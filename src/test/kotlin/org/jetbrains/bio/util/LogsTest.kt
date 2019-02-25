@@ -99,13 +99,13 @@ ${'\t'}at org.jetbrains.bio.util.LogsTest""",
             val errStream = ByteArrayOutputStream()
             System.setOut(PrintStream(outStream))
             System.setErr(PrintStream(errStream))
-            Logs.replaceConsoleAppender(Level.INFO)
+            Logs.addConsoleAppender(Level.INFO)
             try {
                 block()
             } finally {
                 System.setOut(OUT)
                 System.setErr(ERR)
-                Logs.replaceConsoleAppender(Level.INFO)
+                Logs.addConsoleAppender(Level.INFO)
             }
             return String(outStream.toByteArray()) to String(errStream.toByteArray())
         }

@@ -2,7 +2,6 @@ package org.jetbrains.bio.genome
 
 import com.google.common.math.IntMath
 import org.apache.commons.csv.CSVFormat
-import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.jetbrains.bio.Configuration
 import org.jetbrains.bio.genome.sequence.Nucleotide
@@ -28,8 +27,6 @@ object TestOrganismDataGenerator {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        Logs.addConsoleAppender(Level.INFO)
-
         LOG.info("User home: '${System.getProperty("user.home", "n/a")}'")
 
         val configPath = Configuration.defaultConfigPath

@@ -1,6 +1,5 @@
 package org.jetbrains.bio.experiment
 
-import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.jetbrains.bio.dataset.DataConfig
 import org.jetbrains.bio.util.*
@@ -38,9 +37,8 @@ abstract class DataConfigExperiment(folder: String, val configuration: DataConfi
         private val LOG = Logger.getLogger(DataConfigExperiment::class.java)
 
         fun loadDataConfig(input: String, quiet: Boolean = false): DataConfig {
-            // Ensure that we have appender
-            if (!quiet) {
-                Logs.addConsoleAppender(Level.INFO)
+            if (quiet) {
+                Logs.quiet()
             }
             // Let's try load from file
             val path = input.toPath()

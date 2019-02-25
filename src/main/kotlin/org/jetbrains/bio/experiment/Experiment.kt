@@ -1,9 +1,11 @@
 package org.jetbrains.bio.experiment
 
-import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.jetbrains.bio.Configuration
-import org.jetbrains.bio.util.*
+import org.jetbrains.bio.util.createDirectories
+import org.jetbrains.bio.util.div
+import org.jetbrains.bio.util.resolve
+import org.jetbrains.bio.util.time
 import java.nio.file.Path
 
 abstract class Experiment @JvmOverloads constructor(
@@ -33,7 +35,6 @@ abstract class Experiment @JvmOverloads constructor(
     }
 
     fun run() {
-        Logs.addConsoleAppender(Level.INFO)
         if (description != null) {
             LOG.info("Description:\n$description\n")
         }
