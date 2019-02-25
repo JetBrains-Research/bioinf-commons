@@ -1,0 +1,93 @@
+---
+version: 1
+genomes:
+  mm9:
+    species: Mus musculus
+    alias: NCBIM37
+    biomart:
+      url: http://may2012.archive.ensembl.org/biomart/martservice
+      dataset: mmusculus_gene_ensembl
+    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-67/gtf/mus_musculus/Mus_musculus.NCBIM37.67.gtf.gz
+    gtf_chrs:
+      - MT: chrM
+
+    ucsc_annotations_legacy: True
+    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/database/rmsk.txt.gz
+    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/database/cytoBand.txt.gz
+    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/database/gap.txt.gz
+    # centromeres:  n/a
+    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/database/cpgIslandExt.txt.gz
+    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/mm9.2bit
+    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/mm9.chrom.sizes
+
+  hg19:
+    species: Homo sapiens
+    alias: GRCh37
+    biomart:
+      url: http://feb2014.archive.ensembl.org/biomart/martservice
+      dataset: hsapiens_gene_ensembl
+    # Most recent is: "/pub/grch37/current/gtf/homo_sapiens/Homo_sapiens.GRCh37.*.gtf.gz" //87  
+    gtf: ftp://anonymous@ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz
+    gtf_chrs:
+      - MT: chrM
+    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz
+    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz
+    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/gap.txt.gz
+    # centromeres:  n/a
+    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cpgIslandExt.txt.gz
+    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.2bit
+    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.chrom.sizes
+
+  hg38:
+    species: Homo sapiens
+    alias: GRCh38
+    biomart:
+      url: http://mar2016.archive.ensembl.org/biomart/martservice
+      dataset: hsapiens_gene_ensembl
+    # Most recent is: "/pub/current-gtf/homo_sapiens/Homo_sapiens.GRCh38.*.gtf.gz" // 91  
+    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-89/gtf/homo_sapiens/Homo_sapiens.GRCh38.89.gtf.gz
+    gtf_chrs:
+      - MT: chrM
+    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/rmsk.txt.gz
+    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/cytoBand.txt.gz
+    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/gap.txt.gz
+    centromeres:  http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/centromeres.txt.gz
+    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/cpgIslandExt.txt.gz
+    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.2bit
+    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
+
+  # D. melanogaster
+  # http://www.ensembl.org/Drosophila_melanogaster/
+  dm3:
+    species: Drosophila melanogaster
+    alias: BDGP5
+    biomart:
+      url: http://dec2014.archive.ensembl.org/biomart/martservice
+      dataset: dmelanogaster_gene_ensembl
+    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-78/gtf/drosophila_melanogaster/Drosophila_melanogaster.BDGP5.78.gtf.gz
+    gtf_chrs:
+      - mitochondrion_genome: chrM
+    ucsc_annotations_legacy: True
+    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/dm3/database/rmsk.txt.gz
+    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/dm3/database/cytoBand.txt.gz
+    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/dm3/database/gap.txt.gz
+    # centromeres:  n/a
+    # cgis: n/a
+    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips/dm3.2bit
+    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips/dm3.chrom.sizes
+
+  ce6:
+    species: Caenorhabditis elegans
+    alias: WS190
+    biomart:
+      url: http://may2009.archive.ensembl.org/biomart/martservice
+      dataset: celegans_gene_ensembl
+    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-54/gtf/caenorhabditis_elegans/Caenorhabditis_elegans.WS190.54.gtf.gz
+    ucsc_annotations_legacy: True
+    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/ce6/database/rmsk.txt.gz
+    # cytobands: n/a
+    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/ce6/database/gap.txt.gz
+    # centromeres:  n/a
+    # cgis: n/a
+    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/ce6/bigZips/ce6.2bit
+    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/ce6/bigZips/ce6.chrom.sizes
