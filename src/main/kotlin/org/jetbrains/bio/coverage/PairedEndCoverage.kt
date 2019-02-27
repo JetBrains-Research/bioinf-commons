@@ -5,6 +5,7 @@ import gnu.trove.list.TIntList
 import gnu.trove.list.array.TIntArrayList
 import gnu.trove.set.hash.TIntHashSet
 import kotlinx.support.jdk7.use
+import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.ChromosomeRange
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Location
@@ -82,17 +83,22 @@ class PairedEndCoverage private constructor(
         private var totalInsertLength = 0L
 
         /**
-         * We expect this method to be called for only one read of each read pair.
-         * When reading BAM, for example, use "first of pair" flag to control this.
+         * We expect this method to be called for only one read of each read pair: the one
+         * on the negative strand. We thus expect that no same-strand pairs are provided.
+         * We also expect only same-reference pairs.
          *
-         * BAM reports inferred insert size as being relative to the genome build positive
-         * direction, not the strand direction, so it differs in sign between paired reads.
+         * [chr] is the mapping chromosome.
+         * [pos] and [pnext] are POS and PNEXT, the standard SAM fields.
+         * [length] is the length of the read.
          */
-        fun process(read: Location, insertSize: Int): Builder {
-            val nonStrandedInsertSize = read.strand.choose(insertSize, -insertSize)
-            data[read.chromosome].add(read.get5Bound(nonStrandedInsertSize / 2))
+        fun process(
+                chromosome: Chromosome,
+                pos: Int, pnext: Int, length: Int
+        ): Builder {
+            val insertSize = pos + length - pnext
+            data[chromosome].add(pnext + insertSize / 2)
             readPairsCount++
-            totalInsertLength += nonStrandedInsertSize
+            totalInsertLength += insertSize
             return this
         }
 
@@ -121,7 +127,8 @@ class PairedEndCoverage private constructor(
             return PairedEndCoverage(
                     genomeQuery,
                     averageInsertSize = averageInsertSize,
-                    data = data)
+                    data = data
+            )
         }
     }
 

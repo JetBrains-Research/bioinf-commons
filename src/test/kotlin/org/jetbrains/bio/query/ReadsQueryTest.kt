@@ -1,6 +1,7 @@
 package org.jetbrains.bio.query
 
 import org.jetbrains.bio.Tests.assertIn
+import org.jetbrains.bio.Tests.assertIs
 import org.jetbrains.bio.coverage.PairedEndCoverage
 import org.jetbrains.bio.coverage.SingleEndCoverage
 import org.jetbrains.bio.coverage.processPairedReads
@@ -27,6 +28,11 @@ import kotlin.test.assertFalse
 class ReadsQueryTest {
 
     private val TO = GenomeQuery("to1")
+
+    private val SINGLE_END_BAM_READS = 8125
+    private val SINGLE_END_BAM_DETECTED_FRAGMENT = 136
+    private val PAIRED_END_BAM_PAIRS = 693
+    private val PAIRED_END_BAM_INFERRED_FRAGMENT = 139
 
     @Test
     fun testStemGz() {
@@ -58,8 +64,8 @@ class ReadsQueryTest {
             val coverage = readsQuery.get()
             val chr1 = genomeQuery["chr1"]!!
             assertEquals(SingleEndCoverage::class.java, coverage::class.java)
-            assertEquals(136, (coverage as SingleEndCoverage).detectedFragment)
-            assertEquals(8125, coverage.getBothStrandsCoverage(chr1.range.on(chr1)))
+            assertEquals(SINGLE_END_BAM_DETECTED_FRAGMENT, (coverage as SingleEndCoverage).detectedFragment)
+            assertEquals(SINGLE_END_BAM_READS, coverage.getBothStrandsCoverage(chr1.range.on(chr1)))
         }
     }
 
@@ -71,7 +77,7 @@ class ReadsQueryTest {
             val coverage = readsQuery.get()
             val chr1 = genomeQuery["chr1"]!!
             assertEquals(PairedEndCoverage::class.java, coverage::class.java)
-            assertEquals(693, coverage.getBothStrandsCoverage(chr1.range.on(chr1)))
+            assertEquals(PAIRED_END_BAM_PAIRS, coverage.getBothStrandsCoverage(chr1.range.on(chr1)))
         }
     }
 
@@ -82,9 +88,12 @@ class ReadsQueryTest {
             val readsQuery = ReadsQuery(genomeQuery, path, false)
             val (out, err) = LogsTest.captureLoggingOutput { readsQuery.get() }
             assertIn("Library: single_end.bam", out)
-            assertIn("Depth: 8125", out)
+            assertIn("Depth: $SINGLE_END_BAM_READS", out)
             assertIn("Reads: single-ended", out)
-            assertIn("Fragment size: 136 bp (cross-correlation estimate)", out)
+            assertIn(
+                "Fragment size: $SINGLE_END_BAM_DETECTED_FRAGMENT bp (cross-correlation estimate)",
+                out
+            )
             assertEquals("", err)
         }
     }
@@ -96,9 +105,12 @@ class ReadsQueryTest {
             val readsQuery = ReadsQuery(genomeQuery, path, false, fragment = 100)
             val (out, err) = LogsTest.captureLoggingOutput { readsQuery.get() }
             assertIn("Library: single_end.bam", out)
-            assertIn("Depth: 8125", out)
+            assertIn("Depth: $SINGLE_END_BAM_READS", out)
             assertIn("Reads: single-ended", out)
-            assertIn("Fragment size: 100 bp (overrides cross-correlation estimate 136)", out)
+            assertIn(
+                "Fragment size: 100 bp (overrides cross-correlation estimate $SINGLE_END_BAM_DETECTED_FRAGMENT)",
+                out
+            )
             assertEquals("", err)
         }
     }
@@ -110,25 +122,10 @@ class ReadsQueryTest {
             val readsQuery = ReadsQuery(genomeQuery, path, false)
             val (out, err) = LogsTest.captureLoggingOutput { readsQuery.get() }
             assertIn("Library: paired_end.bam", out)
-            assertIn("Depth: 693", out)
-            assertIn("Reads: paired-ended", out)
-            assertIn("Fragment size: 139 bp (average; inferred from read pairs)", out)
-            assertEquals("", err)
-        }
-    }
-
-    @Test
-    fun testPairedEndLoggingOverride() {
-        withResource(ReadsQueryTest::class.java, "paired_end.bam") { path ->
-            val genomeQuery = GenomeQuery("to1")
-            val readsQuery = ReadsQuery(genomeQuery, path, false, fragment = 100)
-            val (out, err) = LogsTest.captureLoggingOutput { readsQuery.get() }
-            assertIn("Library: paired_end.bam", out)
-            assertIn("Depth: 693", out)
+            assertIn("Depth: $PAIRED_END_BAM_PAIRS", out)
             assertIn("Reads: paired-ended", out)
             assertIn(
-                "Fragment size: 139 bp (average; inferred from read pairs; " +
-                        "user input 100 is ignored)",
+                "Fragment size: $PAIRED_END_BAM_INFERRED_FRAGMENT bp (average; inferred from read pairs)",
                 out
             )
             assertEquals("", err)
@@ -139,10 +136,36 @@ class ReadsQueryTest {
     fun testLoadSingleEndBamAsPairedEnd() {
         withResource(ReadsQueryTest::class.java, "single_end.bam") { path ->
             val genomeQuery = GenomeQuery("to1")
-            var matePairs = 0
-            val unpairedReads = processPairedReads(genomeQuery, path) { _, _ -> matePairs++ }
-            assertEquals(0, matePairs)
-            assertEquals(8125, unpairedReads)
+            var pairedReads = 0
+            val unpairedReads = processPairedReads(genomeQuery, path) { _, _, _, _ -> pairedReads++ }
+            assertEquals(0, pairedReads)
+            assertEquals(SINGLE_END_BAM_READS, unpairedReads)
+        }
+    }
+
+    @Test
+    fun testLoadPairedEndBamAsSingleEnd() {
+        withResource(ReadsQueryTest::class.java, "paired_end.bam") { path ->
+            val genomeQuery = GenomeQuery("to1")
+            val readsQuery = ReadsQuery(genomeQuery, path, false, fragment = 0)
+            val coverage = readsQuery.get()
+            val chr1 = genomeQuery["chr1"]!!
+            assertIs(coverage, SingleEndCoverage::class.java)
+            assertEquals(
+                PAIRED_END_BAM_PAIRS * 2,
+                coverage.getBothStrandsCoverage(chr1.range.on(chr1))
+            )
+        }
+    }
+
+    @Test
+    fun testLoadPairedEndBamAsSingleEndLogging() {
+        withResource(ReadsQueryTest::class.java, "paired_end.bam") { path ->
+            val genomeQuery = GenomeQuery("to1")
+            val readsQuery = ReadsQuery(genomeQuery, path, false, fragment = 0)
+            val (out, err) = LogsTest.captureLoggingOutput { readsQuery.get() }
+            assertIn("Fragment option (0) forces reading paired-end reads as single-end!", out)
+            assertEquals("", err)
         }
     }
 

@@ -4,10 +4,7 @@ import htsjdk.samtools.SAMRecord
 import htsjdk.samtools.SamReaderFactory
 import htsjdk.samtools.ValidationStringency
 import kotlinx.support.jdk7.use
-import org.jetbrains.bio.genome.GenomeQuery
-import org.jetbrains.bio.genome.Location
-import org.jetbrains.bio.genome.Strand
-import org.jetbrains.bio.genome.toStrand
+import org.jetbrains.bio.genome.*
 import org.jetbrains.bio.io.BedFormat
 import org.jetbrains.bio.io.unpackRegularFields
 import org.jetbrains.bio.util.*
@@ -89,14 +86,19 @@ fun processReads(genomeQuery: GenomeQuery, path: Path, consumer: (Location) -> U
 
 /**
  * Extract all (valid) read pairs from BAM and feed them to [consumer].
+ * Only the negative strand read is passed to [consumer].
  * Pairs that don't belong to the provided [genomeQuery] are ignored.
- * Consumer accepts the first read of pair and the inferred insert size.
+ * Consumer accepts:
+ * - the chromosome;
+ * - POS (leftmost mapped position of the read);
+ * - PNEXT (leftmost mapped position of the mate read);
+ * - length of the read.
  *
  * Returns the number of valid unpaired reads encountered. If it's not zero,
  * something very wrong has happened.
  */
 fun processPairedReads(
-        genomeQuery: GenomeQuery, path: Path, consumer: (Location, Int) -> Unit
+        genomeQuery: GenomeQuery, path: Path, consumer: (Chromosome, Int, Int, Int) -> Unit
 ): Int {
     val progress = Progress { title = "Loading paired-end reads ${path.name}" }.unbounded()
     try {
@@ -117,14 +119,27 @@ fun processPairedReads(
                                     unpairedCount++
                                     return@forEach
                                 }
-                                if (record.secondOfPairFlag) {
-                                    // only iterate each read pair once but increment progress
-                                    // so that the user doesn't think we're stuck
+                                if (record.mateUnmappedFlag) {
+                                    // we skip partially mapped pairs
                                     return@forEach
                                 }
-                                val location = record.toLocation(genomeQuery)
-                                if (location != null) {
-                                    consumer(location, record.inferredInsertSize)
+                                if (!record.readNegativeStrandFlag || record.mateNegativeStrandFlag
+                                        || record.referenceName != record.mateReferenceName) {
+                                    // We only process negative strand reads.
+                                    // We skip same-strand pairs because we can't easily
+                                    // infer insert size for them.
+                                    // We also skip pairs mapped to different chromosomes.
+                                    return@forEach
+                                }
+
+                                val pos = record.alignmentStart
+                                val pnext = record.mateAlignmentStart
+                                val length = record.readLength
+                                val chromosome = genomeQuery[record.referenceName]
+                                if (pnext != 0 && length != 0 && chromosome != null) {
+                                    consumer(
+                                        chromosome, pos, pnext, length
+                                    )
                                 }
                             }
                         }
@@ -133,8 +148,8 @@ fun processPairedReads(
         }
         return unpairedCount
     } catch (e: IllegalStateException) {
-        error("Error when processing paired-end reads: " +
-                Logs.getMessage(e, includeStackTrace = true))
+        val message = Logs.getMessage(e, includeStackTrace = true)
+        error("Error when processing paired-end reads: $message")
     } finally {
         progress.done()
     }
