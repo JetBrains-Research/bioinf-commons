@@ -84,11 +84,15 @@ class PairedEndCoverage private constructor(
         /**
          * We expect this method to be called for only one read of each read pair.
          * When reading BAM, for example, use "first of pair" flag to control this.
+         *
+         * BAM reports inferred insert size as being relative to the genome build positive
+         * direction, not the strand direction, so it differs in sign between paired reads.
          */
         fun process(read: Location, insertSize: Int): Builder {
-            data[read.chromosome].add(read.get5Bound(insertSize / 2))
+            val nonStrandedInsertSize = read.strand.choose(insertSize, -insertSize)
+            data[read.chromosome].add(read.get5Bound(nonStrandedInsertSize / 2))
             readPairsCount++
-            totalInsertLength += read.strand.choose(insertSize, -insertSize)
+            totalInsertLength += nonStrandedInsertSize
             return this
         }
 
@@ -123,7 +127,7 @@ class PairedEndCoverage private constructor(
 
     companion object {
 
-        const val PAIRED_VERSION = 1
+        const val PAIRED_VERSION = 2
         const val PAIRED_VERSION_FIELD = "paired_version"
         const val AVERAGE_INSERT_SIZE_FIELD = "average_insert_size"
 
