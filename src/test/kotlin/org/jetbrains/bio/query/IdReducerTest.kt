@@ -1,5 +1,6 @@
 package org.jetbrains.bio.query
 
+import org.jetbrains.bio.util.isWindows
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -18,7 +19,13 @@ class IdReducerTest {
         assertEquals("foo_bar#c6167", reduceIds(listOf("_foo%bar_")))
         assertEquals("foo_bar#5d5f2", reduceIds(listOf("foo", "bar")))
         assertEquals("foo_bar#4d2ea", reduceIds(listOf("___foo:$%^", "_bar_")))
-        assertEquals("foo_bar#8fcf1", reduceIds(listOf("/mnt/stripe/bio/foo", "/mnt/stripe/bio/genomes/bar")))
+        if (isWindows()) {
+            assertEquals("foo_bar#7cdc7",
+                    reduceIds(listOf("C:\\mnt\\stripe\\bio\\foo", "C:\\mnt\\stripe\\bio\\genomes\\bar")))
+        } else {
+            assertEquals("foo_bar#8fcf1",
+                    reduceIds(listOf("/mnt/stripe/bio/foo", "/mnt/stripe/bio/genomes/bar")))
+        }
     }
 
     @Test
