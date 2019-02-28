@@ -24,7 +24,6 @@ import java.io.BufferedReader
 import java.io.IOException
 import java.io.Reader
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.ConcurrentMap
 
 enum class Ontology {
@@ -43,11 +42,12 @@ enum class Ontology {
     }
 
     /** A two-letter ontology identifier. */
-    val id: String get() = when (this) {
-        BIOLOGICAL_PROCESS -> "BP"
-        CELLULAR_COMPONENT -> "CC"
-        MOLECULAR_FUNCTION -> "MF"
-    }
+    val id: String
+        get() = when (this) {
+            BIOLOGICAL_PROCESS -> "BP"
+            CELLULAR_COMPONENT -> "CC"
+            MOLECULAR_FUNCTION -> "MF"
+        }
 
     /** Ontology DAG. */
     val graph: DirectedGraph<String, Pair<String, String>> get() = meta.first
@@ -69,7 +69,7 @@ enum class Ontology {
         val path = Configuration.genomesPath / name
         path.checkOrRecalculate("GOA") { output ->
             ("http://ftp.ebi.ac.uk/pub/databases/GO/goa/" +
-             "${speciesInformal.toUpperCase()}/$name").downloadTo(output.path)
+                    "${speciesInformal.toUpperCase()}/$name").downloadTo(output.path)
         }
 
         GafFile.read(genome, path, this)
@@ -87,8 +87,8 @@ enum class Ontology {
  */
 fun DirectedGraph<String, Pair<String, String>>.mapDepth(): TObjectIntMap<String> {
     val depth = TObjectIntHashMap<String>(Constants.DEFAULT_CAPACITY,
-                                          Constants.DEFAULT_LOAD_FACTOR,
-                                          Int.MAX_VALUE)
+            Constants.DEFAULT_LOAD_FACTOR,
+            Int.MAX_VALUE)
     val root = vertexSet().filter { inDegreeOf(it) == 0 }.single()
     val it = DepthFirstIterator(this, root)
     it.addTraversalListener(object : TraversalListenerAdapter<String, Pair<String, String>>() {
@@ -107,57 +107,6 @@ fun DirectedGraph<String, Pair<String, String>>.mapDepth(): TObjectIntMap<String
     return depth
 }
 
-/**
- * For each term computes the number of genes annotated by it but
- * not any of its parent terms. For instance, here
- *
- *        {a, b, c}
- *            1
- *           / \
- *     {b}  2   3 {c}
- *
- * the gene b counts only towards the term 2.
- *
- * A more elaborate example from the Cao & Zhang paper can be found
- * in the tests.
- *
- * Note that two terms *at the same level* can be annotated by the
- * same set of genes.
- */
-fun SetMultimap<String, String>.prune(
-        graph: DirectedGraph<String, Pair<String, String>>): SetMultimap<String, String> {
-    val pruned = HashMultimap.create<String, String>()
-
-    val root = graph.vertexSet().filter { graph.inDegreeOf(it) == 0 }.single()
-    val it = DepthFirstIterator(graph, root)
-    it.addTraversalListener(object : TraversalListenerAdapter<String, Pair<String, String>>() {
-        /**
-         * A mapping from terms to sets of genes, defined as
-         *
-         *     U[t] = genes annotated by `t` and a union of U[t]
-         *            over its children
-         *
-         * where `t` is a term and `U` is the mapping.
-         */
-        private val unions = HashMap<String, Set<String>>()
-
-        override fun vertexFinished(e: VertexTraversalEvent<String>) {
-            val term = e.vertex
-            val seen = HashSet<String>()
-            for ((_, child) in graph.outgoingEdgesOf(term)) {
-                seen.addAll(unions[child]!!)
-            }
-
-            val associated = this@prune[term]!! - seen
-            pruned.putAll(term, associated)
-            seen.addAll(associated)
-            unions[term] = seen
-        }
-    })
-
-    for (term in it) {}  // Drain the iterator.
-    return pruned
-}
 
 data class Term(val id: String, val description: String, val isObsolete: Boolean,
                 val children: Set<String>) {
@@ -169,8 +118,8 @@ data class Term(val id: String, val description: String, val isObsolete: Boolean
             }.toSet()
 
             return Term(properties.single("id"), properties.single("name"),
-                        properties["is_obsolete"] == listOf("true"),
-                        children)
+                    properties["is_obsolete"] == listOf("true"),
+                    children)
         }
     }
 }
@@ -213,7 +162,7 @@ internal class OboFile constructor(private val ontology: Ontology,
 
 private class OboIterator(private val ontology: Ontology,
                           reader: BufferedReader)
-:
+    :
         CachingIterator<String, Term>(reader.lines().iterator()) {
 
     override fun cache(): Term? {
@@ -257,10 +206,10 @@ object GafFile {
     private val FORMAT = CSVFormat.TDF
             .withCommentMarker('!')
             .withHeader("db", "db_object_id", "db_object_symbol", "qualifier",
-                        "go_id", "db_reference", "evidence_code", "with_or_from",
-                        "aspect", "db_object_name", "db_object_synonym",
-                        "do_object_type", "taxon", "date", "assigned_by",
-                        "annotation_extension", "gene_product_form_id")
+                    "go_id", "db_reference", "evidence_code", "with_or_from",
+                    "aspect", "db_object_name", "db_object_synonym",
+                    "do_object_type", "taxon", "date", "assigned_by",
+                    "annotation_extension", "gene_product_form_id")
 
     fun read(genome: Genome, path: Path, ontology: Ontology): SetMultimap<String, String> {
         val aspect = when (ontology) {
@@ -292,7 +241,7 @@ object GafFile {
                 var transcript: Transcript?
                 do {
                     transcript = GeneResolver.get(genome.build, aliases.next(),
-                                                  GeneAliasType.GENE_SYMBOL)
+                            GeneAliasType.GENE_SYMBOL)
                             .firstOrNull()
                 } while (transcript == null && aliases.hasNext())
 
