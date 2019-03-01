@@ -17,8 +17,8 @@ import kotlin.reflect.KProperty
 
 object Configuration {
     const val GENOME_PATHS_PROPERTY = "genomes.path"
-    private const val EXPERIMENT_PROPERTY = "experiments.path"
-    private const val RAW_DATA_PATH_PROPERTY = "raw.data.path"
+    const val EXPERIMENT_PROPERTY = "experiments.path"
+    const val RAW_DATA_PATH_PROPERTY = "raw.data.path"
 
     /** Path to genome-specific annotation, e.g. chrom.sizes file. */
     var genomesPath: Path by OverridableLazyInitPathDelegate(this)
@@ -26,12 +26,8 @@ object Configuration {
     /** Path to raw data, e.g. raw reads in FASTQ format. */
     var rawDataPath: Path by OverridableLazyInitPathDelegate(this)
 
-    /** Path to the data computed by an [Experiment]. */
+    /** Path to the work folder. */
     var experimentsPath: Path by OverridableLazyInitPathDelegate(this)
-
-    /** Path to GEO data. */
-    val geoSamplesPath: Path
-        get() = rawDataPath / "geo-samples"
 
     /** Path to cache data. */
     val cachePath: Path
