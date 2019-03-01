@@ -60,6 +60,22 @@ dependencies {
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
 }
 
+task generateTestOrganism(type: JavaExec) {
+    systemProperty "genomes.path", settingsFolder("genomes.path", "genomes")
+
+    /* Can pass all the properties: */
+    // systemProperties System.getProperties()
+
+    description "Generates sequences/indexes/genes/etc for test organism"
+    configure {
+        main = "org.jetbrains.bio.genome.TestOrganismDataGenerator"
+        classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+        enableAssertions = true
+        maxHeapSize = '1024M' // Not much RAM is available on TC agents
+    }
+}
+
+
 test {
     // Seems on Windows default heap size is about 256m
     // and that is why tests fails with java heap size OOM

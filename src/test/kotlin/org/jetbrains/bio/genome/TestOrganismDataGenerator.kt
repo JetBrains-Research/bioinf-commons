@@ -8,13 +8,17 @@ import org.jetbrains.bio.genome.sequence.Nucleotide
 import org.jetbrains.bio.genome.sequence.TwoBitWriter
 import org.jetbrains.bio.io.FastaRecord
 import org.jetbrains.bio.io.write
-import org.jetbrains.bio.util.*
+import org.jetbrains.bio.util.bufferedWriter
+import org.jetbrains.bio.util.createDirectories
+import org.jetbrains.bio.util.div
+import org.jetbrains.bio.util.withTempFile
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.stream.Collectors
 
 /** A generator for the fake "to1" build. */
+@Suppress("unused")
 object TestOrganismDataGenerator {
     private val LOG = Logger.getLogger(TestOrganismDataGenerator::class.java)
 
@@ -29,27 +33,8 @@ object TestOrganismDataGenerator {
     fun main(args: Array<String>) {
         LOG.info("User home: '${System.getProperty("user.home", "n/a")}'")
 
-        val configPath = Configuration.defaultConfigPath
-        // If there is no config, assume we're running on a CI.
-        if (configPath.notExists) {
-            val genomePathsValue = System.getProperty(Configuration.GENOME_PATHS_PROPERTY)
-            requireNotNull(genomePathsValue) {
-                "Neither genomes system property (${Configuration.GENOME_PATHS_PROPERTY}) isn't set, nor $configPath exists."
-            }
-            Configuration.experimentsPath = genomePathsValue!!.toPath()
-        } else {
-            LOG.info("Already exists: $configPath")
-            LOG.info("""
-                |------  Properties  ------------
-                |${configPath.bufferedReader().readText()}
-                |----------------------------
-                """.trimMargin().trim()
-            )
-        }
-
         // Ensure genomesPaths initialized
         Configuration.genomesPath.createDirectories()
-
 
         LOG.info("Genomes path: ${Configuration.genomesPath}")
         val dataPath = Configuration.genomesPath / Genome.TEST_ORGANISM_BUILD
