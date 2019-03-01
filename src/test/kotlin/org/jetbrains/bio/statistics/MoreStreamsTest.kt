@@ -29,7 +29,7 @@ class MoreStreamsTest {
         val chunks = (0..2).chunked().iterator().asSequence().toList()
         when (ForkJoinPool.getCommonPoolParallelism()) {
             1 -> assertEquals(listOf(Chunk(0, 3)), chunks)
-            2, 3 -> assertEquals(listOf(Chunk(0, 2), Chunk(2, 3)), chunks)
+            2 -> assertEquals(listOf(Chunk(0, 2), Chunk(2, 3)), chunks)
             else -> assertEquals(listOf(Chunk(0, 1), Chunk(1, 2), Chunk(2, 3)), chunks)
         }
     }
