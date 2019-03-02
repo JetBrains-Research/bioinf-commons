@@ -7,5 +7,5 @@ Bioinformatics library in [Kotlin](https://kotlinlang.org) by [JetBrains Researc
 * APIs for working with Genome, Sequence, Genes, Ontologies etc.
 * BAM, BED, FAST* formats support
 * Pandas-like data frames
-* Basic statistics utilities including distributions mixtures, hmms and hypothesis testing
+* Statistics utilities including distributions mixtures, hmms and hypothesis testing
 * Utilities for computations caching, logging, parallel execution with cancelling, etc.
