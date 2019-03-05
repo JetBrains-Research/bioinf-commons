@@ -17,7 +17,7 @@ import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.stream.Collectors
 
-/** A generator for the fake "to1" build. */
+/** A generator for the fake "to1" genome build. */
 @Suppress("unused")
 object TestOrganismDataGenerator {
     private val LOG = Logger.getLogger(TestOrganismDataGenerator::class.java)

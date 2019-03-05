@@ -57,7 +57,7 @@ ${'\t'}at org.jetbrains.bio.util.LogsTest""",
 
     @Test
     fun testLayout() {
-        val (out, _) = captureLoggingOutput {
+        val (out, _) = Logs.captureLoggingOutput {
             Logs.addConsoleAppender(Level.INFO)
             LOG.info("foobar")
         }
@@ -69,7 +69,7 @@ ${'\t'}at org.jetbrains.bio.util.LogsTest""",
 
     @Test
     fun testDebugLayout() {
-        val (out, _) = captureLoggingOutput {
+        val (out, _) = Logs.captureLoggingOutput {
             Logs.addConsoleAppender(Level.DEBUG)
             LOG.debug("foobar")
         }
@@ -82,32 +82,5 @@ ${'\t'}at org.jetbrains.bio.util.LogsTest""",
 
     companion object {
         private val LOG = Logger.getLogger(LogsTest::class.java)
-        private val OUT = System.out
-        private val ERR = System.err
-
-        /**
-         * Useful for checking logs.
-         *
-         * Runs [block] and returns the contents of stdout and stderr by redirecting them
-         * and resetting the console appender.
-         *
-         * Clears redirection and recreates appender
-         * regardless of whether [block] completed normally or threw.
-         */
-        fun captureLoggingOutput(block: () -> Unit): Pair<String, String> {
-            val outStream = ByteArrayOutputStream()
-            val errStream = ByteArrayOutputStream()
-            System.setOut(PrintStream(outStream))
-            System.setErr(PrintStream(errStream))
-            Logs.addConsoleAppender(Level.INFO)
-            try {
-                block()
-            } finally {
-                System.setOut(OUT)
-                System.setErr(ERR)
-                Logs.addConsoleAppender(Level.INFO)
-            }
-            return String(outStream.toByteArray()) to String(errStream.toByteArray())
-        }
     }
 }

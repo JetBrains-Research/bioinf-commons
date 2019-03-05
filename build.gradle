@@ -71,15 +71,12 @@ private String settingsFolder(final String propertyName, final String folderName
 task generateTestOrganism(type: JavaExec) {
     systemProperty "genomes.path", settingsFolder("genomes.path", "genomes")
 
-    /* Can pass all the properties: */
-    // systemProperties System.getProperties()
-
     description "Generates sequences/indexes/genes/etc for test organism"
     configure {
         main = "org.jetbrains.bio.genome.TestOrganismDataGenerator"
-        classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+        classpath = sourceSets.main.runtimeClasspath
         enableAssertions = true
-        maxHeapSize = '1024M' // Not much RAM is available on TC agents
+        maxHeapSize = '1024m' // Not much RAM is available on TC agents
     }
 }
 

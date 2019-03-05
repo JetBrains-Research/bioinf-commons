@@ -86,7 +86,7 @@ class ReadsQueryTest {
         withResource(ReadsQueryTest::class.java, "single_end.bam") { path ->
             val genomeQuery = GenomeQuery("to1")
             val readsQuery = ReadsQuery(genomeQuery, path, false)
-            val (out, err) = LogsTest.captureLoggingOutput { readsQuery.get() }
+            val (out, err) = Logs.captureLoggingOutput { readsQuery.get() }
             assertIn("Library: single_end.bam", out)
             assertIn("Depth: $SINGLE_END_BAM_READS", out)
             assertIn("Reads: single-ended", out)
@@ -103,7 +103,7 @@ class ReadsQueryTest {
         withResource(ReadsQueryTest::class.java, "single_end.bam") { path ->
             val genomeQuery = GenomeQuery("to1")
             val readsQuery = ReadsQuery(genomeQuery, path, false, fragment = 100)
-            val (out, err) = LogsTest.captureLoggingOutput { readsQuery.get() }
+            val (out, err) = Logs.captureLoggingOutput { readsQuery.get() }
             assertIn("Library: single_end.bam", out)
             assertIn("Depth: $SINGLE_END_BAM_READS", out)
             assertIn("Reads: single-ended", out)
@@ -120,7 +120,7 @@ class ReadsQueryTest {
         withResource(ReadsQueryTest::class.java, "paired_end.bam") { path ->
             val genomeQuery = GenomeQuery("to1")
             val readsQuery = ReadsQuery(genomeQuery, path, false)
-            val (out, err) = LogsTest.captureLoggingOutput { readsQuery.get() }
+            val (out, err) = Logs.captureLoggingOutput { readsQuery.get() }
             assertIn("Library: paired_end.bam", out)
             assertIn("Depth: $PAIRED_END_BAM_PAIRS", out)
             assertIn("Reads: paired-ended", out)
@@ -163,7 +163,7 @@ class ReadsQueryTest {
         withResource(ReadsQueryTest::class.java, "paired_end.bam") { path ->
             val genomeQuery = GenomeQuery("to1")
             val readsQuery = ReadsQuery(genomeQuery, path, false, fragment = 0)
-            val (out, err) = LogsTest.captureLoggingOutput { readsQuery.get() }
+            val (out, err) = Logs.captureLoggingOutput { readsQuery.get() }
             assertIn("Fragment option (0) forces reading paired-end reads as single-end!", out)
             assertEquals("", err)
         }

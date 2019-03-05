@@ -73,4 +73,32 @@ object Logs {
         }
     }
 
+
+    /**
+     * Useful for checking logs.
+     *
+     * Runs [block] and returns the contents of stdout and stderr by redirecting them
+     * and resetting the console appender.
+     *
+     * Clears redirection and recreates appender
+     * regardless of whether [block] completed normally or threw.
+     */
+    fun captureLoggingOutput(block: () -> Unit): Pair<String, String> {
+        val out = System.out
+        val err = System.err
+        val outStream = ByteArrayOutputStream()
+        val errStream = ByteArrayOutputStream()
+        System.setOut(PrintStream(outStream))
+        System.setErr(PrintStream(errStream))
+        Logs.addConsoleAppender(Level.INFO)
+        try {
+            block()
+        } finally {
+            System.setOut(out)
+            System.setErr(err)
+            Logs.addConsoleAppender(Level.INFO)
+        }
+        return String(outStream.toByteArray()) to String(errStream.toByteArray())
+    }
+
 }
