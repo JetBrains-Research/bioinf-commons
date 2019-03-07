@@ -59,7 +59,7 @@ object Configuration {
             val properties = System.getProperties()
             val configPath = System.getProperty(CONFIG_PATH_PROPERTY, null)?.toPath()
             if (configPath != null && configPath.exists) {
-                LOG.error("Loading config: '$configPath'...")
+                LOG.info("Loading config: '$configPath'...")
                 if (!configPath.isReadable) {
                     LOG.error("Cannot read: '$configPath'.")
                 } else {
