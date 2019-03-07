@@ -88,11 +88,14 @@ class ReadsQuery(
 
     fun npzPath() = Configuration.cachePath /  "coverage_${fileId}${path.sha}.npz"
 
+    private val idStem = path.stemGz +
+            (if (unique) "_unique" else "")
+
     override val id: String
-        get() = fileId +  (if (fragment != null) "_$fragment" else "")
+        get() = idStem + (if (fragment != null) "_$fragment" else "")
 
     // we don't need to store fragment size in the file name
-    private val fileId: String = path.stemGz + (if (unique) "_unique" else "")
+    private val fileId = idStem + (if (fragment != null) "_raw" else "")
 
     companion object {
         val LOG: Logger = Logger.getLogger(ReadsQuery::class.java)
