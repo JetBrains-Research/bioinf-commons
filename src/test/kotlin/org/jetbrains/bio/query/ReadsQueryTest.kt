@@ -132,6 +132,10 @@ class ReadsQueryTest {
         }
     }
 
+    /**
+     * Should be impossible to achieve via normal [ReadsQuery] invocation, so we use
+     * internal [processPairedReads] method.
+     */
     @Test
     fun testLoadSingleEndBamAsPairedEnd() {
         withResource(ReadsQueryTest::class.java, "single_end.bam") { path ->
@@ -143,6 +147,9 @@ class ReadsQueryTest {
         }
     }
 
+    /**
+     * fragment=0 option should force loading as single-end
+     */
     @Test
     fun testLoadPairedEndBamAsSingleEnd() {
         withResource(ReadsQueryTest::class.java, "paired_end.bam") { path ->
@@ -158,6 +165,9 @@ class ReadsQueryTest {
         }
     }
 
+    /**
+     * fragment=0 option should force loading as single-end
+     */
     @Test
     fun testLoadPairedEndBamAsSingleEndLogging() {
         withResource(ReadsQueryTest::class.java, "paired_end.bam") { path ->
@@ -166,6 +176,23 @@ class ReadsQueryTest {
             val (out, err) = Logs.captureLoggingOutput { readsQuery.get() }
             assertIn("Fragment option (0) forces reading paired-end reads as single-end!", out)
             assertEquals("", err)
+        }
+    }
+
+    /**
+     * We've had troubles with cache file reuse (see issue #1). This test checks that
+     * the cache file is not reused when not appropriate.
+     */
+    @Test
+    fun testLoadPairedEndBamAsPairedEndThenSingleEnd() {
+        withResource(ReadsQueryTest::class.java, "paired_end.bam") { path ->
+            val genomeQuery = GenomeQuery("to1")
+            val readsQueryAsPaired = ReadsQuery(genomeQuery, path, false)
+            val coverageAsPaired = readsQueryAsPaired.get()
+            val readsQueryAsSingle = ReadsQuery(genomeQuery, path, false, fragment = 0)
+            val coverageAsSingle = readsQueryAsSingle.get()
+            assertIs(coverageAsPaired, PairedEndCoverage::class.java)
+            assertIs(coverageAsSingle, SingleEndCoverage::class.java)
         }
     }
 
