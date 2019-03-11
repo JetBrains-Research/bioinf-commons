@@ -68,7 +68,7 @@ private String settingsFolder(final String propertyName, final String folderName
     }
 }
 
-task generateTestOrganism(type: JavaExec) {
+task generateTestOrganism(type: JavaExec, overwrite: true) {
     systemProperty "genomes.path", settingsFolder("genomes.path", "genomes")
 
     description "Generates sequences/indexes/genes/etc for test organism"
@@ -139,6 +139,6 @@ bintray {
     }
 }
 
-task wrapper(type: Wrapper) {
+task wrapper(type: Wrapper, overwrite: true) {
     gradleVersion = '4.10'
 }
