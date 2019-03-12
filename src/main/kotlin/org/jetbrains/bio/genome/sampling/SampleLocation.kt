@@ -62,7 +62,6 @@ fun sampleLocations(chromosome: Chromosome,
     }
 
     val locations = arrayListOf<Location>()
-    val sequence = chromosome.sequence
     lengthList.forEach { length ->
         var location: Location
         var attempts = 0
@@ -77,6 +76,7 @@ fun sampleLocations(chromosome: Chromosome,
             } else {
                 // check that no unknown nucleotides in sequence, otherwise
                 // re-generate location
+                val sequence = chromosome.sequence
                 val hasNs = (location.startOffset until location.endOffset).any { sequence.charAt(it) == Nucleotide.N }
                 if (!hasNs) {
                     locations.add(location)
