@@ -3,9 +3,6 @@ package org.jetbrains.bio.genome
 import org.apache.commons.math3.stat.StatUtils
 import org.apache.log4j.Logger
 import org.jetbrains.bio.coverage.Coverage
-import org.jetbrains.bio.genome.containers.genomeMap
-import org.jetbrains.bio.genome.sampling.XSRandom
-import org.jetbrains.bio.genome.sequence.BinaryLut
 import org.jetbrains.bio.query.ReadsQuery
 import org.jetbrains.bio.util.isAccessible
 import org.jetbrains.bio.util.presentablePath
@@ -58,18 +55,10 @@ object PeaksInfo {
                 val coverages = readQueries.map { it.get() }
                 val frip = frip(genomeQuery, peaks, coverages)
                 result["FRIP"] = frip.toString()
-
-                // XXX Temporary disabled due to https://github.com/JetBrains-Research/epigenome/issues/1310
-                // Span "signal-to-noise" is very unstable, values differs 2x times for same data
-                // val signalToNoise = signalToNoise(genomeQuery, peaks, coverages)
-                // if (signalToNoise != null) {
-                //     signalBlock += "Signal to noise: $signalToNoise\n"
-                // }
             }
         }
         return result
     }
-
 
     private fun frip(genomeQuery: GenomeQuery, peakLocations: List<Location>, coverages: List<Coverage>): Double {
         val frip = coverages.map { coverage ->
@@ -81,90 +70,4 @@ object PeaksInfo {
         LOG.debug("Frip: $frip")
         return frip
     }
-
-
-    private fun signalToNoise(genomeQuery: GenomeQuery,
-                              peaks: List<Location>,
-                              coverages: List<Coverage>): Double? {
-        LOG.debug("Generating ${NUMBER_OF_RANGES}x${RANGE_LENGTH}bp top summits")
-        val topSummits = topSummits(peaks.toList(), coverages)
-        val allPeaksCoords = genomeMap(genomeQuery) { chr ->
-            val coords = peaks.filter { it.chromosome == chr }
-                    .flatMap { listOf(it.startOffset, it.endOffset) }
-                    .sorted()
-                    .distinct().toIntArray()
-            coords to BinaryLut.of(coords, 24)
-        }
-
-        LOG.debug("Generating ${NUMBER_OF_RANGES}x${RANGE_LENGTH}bp desert regions " +
-                "with distance $DESERT_DISTANCE")
-        val desertRanges = topSummits.mapNotNull {
-            sampleRegionInDesert(it.chromosome, allPeaksCoords[it.chromosome])
-        }
-        if (desertRanges.isEmpty()) {
-            LOG.error("Failed to estimate signal-to-noise ratio.")
-            return null
-        }
-        val topPeaksSummitsCoverage = topSummits.map {
-            coverages.map { coverage -> coverage.getBothStrandsCoverage(it) }.average()
-        }.average()
-        val desertCoverage = desertRanges.map {
-            coverages.map { coverage -> coverage.getBothStrandsCoverage(it) }.average()
-        }.average()
-        val signalToNoise = 1.0 * (topPeaksSummitsCoverage + 1e-6) / (desertCoverage + 1e-6)
-        LOG.debug("Signal-to-noise ratio $signalToNoise")
-        return signalToNoise
-    }
-
-
-    private const val NUMBER_OF_RANGES = 1000
-    private const val RANGE_LENGTH = 1000
-    private const val DESERT_DISTANCE = 1000
-
-    private val RANDOM = XSRandom()
-    private const val SAMPLE_ATTEMPTS_THRESHOLD = 1000
-
-    /**
-     * Generates list of given size containing random locations (which may intersect)
-     * of given length within chromosome[leftBound, rightBound)
-     */
-    private fun sampleRegionInDesert(chromosome: Chromosome, allPeaksCoords: Pair<IntArray, BinaryLut>): ChromosomeRange? {
-        val (coords, lut) = allPeaksCoords
-        var range: ChromosomeRange
-        var attempts = 0
-        while (true) {
-            if (attempts++ > SAMPLE_ATTEMPTS_THRESHOLD) {
-                return null
-            }
-            val startOffset = RANDOM.nextInt(chromosome.length - RANGE_LENGTH)
-            range = ChromosomeRange(startOffset, startOffset + RANGE_LENGTH, chromosome)
-            if (checkDistance(lut, coords, range.startOffset) && checkDistance(lut, coords, range.endOffset)) {
-                return range
-            }
-        }
-    }
-
-    // Check if we are not too close to real peaks
-    private fun checkDistance(lut: BinaryLut, coords: IntArray, boundary: Int): Boolean {
-        val (low, high) = lut.nearestElemDist(coords, boundary)
-        check(low != -1 && high != -1)
-        return Math.abs(boundary - coords[low]) > DESERT_DISTANCE && Math.abs(boundary - coords[high]) > DESERT_DISTANCE
-    }
-
-    private fun topSummits(peaks: List<Location>, coverages: List<Coverage>): List<ChromosomeRange> {
-        return peaks
-                .sortedByDescending {
-                    coverages.map { coverage ->
-                        coverage.getBothStrandsCoverage(it.toChromosomeRange())
-                    }.average()
-                }
-                .map {
-                    val start = (it.startOffset + it.endOffset) / 2 - RANGE_LENGTH / 2
-                    val end = (it.startOffset + it.endOffset) / 2 + RANGE_LENGTH / 2
-                    ChromosomeRange(start, end, it.chromosome)
-                }
-                .take(NUMBER_OF_RANGES)
-                .toList()
-    }
-
 }
