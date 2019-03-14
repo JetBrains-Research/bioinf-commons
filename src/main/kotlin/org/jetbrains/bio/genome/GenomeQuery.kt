@@ -6,16 +6,15 @@ import java.nio.file.Path
 import java.util.*
 
 /**
- * Genome query for all chromosomes (somatic & autosomal).
- * Important: unlocalized and unmapped fragments and the mitochondrial chromosome are ignored.
- *
+ * Genome query for all chromosomes.
  * @author Oleg Shpynov
  */
 class GenomeQuery(val genome: Genome,
-                  /** A subset of chromosomes to be considered or empty list for all chromosomes. */
-                  val restriction: Set<String> = emptySet()) {
+                  /** A subset of chromosomes to be considered or null for all chromosomes. */
+                  val restriction: Set<String>? = null) {
 
-    constructor(build: String, vararg names: String) : this(Genome[build], names.toSet())
+    constructor(build: String, vararg names: String) :
+            this(Genome[build], if (names.isNotEmpty()) names.toSet() else null)
 
     constructor(chromSizesPath: Path) :
             this(Genome[buildByChromSizesPath(chromSizesPath), chromSizesPath])
@@ -23,17 +22,11 @@ class GenomeQuery(val genome: Genome,
     val build: String
         get() = genome.build
 
-    private val filteredChromosomes: List<Chromosome> by lazy {
-        genome.chromosomes.filter {
-            if (restriction.isEmpty()) {
-                chrDefaultChoice(it.name)
-            } else {
-                it.name in restriction
-            }
-        }
+    private val chromosomes: List<Chromosome> by lazy {
+        genome.chromosomes.filter { restriction == null || it.name in restriction }
     }
 
-    fun get(): List<Chromosome> = filteredChromosomes
+    fun get(): List<Chromosome> = chromosomes
 
     fun only(chromosomes: List<String>): GenomeQuery {
         chromosomes.forEach {
@@ -48,16 +41,11 @@ class GenomeQuery(val genome: Genome,
     }
 
     val id: String
-        get() = build + if (restriction.isNotEmpty()) "[${restriction.sorted().joinToString(",")}]" else ""
+        get() = build + if (restriction != null) "[${restriction.sorted().joinToString(",")}]" else ""
 
     val description: String
         get() {
-            val contents = if (restriction.isNotEmpty()) {
-                restriction.joinToString(", ")
-            } else {
-                "all chromosomes"
-            }
-            return "$build [$contents]"
+            return "$build [${restriction?.sorted()?.joinToString(", ") ?: "all chromosomes"}]"
         }
 
     operator fun get(name: String): Chromosome? {
@@ -68,11 +56,7 @@ class GenomeQuery(val genome: Genome,
         }
         /** [Chromosome] always contain canonical name, i.e. given in chrom.sizes.path */
         val canonicalName = result.name
-        if (!chrDefaultChoice(canonicalName)) {
-            LOG.debug("Chromosome $name in ignored")
-            return null
-        }
-        if (restriction.isNotEmpty() && canonicalName !in restriction) {
+        if (restriction != null && canonicalName !in restriction) {
             LOG.debug("Chromosome $name in not in restricted genome $description")
             return null
         }
@@ -108,13 +92,6 @@ class GenomeQuery(val genome: Genome,
             LOG.debug("Chrom sizes name: $fileName. Detected build: $build")
             return build
         }
-
-        private val MAPPED_CHRS_PATTERN = "chr[0-9a-tv-zA-TV-Z]+[0-9a-zA-Z]*".toRegex()
-
-        /**
-         * By default let's ignore chrMT, unmapped contigs and alternative contigs
-         */
-        fun chrDefaultChoice(chrName: String) = chrName != "chrM" && chrName.matches(MAPPED_CHRS_PATTERN)
     }
 }
 
@@ -128,6 +105,7 @@ fun String.toGenomeQuery(): GenomeQuery {
         return GenomeQuery(this)
     }
     val build = substringBefore('[')
-    val names = substringAfter('[').replace("]", "").split(',').toTypedArray()
+    val names = substringAfter('[').replace("]", "").split(',').filter { it.isNotBlank() }.toTypedArray()
+    check(names.isNotEmpty()) { "Empty restriction is not allowed within []" }
     return GenomeQuery(build, *names)
 }

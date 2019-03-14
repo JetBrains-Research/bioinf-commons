@@ -48,7 +48,7 @@ open class Methylome internal constructor(
 
     @Throws(IOException::class)
     fun save(outputPath: Path) {
-        check(genomeQuery.restriction.isEmpty())
+        check(genomeQuery.restriction == null)
         NpzFile.write(outputPath).use { writer ->
             writer.write("version", intArrayOf(VERSION))
 

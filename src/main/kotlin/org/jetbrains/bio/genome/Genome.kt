@@ -74,18 +74,9 @@ class Genome private constructor(
     }
 
     val chromosomes: List<Chromosome> by lazy {
-        val ignoredChromosomes = arrayListOf<String>()
-        /** No need to check that name in [chromosomeNamesMap] as in [Chromosome.invoke] fake constructor call */
-        val result = chromSizesMap.map { (name, length) ->
-            if (!GenomeQuery.chrDefaultChoice(name)) {
-                ignoredChromosomes.add(name)
-            }
+        chromSizesMap.map { (name, length) ->
             Chromosome.getOrCreateChromosome(this, name, length)
         }
-        if (ignoredChromosomes.isNotEmpty()) {
-            LOG.info("Ignored chromosomes $chromSizesPath: ${ignoredChromosomes.joinToString(", ")}")
-        }
-        return@lazy result
     }
 
     /**
@@ -134,7 +125,8 @@ class Genome private constructor(
             return annotationsPath
         }
 
-    override fun compareTo(other: Genome) = build.compareTo(other.build)
+    override fun compareTo(other: Genome) =
+            ComparisonChain.start().compare(build, other.build).compare(chromSizesPath, other.chromSizesPath).result()
 
     fun presentableName(): String {
         val config = AnnotationsConfig[build]

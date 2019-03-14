@@ -2,27 +2,24 @@ package org.jetbrains.bio.genome.query
 
 import org.apache.log4j.SimpleLayout
 import org.apache.log4j.WriterAppender
-import org.jetbrains.bio.genome.*
+import org.jetbrains.bio.genome.Chromosome
+import org.jetbrains.bio.genome.Genome
+import org.jetbrains.bio.genome.GenomeQuery
+import org.jetbrains.bio.genome.toGenomeQuery
 import org.jetbrains.bio.util.*
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import kotlin.test.*
 
 class GenomeQueryTest {
-    @Test
-    fun testUnspecifiedChromosome() {
-        val genomeQuery = GenomeQuery("to1")
-        val chromosomes = genomeQuery.get()
-        assertEquals(Genome["to1"].chromosomes.size - 1,
-                chromosomes.size)  // ^^^ minus chrM.
-    }
 
     @Test
     fun testNames() {
         val genomeQuery = GenomeQuery("to1", "chr1", "chr2")
-        assertTrue("chr1" in genomeQuery.restriction)
-        assertTrue("chr2" in genomeQuery.restriction)
-        assertFalse("chr3" in genomeQuery.restriction)
+        assertNotNull(genomeQuery.restriction)
+        assertTrue("chr1" in genomeQuery.restriction!!)
+        assertTrue("chr2" in genomeQuery.restriction!!)
+        assertFalse("chr3" in genomeQuery.restriction!!)
     }
 
     @Test
@@ -39,7 +36,6 @@ class GenomeQueryTest {
         withTempDirectory("foo") { dir ->
             val chromSizesPath = dir / "to1.chrom.sizes"
             chromSizesPath.bufferedWriter().use {
-                it.write("fooBarBaz\t10\n")
                 it.write("chr1\t100000\n")
                 it.write("chr10\t100000\n")
                 it.write("chr100\t100000\n")
@@ -47,8 +43,7 @@ class GenomeQueryTest {
             val g0 = Genome["to1"]
             assertEquals("[chr1, chr2, chr3, chrX, chrM]", g0.chromosomes.map { it.name }.toString())
             val g1 = Genome["to1", chromSizesPath]
-            assertEquals("[fooBarBaz, chr1, chr10, chr100]", g1.chromosomes.map { it.name }.toString())
-            assertEquals("[chr1, chr10, chr100]", g1.toQuery().get().map { it.name }.toString())
+            assertEquals("[chr1, chr10, chr100]", g1.chromosomes.map { it.name }.toString())
             assertNotEquals(g0, g1)
         }
     }
@@ -77,17 +72,7 @@ class GenomeQueryTest {
     @Test
     fun testNamesAllChromosomes() {
         val genomeQuery = GenomeQuery("to1")
-        assertTrue(genomeQuery.restriction.isEmpty())
-    }
-
-    @Test
-    fun testSize() {
-        val genomeQuery = GenomeQuery("to1", "chr1", "chr2")
-        assertEquals(2, genomeQuery.get().size)
-
-        val genomeQueryAll = GenomeQuery("to1")
-        assertEquals(Genome["to1"].chromosomes.size - 1,
-                genomeQueryAll.get().size)
+        assertNull(genomeQuery.restriction)
     }
 
     @Test
@@ -98,8 +83,7 @@ class GenomeQueryTest {
 
     @Test
     fun testParse() {
-        assertEquals(Genome["to1"].chromosomes.size - 1,
-                "to1".toGenomeQuery().get().size)
+        assertEquals(Genome["to1"].chromosomes.size, "to1".toGenomeQuery().get().size)
         assertEquals(1, "to1[chr1]".toGenomeQuery().get().size)
         assertEquals(2, "to1[chr1,chr3]".toGenomeQuery().get().size)
     }
@@ -119,14 +103,12 @@ class GenomeQueryTest {
 
 
     @Test
-    fun chrDefaultChoice() {
+    fun restrictions() {
         val genome = Genome["to1"]
         val genomeQuery = GenomeQuery("to1")
         val chrM = Chromosome(genome, "chrM")
         assertTrue(chrM in genome.chromosomes)
-        assertEquals(null, genomeQuery[chrM.name])
-        assertFalse(chrM in genomeQuery.get())
-        assertFalse(chrM.name in genomeQuery)
+        assertNotNull(genomeQuery[chrM.name])
 
         val genomeQuery13 = "to1[chr1,chr3]".toGenomeQuery()
         assertFalse("chr2" in genomeQuery13)
@@ -134,37 +116,9 @@ class GenomeQueryTest {
         assertFalse("2" in genomeQuery13)
     }
 
-
-    @Test
-    fun mappedChromosome() {
-        // human
-        assertTrue(GenomeQuery.chrDefaultChoice("chr1"))
-        assertTrue(GenomeQuery.chrDefaultChoice("chr22"))
-        assertTrue(GenomeQuery.chrDefaultChoice("chrX"))
-        assertTrue(GenomeQuery.chrDefaultChoice("chrY"))
-
-        assertFalse(GenomeQuery.chrDefaultChoice("chrM"))
-
-        assertFalse(GenomeQuery.chrDefaultChoice("chr6_apd_hap1"))
-        assertFalse(GenomeQuery.chrDefaultChoice("chrUn_gl000225"))
-        assertFalse(GenomeQuery.chrDefaultChoice("chr4_gl000193_random"))
-        assertFalse(GenomeQuery.chrDefaultChoice("chrUn_gl000214"))
-
-        // D. melanogaster
-        assertTrue(GenomeQuery.chrDefaultChoice("chr2L"))
-        assertTrue(GenomeQuery.chrDefaultChoice("chr2LHet"))
-
-        assertFalse(GenomeQuery.chrDefaultChoice("chrU"))
-        assertFalse(GenomeQuery.chrDefaultChoice("chrUextra"))
-        assertFalse(GenomeQuery.chrDefaultChoice("chrUn_CP007081v1"))
-        assertFalse(GenomeQuery.chrDefaultChoice("chrY_CP007108v1_random"))
-        assertFalse(GenomeQuery.chrDefaultChoice("chrUn_DS484396v1"))
-
-
-        // C. elegance
-        assertTrue(GenomeQuery.chrDefaultChoice("chrI"))
-        assertTrue(GenomeQuery.chrDefaultChoice("chrII"))
-        assertTrue(GenomeQuery.chrDefaultChoice("chrV"))
+    @Test(expected = IllegalStateException::class)
+    fun emptyRestriction() {
+        "to1[]".toGenomeQuery()
     }
 
     @Test
