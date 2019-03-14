@@ -121,6 +121,12 @@ class GenomeQueryTest {
         "to1[]".toGenomeQuery()
     }
 
+    @Test(expected = IllegalStateException::class)
+    fun unknownChromosomeRestriction() {
+        GenomeQuery("to1", "unknown")
+    }
+
+
     @Test
     fun testCreateGenomeQuery() {
         withTempFile("foo", ".galaxy.dat") { path ->

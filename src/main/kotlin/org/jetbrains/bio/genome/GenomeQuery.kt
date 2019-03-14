@@ -19,6 +19,14 @@ class GenomeQuery(val genome: Genome,
     constructor(chromSizesPath: Path) :
             this(Genome[buildByChromSizesPath(chromSizesPath), chromSizesPath])
 
+    init {
+        restriction?.forEach {
+            check(it in genome.chromosomeNamesMap) {
+                "Unknown chromosome name for $genome: $it"
+            }
+        }
+    }
+
     val build: String
         get() = genome.build
 
