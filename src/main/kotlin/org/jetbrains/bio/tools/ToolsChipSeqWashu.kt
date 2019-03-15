@@ -1,19 +1,14 @@
 package org.jetbrains.bio.tools
 
 import org.apache.log4j.Logger
-import org.jetbrains.bio.dataset.ChipSeqTarget
-import org.jetbrains.bio.dataset.DataConfig
 import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.util.*
-import java.nio.file.Files
-import java.nio.file.LinkOption
 import java.nio.file.Path
-import java.util.*
 
 
 /**
- * Main entry point to the toolsWashu repository scripts
- * See https://github.com/JetBrains-Research/toolsWashu
+ * Main entry point to the washu repository scripts
+ * See https://github.com/JetBrains-Research/washu
  */
 @Suppress("Unused")
 class ToolsChipSeqWashu(private val path: Path = DEFAULT_PATH) {
@@ -21,12 +16,12 @@ class ToolsChipSeqWashu(private val path: Path = DEFAULT_PATH) {
     init {
         check(path.isAccessible() && path.isDirectory) {
             "FAILED to find repository at: $path\n" +
-                    "Repository: https://github.com/JetBrains-Research/toolsWashu"
+                    "Repository: https://github.com/JetBrains-Research/washu"
         }
     }
 
     companion object {
-        val DEFAULT_PATH = "/mnt/stripe/toolsWashu".toPath()
+        val DEFAULT_PATH = "/mnt/stripe/washu".toPath()
         internal val LOG = Logger.getLogger(ToolsChipSeqWashu::class.java)
     }
 
