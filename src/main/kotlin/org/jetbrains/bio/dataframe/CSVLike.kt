@@ -11,10 +11,6 @@ import java.nio.file.Path
 class CSVLike(val format: CSVFormat) : DataFrameMapper() {
     private val LOG = Logger.getLogger(CSVLike::class.java)
 
-    companion object {
-        const val DELIMITER = "; "
-    }
-
     /**
      * Tries to guess data frame spec for a given [path].
      */
@@ -76,11 +72,13 @@ class CSVLike(val format: CSVFormat) : DataFrameMapper() {
              header: Boolean = true,
              typed: Boolean = true,
              comments: Array<String>? = null) {
+
+        val typesSeparator = ";${format.delimiter}"
         format.print(out).use { csvPrinter ->
             comments?.forEach { csvPrinter.printComment(it) }
 
             if (typed) {
-                csvPrinter.printComment(df.columns.joinToString(DELIMITER) { it.typeName() })
+                csvPrinter.printComment(df.columns.joinToString(typesSeparator) { it.typeName() })
             }
 
             if (header) {

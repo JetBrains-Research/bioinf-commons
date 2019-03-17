@@ -30,7 +30,7 @@ class CsvMapperTest {
     // TODO: csv
 
     @Test fun testGuess() {
-        val blob = arrayOf("# Integer; Short; Byte; Long; Boolean; String; org.jetbrains.bio.dataframe.TestEnum",
+        val blob = arrayOf("# Integer;\tShort;\tByte;\tLong;\tBoolean;\tString;\torg.jetbrains.bio.dataframe.TestEnum",
                            "i\ts\tb\tl\tf\tstr\te",
                            "5\t5\t5\t5\t0\tstr5\tVAL5",
                            "1\t1\t1\t1\t0\tstr1\tVAL1",
@@ -71,7 +71,7 @@ class CsvMapperTest {
         withTempFile("df", ".csv") { path ->
             DataFrameMappers.TSV.save(path, df)
 
-            val blob = listOf("# Integer; Short; Byte; Long; Boolean; String; org.jetbrains.bio.dataframe.TestEnum",
+            val blob = listOf("# Integer;\tShort;\tByte;\tLong;\tBoolean;\tString;\torg.jetbrains.bio.dataframe.TestEnum",
                               "i\ts\tb\tl\tf\tstr\te",
                               "5\t5\t5\t5\t0\tstr5\tVAL5",
                               "1\t1\t1\t1\t0\tstr1\tVAL1",
@@ -116,7 +116,7 @@ class CsvMapperTest {
     }
 
     @Test fun testDump() {
-        val expected = arrayOf("# Integer; Short; Byte; Long; Boolean; String; org.jetbrains.bio.dataframe.TestEnum",
+        val expected = arrayOf("# Integer;\tShort;\tByte;\tLong;\tBoolean;\tString;\torg.jetbrains.bio.dataframe.TestEnum",
                                "i\ts\tb\tl\tf\tstr\te",
                                "5\t5\t5\t5\t0\tstr5\tVAL5",
                                "1\t1\t1\t1\t0\tstr1\tVAL1",
@@ -132,7 +132,7 @@ class CsvMapperTest {
 
     @Test fun testDumpHead() {
         val dump = testDataFrame.dumpHead(3)
-        val expected = arrayOf("# Integer; Short; Byte; Long; Boolean; String; org.jetbrains.bio.dataframe.TestEnum",
+        val expected = arrayOf("# Integer;\tShort;\tByte;\tLong;\tBoolean;\tString;\torg.jetbrains.bio.dataframe.TestEnum",
                                "i\ts\tb\tl\tf\tstr\te",
                                "5\t5\t5\t5\t0\tstr5\tVAL5",
                                "1\t1\t1\t1\t0\tstr1\tVAL1",
