@@ -1,5 +1,6 @@
 package org.jetbrains.bio.methylome
 
+import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Strand
 import org.jetbrains.bio.genome.StrandFilter
@@ -9,7 +10,7 @@ import kotlin.test.assertEquals
 
 class MethylomeToDataFrameTest {
     @Test fun single() {
-        val genomeQuery = GenomeQuery("to1")
+        val genomeQuery = GenomeQuery(Genome["to1"])
         val chromosome = genomeQuery.get().first()
         val methylome = Methylome.builder(genomeQuery)
                 .add(chromosome, Strand.PLUS, 100, CytosineContext.CG, 1, 10)
@@ -31,7 +32,7 @@ class MethylomeToDataFrameTest {
     }
 
     @Test fun double() {
-        val genomeQuery = GenomeQuery("to1")
+        val genomeQuery = GenomeQuery(Genome["to1"])
         val chromosome = genomeQuery.get().first()
         val methylome = Methylome.builder(genomeQuery)
                 .add(chromosome, Strand.PLUS, 100, CytosineContext.CG, 1, 10)
@@ -45,7 +46,7 @@ class MethylomeToDataFrameTest {
     }
 
     @Test fun triple() {
-        val genomeQuery = GenomeQuery("to1")
+        val genomeQuery = GenomeQuery(Genome["to1"])
         val chromosome = genomeQuery.get().first()
         val methylome = Methylome.builder(genomeQuery)
                 .add(chromosome, Strand.PLUS, 100, CytosineContext.CG, 1, 10)

@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
 import org.apache.log4j.Logger
+import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
-import org.jetbrains.bio.genome.toGenomeQuery
 import org.jetbrains.bio.util.*
 import java.io.Reader
 import java.io.StringWriter
@@ -89,6 +89,22 @@ aux:
 
         /** Loads configuration from a YAML file with id as file name. */
         fun load(path: Path) = path.bufferedReader().use { load(it, path.stem) }
+
+        /**
+         * Parses [String] as genome with possible custom chromosomes set. Creates only default genome.
+         * Doesn't support genome with customized paths.
+         *
+         * @param str Genome defining string,  e.g. "hg19" or "hg19[chr1,chr2]"
+         */
+        internal fun parseGenomeDefinition(str: String): Pair<Genome, Array<String>> {
+            if ("[" !in str) {
+                return Genome[str] to emptyArray()
+            }
+            val build = str.substringBefore('[')
+            val names = str.substringAfter('[').replace("]", "").split(',').filter { it.isNotBlank() }.toTypedArray()
+            check(names.isNotEmpty()) { "Empty restriction is not allowed within []" }
+            return Genome[build] to names
+        }
     }
 
     /**
@@ -112,7 +128,11 @@ aux:
      * A genome query, which specifies genome build and chromosome restriction.
      * NOTE: we don't use lateinit var here to guarantee read-only access
      */
-    val genomeQuery: GenomeQuery by lazy { genome.toGenomeQuery() }
+    val genomeQuery: GenomeQuery by lazy {
+        parseGenomeDefinition(genome).let { (genome, chromosomes)
+            -> GenomeQuery(genome, *chromosomes)
+        }
+    }
 
     /**
      * Configured tracks.

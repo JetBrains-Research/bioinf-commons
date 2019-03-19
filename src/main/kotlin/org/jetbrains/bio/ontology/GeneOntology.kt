@@ -240,7 +240,7 @@ object GafFile {
                 // gene symbols. This is a limitation of the annotations.
                 var transcript: Transcript?
                 do {
-                    transcript = GeneResolver.get(genome.build, aliases.next(),
+                    transcript = GeneResolver.get(genome, aliases.next(),
                             GeneAliasType.GENE_SYMBOL)
                             .firstOrNull()
                 } while (transcript == null && aliases.hasNext())

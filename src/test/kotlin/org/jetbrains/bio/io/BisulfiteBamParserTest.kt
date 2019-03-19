@@ -1,11 +1,9 @@
 package org.jetbrains.bio.io
 
-import org.jetbrains.bio.genome.GenomeQuery
-
 class BisulfiteBamParserTest {
     // The file is a subsample from chr22 of GSM432685.
     // Required true genome or we need to sample bam files in TestOrganismGenerator
-    private val genomeQuery = GenomeQuery("hg19", "chr22")
+//    private val genomeQuery = GenomeQuery("hg19", "chr22")
 
 //    @Test(expected = IllegalStateException::class) fun unindexed() {
 //        print(genomeQuery.get())

@@ -245,16 +245,16 @@ data class Location(val startOffset: Int, val endOffset: Int,
             }
         }
 
-        fun valueOf(str: String, build: String): Location? {
-            try {
+        fun valueOf(str: String, genome: Genome): Location? {
+            return try {
                 val split = str.split(":", "[", ", ", ")")
-                val chr = Chromosome(build, split[0])
+                val chr = Chromosome(genome, split[0])
                 val strand = split[1].toStrand()
                 val start = split[2].toInt()
                 val end = split[3].toInt()
-                return Location(start, end, chr, strand)
+                Location(start, end, chr, strand)
             } catch (e: Exception) {
-                return null
+                null
             }
         }
     }

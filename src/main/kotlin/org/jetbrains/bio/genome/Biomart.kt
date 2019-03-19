@@ -117,7 +117,7 @@ data class Mart(
         private val LOG = Logger.getLogger(Mart::class.java)
 
         /** Returns an appropriate mart for a given UCSC genome build. */
-        fun forBuild(build: String) = AnnotationsConfig[build].mart
+        fun forGenome(genome: Genome) = AnnotationsConfig[genome.build].mart
 
         /**
          * Sends an HTTP GET request to the Biomart server.

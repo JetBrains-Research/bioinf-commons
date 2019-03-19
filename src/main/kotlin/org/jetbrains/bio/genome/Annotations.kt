@@ -27,16 +27,11 @@ import java.nio.file.StandardOpenOption
  * return false, and the entries of `M` could never be updated or
  * retrieved.
  */
-internal fun <T> cache(): Cache<String, ListMultimap<Chromosome, T>> {
+internal fun <T> cache(): Cache<Genome, ListMultimap<Chromosome, T>> {
     return CacheBuilder.newBuilder()
             .softValues()
             .initialCapacity(1)
-            .build<String, ListMultimap<Chromosome, T>>()
-}
-
-/** UCSC annotations always use "chrN" format, so we don't need [ChromosomeNamesMap]. */
-internal fun chromosomeMap(build: String): Map<String, Chromosome> {
-    return Genome[build].chromosomes.associateBy { it.name }
+            .build<Genome, ListMultimap<Chromosome, T>>()
 }
 
 data class Repeat(val name: String,
@@ -61,7 +56,7 @@ object Repeats {
                 // Builds with per-chromosome repeat annotations.
                 val prefix = config.repeatsUrl.substringBeforeLast("/")
                 val template = "%s_${config.repeatsUrl.substringAfterLast("/")}"
-                UCSC.downloadBatchTo(output.path, build, "$prefix/", template)
+                UCSC.downloadBatchTo(output.path, genome, "$prefix/", template)
             } else {
                 config.repeatsUrl.downloadTo(output.path)
             }
@@ -77,15 +72,15 @@ object Repeats {
 
     internal fun all(genome: Genome): ListMultimap<Chromosome, Repeat> {
         val build = genome.build
-        return CACHE.get(build) {
-            read(build, repeatsPath(genome))
+        return CACHE.get(genome) {
+            read(genome, repeatsPath(genome))
         }
     }
 
 
-    private fun read(build: String, repeatsPath: Path): ListMultimap<Chromosome, Repeat> {
+    private fun read(genome: Genome, repeatsPath: Path): ListMultimap<Chromosome, Repeat> {
         val builder = ImmutableListMultimap.builder<Chromosome, Repeat>()
-        val chromosomes = chromosomeMap(build)
+        val chromosomes = genome.chromosomeNamesMap
         FORMAT.parse(repeatsPath.bufferedReader()).use { csvParser ->
             for (row in csvParser) {
                 val chromosome = chromosomes[row["chrom"]] ?: continue
@@ -126,9 +121,8 @@ object CytoBands {
             .withHeader("chrom", "start_offset", "end_offset", "name", "gie_stain")
 
     internal fun all(genome: Genome): ListMultimap<Chromosome, CytoBand> {
-        val build = genome.build
-        return CACHE.get(build) {
-            val cytobandsUrl = AnnotationsConfig[build].cytobandsUrl
+        return CACHE.get(genome) {
+            val cytobandsUrl = AnnotationsConfig[genome.build].cytobandsUrl
             if (cytobandsUrl == null) {
                 LinkedListMultimap.create()
             } else {
@@ -136,14 +130,14 @@ object CytoBands {
                 bandsPath.checkOrRecalculate("CytoBands") { output ->
                     cytobandsUrl.downloadTo(output.path)
                 }
-                read(build, bandsPath)
+                read(genome, bandsPath)
             }
         }
     }
 
-    private fun read(build: String, bandsPath: Path): ListMultimap<Chromosome, CytoBand> {
+    private fun read(genome: Genome, bandsPath: Path): ListMultimap<Chromosome, CytoBand> {
         val builder = ImmutableListMultimap.builder<Chromosome, CytoBand>()
-        val chromosomes = chromosomeMap(build)
+        val chromosomes = genome.chromosomeNamesMap
         FORMAT.parse(bandsPath.bufferedReader()).use { csvParser ->
             for (row in csvParser) {
                 val chromosome = chromosomes[row["chrom"]] ?: continue
@@ -186,20 +180,19 @@ object Gaps {
     private const val CENTROMERES_FILE_NAME = "centromeres.txt.gz"
 
     internal fun all(genome: Genome): ListMultimap<Chromosome, Gap> {
-        val build = genome.build
-        return CACHE.get(build) {
+        return CACHE.get(genome) {
             val gapsPath = genome.dataPath / FILE_NAME
             gapsPath.checkOrRecalculate("Gaps") { output ->
-                download(build, output.path)
+                download(genome, output.path)
             }
 
-            read(build, gapsPath)
+            read(genome, gapsPath)
         }
     }
 
-    private fun read(build: String, gapsPath: Path): ListMultimap<Chromosome, Gap> {
+    private fun read(genome: Genome, gapsPath: Path): ListMultimap<Chromosome, Gap> {
         val builder = ImmutableListMultimap.builder<Chromosome, Gap>()
-        val chromosomes = chromosomeMap(build)
+        val chromosomes = genome.chromosomeNamesMap
         FORMAT.parse(gapsPath.bufferedReader()).use { csvParser ->
             for (row in csvParser) {
                 val chromosome = chromosomes[row["chrom"]] ?: continue
@@ -213,14 +206,14 @@ object Gaps {
         return builder.build()
     }
 
-    private fun download(build: String, gapsPath: Path) {
-        val config = AnnotationsConfig[build]
+    private fun download(genome: Genome, gapsPath: Path) {
+        val config = AnnotationsConfig[genome.build]
 
         if (config.ucscAnnLegacyFormat) {
             // Builds with per-chromosome gap annotations.
             val prefix = config.gapsUrl.substringBeforeLast("/")
             val template = "%s_${config.gapsUrl.substringAfterLast("/")}"
-            UCSC.downloadBatchTo(gapsPath, build, "$prefix/", template)
+            UCSC.downloadBatchTo(gapsPath, genome, "$prefix/", template)
         } else {
             config.gapsUrl.downloadTo(gapsPath)
 
@@ -296,25 +289,24 @@ object CpGIslands {
     }
 
     internal fun all(genome: Genome): ListMultimap<Chromosome, CpGIsland> {
-        val build = genome.build
-        return CACHE.get(build) {
+        return CACHE.get(genome) {
             val path = cpgIslandsPath(genome)
             if (path == null) {
                 LinkedListMultimap.create()
             } else {
-                read(build, path)
+                read(genome, path)
             }
         }
     }
 
-    private fun read(build: String, islandsPath: Path): ListMultimap<Chromosome, CpGIsland> {
+    private fun read(genome: Genome, islandsPath: Path): ListMultimap<Chromosome, CpGIsland> {
         val builder = ImmutableListMultimap.builder<Chromosome, CpGIsland>()
-        val chromosomes = chromosomeMap(build)
+        val chromosomes = genome.chromosomeNamesMap
 
         val headers = arrayOf("chrom", "start_offset", "end_offset", "name", "length",
                 "cpg_num", "gc_num", "per_cpg", "per_gc", "obs_exp")
 
-        val csvFormat = if (AnnotationsConfig[build].ucscAnnLegacyFormat) {
+        val csvFormat = if (AnnotationsConfig[genome.build].ucscAnnLegacyFormat) {
             //Builds missing `bin` column in the annotations
             CSVFormat.TDF.withHeader(*headers)
         } else {

@@ -2,6 +2,7 @@ package org.jetbrains.bio.methylome
 
 import com.google.common.math.IntMath
 import org.apache.commons.math3.distribution.BinomialDistribution
+import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Strand
 import org.jetbrains.bio.util.withTempFile
@@ -10,7 +11,7 @@ import java.util.*
 import kotlin.test.assertEquals
 
 class MethylomeTest {
-    private val genomeQuery = GenomeQuery("to1")
+    private val genomeQuery = GenomeQuery(Genome["to1"])
 
     @Test fun testLazy() {
         val builder = Methylome.builder(genomeQuery)
@@ -60,7 +61,7 @@ class MethylomeTest {
 
             for (chromosome in chromosomes) {
                 val methylome1 = Methylome.lazy(
-                        GenomeQuery(genomeQuery.build, chromosome.name), path)
+                        GenomeQuery(genomeQuery.genome, chromosome.name), path)
                 assertEquals(methylome.getCombined(chromosome).size, methylome1.size)
                 assertEquals(methylome.getCombined(chromosome),
                              methylome1.getCombined(chromosome))

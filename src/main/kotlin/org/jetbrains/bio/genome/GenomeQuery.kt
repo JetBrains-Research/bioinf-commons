@@ -13,8 +13,8 @@ class GenomeQuery(val genome: Genome,
                   /** A subset of chromosomes to be considered or null for all chromosomes. */
                   val restriction: Set<String>? = null) {
 
-    constructor(build: String, vararg names: String) :
-            this(Genome[build], if (names.isNotEmpty()) names.toSet() else null)
+    constructor(genome: Genome, vararg names: String) :
+            this(genome, if (names.isNotEmpty()) names.toSet() else null)
 
     constructor(chromSizesPath: Path) :
             this(Genome[buildByChromSizesPath(chromSizesPath), chromSizesPath])
@@ -104,16 +104,3 @@ class GenomeQuery(val genome: Genome,
 }
 
 fun Genome.toQuery() = GenomeQuery(this)
-
-/**
- * Restores genome query from [String]
- */
-fun String.toGenomeQuery(): GenomeQuery {
-    if ("[" !in this) {
-        return GenomeQuery(this)
-    }
-    val build = substringBefore('[')
-    val names = substringAfter('[').replace("]", "").split(',').filter { it.isNotBlank() }.toTypedArray()
-    check(names.isNotEmpty()) { "Empty restriction is not allowed within []" }
-    return GenomeQuery(build, *names)
-}

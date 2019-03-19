@@ -1,9 +1,6 @@
 package org.jetbrains.bio.genome.containers
 
-import org.jetbrains.bio.genome.Chromosome
-import org.jetbrains.bio.genome.GenomeQuery
-import org.jetbrains.bio.genome.Location
-import org.jetbrains.bio.genome.Strand
+import org.jetbrains.bio.genome.*
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -74,7 +71,7 @@ class LocationsMergingListTest {
         assertEquals(listOf(universe),
                      universe - listOf(Location(0, 40, chromosome, Strand.MINUS)))
         assertEquals(listOf(universe),
-                     universe - listOf(Location(0, 40, Chromosome("to1", "chr2"), Strand.PLUS)))
+                     universe - listOf(Location(0, 40, Chromosome(Genome["to1"], "chr2"), Strand.PLUS)))
 
         assertEquals(listOf(Location(0, 20, chromosome, Strand.PLUS),
                             Location(40, 100, chromosome, Strand.PLUS)),
@@ -88,10 +85,10 @@ class LocationsMergingListTest {
     }
 
     companion object {
-        private val chromosome = Chromosome("to1", "chr1")
+        private val chromosome = Chromosome(Genome["to1"], "chr1")
     }
 }
 
 private fun testList(vararg locations: Location): LocationsMergingList {
-    return locationList(GenomeQuery("to1"), *locations)
+    return locationList(GenomeQuery(Genome["to1"]), *locations)
 }

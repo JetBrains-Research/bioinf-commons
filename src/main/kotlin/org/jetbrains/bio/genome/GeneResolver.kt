@@ -14,12 +14,12 @@ import org.apache.log4j.Logger
 object GeneResolver {
     /** A mapping of UPPERCASE "gene names" to genes for a specific organism.  */
     private val GENES_MAPS_CACHE
-            = Maps.newConcurrentMap<Pair<String, GeneAliasType>, ListMultimap<String, Transcript>>()
+            = Maps.newConcurrentMap<Pair<Genome, GeneAliasType>, ListMultimap<String, Transcript>>()
 
     private val LOG = Logger.getLogger(GeneResolver::class.java)
 
-    fun getAnyGene(build: String, anyAlias: String): Gene? {
-        val geneIds = matching(build, anyAlias).asSequence()
+    fun getAnyGene(genome: Genome, anyAlias: String): Gene? {
+        val geneIds = matching(genome, anyAlias).asSequence()
                 .map { it.ensemblGeneId }
                 .distinct().toList()
 
@@ -27,7 +27,7 @@ object GeneResolver {
             LOG.warn("$anyAlias resolved to ${geneIds.size} genes: ${geneIds.joinToString(",")}")
         }
 
-        return Genome[build].genes.find { it.ensemblGeneId in geneIds}
+        return genome.genes.find { it.ensemblGeneId in geneIds}
     }
 
 
@@ -37,8 +37,8 @@ object GeneResolver {
      * If the name is ambiguous then any of the matching genes might
      * be returned.
      */
-    fun getAny(build: String, anyAlias: String): Transcript? {
-        val it = matching(build, anyAlias).iterator()
+    fun getAny(genome: Genome, anyAlias: String): Transcript? {
+        val it = matching(genome, anyAlias).iterator()
         val match = if (it.hasNext()) it.next() else null
         if (it.hasNext()) {
             val matches = listOf(match) + it
@@ -48,8 +48,8 @@ object GeneResolver {
         return match
     }
 
-    fun getAny(build: String, alias: String, aliasType: GeneAliasType): Transcript? {
-        val it = matching(build, alias, aliasType).iterator()
+    fun getAny(genome: Genome, alias: String, aliasType: GeneAliasType): Transcript? {
+        val it = matching(genome, alias, aliasType).iterator()
         val match = if (it.hasNext()) it.next() else null
         if (it.hasNext()) {
             val matches = listOf(match) + it
@@ -62,28 +62,28 @@ object GeneResolver {
     /**
      * Returns all genes with a given name.
      */
-    fun get(build: String, anyAlias: String): Sequence<Transcript> {
-        return matching(build, anyAlias)
+    fun get(genome: Genome, anyAlias: String): Sequence<Transcript> {
+        return matching(genome, anyAlias)
     }
 
-    fun get(build: String, alias: String, aliasType: GeneAliasType): Sequence<Transcript> {
-        return matching(build, alias, aliasType)
+    fun get(genome: Genome, alias: String, aliasType: GeneAliasType): Sequence<Transcript> {
+        return matching(genome, alias, aliasType)
     }
 
-    private fun matching(build: String, anyAlias: String): Sequence<Transcript> {
+    private fun matching(genome: Genome, anyAlias: String): Sequence<Transcript> {
         return GeneAliasType.values().asSequence()
-                .flatMap { aliasType -> matching(build, anyAlias, aliasType) }
+                .flatMap { aliasType -> matching(genome, anyAlias, aliasType) }
     }
 
-    private fun matching(build: String, alias: String, aliasType: GeneAliasType): Sequence<Transcript> {
-        val genesMap = genesMapFor(build, aliasType)
+    private fun matching(genome: Genome, alias: String, aliasType: GeneAliasType): Sequence<Transcript> {
+        val genesMap = genesMapFor(genome, aliasType)
         return genesMap[alias.toUpperCase()].asSequence()
     }
 
-    private fun genesMapFor(build: String, aliasType: GeneAliasType): ListMultimap<String, Transcript> {
-        return GENES_MAPS_CACHE.computeIfAbsent(build to aliasType) {
+    private fun genesMapFor(genome: Genome, aliasType: GeneAliasType): ListMultimap<String, Transcript> {
+        return GENES_MAPS_CACHE.computeIfAbsent(genome to aliasType) {
             val genesMap = ImmutableListMultimap.builder<String, Transcript>()
-            for (gene in Genome[build].transcripts) {
+            for (gene in genome.transcripts) {
                 val name = gene.names[aliasType] ?: ""
                 if (name.isNotEmpty()) {
                     genesMap.put(name.toUpperCase(), gene)

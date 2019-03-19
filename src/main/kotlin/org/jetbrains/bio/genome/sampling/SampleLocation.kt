@@ -34,7 +34,7 @@ fun randomizeBedRegions(bedFilePath: Path, genomeQuery: GenomeQuery): Path {
                 .mapValues { it.value.map { p -> p.second } }
                 .toList().parallelStream()
                 .map {
-                    val chr = Chromosome(genomeQuery.build, it.first)
+                    val chr = Chromosome(genomeQuery.genome, it.first)
                     sampleLocations(chr, it.second, 0, chr.length, false, Strand.PLUS)
                 }
                 .sequential() // required here, otherwise flatMap().forEach() seems to look concurrently

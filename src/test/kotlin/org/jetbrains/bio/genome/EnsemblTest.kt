@@ -255,7 +255,7 @@ class GtfReaderTest {
     @Test
     fun noStartCodon() {
         val transcript = readTranscript(ENST00000541351)
-        assertEquals(Location(10853873, 10863313, Chromosome("to1", "chr1"),
+        assertEquals(Location(10853873, 10863313, Chromosome(Genome["to1"], "chr1"),
                               Strand.MINUS),
                      transcript.location)
         assertEquals(Range(10854688, 10863313), transcript.cdsRange)
@@ -497,7 +497,7 @@ class GtfReaderTest {
 
     @Test
     fun determineUTR3End5() {
-        val chr = Chromosome("to1", "chr1")
+        val chr = Chromosome(Genome["to1"], "chr1")
 
         // basic:
         assertEquals(83, GtfReader.determineUTR3End5(

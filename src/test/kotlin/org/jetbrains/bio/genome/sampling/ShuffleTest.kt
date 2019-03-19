@@ -1,6 +1,7 @@
 package org.jetbrains.bio.genome.sampling
 
 import org.jetbrains.bio.genome.ChromosomeRange
+import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -9,7 +10,7 @@ import kotlin.test.fail
 
 
 class ShuffleTest {
-    val genomeQuery = GenomeQuery("to1")
+    val genomeQuery = GenomeQuery(Genome["to1"])
     val chromosomes = genomeQuery.get()
 
     private fun checkShuffled(regions: List<ChromosomeRange>, shuffled: List<ChromosomeRange>) {

@@ -3,6 +3,7 @@ package org.jetbrains.bio.io
 import kotlinx.support.jdk7.use
 import org.jetbrains.bio.big.BedEntry
 import org.jetbrains.bio.big.ExtendedBedEntry
+import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.Strand
@@ -732,7 +733,7 @@ Fields number in BED file is between 3 and 15, but was 2""")
 
     @Test
     fun testToBedEntry() {
-        val chr = GenomeQuery("to1").get()[0]
+        val chr = GenomeQuery(Genome["to1"]).get()[0]
         val loci = listOf(
                 Location(1, 5, chr, Strand.PLUS),
                 Location(1, 5, chr, Strand.MINUS))
@@ -746,7 +747,7 @@ Fields number in BED file is between 3 and 15, but was 2""")
             }
 
             assertEquals(bedFormat, BedFormat.auto(trackPath))
-            assertEquals(loci, BedFormat.auto(trackPath).parseLocations(trackPath, "to1"))
+            assertEquals(loci, BedFormat.auto(trackPath).parseLocations(trackPath, Genome["to1"]))
         }
     }
 

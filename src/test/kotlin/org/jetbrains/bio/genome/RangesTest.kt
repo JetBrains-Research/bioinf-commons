@@ -66,7 +66,7 @@ class RangeTest {
 }
 
 class LocationTest {
-    private var chromosome = Chromosome("to1", "chr1")
+    private var chromosome = Chromosome(Genome["to1"], "chr1")
 
     @Test fun testContainsOffset() {
         val loc = Location(0, 10, chromosome, PLUS)
@@ -168,7 +168,7 @@ class LocationTest {
         val location3 = Location(0, 100, chromosome, PLUS)
         assertEquals(0, location1.compareTo(location3))
 
-        val location4 = Location(0, 100, Chromosome("to1", "chr2"), PLUS)
+        val location4 = Location(0, 100, Chromosome(Genome["to1"], "chr2"), PLUS)
         assertEquals(-1, location1.compareTo(location4))
         assertEquals(1, location4.compareTo(location1))
     }
@@ -180,7 +180,7 @@ class LocationTest {
         assertFalse(Location.intersects(null, Location(1, 5, chromosome, PLUS)))
         assertFalse(Location.intersects(Location(1, 5, chromosome, PLUS), null))
         assertFalse(Location.intersects(Location(1, 5, chromosome, PLUS),
-                Location(1, 5, Chromosome("to1", "chr2"), PLUS)))
+                Location(1, 5, Chromosome(Genome["to1"], "chr2"), PLUS)))
 
         assertTrue(Location.intersects(Location(1, 5, chromosome, PLUS), Location(1, 5, chromosome, MINUS)))
         assertTrue(Location.intersects(Location(1, 5, chromosome, PLUS), Location(4, 6, chromosome, PLUS)))

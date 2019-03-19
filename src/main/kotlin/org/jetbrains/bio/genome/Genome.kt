@@ -119,7 +119,7 @@ class Genome private constructor(
             val annotationsPath = dataPath / "$build.annotations.gtf"
             annotationsPath.checkOrRecalculate("GTF annotations") { (path) ->
                 Ensembl.getGTF(this).bufferedReader().use {
-                    Ensembl.convertGTF(build, it, path)
+                    Ensembl.convertGTF(this, it, path)
                 }
             }
             return annotationsPath
@@ -148,7 +148,7 @@ class Genome private constructor(
         operator fun get(build: String, chromSizesPath: Path? = null) =
                 CACHE.computeIfAbsent(build to chromSizesPath) {
                     if (chromSizesPath != null) Genome(build, chromSizesPath) else Genome(build)
-                }
+                }!!
     }
 }
 
@@ -239,8 +239,8 @@ data class Chromosome private constructor(
         /** Use cache to avoid extra sequence loading. */
         private val CACHE = Maps.newConcurrentMap<Pair<Genome, String>, Chromosome>()
 
-        /** Fake constructor to ensure caching and canonical naming. */
-        internal operator fun invoke(genome: Genome, name: String): Chromosome {
+        /** Constructs a chromosome from a human-readable name, e.g. "chrM". */
+        operator fun invoke(genome: Genome, name: String): Chromosome {
             check(name in genome.chromosomeNamesMap) {
                 "unknown chromosome $name for genome ${genome.presentableName()}"
             }
@@ -251,11 +251,6 @@ data class Chromosome private constructor(
 
         internal fun getOrCreateChromosome(genome: Genome, canonicalName: String, length: Int): Chromosome {
             return CACHE.computeIfAbsent(genome to canonicalName) { Chromosome(genome, canonicalName, length) }
-        }
-
-        /** Constructs a chromosome from a human-readable name, e.g. "chrM". */
-        operator fun invoke(build: String, name: String): Chromosome {
-            return invoke(Genome[build], name)
         }
 
         internal val ADAPTER = object : TypeAdapter<Chromosome>() {

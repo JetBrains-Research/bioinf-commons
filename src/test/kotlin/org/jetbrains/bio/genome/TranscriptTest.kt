@@ -7,7 +7,7 @@ import java.util.*
 import kotlin.test.*
 
 class TranscriptTest {
-    private val chromosome = Chromosome("to1", "chr1")
+    private val chromosome = Chromosome(Genome["to1"], "chr1")
     private val RANDOM = Random(1234)
 
     @Test fun exonsIntronsSorted() {
@@ -318,7 +318,7 @@ class TranscriptTest {
         // Just load test organism and ensure that fields initialized correctly + auto caches recreation works.
         // (e.g. if Transcript was changed, but to wasn't re-created)
 
-        val chr = Chromosome("to1", "chr1")
+        val chr = Chromosome(Genome["to1"], "chr1")
         var t = chr.transcripts.stream().filter { it.ensemblId == "ENSTSIMGENE.CHR1.0"}.findFirst().get()
         assertTrue(!t.isCoding)
         assertNull(t.cdsRange)

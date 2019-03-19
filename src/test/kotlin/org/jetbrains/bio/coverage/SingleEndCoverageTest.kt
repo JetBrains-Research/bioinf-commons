@@ -4,10 +4,7 @@ import gnu.trove.list.array.TIntArrayList
 import kotlinx.support.jdk7.use
 import org.jetbrains.bio.Tests.assertIn
 import org.jetbrains.bio.Tests.assertNotIn
-import org.jetbrains.bio.genome.Chromosome
-import org.jetbrains.bio.genome.GenomeQuery
-import org.jetbrains.bio.genome.Location
-import org.jetbrains.bio.genome.Strand
+import org.jetbrains.bio.genome.*
 import org.jetbrains.bio.io.BedFormat
 import org.jetbrains.bio.io.toBedEntry
 import org.jetbrains.bio.util.withTempFile
@@ -147,7 +144,7 @@ class SingleEndCoverageTest {
         withTempFile("coverage", ".cov") { coveragePath ->
             coverage.save(coveragePath)
             assertTrue(chromosome2 in coverage.genomeQuery.get())
-            val loaded = Coverage.load(coveragePath, GenomeQuery("to1", chromosome1.name))
+            val loaded = Coverage.load(coveragePath, GenomeQuery(Genome["to1"], chromosome1.name))
             assertEquals(SingleEndCoverage::class.java, loaded::class.java)
             assertFalse(chromosome2 in loaded.genomeQuery.get())
         }
@@ -155,7 +152,7 @@ class SingleEndCoverageTest {
 
     @Test
     fun testReversePartialLoading() {
-        val partialGenomeQuery = GenomeQuery("to1", chromosome1.name)
+        val partialGenomeQuery = GenomeQuery(Genome["to1"], chromosome1.name)
         val coverage = generateCoverage(partialGenomeQuery)
         assertNotIn(chromosome2, coverage.genomeQuery.get())
         withTempFile("coverage", ".cov") { coveragePath ->
@@ -279,7 +276,7 @@ class SingleEndCoverageTest {
     }
 
     companion object {
-        internal var genomeQuery: GenomeQuery = GenomeQuery("to1")
+        internal var genomeQuery: GenomeQuery = GenomeQuery(Genome["to1"])
         internal var chromosome1: Chromosome = genomeQuery.get()[0]
         internal var chromosome2: Chromosome = genomeQuery.get()[1]
 

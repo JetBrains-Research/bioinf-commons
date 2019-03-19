@@ -24,7 +24,7 @@ object GeneDescription {
         return CACHE.get(genome.build) {
             val descriptionPath = genome.dataPath / "description.tsv"
             descriptionPath.checkOrRecalculate("Genes") { output ->
-                val pairs = downloadAnnotation(genome.build).toList()
+                val pairs = downloadAnnotation(genome).toList()
                 DataFrame()
                         .with("name", pairs.map { it.first }.toTypedArray())
                         .with("description", pairs.map { it.second }.toTypedArray())
@@ -43,11 +43,11 @@ object GeneDescription {
     }
 
 
-    fun downloadAnnotation(build: String): Map<String, String> {
+    fun downloadAnnotation(genome: Genome): Map<String, String> {
 
         val genesDescriptionMap = TreeMap<String, String>()
         val attributes = listOf("ensembl_gene_id", "description")
-        Mart.forBuild(build)?.query(attributes) { pipe ->
+        Mart.forGenome(genome)?.query(attributes) { pipe ->
             val block = ArrayList<CSVRecord>(1)
             val it = Iterators.peekingIterator(pipe.iterator())
             while (it.hasNext()) {

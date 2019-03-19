@@ -118,7 +118,7 @@ object TestOrganismDataGenerator {
             val transcripts = ArrayList<Transcript>()
 
             for (name in CHROMOSOMES_SIZES.keys.sorted()) {
-                val chromosome = Chromosome(genome.build, name)
+                val chromosome = Chromosome(genome, name)
                 val length = CHROMOSOMES_SIZES[name]!!
 
                 var currentEnd = 0

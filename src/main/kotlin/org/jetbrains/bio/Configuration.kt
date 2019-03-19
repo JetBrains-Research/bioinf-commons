@@ -123,7 +123,7 @@ object Configuration {
 
         operator fun setValue(thisReef: Any?, prop: KProperty<*>, value: Path) {
             synchronized(Configuration) {
-                require(!initialized) {
+                require(!initialized || field == value) {
                     "Path '${prop.name}' already initialized. Cannot change '$field' to '$value'"
                 }
                 // Perform set only if isn't overridden, e.g. if is null:

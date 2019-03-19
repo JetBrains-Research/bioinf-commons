@@ -194,7 +194,7 @@ class PairedEndCoverageTest {
             coverage.save(coveragePath)
             val loaded = Coverage.load(
                 coveragePath,
-                GenomeQuery("to1", chromosome1.name)
+                GenomeQuery(Genome["to1"], chromosome1.name)
             )
             assertEquals(PairedEndCoverage::class.java, loaded::class.java)
             assertNotIn(chromosome2, loaded.genomeQuery.get())
@@ -204,7 +204,7 @@ class PairedEndCoverageTest {
 
     @Test
     fun testReversePartialLoading() {
-        val partialGenomeQuery = GenomeQuery("to1", chromosome1.name)
+        val partialGenomeQuery = GenomeQuery(Genome["to1"], chromosome1.name)
         val coverage = generateCoverage(partialGenomeQuery)
         assertNotIn(chromosome2, coverage.genomeQuery.get())
         withTempFile("coverage", ".cov") { coveragePath ->
@@ -226,7 +226,7 @@ class PairedEndCoverageTest {
     // TODO[dievsky] test loading from BAM files?
 
     companion object {
-        internal var genomeQuery: GenomeQuery = GenomeQuery("to1")
+        internal var genomeQuery: GenomeQuery = GenomeQuery(Genome["to1"])
         internal var chromosome1: Chromosome = genomeQuery.get()[0]
         internal var chromosome2: Chromosome = genomeQuery.get()[1]
 

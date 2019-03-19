@@ -8,6 +8,7 @@ import org.apache.log4j.Logger
 import org.jetbrains.bio.big.BedEntry
 import org.jetbrains.bio.big.ExtendedBedEntry
 import org.jetbrains.bio.genome.Chromosome
+import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.containers.LocationsMergingList
 import org.jetbrains.bio.genome.toStrand
@@ -69,13 +70,13 @@ data class BedFormat(
             path.bufferedReader(), path.toAbsolutePath().toString(), f
     )
 
-    fun parseLocations(path: Path, build: String) = parse(
+    fun parseLocations(path: Path, genome: Genome) = parse(
             path.bufferedReader(),
             path.toAbsolutePath().toString()) {
         it.map { entry ->
             entry.unpack(
                 minOf(fieldsNumber, (BedField.STRAND.field.index + 1).toByte()), 0, delimiter
-            ).toLocation(build)
+            ).toLocation(genome)
         }
     }
 
@@ -512,8 +513,8 @@ fun Location.toBedEntry() = ExtendedBedEntry(
         chromosome.name, startOffset, endOffset, strand = strand.char
 )
 
-fun ExtendedBedEntry.toLocation(build: String) =
-        Location(start, end, Chromosome(build, chrom), strand.toStrand())
+fun ExtendedBedEntry.toLocation(genome: Genome) =
+        Location(start, end, Chromosome(genome, chrom), strand.toStrand())
 
 fun LocationsMergingList.saveWithUniqueNames(bedPath: Path) {
     val printer = BedFormat().print(bedPath)

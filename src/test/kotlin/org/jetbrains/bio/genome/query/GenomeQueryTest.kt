@@ -5,7 +5,6 @@ import org.apache.log4j.WriterAppender
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
-import org.jetbrains.bio.genome.toGenomeQuery
 import org.jetbrains.bio.util.*
 import org.junit.Test
 import java.io.ByteArrayOutputStream
@@ -15,7 +14,7 @@ class GenomeQueryTest {
 
     @Test
     fun testNames() {
-        val genomeQuery = GenomeQuery("to1", "chr1", "chr2")
+        val genomeQuery = GenomeQuery(Genome["to1"], "chr1", "chr2")
         assertNotNull(genomeQuery.restriction)
         assertTrue("chr1" in genomeQuery.restriction!!)
         assertTrue("chr2" in genomeQuery.restriction!!)
@@ -24,7 +23,7 @@ class GenomeQueryTest {
 
     @Test
     fun testOnly() {
-        val genomeQuery = GenomeQuery("to1")
+        val genomeQuery = GenomeQuery(Genome["to1"])
         val same = genomeQuery.only(genomeQuery.get().map { it.name })
         assertSame(genomeQuery, same)
         assertEquals("to1", same.id)
@@ -64,33 +63,26 @@ class GenomeQueryTest {
             val restricted = genomeQuery.only(listOf("chr1"))
             assertSame(genome, genomeQuery.genome)
             assertSame(genome, restricted.genome)
-            assertNotEquals(genome, GenomeQuery("to1").genome)
+            assertNotEquals(genome, GenomeQuery(Genome["to1"]).genome)
         }
     }
 
 
     @Test
     fun testNamesAllChromosomes() {
-        val genomeQuery = GenomeQuery("to1")
+        val genomeQuery = GenomeQuery(Genome["to1"])
         assertNull(genomeQuery.restriction)
     }
 
     @Test
     fun testGetShortName() {
-        val genomeQuery = GenomeQuery("to1", "chr1", "chr2")
+        val genomeQuery = GenomeQuery(Genome["to1"], "chr1", "chr2")
         assertEquals("to1[chr1,chr2]", genomeQuery.id)
     }
 
     @Test
-    fun testParse() {
-        assertEquals(Genome["to1"].chromosomes.size, "to1".toGenomeQuery().get().size)
-        assertEquals(1, "to1[chr1]".toGenomeQuery().get().size)
-        assertEquals(2, "to1[chr1,chr3]".toGenomeQuery().get().size)
-    }
-
-    @Test
     fun testChromosomeNamesMap() {
-        val genomeQuery = GenomeQuery("to1")
+        val genomeQuery = GenomeQuery(Genome["to1"])
         for (chromosome in genomeQuery.get()) {
             assertTrue(chromosome.name.substringAfter("chr") in genomeQuery)
             assertNotNull(genomeQuery[chromosome.name.substringAfter("chr")])
@@ -105,25 +97,20 @@ class GenomeQueryTest {
     @Test
     fun restrictions() {
         val genome = Genome["to1"]
-        val genomeQuery = GenomeQuery("to1")
+        val genomeQuery = GenomeQuery(Genome["to1"])
         val chrM = Chromosome(genome, "chrM")
         assertTrue(chrM in genome.chromosomes)
         assertNotNull(genomeQuery[chrM.name])
 
-        val genomeQuery13 = "to1[chr1,chr3]".toGenomeQuery()
+        val genomeQuery13 = GenomeQuery(genome, "chr1", "chr3")
         assertFalse("chr2" in genomeQuery13)
         assertFalse("CHR2" in genomeQuery13)
         assertFalse("2" in genomeQuery13)
     }
 
     @Test(expected = IllegalStateException::class)
-    fun emptyRestriction() {
-        "to1[]".toGenomeQuery()
-    }
-
-    @Test(expected = IllegalStateException::class)
     fun unknownChromosomeRestriction() {
-        GenomeQuery("to1", "unknown")
+        GenomeQuery(Genome["to1"], "unknown")
     }
 
 

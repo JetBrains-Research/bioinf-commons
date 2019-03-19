@@ -30,7 +30,7 @@ object AnnotationsConfig {
         check(build in builds) {
             "Unexpected build name $build, annotations are available only for ${builds.joinToString()}"
         }
-        return mapping[build]!!
+        return mapping.getValue(build)
     }
 
 

@@ -35,8 +35,8 @@ object Ensembl {
         return gtfPath
     }
 
-    fun convertGTF(build: String, inputStream: BufferedReader, outputPath: Path) {
-        val mapping = AnnotationsConfig[build].gtfChrsMapping
+    fun convertGTF(genome: Genome, inputStream: BufferedReader, outputPath: Path) {
+        val mapping = AnnotationsConfig[genome.build].gtfChrsMapping
         val writer = outputPath.bufferedWriter()
         for (line in inputStream.lines()) {
             if (line.startsWith("#")) {

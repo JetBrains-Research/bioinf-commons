@@ -1,6 +1,7 @@
 package org.jetbrains.bio.genome.sequence
 
 import org.jetbrains.bio.genome.Chromosome
+import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.Strand
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -14,7 +15,7 @@ class NucleotideSequenceTest {
     }
 
     @Test fun testSubstringTestOrganism() {
-        val chromosome = Chromosome("to1", "chr1")
+        val chromosome = Chromosome(Genome["to1"], "chr1")
         val sequence = chromosome.sequence
         val from = sequence.length / 3
         val to = sequence.length - from

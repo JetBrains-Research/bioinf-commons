@@ -141,13 +141,13 @@ object UCSC {
      *               `"%s_rmsk.txt.gz"`.
      * @throws IOException if any of the I/O operations do so.
      */
-    fun downloadBatchTo(outputPath: Path, build: String, rootUrl: String, template: String) {
+    fun downloadBatchTo(outputPath: Path, genome: Genome, rootUrl: String, template: String) {
         val tmpDir = Files.createTempDirectory("batch")
         val targetPath = tmpDir / "target.gz"
 
         try {
             outputPath.outputStream().use { merged ->
-                for (chromosome in GenomeQuery(build).get()) {
+                for (chromosome in GenomeQuery(genome).get()) {
                     "$rootUrl${template.format(chromosome.name)}".downloadTo(targetPath)
                     targetPath.inputStream().use { it.copyTo(merged) }
                 }
