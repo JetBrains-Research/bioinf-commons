@@ -10,7 +10,6 @@ import java.nio.file.Path
  * Main entry point to the washu repository scripts
  * See https://github.com/JetBrains-Research/washu
  */
-@Suppress("Unused")
 class ToolsChipSeqWashu(private val path: Path = DEFAULT_PATH) {
 
     init {
@@ -167,13 +166,6 @@ class ToolsChipSeqWashu(private val path: Path = DEFAULT_PATH) {
     fun runReads2BW(readsPath: Path, chromSizesPath: Path, output: Path) {
         "bash".exec("-c", "export WASHU_ROOT=$path && " +
                 "bash ${script("scripts/reads2bw.sh")} $readsPath $chromSizesPath $output") {
-            directory(output.parent.toFile())
-        }
-    }
-
-    fun runReads2TagsBW(readsPath: Path, fragmentSize: Int, chromSizesPath: Path, output: Path) {
-        "bash".exec("-c", "export WASHU_ROOT=$path && " +
-                "bash ${script("downstream/signals/bam2tagsbw.sh")} $readsPath $fragmentSize $chromSizesPath $output") {
             directory(output.parent.toFile())
         }
     }
