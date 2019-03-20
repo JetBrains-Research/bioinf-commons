@@ -17,7 +17,7 @@ class AnnotationsConfigTest {
         // XXX It's important to check that versions match, otherwise
         // AnnotationsConfig fails during static initialization and NoClassDefFound error is shown in logs
         withResource(AnnotationsConfig::class.java, "annotations.yaml") { path ->
-            val (version, _) = AnnotationsConfig.load(path)
+            val (version, _) = AnnotationsConfig.parseYaml(path)
             assertEquals(AnnotationsConfig.VERSION, version)
         }
     }
@@ -25,7 +25,7 @@ class AnnotationsConfigTest {
     @Test
     fun parseYaml() {
         withResource(BedParserTest::class.java, "test_annotations.yaml") { path ->
-            val (version, mapping) = AnnotationsConfig.load(path)
+            val (version, mapping) = AnnotationsConfig.parseYaml(path)
             assertEquals(1, version)
             assertEquals(5, mapping.entries.size)
             assertEquals(listOf("ce6", "dm3", "hg19", "hg38", "mm9"), mapping.keys.sorted())

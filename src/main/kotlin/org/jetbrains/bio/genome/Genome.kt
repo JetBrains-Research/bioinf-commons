@@ -1,7 +1,6 @@
 package org.jetbrains.bio.genome
 
 import com.google.common.annotations.VisibleForTesting
-import com.google.common.collect.ComparisonChain
 import com.google.common.collect.Maps
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
@@ -11,9 +10,7 @@ import org.apache.log4j.Logger
 import org.jetbrains.bio.Configuration
 import org.jetbrains.bio.genome.sequence.TwoBitReader
 import org.jetbrains.bio.genome.sequence.TwoBitSequence
-import org.jetbrains.bio.util.bufferedReader
-import org.jetbrains.bio.util.checkOrRecalculate
-import org.jetbrains.bio.util.div
+import org.jetbrains.bio.util.*
 import java.io.IOException
 import java.io.UncheckedIOException
 import java.lang.ref.WeakReference
@@ -39,13 +36,81 @@ import java.nio.file.Path
 class Genome private constructor(
         /** Build in UCSC nomenclature, e.g. `"mm9"`. */
         val build: String,
+
+        /** Annotations download urls and genome settings descriptor **/
+        val annotationsConfig: GenomeAnnotationsConfig?,
+
+        /** Absolute path to the genome data folder. */
+        val dataPath: Path?,
+
         /** Absolute path to the genome chromosome sizes path,
          * if **not exists** will be downloaded automatically. */
-        val chromSizesPath: Path = Configuration.genomesPath / build / "$build.chrom.sizes"
-) : Comparable<Genome> {
+        chromSizesPath: Path?,
 
-    /** Absolute path to the genome data folder. */
-    val dataPath = Configuration.genomesPath / build
+        val cpgIslandsPath: Path?,
+        val cytobandsPath: Path?,
+        repeatsPath: Path?,
+        gapsPath: Path?,
+        private val twoBitPath: Path?,
+        private val genesGTFPath: Path?,
+        genesDescriptionsPath: Path?
+) {
+    val chromSizesPath by lazy { ensureNotNull(chromSizesPath, "Chromosomes Sizes") }
+    val repeatsPath by lazy { ensureNotNull(repeatsPath, "Repeats") }
+    val gapsPath by lazy { ensureNotNull(gapsPath, "Gaps") }
+    fun twoBitPath(downloadIfMissed: Boolean = true) =
+            ensureNotNull(twoBitPath, "Genome *.2bit Sequence").also { twoBitPath ->
+                if (downloadIfMissed) {
+                    twoBitPath.checkOrRecalculate { output ->
+                        val config = annotationsConfig
+                        requireNotNull(config) {
+                            "Cannot save Genome Sequence to $twoBitPath. Annotations information for $build isn't available."
+                        }
+                        config.sequenceUrl.downloadTo(output.path)
+                    }
+                }
+            }
+
+    /**
+     * Required for Star, RSEM
+     */
+    val genesNormalizedGtfPath: Path  by lazy {
+        val gtfPath = genesGtfPath(false)
+        val baseName = when {
+            gtfPath.name.endsWith(".gtf.gz") -> {
+                gtfPath.name.subSequence(0, gtfPath.name.length - ".gtf.gz".length)
+            }
+            gtfPath.extension == "gtf" -> gtfPath.stem
+            else -> error("Unsupported GTF path: $gtfPath")
+        }
+
+        val normGtfPath = gtfPath.parent / "$baseName.norm.gtf"
+
+        normGtfPath.checkOrRecalculate("GTF annotations") { (path) ->
+            genesGtfPath(true).bufferedReader().use { reader ->
+                Ensembl.convertGTF(this, reader, path)
+            }
+        }
+        normGtfPath
+    }
+
+    val genesDescriptionsPath: Path by lazy { ensureNotNull(genesDescriptionsPath, "Gene Description") }
+
+    /**
+     * Ensure *.gtf file exists and download it if necessary
+     */
+    fun genesGtfPath(downloadIfMissed: Boolean = true) =
+            ensureNotNull(genesGTFPath, "Genes GTF Annotations").also { genesGTFPath ->
+                if (downloadIfMissed) {
+                    genesGTFPath.checkOrRecalculate("Genes") { output ->
+                        val config = annotationsConfig
+                        requireNotNull(config) {
+                            "Cannot save genes GTF to $genesGTFPath. Annotations information isn't available for $build."
+                        }
+                        config.gtfUrl.downloadTo(output.path)
+                    }
+                }
+            }
 
     /** Species token, e.g. `"mm"`. */
     val species: String get() = build.takeWhile { !it.isDigit() }
@@ -54,21 +119,32 @@ class Genome private constructor(
      * Content of chrom.sizes file. Preserves original order during iteration.
      */
     internal val chromSizesMap: LinkedHashMap<String, Int> by lazy {
+        val path: Path = this.chromSizesPath
+
         // Fetch chrom sizes path if not exists
-        chromSizesPath.checkOrRecalculate { (p) ->
-            AnnotationsConfig[build].chromsizesUrl.downloadTo(p)
+        path.checkOrRecalculate { (p) ->
+            requireNotNull(annotationsConfig) {
+                "Cannot save chromosomes sizes to $path. Annotations information isn't available" +
+                        " for $build."
+            }
+
+            annotationsConfig.chromsizesUrl.downloadTo(p)
         }
-        LOG.debug("Loading chrom.sizes $chromSizesPath")
+
+        LOG.debug("Loading chrom.sizes $path")
         val map = LinkedHashMap<String, Int>()
-        CSVFormat.TDF.parse(chromSizesPath.bufferedReader()).use { `in` ->
-            `in`.records.forEach {
+        CSVFormat.TDF.parse(path.bufferedReader()).use { parser ->
+            parser.records.forEach {
                 try {
                     map[it[0]] = it[1].toInt()
                 } catch (t: Throwable) {
-                    LOG.error("Failed to parse chrom.sizes file: $chromSizesPath, line: ${it.joinToString("\t")}", t)
+                    LOG.error(
+                            "Failed to parse chrom.sizes file: $path," +
+                                    " line: ${it.joinToString("\t")}", t
+                    )
                 }
             }
-            LOG.debug("DONE Loading chrom.sizes $chromSizesPath")
+            LOG.debug("DONE Loading chrom.sizes $path")
             return@lazy map
         }
     }
@@ -101,39 +177,23 @@ class Genome private constructor(
         map
     }
 
-    val twoBitPath: Path
-        get() {
-            val path = dataPath / "$build.2bit"
-            path.checkOrRecalculate { output ->
-                AnnotationsConfig[build].sequenceUrl.downloadTo(output.path)
-            }
-            return path
-        }
-
     val transcripts: Collection<Transcript> by lazy { Transcripts.all(this).values() }
 
     val genes: List<Gene> by lazy { groupTranscripts(transcripts) }
 
-    val gtfAnnotationsPath: Path
-        get() {
-            val annotationsPath = dataPath / "$build.annotations.gtf"
-            annotationsPath.checkOrRecalculate("GTF annotations") { (path) ->
-                Ensembl.getGTF(this).bufferedReader().use {
-                    Ensembl.convertGTF(this, it, path)
-                }
-            }
-            return annotationsPath
-        }
-
-    override fun compareTo(other: Genome) =
-            ComparisonChain.start().compare(build, other.build).compare(chromSizesPath, other.chromSizesPath).result()
-
     fun presentableName(): String {
-        val config = AnnotationsConfig[build]
-        return "${config.species}: $build${when {
-            config.alias != null -> " (${config.alias})"
-            else -> ""
-        }}"
+        val alias = annotationsConfig?.alias?.let { " ($it)" } ?: ""
+        return "${annotationsConfig?.species ?: "Unknown Species"}: $build$alias"
+    }
+
+    private fun <T: Any> ensureNotNull(value:T?, tag: String): T {
+        requireNotNull(value) {
+             "$tag information was requested but it isn't available in '$build' genome." +
+                     " This could happen if you are using customized genome which doesn't configure path to" +
+                     " the information which is accessed later in your program."
+
+        }
+        return value
     }
 
     companion object {
@@ -143,12 +203,140 @@ class Genome private constructor(
         internal val LOG = Logger.getLogger(Genome::class.java)
 
         /** Use cache to avoid extra chrom.sizes loading. */
-        private val CACHE = Maps.newConcurrentMap<Pair<String, Path?>, Genome>()
+        private val CACHE = Maps.newConcurrentMap<String, Genome>()
 
-        operator fun get(build: String, chromSizesPath: Path? = null) =
-                CACHE.computeIfAbsent(build to chromSizesPath) {
-                    if (chromSizesPath != null) Genome(build, chromSizesPath) else Genome(build)
-                }!!
+        /**
+         * Get or init default genome, which downloads all missing files to [Configuration.genomesPath]
+         * See [Genome] constructor
+         */
+        operator fun get(build: String) =
+                getOrAdd(build, false) {
+                    val dataPath = Configuration.genomesPath / build
+                    val to = build == TEST_ORGANISM_BUILD
+
+                    val annCfg: GenomeAnnotationsConfig = when {
+                        to -> GenomeAnnotationsConfig(
+                                "Test Organism", null, "<n/a>", emptyMap(), false,
+                                "<n/a>", "<n/a>", "<n/a>", "<n/a>", "<n/a>",
+                                null, "<n/a>", null)
+
+                        else -> {
+                            if (!AnnotationsConfig.initialized) {
+                                // Init with default settings only if not initialized by user before us
+                                AnnotationsConfig.init(Configuration.genomesPath / "annotations.yaml")
+                            }
+                            AnnotationsConfig[build]
+                        }
+                    }
+                    val genesDescriptionsPath: Path? = if (to) null else dataPath / "description.tsv"
+                    val genesGTFPath: Path = dataPath / (when {
+                        to -> "genes.gtf.gz"
+                        else -> annCfg.gtfUrl.substringAfterLast('/')
+                    })
+
+                    Genome(
+                            build,
+                            annotationsConfig = annCfg,
+                            // we don't expect test genome to save smth in test data dir
+                            dataPath = if (to) null else dataPath,
+
+                            chromSizesPath = dataPath / "$build.chrom.sizes",
+                            cpgIslandsPath = annCfg.cpgIslandsUrl?.let { dataPath / CpGIslands.ISLANDS_FILE_NAME },
+                            cytobandsPath = annCfg.cytobandsUrl?.let { dataPath / CytoBands.FILE_NAME },
+                            repeatsPath = dataPath / Repeats.FILE_NAME,
+                            gapsPath = dataPath / Gaps.FILE_NAME,
+                            twoBitPath = dataPath / "$build.2bit",
+                            genesGTFPath = genesGTFPath,
+                            genesDescriptionsPath = genesDescriptionsPath
+                    )
+                }
+
+        /**
+         * Get or init customized genome
+         *
+         * See [Genome] constructor
+         */
+        operator fun get(
+                build: String,
+                chromSizesPath: Path,
+                annotationsConfig: GenomeAnnotationsConfig? = null,
+                dataPath: Path? = null,
+                cpgIslandsPath: Path? = null,
+                cytobandsPath: Path? = null,
+                repeatsPath: Path? = null,
+                gapsPath: Path? = null,
+                twoBitPath: Path? = null,
+                genesGTFPath: Path? = null,
+                genesDescriptionsPath: Path? = null
+        ) = getOrAdd(build, true) {
+            Genome(
+                    build,
+                    annotationsConfig = annotationsConfig,
+                    dataPath = dataPath,
+                    chromSizesPath = chromSizesPath,
+                    cpgIslandsPath = cpgIslandsPath,
+                    cytobandsPath = cytobandsPath,
+                    repeatsPath = repeatsPath,
+                    gapsPath = gapsPath,
+                    twoBitPath = twoBitPath,
+                    genesGTFPath = genesGTFPath,
+                    genesDescriptionsPath = genesDescriptionsPath
+
+            )
+        }
+
+        operator fun get(chromSizesPath: Path) = this[buildNameFrom(chromSizesPath), chromSizesPath]
+
+        private fun getOrAdd(build: String, customized: Boolean, genomeProvider: () -> Genome): Genome =
+                if (!customized) {
+                    // If genome getter not customized:
+                    // * genome not initialized => return genome with default paths
+                    // * already initialized => return cached genome even if cached genome is a customized one
+
+                    // It is useful for CLI tools & genome string parsing like in DataConfig experiments
+                    // We could init "hg19" with custom paths (on first access), then DataConfig static
+                    // deserialization could load our custom genome for "hg19" instead of genome with default
+                    // paths.
+                    //
+                    // P.S: We could remove this code and leave impl like for customized genome (see the other branch)
+                    CACHE.computeIfAbsent(build) {
+                        genomeProvider()
+                    }
+                } else {
+                    // Create genome, it is cheap. Need further to compare with cached version
+                    val newGenome = genomeProvider()
+
+                    val cachedGenome = CACHE.computeIfAbsent(build) {
+                        newGenome
+                    }
+
+                    // Assume 'build' is genome id, otherwise it could be misleading and we could get different
+                    // [Genome] instances where we do not expect this.
+
+                    // Compare that genome is same as cached one:
+                    require(cachedGenome.chromSizesPath == newGenome.chromSizesPath) {
+                        "Cannot load genome for ${newGenome.chromSizesPath}: genome '$build' already initialized" +
+                                " with ${cachedGenome.chromSizesPath}"
+                    }
+
+                    // XXX: maybe implement equals (e.g. convert genome to dataclass) & require(genome == newInstance) ?
+
+                    cachedGenome
+                }
+
+        private fun buildNameFrom(chromSizesPath: Path): String {
+            val fileName = chromSizesPath.fileName.toString()
+
+            if (!fileName.endsWith(".chrom.sizes")) {
+                val build = fileName.substringBefore(".")
+                LOG.warn("Unexpected chrom sizes file name: $fileName, expected <build>.chrom.sizes. " +
+                        "Detected build: $build")
+                return build
+            }
+            val build = fileName.substringBeforeLast(".chrom.sizes")
+            LOG.debug("Chrom sizes name: $fileName. Detected build: $build")
+            return build
+        }
     }
 }
 
@@ -164,7 +352,7 @@ data class Chromosome private constructor(
         /** Unique chromosome name usually prefixed by `"chr"`, e.g. `"chr19"`. */
         val name: String,
         /** Length defined in chrom.sizes file. */
-        val length: Int) : Comparable<Chromosome> {
+        val length: Int) {
 
     /**
      * Weak reference for sequence caching
@@ -177,14 +365,15 @@ data class Chromosome private constructor(
             var s = sequenceRef.get()
             if (s == null) {
                 s = try {
-                    val twoBitLength = TwoBitReader.length(genome.twoBitPath, name)
+                    val twoBitPath = genome.twoBitPath()
+                    val twoBitLength = TwoBitReader.length(twoBitPath, name)
                     check(length == twoBitLength) {
                         "Chromosome $name length differs in chrom.sizes($length) and 2bit file($twoBitLength)"
                     }
-                    TwoBitReader.read(genome.twoBitPath, name)
+                    TwoBitReader.read(twoBitPath, name)
                 } catch (e: IOException) {
                     throw UncheckedIOException(
-                            "Error loading $name from ${genome.twoBitPath}", e)
+                            "Error loading $name from ${genome.twoBitPath(false)}", e)
                 }
 
                 sequenceRef = WeakReference(s)
@@ -227,11 +416,6 @@ data class Chromosome private constructor(
     val cytoBands: List<CytoBand> get() = CytoBands.all(genome)[this]
 
     val cpgIslands: List<CpGIsland> get() = CpGIslands.all(genome)[this]
-
-    override fun compareTo(other: Chromosome) = ComparisonChain.start()
-            .compare(genome, other.genome)
-            .compare(name, other.name)
-            .result()
 
     override fun toString() = "${genome.build}:$name"
 

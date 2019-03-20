@@ -117,8 +117,11 @@ data class Range(
     }
 }
 
-data class ChromosomeRange(val startOffset: Int, val endOffset: Int,
-                           val chromosome: Chromosome) : LocationAware {
+data class ChromosomeRange(
+        val startOffset: Int,
+        val endOffset: Int,
+        val chromosome: Chromosome
+) : LocationAware, Comparable<ChromosomeRange> {
 
     init {
         require(startOffset <= endOffset) { "invalid chromosome range $this" }
@@ -131,6 +134,13 @@ data class ChromosomeRange(val startOffset: Int, val endOffset: Int,
     fun on(strand: Strand) = Location(startOffset, endOffset, chromosome, strand)
 
     fun toRange() = Range(startOffset, endOffset)
+
+    override fun compareTo(other: ChromosomeRange) = ComparisonChain.start()
+            // sort by chr name, start, end offset
+            .compare(chromosome.name, other.chromosome.name)
+            .compare(startOffset, other.startOffset)
+            .compare(endOffset, other.endOffset)
+            .result()
 
     override fun toString() = "${chromosome.name}:[$startOffset, $endOffset)"
 }
@@ -179,7 +189,8 @@ data class Location(val startOffset: Int, val endOffset: Int,
     override fun toString() = "${chromosome.name}:$strand[$startOffset, $endOffset)"
 
     override fun compareTo(other: Location) = ComparisonChain.start()
-            .compare(chromosome, other.chromosome)
+            // sort locs by chr name, strand, start, end offset
+            .compare(chromosome.name, other.chromosome.name)
             .compare(strand, other.strand)
             .compare(startOffset, other.startOffset)
             .compare(endOffset, other.endOffset)

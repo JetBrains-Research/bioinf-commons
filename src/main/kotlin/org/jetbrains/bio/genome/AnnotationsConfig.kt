@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
 import org.apache.log4j.Logger
-import org.jetbrains.bio.Configuration
 import org.jetbrains.bio.util.*
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -15,37 +14,82 @@ import java.util.*
  * @author Roman.Chernyatchik
  */
 object AnnotationsConfig {
-    private val LOG = Logger.getLogger(AnnotationsConfig::class.java)
     const val VERSION: Int = 3
+    private val LOG = Logger.getLogger(AnnotationsConfig::class.java)
 
-    private val mapping: Map<String, GenomeAnnotationsConfig> = load()
+    @Volatile private var pathAndYamlConfig: Pair<Path, Map<String, GenomeAnnotationsConfig>>? = null
 
-    val builds = mapping.keys
-    operator fun get(build: String): GenomeAnnotationsConfig {
-        if (build == Genome.TEST_ORGANISM_BUILD) {
-            return GenomeAnnotationsConfig("Test Organism", null, "n/a", emptyMap(),
-                    false, "n/a", "n/a", "n/a", "n/a",
-                    "n/a", null, null, null)
+    /**
+     * Parse YAML file and load configuration. If YAML file doesn't exist if would be created with
+     * default bundled content using [bioinf-commons/src/main/resources/annotations.yaml]
+     */
+    fun init(yamlConfig: Path) {
+        // 'Double checked synchronization' to configure pathAndYamlConfig singleton
+        if (pathAndYamlConfig == null) {
+            synchronized(this) {
+                // if 2-nd thread enters section after 1-st thread already left it: do not reassign the value
+                if (pathAndYamlConfig == null) {
+                    pathAndYamlConfig = yamlConfig to loadOrCreateBuild2ConfigMapping(yamlConfig)
+                }
+            }
         }
+        val path = pathAndYamlConfig!!.first
+        require(yamlConfig == path) {
+            "Already initialized with $path, couldn't be overridden with $yamlConfig."
+        }
+    }
+
+    val initialized: Boolean
+        get() = pathAndYamlConfig != null
+
+    /**
+     * Ensure annotations config loaded, use [AnnotationsConfig.init]
+     */
+    val yamlConfig: Path
+        get() {
+            if (pathAndYamlConfig == null) {
+                error("Annotations config not initialized, call [AnnotationsConfig.init] first")
+            }
+            return pathAndYamlConfig!!.first
+        }
+    /**
+     * Ensure annotations config loaded, use [AnnotationsConfig.init]
+     */
+    val builds: Set<String>
+        get() {
+            if (pathAndYamlConfig == null) {
+                error("Annotations config not initialized, call [AnnotationsConfig.init] first")
+            }
+            return pathAndYamlConfig!!.second.keys
+        }
+
+    /**
+     * Ensure annotations config loaded, use [AnnotationsConfig.init]
+     */
+    operator fun get(build: String): GenomeAnnotationsConfig {
+        if (pathAndYamlConfig == null) {
+            error("Annotations config not initialized, call [AnnotationsConfig.ensureInitialized] first")
+        }
+
         check(build in builds) {
             "Unexpected build name $build, annotations are available only for ${builds.joinToString()}"
         }
-        return mapping.getValue(build)
+        return pathAndYamlConfig!!.second.getValue(build)
     }
 
-
-    internal fun load(path: Path): Pair<Int, Map<String, GenomeAnnotationsConfig>> {
-        val yaml = YamlMapper.load(path)
+    internal fun parseYaml(yamlConfig: Path): Pair<Int, Map<String, GenomeAnnotationsConfig>> {
+        val yaml = YamlMapper.load(yamlConfig)
         val buildsConfig = yaml.genomes.keys.map { build ->
             build to yaml[build]
         }.toMap()
-        return yaml.version to buildsConfig
+
+        return yaml.version to Collections.unmodifiableMap(buildsConfig)
     }
 
-    private fun load(): Map<String, GenomeAnnotationsConfig> {
-        val path = Configuration.genomesPath / "annotations.yaml"
-        if (path.exists) {
-            val (version, mapping) = load(path)
+    private fun loadOrCreateBuild2ConfigMapping(yamlConfig: Path): Map<String, GenomeAnnotationsConfig> {
+        if (yamlConfig.exists) {
+            // check if outdated
+            val (version, mapping) = parseYaml(yamlConfig)
             if (version == VERSION) {
                 return mapping
             }
@@ -54,21 +98,23 @@ object AnnotationsConfig {
             val hash = mapping.hashCode().toString().sha
             val suffix = "${dateFormat.format(Date())}.$hash"
 
-            val bkPath = path.withExtension("$suffix.yaml")
-            path.move(bkPath, StandardCopyOption.ATOMIC_MOVE)
-            LOG.info("Outdated annotations file $path (version: $version) was backed up to $bkPath " +
+            val bkPath = yamlConfig.withExtension("$suffix.yaml")
+            yamlConfig.move(bkPath, StandardCopyOption.ATOMIC_MOVE)
+            LOG.info("Outdated annotations file $yamlConfig (version: $version) was backed up to $bkPath " +
                     "and replaced with recent version: $VERSION).")
         }
-        path.checkOrRecalculate { output ->
+        // create if not exist or was outdated
+        yamlConfig.checkOrRecalculate { output ->
             val text = AnnotationsConfig::class.java
                     .getResourceAsStream("/annotations.yaml")
                     .bufferedReader(Charsets.UTF_8)
                     .readText()
             output.path.write(text)
         }
-        val (newVersion, newMapping) = AnnotationsConfig.load(path)
+        // ensure version
+        val (newVersion, newMapping) = parseYaml(yamlConfig)
         require(newVersion == VERSION) {
-            "Bundled annotations are expected to have latest format version $VERSION but was ${newVersion}."
+            "Bundled annotations are expected to have latest format version $VERSION but was $newVersion."
         }
         return newMapping
     }

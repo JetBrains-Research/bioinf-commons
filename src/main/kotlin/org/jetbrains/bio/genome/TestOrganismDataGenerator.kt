@@ -12,7 +12,6 @@ import org.jetbrains.bio.util.bufferedWriter
 import org.jetbrains.bio.util.createDirectories
 import org.jetbrains.bio.util.div
 import org.jetbrains.bio.util.withTempFile
-import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.stream.Collectors
@@ -41,8 +40,18 @@ object TestOrganismDataGenerator {
         // Ensure data path initialized
         dataPath.createDirectories()
         LOG.info("Generating test organism into $dataPath")
-        val chromSizesPath = generateChromSizes()
-        val genome = Genome[Genome.TEST_ORGANISM_BUILD, chromSizesPath]
+
+        LOG.info("Generating chrom.sizes")
+        val build = Genome.TEST_ORGANISM_BUILD
+        val chromSizesPath = Configuration.genomesPath / build / "$build.chrom.sizes"
+        CSVFormat.TDF.print(chromSizesPath.bufferedWriter()).use { csvPrinter ->
+            CHROMOSOMES_SIZES.forEach { name, size ->
+                csvPrinter.printRecord(name, size.toString())
+            }
+        }
+
+        LOG.info("Generating other files")
+        val genome = Genome[Genome.TEST_ORGANISM_BUILD]
         generateSequence(genome)
         generateTranscripts(genome)
         generateCentromere(genome)
@@ -51,19 +60,6 @@ object TestOrganismDataGenerator {
         generateCGI(genome)
         LOG.info("Done")
     }
-
-    private fun generateChromSizes(): Path {
-        LOG.info("Generating chrom.sizes")
-        val chromSizesPath = Configuration.genomesPath / Genome.TEST_ORGANISM_BUILD /
-                "${Genome.TEST_ORGANISM_BUILD}.chrom.sizes"
-        CSVFormat.TDF.print(chromSizesPath.bufferedWriter()).use { csvPrinter ->
-            CHROMOSOMES_SIZES.forEach { name, size ->
-                csvPrinter.printRecord(name, size.toString())
-            }
-        }
-        return chromSizesPath
-    }
-
 
     /**
      * Generates 2bit sequences.
@@ -98,8 +94,7 @@ object TestOrganismDataGenerator {
             }.asIterable().write(fastaPath)
 
             LOG.info("Converting FASTA sequence to 2bit")
-            val twoBitPath = genome.dataPath / "${genome.build}.2bit"
-            TwoBitWriter.convert(fastaPath, twoBitPath)
+            TwoBitWriter.convert(fastaPath, genome.twoBitPath(false))
         }
     }
 
@@ -113,7 +108,7 @@ object TestOrganismDataGenerator {
 
         val r = ThreadLocalRandom.current()
 
-        (genome.dataPath / "genes.gtf.gz").bufferedWriter().use { w ->
+        genome.genesGtfPath(false).bufferedWriter().use { w ->
 
             val transcripts = ArrayList<Transcript>()
 
@@ -223,7 +218,7 @@ object TestOrganismDataGenerator {
      */
     private fun generateCentromere(genome: Genome) {
         LOG.info("Generating centromere annotations")
-        (genome.dataPath / Gaps.FILE_NAME).bufferedWriter().use {
+        genome.gapsPath.bufferedWriter().use {
             val printer = Gaps.FORMAT.print(it)
             for (chromosome in genome.chromosomes) {
                 printer.printRecord(100,
@@ -242,7 +237,7 @@ object TestOrganismDataGenerator {
      */
     private fun generateCytobands(genome: Genome) {
         LOG.info("Generating cytoband annotations")
-        (genome.dataPath / CytoBands.FILE_NAME).bufferedWriter().use {
+        genome.cytobandsPath!!.bufferedWriter().use {
             val printer = CytoBands.FORMAT.print(it)
             for ((i, chromosome) in genome.chromosomes.withIndex()) {
                 printer.printRecord(chromosome.name,
@@ -261,8 +256,7 @@ object TestOrganismDataGenerator {
      */
     private fun generateRepeats(genome: Genome) {
         LOG.info("Generating repeat annotations (stub)")
-        val repeatsPath = genome.dataPath / Repeats.FILE_NAME
-        repeatsPath.bufferedWriter().use { w ->
+        genome.repeatsPath.bufferedWriter().use { w ->
             // This is the first line from mm9 annotations.
             w.write("607\t687\t174\t0\t0\tchr1\t3000001\t3000156\t-194195276\t-" +
                     "\tL1_Mur2\tLINE\tL1\t-4310\t1567\t1413\t1")
@@ -276,8 +270,7 @@ object TestOrganismDataGenerator {
      */
     private fun generateCGI(genome: Genome) {
         LOG.info("Generating repeat annotations (stub)")
-        val repeatsPath = genome.dataPath / CpGIslands.ISLANDS_FILE_NAME
-        repeatsPath.bufferedWriter().use { w ->
+        genome.cpgIslandsPath!!.bufferedWriter().use { w ->
             // This is the first line from hg19 annotations.
             w.write("""
                 |585	chr1	28735	29810	CpG: 116	1075	116	787	21.6	73.2	0.83

@@ -207,7 +207,7 @@ object Transcripts {
     private val BOUND5_INDEX_CACHE = CacheBuilder.newBuilder()
                 .softValues()
                 .initialCapacity(1)
-                .build<String, Map<Chromosome, Pair<IntArray, BinaryLut>>>()
+                .build<Genome, Map<Chromosome, Pair<IntArray, BinaryLut>>>()
 
     /** Visible only for [TestOrganismDataGenerator]. */
     val GSON = GsonBuilder()
@@ -216,7 +216,7 @@ object Transcripts {
             .create()
 
     internal fun bound5Index(genome: Genome):  Map<Chromosome, Pair<IntArray, BinaryLut>> {
-        return BOUND5_INDEX_CACHE.get(genome.build) {
+        return BOUND5_INDEX_CACHE.get(genome) {
             val transcripts = all(genome)
 
             transcripts.keySet().associate { chr ->
@@ -242,27 +242,26 @@ object Transcripts {
      */
     data class JsonTranscriptome(val vers:Int, val transcripts: List<Transcript>)
 
-    fun transcriptsGtfAndJsonPaths(genome: Genome): Pair<Path, Path> {
-        val gtfFile = Ensembl.getGTF(genome, false)
-
+    fun cachedTranscriptsJsonPath(genesGtfPath: Path): Path {
         // JSON cached genes are loaded in ~2 secs, instead of 14-23 secs parsing from gtf
-        val cachedTranscripts = gtfFile.withExtension("json.gz")
-        return Pair(gtfFile, cachedTranscripts)
+        return genesGtfPath.withExtension("json.gz")
     }
 
     private fun loadTranscripts(genome: Genome, cleanCache: Boolean): ListMultimap<Chromosome, Transcript> {
-        val (gtfFile, cachedTranscripts) = transcriptsGtfAndJsonPaths(genome)
+        val gtfFile = genome.genesGtfPath(false)
+        val cachedTranscripts = cachedTranscriptsJsonPath(gtfFile)
+
         if (cleanCache) {
             cachedTranscripts.deleteIfExists()
         }
 
         cachedTranscripts.checkOrRecalculate("Processing genes") { (path) ->
             // ensure gtf file exists
-            Ensembl.getGTF(genome, true)
+            genome.genesGtfPath(true)
 
             val transcripts = LOG.time(level = Level.INFO, message = "Parsing genes $gtfFile") {
-                gtfFile.bufferedReader().use {
-                    GtfReader(it, genome).readTranscripts()
+                gtfFile.bufferedReader().use { reader ->
+                    GtfReader(reader, genome).readTranscripts()
                             // sort by 5' offset then by ensemblId (to be deterministic),
                             // it is required for bound5Index() correct work,
                             // please don't change it to sort by start offset

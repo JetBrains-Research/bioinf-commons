@@ -302,7 +302,7 @@ fun Path.checkOrRecalculate(label: String = "",
                             isDirectory: Boolean = false,
                             ignoreEmptyFile: Boolean = false,
                             timestamp: Long = 0,
-                            recalculate: (PathWrapper) -> Unit) {
+                            recalculate: (PathWrapper) -> Unit): Path {
     val target = toAbsolutePath().normalize()
     return LockManager.synchronized(target) {
         val prefix = if (label.isNotEmpty()) "$label: " else ""
@@ -339,6 +339,7 @@ fun Path.checkOrRecalculate(label: String = "",
                 }
             }
         }
+        this@checkOrRecalculate
     }
 }
 

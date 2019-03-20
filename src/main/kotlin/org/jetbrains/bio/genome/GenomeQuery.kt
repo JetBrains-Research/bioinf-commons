@@ -2,22 +2,14 @@ package org.jetbrains.bio.genome
 
 import com.google.common.annotations.VisibleForTesting
 import org.apache.log4j.Logger
-import java.nio.file.Path
 import java.util.*
 
 /**
  * Genome query for all chromosomes.
- * @author Oleg Shpynov
  */
-class GenomeQuery(val genome: Genome,
-                  /** A subset of chromosomes to be considered or null for all chromosomes. */
-                  val restriction: Set<String>? = null) {
-
-    constructor(genome: Genome, vararg names: String) :
-            this(genome, if (names.isNotEmpty()) names.toSet() else null)
-
-    constructor(chromSizesPath: Path) :
-            this(Genome[buildByChromSizesPath(chromSizesPath), chromSizesPath])
+class GenomeQuery (val genome: Genome, vararg names: String) {
+    /** A subset of chromosomes to be considered or null for all chromosomes. */
+    val restriction: Set<String>? = if (names.isNotEmpty()) names.toSet() else null
 
     init {
         restriction?.forEach {
@@ -45,7 +37,7 @@ class GenomeQuery(val genome: Genome,
         if (chromosomes.sorted() == get().map { it.name }.sorted()) {
             return this
         }
-        return GenomeQuery(genome, chromosomes.toSet())
+        return GenomeQuery(genome, *chromosomes.distinct().toTypedArray())
     }
 
     val id: String
@@ -88,26 +80,13 @@ class GenomeQuery(val genome: Genome,
         @VisibleForTesting
         internal val LOG = Logger.getLogger(GenomeQuery::class.java)
 
-        private fun buildByChromSizesPath(chromSizesPath: Path): String {
-            val fileName = chromSizesPath.fileName.toString()
-            if (!fileName.endsWith(".chrom.sizes")) {
-                val build = fileName.substringBefore(".")
-                LOG.warn("Unexpected chrom sizes file name: $fileName, expected <build>.chrom.sizes. " +
-                        "Detected build: $build")
-                return build
-            }
-            val build = fileName.substringBeforeLast(".chrom.sizes")
-            LOG.debug("Chrom sizes name: $fileName. Detected build: $build")
-            return build
-        }
-
         /**
          * Parses [String] as genome with possible custom chromosomes set.
          * Is designed to support serialized [GenomeQuery.id]
          *
          * @param str Genome defining string,  e.g. "hg19" or "hg19[chr1,chr2]"
          */
-        fun parseGenomeDefinition(str: String): Pair<String, Array<String>> {
+        fun parseGenomeQueryId(str: String): Pair<String, Array<String>> {
             if ("[" !in str) {
                 return str to emptyArray()
             }

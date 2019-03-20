@@ -147,7 +147,7 @@ object UCSC {
 
         try {
             outputPath.outputStream().use { merged ->
-                for (chromosome in GenomeQuery(genome).get()) {
+                for (chromosome in genome.chromosomes) {
                     "$rootUrl${template.format(chromosome.name)}".downloadTo(targetPath)
                     targetPath.inputStream().use { it.copyTo(merged) }
                 }

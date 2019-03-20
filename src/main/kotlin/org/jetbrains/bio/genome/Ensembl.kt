@@ -4,8 +4,6 @@ import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVPrinter
 import org.apache.log4j.Logger
 import org.jetbrains.bio.util.bufferedWriter
-import org.jetbrains.bio.util.checkOrRecalculate
-import org.jetbrains.bio.util.div
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.nio.file.Path
@@ -17,26 +15,8 @@ import kotlin.math.min
 
 object Ensembl {
 
-    /**
-     * Ensure *.gtf file exists and download it if necessary
-     */
-    fun getGTF(genome: Genome, downloadIfMissed: Boolean = true): Path {
-        // Testdata mock
-        if (genome.build == "to1") {
-            return genome.dataPath / "genes.gtf.gz"
-        }
-        val gtfUrl = AnnotationsConfig[genome.build].gtfUrl
-        val gtfPath = genome.dataPath / gtfUrl.substringAfterLast('/')
-        if (downloadIfMissed) {
-            gtfPath.checkOrRecalculate("Genes") { output ->
-                gtfUrl.downloadTo(output.path)
-            }
-        }
-        return gtfPath
-    }
-
     fun convertGTF(genome: Genome, inputStream: BufferedReader, outputPath: Path) {
-        val mapping = AnnotationsConfig[genome.build].gtfChrsMapping
+        val mapping = genome.annotationsConfig?.gtfChrsMapping ?: emptyMap()
         val writer = outputPath.bufferedWriter()
         for (line in inputStream.lines()) {
             if (line.startsWith("#")) {
@@ -64,7 +44,7 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
     fun readTranscripts(): List<Transcript> {
         var hasDetailedUTRInfo: Boolean? = null
         val transcriptsMap = HashMap<String, TranscriptInfo>()
-        val chrsMapping = AnnotationsConfig[genome.build].gtfChrsMapping
+        val chrsMapping = genome.annotationsConfig?.gtfChrsMapping ?: emptyMap()
         val genomeQuery = genome.toQuery()
         for (line in reader.lineSequence()) {
             val featureType = parseLine(line, transcriptsMap, genomeQuery, chrsMapping)

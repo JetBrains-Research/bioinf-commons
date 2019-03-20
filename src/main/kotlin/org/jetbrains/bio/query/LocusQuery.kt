@@ -224,7 +224,7 @@ class RepeatsQuery(private val repeatClass: String? = null) : ChromosomeLocusQue
 
 class NonRepeatsQuery : ChromosomeLocusQuery("non_repeats") {
     override fun apply(input: Chromosome): Collection<Location> {
-        val genomeQuery = GenomeQuery(input.genome, setOf(input.name))
+        val genomeQuery = GenomeQuery(input.genome, input.name)
         val repeats = locationList(genomeQuery, input.repeats.map { it.location })
 
         return Strand.values().flatMap {

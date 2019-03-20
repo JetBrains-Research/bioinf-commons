@@ -7,7 +7,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
 import org.apache.log4j.Logger
 import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
-import org.jetbrains.bio.genome.GenomeQuery.Companion.parseGenomeDefinition
+import org.jetbrains.bio.genome.GenomeQuery.Companion.parseGenomeQueryId
 import org.jetbrains.bio.util.*
 import java.io.Reader
 import java.io.StringWriter
@@ -114,7 +114,7 @@ aux:
      * NOTE: we don't use lateinit var here to guarantee read-only access
      */
     val genomeQuery: GenomeQuery by lazy {
-        parseGenomeDefinition(genome).let { (build, chromosomes)
+        parseGenomeQueryId(genome).let { (build, chromosomes)
             -> GenomeQuery(Genome[build], *chromosomes)
         }
     }

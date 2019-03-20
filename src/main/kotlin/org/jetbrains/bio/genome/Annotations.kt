@@ -47,10 +47,12 @@ object Repeats {
     internal const val FILE_NAME = "rmsk.txt.gz"
 
     fun repeatsPath(genome: Genome): Path {
-        val build = genome.build
-        val repeatsPath = genome.dataPath / FILE_NAME
-        repeatsPath.checkOrRecalculate("Repeats") { output ->
-            val config = AnnotationsConfig[build]
+        val repeatsPath = genome.repeatsPath
+        return repeatsPath.checkOrRecalculate("Repeats") { output ->
+            val config = genome.annotationsConfig
+            requireNotNull(config) {
+                "Cannot save Repeats to $repeatsPath. Annotations information isn't available for ${genome.build}."
+            }
 
             if (config.ucscAnnLegacyFormat) {
                 // Builds with per-chromosome repeat annotations.
@@ -61,7 +63,6 @@ object Repeats {
                 config.repeatsUrl.downloadTo(output.path)
             }
         }
-        return repeatsPath
     }
 
     private val FORMAT = CSVFormat.TDF.withHeader(
@@ -70,11 +71,8 @@ object Repeats {
             "strand", "name", "class", "family", "repeat_start",
             "repeat_end", "repeat_left", "id")
 
-    internal fun all(genome: Genome): ListMultimap<Chromosome, Repeat> {
-        val build = genome.build
-        return CACHE.get(genome) {
-            read(genome, repeatsPath(genome))
-        }
+    internal fun all(genome: Genome) = CACHE.get(genome) {
+        read(genome, repeatsPath(genome))
     }
 
 
@@ -122,15 +120,25 @@ object CytoBands {
 
     internal fun all(genome: Genome): ListMultimap<Chromosome, CytoBand> {
         return CACHE.get(genome) {
-            val cytobandsUrl = AnnotationsConfig[genome.build].cytobandsUrl
-            if (cytobandsUrl == null) {
+            val path = genome.cytobandsPath
+            if (path == null ) {
                 LinkedListMultimap.create()
             } else {
-                val bandsPath = genome.dataPath / FILE_NAME
-                bandsPath.checkOrRecalculate("CytoBands") { output ->
-                    cytobandsUrl.downloadTo(output.path)
+                path.checkOrRecalculate("CytoBands") { output ->
+                    val config = genome.annotationsConfig
+                    requireNotNull(config) {
+                        "Cannot save CytoBands to $path. Annotations information isn't available for ${genome.build}."
+                    }
+
+                    val url = config.cytobandsUrl
+                    requireNotNull(url) {
+                        "Cannot save CytoBands to $path. CytoBands URL for ${genome.build} is not defined." +
+                                " Annotations configuration: $config"
+                    }
+
+                    url.downloadTo(output.path)
                 }
-                read(genome, bandsPath)
+                read(genome, path)
             }
         }
     }
@@ -181,9 +189,14 @@ object Gaps {
 
     internal fun all(genome: Genome): ListMultimap<Chromosome, Gap> {
         return CACHE.get(genome) {
-            val gapsPath = genome.dataPath / FILE_NAME
+            val gapsPath = genome.gapsPath
             gapsPath.checkOrRecalculate("Gaps") { output ->
-                download(genome, output.path)
+                val config = genome.annotationsConfig
+                requireNotNull(config) {
+                    "Cannot save Gaps info to $gapsPath. Annotations information isn't available for ${genome.build}."
+                }
+
+                download(genome, config, output.path)
             }
 
             read(genome, gapsPath)
@@ -206,16 +219,17 @@ object Gaps {
         return builder.build()
     }
 
-    private fun download(genome: Genome, gapsPath: Path) {
-        val config = AnnotationsConfig[genome.build]
+    private fun download(genome: Genome, config: GenomeAnnotationsConfig, gapsPath: Path) {
+        val gapsUrl = config.gapsUrl
+        val ucscAnnLegacyFormat = config.ucscAnnLegacyFormat
 
-        if (config.ucscAnnLegacyFormat) {
+        if (ucscAnnLegacyFormat) {
             // Builds with per-chromosome gap annotations.
-            val prefix = config.gapsUrl.substringBeforeLast("/")
-            val template = "%s_${config.gapsUrl.substringAfterLast("/")}"
+            val prefix = gapsUrl.substringBeforeLast("/")
+            val template = "%s_${gapsUrl.substringAfterLast("/")}"
             UCSC.downloadBatchTo(gapsPath, genome, "$prefix/", template)
         } else {
-            config.gapsUrl.downloadTo(gapsPath)
+            gapsUrl.downloadTo(gapsPath)
 
             // Builds with separate centromere annotations:
             if (config.centromeresUrl != null) {
@@ -223,7 +237,7 @@ object Gaps {
                 // separate file. Obviously, the format of the file doesn't
                 // match the one of 'gap.txt.gz', so we fake the left
                 // out columns below.
-                val centromeresPath = gapsPath.parent / CENTROMERES_FILE_NAME
+                val centromeresPath =  gapsPath.parent / CENTROMERES_FILE_NAME
                 try {
                     config.centromeresUrl.downloadTo(centromeresPath)
                     centromeresPath.bufferedReader().useLines { centromeres ->
@@ -273,40 +287,44 @@ object CpGIslands {
 
     internal const val ISLANDS_FILE_NAME = "cpgIslandExt.txt.gz"
 
-    fun cpgIslandsPath(genome: Genome): Path? {
-        val path = genome.dataPath / ISLANDS_FILE_NAME
-        if (genome.build == Genome.TEST_ORGANISM_BUILD) {
-            return path
-        }
-        val url = AnnotationsConfig[genome.build].cpgIslandsUrl
-        if (url != null) {
-            path.checkOrRecalculate("CpGIslands") { output ->
-                url.downloadTo(output.path)
-            }
-            return path
-        }
-        return null
-    }
-
     internal fun all(genome: Genome): ListMultimap<Chromosome, CpGIsland> {
         return CACHE.get(genome) {
-            val path = cpgIslandsPath(genome)
+            val path = genome.cpgIslandsPath
             if (path == null) {
                 LinkedListMultimap.create()
             } else {
-                read(genome, path)
+                val config = genome.annotationsConfig
+                requireNotNull(config) {
+                    "Cannot save CpG Islands to $path. Annotations information isn't available for ${genome.build}."
+                }
+
+                path.checkOrRecalculate("CpGIslands") { output ->
+                    val url = config.cpgIslandsUrl
+                    requireNotNull(url) {
+                        "Cannot save CpG Islands to $path. CpG Islands URL for ${genome.build} is not defined." +
+                                " Annotations configuration: $config"
+                    }
+
+                    url.downloadTo(output.path)
+                }
+
+                read(genome, path, config.ucscAnnLegacyFormat)
             }
         }
     }
 
-    private fun read(genome: Genome, islandsPath: Path): ListMultimap<Chromosome, CpGIsland> {
+    private fun read(
+            genome: Genome,
+            islandsPath: Path,
+            ucscAnnLegacyFormat: Boolean
+    ): ListMultimap<Chromosome, CpGIsland> {
         val builder = ImmutableListMultimap.builder<Chromosome, CpGIsland>()
         val chromosomes = genome.chromosomeNamesMap
 
         val headers = arrayOf("chrom", "start_offset", "end_offset", "name", "length",
                 "cpg_num", "gc_num", "per_cpg", "per_gc", "obs_exp")
 
-        val csvFormat = if (AnnotationsConfig[genome.build].ucscAnnLegacyFormat) {
+        val csvFormat = if (ucscAnnLegacyFormat) {
             //Builds missing `bin` column in the annotations
             CSVFormat.TDF.withHeader(*headers)
         } else {

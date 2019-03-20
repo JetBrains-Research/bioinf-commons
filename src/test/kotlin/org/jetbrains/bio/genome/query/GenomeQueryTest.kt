@@ -1,13 +1,13 @@
 package org.jetbrains.bio.genome.query
 
-import org.apache.log4j.SimpleLayout
-import org.apache.log4j.WriterAppender
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
-import org.jetbrains.bio.util.*
+import org.jetbrains.bio.util.bufferedWriter
+import org.jetbrains.bio.util.div
+import org.jetbrains.bio.util.name
+import org.jetbrains.bio.util.withTempDirectory
 import org.junit.Test
-import java.io.ByteArrayOutputStream
 import kotlin.test.*
 
 class GenomeQueryTest {
@@ -30,22 +30,6 @@ class GenomeQueryTest {
         assertEquals("to1[chr1]", genomeQuery.only(listOf("chr1")).id)
     }
 
-    @Test
-    fun testChromSizes() {
-        withTempDirectory("foo") { dir ->
-            val chromSizesPath = dir / "to1.chrom.sizes"
-            chromSizesPath.bufferedWriter().use {
-                it.write("chr1\t100000\n")
-                it.write("chr10\t100000\n")
-                it.write("chr100\t100000\n")
-            }
-            val g0 = Genome["to1"]
-            assertEquals("[chr1, chr2, chr3, chrX, chrM]", g0.chromosomes.map { it.name }.toString())
-            val g1 = Genome["to1", chromSizesPath]
-            assertEquals("[chr1, chr10, chr100]", g1.chromosomes.map { it.name }.toString())
-            assertNotEquals(g0, g1)
-        }
-    }
 
 
     @Test
@@ -58,11 +42,14 @@ class GenomeQueryTest {
                 it.write("chr10\t100000\n")
                 it.write("chr100\t100000\n")
             }
-            val genome = Genome["to1", chromSizesPath]
+            val genome = Genome["to1.${chromSizesPath.name}", chromSizesPath]
+
             val genomeQuery = GenomeQuery(genome)
             val restricted = genomeQuery.only(listOf("chr1"))
+
             assertSame(genome, genomeQuery.genome)
             assertSame(genome, restricted.genome)
+
             assertNotEquals(genome, GenomeQuery(Genome["to1"]).genome)
         }
     }
@@ -114,28 +101,9 @@ class GenomeQueryTest {
     }
 
 
-    @Test
-    fun testCreateGenomeQuery() {
-        withTempFile("foo", ".galaxy.dat") { path ->
-            val logContent = ByteArrayOutputStream()
-            val appender = WriterAppender(SimpleLayout(), logContent).apply { name = "test appender" }
-            GenomeQuery.LOG.addAppender(appender)
-            try {
-                val genomeQuery = GenomeQuery(path)
-                val build = path.fileName.toString().substringBefore(".")
-                assertEquals(genomeQuery.build, build)
-                assertTrue("Unexpected chrom sizes file name: ${path.fileName}, " +
-                        "expected <build>.chrom.sizes. Detected build: $build" in
-                        logContent.toString())
-            } finally {
-                MultitaskProgress.LOG.removeAppender(appender)
-            }
-        }
-    }
-
     @Test(expected = IllegalStateException::class)
     fun parseGenomeDefinition_EmptyRestriction() {
-        GenomeQuery.parseGenomeDefinition("to1[]")
+        GenomeQuery.parseGenomeQueryId("to1[]")
     }
 
     @Test
@@ -150,7 +118,7 @@ class GenomeQueryTest {
     }
 
     private fun checkGenomeDefParsing(expected: Pair<String, Array<String>>, genomeStr: String) {
-        val (actualBuild, actualRestriction) = GenomeQuery.parseGenomeDefinition(genomeStr)
+        val (actualBuild, actualRestriction) = GenomeQuery.parseGenomeQueryId(genomeStr)
         assertEquals(expected.first, actualBuild)
         assertEquals(expected.second.joinToString(), actualRestriction.joinToString())
     }

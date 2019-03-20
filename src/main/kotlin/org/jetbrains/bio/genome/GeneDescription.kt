@@ -8,21 +8,20 @@ import com.google.common.collect.PeekingIterator
 import org.apache.commons.csv.CSVRecord
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.util.checkOrRecalculate
-import org.jetbrains.bio.util.div
 import java.nio.file.Path
 import java.util.*
 
 
 object GeneDescription {
-    private val CACHE: Cache<String, Map<String, String>> = CacheBuilder.newBuilder()
+    private val CACHE: Cache<Genome, Map<String, String>> = CacheBuilder.newBuilder()
             .softValues()
             .initialCapacity(1)
-            .build<String, Map<String, String>>()
+            .build<Genome, Map<String, String>>()
 
 
     fun getMap(genome: Genome): Map<String, String> {
-        return CACHE.get(genome.build) {
-            val descriptionPath = genome.dataPath / "description.tsv"
+        return CACHE.get(genome) {
+            val descriptionPath = genome.genesDescriptionsPath
             descriptionPath.checkOrRecalculate("Genes") { output ->
                 val pairs = downloadAnnotation(genome).toList()
                 DataFrame()
@@ -47,7 +46,7 @@ object GeneDescription {
 
         val genesDescriptionMap = TreeMap<String, String>()
         val attributes = listOf("ensembl_gene_id", "description")
-        Mart.forGenome(genome)?.query(attributes) { pipe ->
+        genome.annotationsConfig?.mart?.query(attributes) { pipe ->
             val block = ArrayList<CSVRecord>(1)
             val it = Iterators.peekingIterator(pipe.iterator())
             while (it.hasNext()) {
@@ -65,7 +64,7 @@ object GeneDescription {
                     continue
                 }
 
-                genesDescriptionMap.put(ensemblGeneId, description)
+                genesDescriptionMap[ensemblGeneId] = description
             }
         }
         return genesDescriptionMap

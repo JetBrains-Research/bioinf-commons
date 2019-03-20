@@ -2,6 +2,7 @@ package org.jetbrains.bio.genome
 
 import com.google.common.collect.Ordering
 import org.jetbrains.bio.util.name
+import org.jetbrains.bio.util.toPath
 import org.junit.Test
 import java.util.*
 import kotlin.test.*
@@ -329,14 +330,23 @@ class TranscriptTest {
     }
 
     @Test
-    fun transcriptsGtfAndJsonPaths() {
+    fun cachedTranscriptsJsonPath() {
         // only 'to1' doesn't require annotations downloading
         val genome = Genome["to1"]
-        val (gtf, json) = Transcripts.transcriptsGtfAndJsonPaths(genome)
+
+        val gtf = genome.genesGtfPath(false)
         assertEquals("genes.gtf.gz", gtf.name)
 
         // XXX json files for normal genomes are bundled annotations.tar.gz
         // do not change this test data without updating files in annotations.tar.gz
-        assertEquals("genes.gtf.json.gz", json.name)
+        assertEquals(
+                "genes.gtf.json.gz",
+                Transcripts.cachedTranscriptsJsonPath(gtf).name
+        )
+
+        assertEquals(
+                "foo/Homo_sapiens.GRCh37.87.gtf.json.gz".toPath(),
+                Transcripts.cachedTranscriptsJsonPath("foo/Homo_sapiens.GRCh37.87.gtf.gz".toPath())
+        )
     }
 }
