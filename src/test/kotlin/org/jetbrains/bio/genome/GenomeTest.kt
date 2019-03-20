@@ -88,14 +88,14 @@ class GenomeTest {
     }
 
     @Test
-    fun testCreateGenomeQuery() {
+    fun testChromSizes_LoggedError() {
         withTempFile("foo", ".galaxy.dat") { path ->
             val logContent = ByteArrayOutputStream()
 
-            // TODO: @oleg, why do we need this appender?
-
+            //XXX: Add log appender to catch warning about suspicious genome name
             val appender = WriterAppender(SimpleLayout(), logContent).apply { name = "test appender" }
-            GenomeQuery.LOG.addAppender(appender)
+            Genome.LOG.addAppender(appender)
+            
             try {
                 val genome = Genome[path]
                 val build = path.fileName.toString().substringBefore(".")
