@@ -100,6 +100,22 @@ class GenomeQuery(val genome: Genome,
             LOG.debug("Chrom sizes name: $fileName. Detected build: $build")
             return build
         }
+
+        /**
+         * Parses [String] as genome with possible custom chromosomes set.
+         * Is designed to support serialized [GenomeQuery.id]
+         *
+         * @param str Genome defining string,  e.g. "hg19" or "hg19[chr1,chr2]"
+         */
+        fun parseGenomeDefinition(str: String): Pair<String, Array<String>> {
+            if ("[" !in str) {
+                return str to emptyArray()
+            }
+            val build = str.substringBefore('[')
+            val names = str.substringAfter('[').replace("]", "").split(',').filter { it.isNotBlank() }.toTypedArray()
+            check(names.isNotEmpty()) { "Empty restriction is not allowed within []" }
+            return build to names
+        }
     }
 }
 

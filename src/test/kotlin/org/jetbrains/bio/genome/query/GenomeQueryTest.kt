@@ -132,4 +132,26 @@ class GenomeQueryTest {
             }
         }
     }
+
+    @Test(expected = IllegalStateException::class)
+    fun parseGenomeDefinition_EmptyRestriction() {
+        GenomeQuery.parseGenomeDefinition("to1[]")
+    }
+
+    @Test
+    fun parseGenomeDefinition_Restrictions() {
+        checkGenomeDefParsing("to1" to arrayOf("chr1", "chr3"), "to1[chr1,chr3]")
+        checkGenomeDefParsing("to1" to arrayOf("chr1"), "to1[chr1]")
+    }
+
+    @Test
+    fun parseGenomeDefinition_BuildName() {
+        checkGenomeDefParsing("to1" to emptyArray(), "to1")
+    }
+
+    private fun checkGenomeDefParsing(expected: Pair<String, Array<String>>, genomeStr: String) {
+        val (actualBuild, actualRestriction) = GenomeQuery.parseGenomeDefinition(genomeStr)
+        assertEquals(expected.first, actualBuild)
+        assertEquals(expected.second.joinToString(), actualRestriction.joinToString())
+    }
 }

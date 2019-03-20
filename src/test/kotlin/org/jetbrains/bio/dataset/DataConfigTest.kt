@@ -1,7 +1,5 @@
 package org.jetbrains.bio.dataset
 
-import org.jetbrains.bio.genome.Genome
-import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.util.bufferedWriter
 import org.jetbrains.bio.util.stem
 import org.jetbrains.bio.util.withTempDirectory
@@ -275,34 +273,4 @@ class ReplicatedDataTest {
             assertFalse(data.failedTrack)
         }
     }
-
-    @Test(expected = IllegalStateException::class)
-    fun parseGenomeDefinition_EmptyRestriction() {
-        DataConfig.parseGenomeDefinition("to1[]")
-    }
-
-    @Test
-    fun parseGenomeDefinition_Restrictions() {
-        val (genome, restictions) = DataConfig.parseGenomeDefinition("to1[chr1,chr3]")
-        assertEquals("to1", genome.build)
-        assertEquals(arrayOf("chr1", "chr3"), restictions)
-    }
-
-    @Test
-    fun parseGenomeDefinition() {
-        assertEquals(
-                Genome["to1"].chromosomes.size,
-                DataConfig.parseGenomeDefinition("to1").let { GenomeQuery(it.first, *it.second) }.get().size
-        )
-        assertEquals(
-                1,
-                DataConfig.parseGenomeDefinition("to1[chr1]").let { GenomeQuery(it.first, *it.second) }.get().size
-        )
-        assertEquals(
-                2,
-                DataConfig.parseGenomeDefinition("to1[chr1,chr3]").let { GenomeQuery(it.first, *it.second) }.get().size
-        )
-    }
-
-
 }
