@@ -2,9 +2,11 @@ package org.jetbrains.bio.util
 
 import joptsimple.*
 import org.jetbrains.bio.io.BedFormat
+import org.jline.terminal.TerminalBuilder
 import java.io.StringWriter
 import java.nio.file.Path
 import java.util.*
+import kotlin.math.max
 
 /**
  * NOTE:
@@ -12,8 +14,29 @@ import java.util.*
  */
 operator fun OptionSet.contains(option: String): Boolean = has(option)
 
-fun OptionParser.parse(args: Array<String>, description: String? = null, block: (OptionSet) -> Unit) {
+/**
+ * @param args Cmdline arguments
+ * @param description Tool description
+ * @param acceptNonOptionArguments Pass true in order to allow positional arguments 
+ * @param block Additional cmdline args description
+ */
+fun OptionParser.parse(
+        args: Array<String>,
+        description: String? = null,
+        acceptNonOptionArguments : Boolean = false,
+        block: (OptionSet) -> Unit
+) {
     try {
+        formatHelpWith(BuiltinHelpFormatter(
+                max(80, try {
+                    TerminalBuilder.terminal().width
+                } catch (e: Exception) {
+                    System.err.println("Warning: Cannot defined terminal width: ${e.message}")
+                    0
+                }),
+                2
+        ))
+
         acceptsAll(listOf("h", "?", "help"), "Show help").forHelp()
 
         val options = parse(*args)
@@ -32,7 +55,7 @@ fun OptionParser.parse(args: Array<String>, description: String? = null, block: 
             }
         }
 
-        if (options.nonOptionArguments().isNotEmpty()) {
+        if (!acceptNonOptionArguments && options.nonOptionArguments().isNotEmpty()) {
             fail("Unrecognized options: ${options.nonOptionArguments()}")
         }
 
