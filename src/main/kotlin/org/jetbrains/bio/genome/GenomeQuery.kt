@@ -28,18 +28,6 @@ class GenomeQuery (val genome: Genome, vararg names: String) {
 
     fun get(): List<Chromosome> = chromosomes
 
-    fun only(chromosomes: List<String>): GenomeQuery {
-        chromosomes.forEach {
-            check(it in this) {
-                "Unknown chromosome name: $it for $description"
-            }
-        }
-        if (chromosomes.sorted() == get().map { it.name }.sorted()) {
-            return this
-        }
-        return GenomeQuery(genome, *chromosomes.distinct().toTypedArray())
-    }
-
     val id: String
         get() = build + if (restriction != null) "[${restriction.sorted().joinToString(",")}]" else ""
 

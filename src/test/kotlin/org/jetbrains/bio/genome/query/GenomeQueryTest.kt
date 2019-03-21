@@ -22,12 +22,15 @@ class GenomeQueryTest {
     }
 
     @Test
-    fun testOnly() {
-        val genomeQuery = GenomeQuery(Genome["to1"])
-        val same = genomeQuery.only(genomeQuery.get().map { it.name })
-        assertSame(genomeQuery, same)
-        assertEquals("to1", same.id)
-        assertEquals("to1[chr1]", genomeQuery.only(listOf("chr1")).id)
+    fun testId() {
+        val gq = GenomeQuery(Genome["to1"])
+        val same = GenomeQuery(gq.genome, *gq.get().map { it.name }.toTypedArray())
+
+        assertEquals("to1[chr1,chr2,chr3,chrM,chrX]", same.id)
+        assertNotEquals(gq.id, same.id)
+        assertNotSame(gq, same)
+
+        assertEquals("to1[chr1]", GenomeQuery(gq.genome, "chr1").id)
     }
 
 
@@ -45,7 +48,7 @@ class GenomeQueryTest {
             val genome = Genome["to1.${chromSizesPath.name}", chromSizesPath]
 
             val genomeQuery = GenomeQuery(genome)
-            val restricted = genomeQuery.only(listOf("chr1"))
+            val restricted = GenomeQuery(genomeQuery.genome, "chr1")
 
             assertSame(genome, genomeQuery.genome)
             assertSame(genome, restricted.genome)
