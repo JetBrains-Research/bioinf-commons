@@ -3,6 +3,15 @@ bioinf-commons changelog
 
 Here you can see the full list of changes between each release.
 
+Version 0.0.3
+-------------
+
+Released on March 22, 2019
+
+- Reworked `Genome` object configuration, by annotations file and naming conventions or explicitly
+- Command line interfaces improvement - use `jline` library to detect actual terminal width
+-
+
 Version 0.0.2
 -------------
 
