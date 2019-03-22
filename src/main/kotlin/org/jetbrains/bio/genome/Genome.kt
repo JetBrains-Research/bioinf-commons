@@ -257,8 +257,8 @@ class Genome private constructor(
          * See [Genome] constructor
          */
         operator fun get(
-                build: String,
                 chromSizesPath: Path,
+                build: String = buildNameFrom(chromSizesPath),
                 annotationsConfig: GenomeAnnotationsConfig? = null,
                 dataPath: Path? = null,
                 cpgIslandsPath: Path? = null,
@@ -284,8 +284,6 @@ class Genome private constructor(
 
             )
         }
-
-        operator fun get(chromSizesPath: Path) = this[buildNameFrom(chromSizesPath), chromSizesPath]
 
         private fun getOrAdd(build: String, customized: Boolean, genomeProvider: () -> Genome): Genome =
                 if (!customized) {

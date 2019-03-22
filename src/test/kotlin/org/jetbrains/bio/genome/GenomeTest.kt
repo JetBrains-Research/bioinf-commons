@@ -35,14 +35,14 @@ class GenomeTest {
                 it.write("chr2\t100000\n")
                 it.write("chr3\t100000\n")
             }
-            assertSame(Genome["to2", chromSizesPath1], Genome["to2", chromSizesPath1])
-            assertEquals(Genome["to2", chromSizesPath1], Genome["to2", chromSizesPath1])
-            assertNotEquals(Genome["to3", chromSizesPath1], Genome["to4", chromSizesPath1])
+            assertSame(Genome[chromSizesPath1, "to2"], Genome[chromSizesPath1, "to2"])
+            assertEquals(Genome[chromSizesPath1, "to2"], Genome[chromSizesPath1, "to2"])
+            assertNotEquals(Genome[chromSizesPath1, "to3"], Genome[chromSizesPath1, "to4"])
 
             // At the moment we check only build & chrom size path
             assertSame(
-                    Genome.get("to2", chromSizesPath1, genesDescriptionsPath = "vers1".toPath()),
-                    Genome.get("to2", chromSizesPath1, genesDescriptionsPath = "vers2".toPath())
+                    Genome.get(chromSizesPath1, "to2", genesDescriptionsPath = "vers1".toPath()),
+                    Genome.get(chromSizesPath1, "to2", genesDescriptionsPath = "vers2".toPath())
             )
         }
     }
@@ -63,8 +63,8 @@ class GenomeTest {
             }
 
             assertNotEquals(
-                    Genome["to2", chromSizesPath1],
-                    Genome["to2", chromSizesPath2]
+                    Genome[chromSizesPath1, "to2"],
+                    Genome[chromSizesPath2, "to2"]
             )
         }
     }
@@ -81,7 +81,7 @@ class GenomeTest {
             val g0 = Genome["to1"]
             assertEquals("chr1, chr2, chr3, chrX, chrM", g0.chromosomes.joinToString { it.name })
 
-            val g1 = Genome["to1.${chromSizesPath.name}", chromSizesPath]
+            val g1 = Genome[chromSizesPath, "to1.${chromSizesPath.name}"]
             assertEquals("chr1, chr10, chr100", g1.chromosomes.joinToString { it.name })
             assertNotEquals(g0, g1)
         }

@@ -134,9 +134,25 @@ abstract class PathConverter : ValueConverter<Path> {
             }
         }
 
-        fun noCheck(): PathConverter = object : PathConverter() {
+        fun noCheck(ext: String? = null): PathConverter = object : PathConverter() {
             @Throws(ValueConversionException::class)
-            override fun check(path: Path) {}
+            override fun check(path: Path) {
+                if (ext != null && path.extension.toLowerCase() != ext.toLowerCase()) {
+                    throw ValueConversionException("Expected *.$ext file, but was ${path.fileName}")
+                }
+            }
+        }
+
+        fun notExists(ext: String? = null): PathConverter = object : PathConverter() {
+            @Throws(ValueConversionException::class)
+            override fun check(path: Path) {
+                if (path.exists) {
+                    throw ValueConversionException("Path $path already exist")
+                }
+                if (ext != null && path.extension.toLowerCase() != ext.toLowerCase()) {
+                    throw ValueConversionException("Expected *.$ext file, but was ${path.fileName}")
+                }
+            }
         }
 
         fun bedtoolsValidFile(ext: String? = null): PathConverter = object : PathConverter() {

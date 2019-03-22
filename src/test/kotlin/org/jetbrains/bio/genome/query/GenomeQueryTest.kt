@@ -45,7 +45,7 @@ class GenomeQueryTest {
                 it.write("chr10\t100000\n")
                 it.write("chr100\t100000\n")
             }
-            val genome = Genome["to1.${chromSizesPath.name}", chromSizesPath]
+            val genome = Genome[chromSizesPath, "to1.${chromSizesPath.name}"]
 
             val genomeQuery = GenomeQuery(genome)
             val restricted = GenomeQuery(genomeQuery.genome, "chr1")
