@@ -10,6 +10,7 @@ import org.jetbrains.bio.io.toBedEntry
 import org.jetbrains.bio.util.withTempFile
 import org.junit.Assert.assertArrayEquals
 import org.junit.Test
+import java.util.*
 import kotlin.test.*
 
 class SingleEndCoverageTest {
@@ -293,6 +294,11 @@ class SingleEndCoverageTest {
         }
     }
 }
+
+/**
+ * Simplifies reading and writing test code
+ */
+internal fun SingleEndCoverage.withFragment(fragment: Int): SingleEndCoverage = withFragment(Optional.of(fragment))
 
 
 internal fun SingleEndCoverage.Builder.putAll(chromosome: Chromosome,

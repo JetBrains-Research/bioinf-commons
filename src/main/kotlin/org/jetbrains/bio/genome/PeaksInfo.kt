@@ -9,6 +9,7 @@ import org.jetbrains.bio.util.presentablePath
 import org.jetbrains.bio.util.size
 import java.net.URI
 import java.nio.file.Path
+import java.util.*
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
@@ -27,7 +28,7 @@ object PeaksInfo {
                 peaksStream: Stream<Location>,
                 src: URI?,
                 paths: List<Path>,
-                fragment: Int? = null): Map<String, String> {
+                fragment: Optional<Int> = Optional.empty()): Map<String, String> {
         val peaks = peaksStream.collect(Collectors.toList())
         val peaksLengths = peaks.map { it.length().toDouble() }.toDoubleArray()
         val peaksCount = peaksLengths.count()

@@ -13,6 +13,7 @@ import org.jetbrains.bio.genome.containers.genomeStrandMap
 import org.jetbrains.bio.npy.NpzFile
 import java.io.IOException
 import java.nio.file.Path
+import java.util.*
 
 /**
  * The container maintains a sorted list of tag offsets for each chromosome and strand.
@@ -87,10 +88,10 @@ class SingleEndCoverage private constructor(
      * Sets fragment size to specified value or reverts to a detected one if "null" is provided.
      * Returns a copy of the immutable [SingleEndCoverage] object.
      */
-    fun withFragment(fragment: Int?): SingleEndCoverage = if (fragment == null) {
-        SingleEndCoverage(genomeQuery, detectedFragment, data = data)
+    fun withFragment(fragment: Optional<Int>): SingleEndCoverage = if (fragment.isPresent) {
+        SingleEndCoverage(genomeQuery, detectedFragment, fragment.get(), data)
     } else {
-        SingleEndCoverage(genomeQuery, detectedFragment, fragment, data)
+        SingleEndCoverage(genomeQuery, detectedFragment, data = data)
     }
 
     /**

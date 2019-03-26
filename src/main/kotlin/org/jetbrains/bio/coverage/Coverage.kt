@@ -10,6 +10,7 @@ import org.jetbrains.bio.genome.Strand
 import org.jetbrains.bio.npy.NpzFile
 import java.io.IOException
 import java.nio.file.Path
+import java.util.*
 
 
 /**
@@ -48,7 +49,7 @@ interface Coverage {
         internal fun load(
                 inputPath: Path,
                 genomeQuery: GenomeQuery,
-                fragment: Int? = null
+                fragment: Optional<Int> = Optional.empty()
         ): Coverage {
             return NpzFile.read(inputPath).use { reader ->
                 val version = reader[VERSION_FIELD].asIntArray().single()

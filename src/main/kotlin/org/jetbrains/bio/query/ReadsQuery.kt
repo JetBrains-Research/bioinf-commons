@@ -6,6 +6,7 @@ import org.jetbrains.bio.coverage.*
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.util.*
 import java.nio.file.Path
+import java.util.*
 
 /**
  * Query of tags coverage created from a BAM or BED/BED.GZ file.
@@ -23,20 +24,20 @@ class ReadsQuery(
         val genomeQuery: GenomeQuery,
         val path: Path,
         val unique: Boolean = true,
-        val fragment: Int? = null, // ignored if paired
+        val fragment: Optional<Int> = Optional.empty(),
         val logFragmentSize: Boolean = true
 ): CachingInputQuery<Coverage>() {
 
     override fun getUncached(): Coverage = coverage()
 
     override val description: String
-        get() = "Path: $path, Unique: $unique, Fragment: $fragment"
+        get() = "Path: $path, Unique: $unique, Fragment: ${fragment.fragmentToString()}"
 
     fun coverage(): Coverage {
         val npz = npzPath()
         npz.checkOrRecalculate("Coverage for ${path.name}") { (npzPath) ->
             val paired = isPaired(path)
-            if (paired && fragment == null) {
+            if (paired && !fragment.isPresent) {
                 PairedEndCoverage.builder(genomeQuery).apply {
                     val unpaired = processPairedReads(genomeQuery, path) { chr, pos, pnext, len ->
                         process(chr, pos, pnext, len)
@@ -49,7 +50,7 @@ class ReadsQuery(
                 }.build(unique).save(npzPath)
             } else {
                 if (paired) {
-                    LOG.info("Fragment option ($fragment) forces reading paired-end reads as single-end!")
+                    LOG.info("Fragment option (${fragment.get()}) forces reading paired-end reads as single-end!")
                 }
                 SingleEndCoverage.builder(genomeQuery).apply {
                     processReads(genomeQuery, path) {
@@ -66,18 +67,18 @@ class ReadsQuery(
                         "Fragment size: ${coverage.actualFragment} bp " +
                                 "(overrides cross-correlation " +
                                 "estimate ${coverage.detectedFragment})"
-                    fragment == null ->
+                    !fragment.isPresent ->
                         "Fragment size: ${coverage.detectedFragment} bp " +
                                 "(cross-correlation estimate)"
                     else ->
                         "Fragment size: ${coverage.detectedFragment} bp " +
                                 "(user input is equal to cross-correlation estimate)"
                 }
-                is PairedEndCoverage -> "Reads: paired-ended, " + if (fragment == null) {
-                    "Fragment size: ${coverage.averageInsertSize} bp (average; inferred from read pairs)"
-                } else {
+                is PairedEndCoverage -> "Reads: paired-ended, " + if (fragment.isPresent) {
                     "Fragment size: ${coverage.averageInsertSize} bp (average; inferred from read pairs; " +
-                            "user input $fragment is ignored)"
+                            "user input ${fragment.get()} is ignored)"
+                } else {
+                    "Fragment size: ${coverage.averageInsertSize} bp (average; inferred from read pairs)"
                 }
                 else -> throw IllegalArgumentException("Unknown library type: ${coverage::class.java}")
             }
@@ -92,10 +93,10 @@ class ReadsQuery(
             (if (unique) "_unique" else "")
 
     override val id: String
-        get() = idStem + (if (fragment != null) "_$fragment" else "")
+        get() = idStem + (if (fragment.isPresent) "_${fragment.get()}" else "")
 
     // we don't need to store fragment size in the file name
-    private val fileId = idStem + (if (fragment != null) "_raw" else "")
+    private val fileId = idStem + (if (fragment.isPresent) "_raw" else "")
 
     companion object {
         val LOG: Logger = Logger.getLogger(ReadsQuery::class.java)
@@ -115,3 +116,5 @@ val Path.stemGz: String get() {
         else -> stem
     }
 }
+
+fun Optional<Int>.fragmentToString(): String = map(Int::toString).orElse("auto")

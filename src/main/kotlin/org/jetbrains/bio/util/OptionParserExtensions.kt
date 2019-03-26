@@ -192,3 +192,29 @@ abstract class PathConverter : ValueConverter<Path> {
 
     }
 }
+
+/**
+ * Converts an integer number i to Optional.of(i), and the string "auto" to Optional.empty().
+ * We use e.g. it to read fragment and bin sizes in Span.
+ */
+class OptionalIntConverter: ValueConverter<Optional<Int>> {
+
+    @Throws(ValueConversionException::class)
+    override fun convert(value: String): Optional<Int> {
+        if (value == "auto") {
+            return Optional.empty()
+        }
+        try {
+            return Optional.of(Integer.parseInt(value))
+        } catch (e: NumberFormatException) {
+            throw ValueConversionException("Expected an integer number or 'auto', got $value", e)
+        }
+    }
+
+    /**
+     * It seems impossible to just write Optional<Int>::class.java, but the class of an instance works fine.
+     */
+    override fun valueType() = (Optional.empty<Int>())::class.java
+
+    override fun valuePattern(): String? = null
+}
