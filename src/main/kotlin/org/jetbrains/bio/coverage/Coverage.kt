@@ -10,7 +10,6 @@ import org.jetbrains.bio.genome.Strand
 import org.jetbrains.bio.npy.NpzFile
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
 
 
 /**
@@ -49,7 +48,7 @@ interface Coverage {
         internal fun load(
                 inputPath: Path,
                 genomeQuery: GenomeQuery,
-                fragment: Optional<Int> = Optional.empty()
+                fragment: Fragment = AutoFragment
         ): Coverage {
             return NpzFile.read(inputPath).use { reader ->
                 val version = reader[VERSION_FIELD].asIntArray().single()
@@ -68,6 +67,35 @@ interface Coverage {
     }
 }
 
+
+sealed class Fragment {
+
+    /**
+     * At some point, fragment was stored as Int?, with null corresponding to what now is [AutoFragment].
+     * Since some parts of code (like ID generation) depend on this convention, this is a useful conversion property.
+     */
+    abstract val nullableInt: Int?
+
+    companion object {
+        @Throws(NumberFormatException::class)
+        fun fromString(value: String): Fragment {
+            if (value == "auto") {
+                return AutoFragment
+            }
+            return FixedFragment(Integer.parseInt(value))
+        }
+    }
+}
+
+data class FixedFragment(val size: Int) : Fragment() {
+    override fun toString(): String = size.toString()
+    override val nullableInt: Int? = size
+}
+
+object AutoFragment : Fragment() {
+    override fun toString(): String = "auto"
+    override val nullableInt: Int? = null
+}
 
 /**
  * Returns the insertion index of [target] into a sorted list.

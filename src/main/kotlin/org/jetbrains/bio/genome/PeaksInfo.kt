@@ -2,7 +2,9 @@ package org.jetbrains.bio.genome
 
 import org.apache.commons.math3.stat.StatUtils
 import org.apache.log4j.Logger
+import org.jetbrains.bio.coverage.AutoFragment
 import org.jetbrains.bio.coverage.Coverage
+import org.jetbrains.bio.coverage.Fragment
 import org.jetbrains.bio.query.ReadsQuery
 import org.jetbrains.bio.util.isAccessible
 import org.jetbrains.bio.util.presentablePath
@@ -28,7 +30,7 @@ object PeaksInfo {
                 peaksStream: Stream<Location>,
                 src: URI?,
                 paths: List<Path>,
-                fragment: Optional<Int> = Optional.empty()): Map<String, String> {
+                fragment: Fragment = AutoFragment): Map<String, String> {
         val peaks = peaksStream.collect(Collectors.toList())
         val peaksLengths = peaks.map { it.length().toDouble() }.toDoubleArray()
         val peaksCount = peaksLengths.count()

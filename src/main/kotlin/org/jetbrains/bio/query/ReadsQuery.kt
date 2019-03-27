@@ -24,20 +24,20 @@ class ReadsQuery(
         val genomeQuery: GenomeQuery,
         val path: Path,
         val unique: Boolean = true,
-        val fragment: Optional<Int> = Optional.empty(),
+        val fragment: Fragment = AutoFragment,
         val logFragmentSize: Boolean = true
-): CachingInputQuery<Coverage>() {
+) : CachingInputQuery<Coverage>() {
 
     override fun getUncached(): Coverage = coverage()
 
     override val description: String
-        get() = "Path: $path, Unique: $unique, Fragment: ${fragment.fragmentToString()}"
+        get() = "Path: $path, Unique: $unique, Fragment: ${fragment}"
 
     fun coverage(): Coverage {
         val npz = npzPath()
         npz.checkOrRecalculate("Coverage for ${path.name}") { (npzPath) ->
             val paired = isPaired(path)
-            if (paired && !fragment.isPresent) {
+            if (paired && fragment is AutoFragment) {
                 PairedEndCoverage.builder(genomeQuery).apply {
                     val unpaired = processPairedReads(genomeQuery, path) { chr, pos, pnext, len ->
                         process(chr, pos, pnext, len)
@@ -50,7 +50,7 @@ class ReadsQuery(
                 }.build(unique).save(npzPath)
             } else {
                 if (paired) {
-                    LOG.info("Fragment option (${fragment.get()}) forces reading paired-end reads as single-end!")
+                    LOG.info("Fragment option ($fragment) forces reading paired-end reads as single-end!")
                 }
                 SingleEndCoverage.builder(genomeQuery).apply {
                     processReads(genomeQuery, path) {
@@ -67,16 +67,16 @@ class ReadsQuery(
                         "Fragment size: ${coverage.actualFragment} bp " +
                                 "(overrides cross-correlation " +
                                 "estimate ${coverage.detectedFragment})"
-                    !fragment.isPresent ->
+                    fragment is AutoFragment ->
                         "Fragment size: ${coverage.detectedFragment} bp " +
                                 "(cross-correlation estimate)"
                     else ->
                         "Fragment size: ${coverage.detectedFragment} bp " +
                                 "(user input is equal to cross-correlation estimate)"
                 }
-                is PairedEndCoverage -> "Reads: paired-ended, " + if (fragment.isPresent) {
+                is PairedEndCoverage -> "Reads: paired-ended, " + if (fragment is FixedFragment) {
                     "Fragment size: ${coverage.averageInsertSize} bp (average; inferred from read pairs; " +
-                            "user input ${fragment.get()} is ignored)"
+                            "user input $fragment is ignored)"
                 } else {
                     "Fragment size: ${coverage.averageInsertSize} bp (average; inferred from read pairs)"
                 }
@@ -93,10 +93,10 @@ class ReadsQuery(
             (if (unique) "_unique" else "")
 
     override val id: String
-        get() = idStem + (if (fragment.isPresent) "_${fragment.get()}" else "")
+        get() = idStem + (if (fragment is FixedFragment) "_$fragment" else "")
 
     // we don't need to store fragment size in the file name
-    private val fileId = idStem + (if (fragment.isPresent) "_raw" else "")
+    private val fileId = idStem + (if (fragment is FixedFragment) "_raw" else "")
 
     companion object {
         val LOG: Logger = Logger.getLogger(ReadsQuery::class.java)

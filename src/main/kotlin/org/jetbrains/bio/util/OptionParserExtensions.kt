@@ -1,6 +1,7 @@
 package org.jetbrains.bio.util
 
 import joptsimple.*
+import org.jetbrains.bio.coverage.Fragment
 import org.jetbrains.bio.io.BedFormat
 import org.jline.terminal.TerminalBuilder
 import java.io.StringWriter
@@ -194,18 +195,14 @@ abstract class PathConverter : ValueConverter<Path> {
 }
 
 /**
- * Converts an integer number i to Optional.of(i), and the string "auto" to Optional.empty().
- * We use e.g. it to read fragment and bin sizes in Span.
+ * Converts an integer number i to FixedFragment(i), and the string "auto" to AutoFragment.
  */
-class OptionalIntConverter: ValueConverter<Optional<Int>> {
+class FragmentConverter : ValueConverter<Fragment> {
 
     @Throws(ValueConversionException::class)
-    override fun convert(value: String): Optional<Int> {
-        if (value == "auto") {
-            return Optional.empty()
-        }
+    override fun convert(value: String): Fragment {
         try {
-            return Optional.of(Integer.parseInt(value))
+            return Fragment.fromString(value)
         } catch (e: NumberFormatException) {
             throw ValueConversionException("Expected an integer number or 'auto', got $value", e)
         }
@@ -214,7 +211,7 @@ class OptionalIntConverter: ValueConverter<Optional<Int>> {
     /**
      * It seems impossible to just write Optional<Int>::class.java, but the class of an instance works fine.
      */
-    override fun valueType() = (Optional.empty<Int>())::class.java
+    override fun valueType() = Fragment::class.java
 
     override fun valuePattern(): String? = null
 }
