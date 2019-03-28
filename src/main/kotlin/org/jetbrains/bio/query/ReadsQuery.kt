@@ -6,7 +6,6 @@ import org.jetbrains.bio.coverage.*
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.util.*
 import java.nio.file.Path
-import java.util.*
 
 /**
  * Query of tags coverage created from a BAM or BED/BED.GZ file.
@@ -116,5 +115,3 @@ val Path.stemGz: String get() {
         else -> stem
     }
 }
-
-fun Optional<Int>.fragmentToString(): String = map(Int::toString).orElse("auto")
