@@ -126,7 +126,7 @@ abstract class PathConverter : ValueConverter<Path> {
             @Throws(ValueConversionException::class)
             override fun check(path: Path) {
                 if (path.notExists) {
-                    throw ValueConversionException("Path $path does not exist")
+                    throw ValueConversionException("Path $path does not exists")
                 }
                 if (ext != null && path.extension.toLowerCase() != ext.toLowerCase()) {
                     throw ValueConversionException("Expected *.$ext file, but was ${path.fileName}")
