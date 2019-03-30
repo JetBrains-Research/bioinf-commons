@@ -22,9 +22,10 @@ abstract class Progress protected constructor(
         /** Title to be displayed. */
         protected val title: String,
         /** The amount of time between progress reports. */
-        private val periodNanos: Long) {
-
-
+        private val periodNanos: Long,
+        /** Report into log file or stderr. Progress is often reported to stderr and stdout is kept clean */
+        private val reportToStderr: Boolean
+) {
     private val startTime = System.nanoTime()
     private var lastDuration = AtomicLong(-periodNanos)
 
@@ -40,7 +41,10 @@ abstract class Progress protected constructor(
 
     protected abstract fun format(duration: Long, processed: Long): String
 
-    protected fun tell(message: String) = LOG.info("$title: $message")
+    protected fun tell(message: String) = when {
+        reportToStderr -> System.err.println("$title: $message")
+        else -> LOG.info("$title: $message")
+    }
 
     abstract fun report(update: Long = 1)
 
@@ -64,13 +68,30 @@ abstract class Progress protected constructor(
 
         var period: Pair<Int, TimeUnit> = 10 to SECONDS
 
-        fun bounded(totalItems: Long): Progress {
-            return Bounded(title, period.second.toNanos(period.first.toLong()), totalItems)
-        }
+        /**
+         * @param totalItems Total items number
+         * @param reportToStderr If true report to [System.err] instead of LOG file
+         * @param percentsOnly If true report progress only in percents and omit items number. E.g. useful
+         *  when performance depends on locus length, so items number is summary loci length and progress reports
+         *  locus length on update. Items number in such cases is too big and useless for user.
+         */
+        fun bounded(
+                totalItems: Long,
+                reportToStderr: Boolean=false,
+                percentsOnly: Boolean=false
+        ): Progress = Bounded(
+                title,
+                period.second.toNanos(period.first.toLong()),
+                totalItems,
+                reportToStderr = reportToStderr,
+                percentsOnly = percentsOnly
+        )
 
-        fun unbounded(): Progress {
-            return Unbounded(title, period.second.toNanos(period.first.toLong()))
-        }
+        fun unbounded(reportToStderr: Boolean=false): Progress = Unbounded(
+                title,
+                period.second.toNanos(period.first.toLong()),
+                reportToStderr = reportToStderr
+        )
     }
 
     abstract fun processedItems(): Long
@@ -143,9 +164,13 @@ abstract class Progress protected constructor(
     }
 }
 
-private class Bounded(title: String?,
-                      timeOutNanos: Long,
-                      private val totalItems: Long) : Progress(title ?: "Progress", timeOutNanos) {
+private class Bounded(
+        title: String?,
+        timeOutNanos: Long,
+        private val totalItems: Long,
+        reportToStderr: Boolean,
+        private val percentsOnly: Boolean
+) : Progress(title ?: "Progress", timeOutNanos, reportToStderr = reportToStderr) {
 
     override fun processedItems() = totalItems
 
@@ -177,11 +202,15 @@ private class Bounded(title: String?,
     }
 
     override fun format(duration: Long, processed: Long): String {
-        val progressPart = if (totalItems > 0)
-            "%.0f%% (%,d/%,d), Elapsed time: ${asTime(duration)}".format(
-                    processed * 100.0 / totalItems, processed, totalItems)
-        else
+        val progressPart = if (totalItems > 0) {
+            val itemsStr = when {
+                percentsOnly -> ""
+                else -> " (%,d/%,d)".format(processed, totalItems)
+            }
+            "%.0f%%$itemsStr, Elapsed time: ${asTime(duration)}".format(processed * 100.0 / totalItems)
+        } else {
             "100%, Elapsed time: ${asTime(duration)}"
+        }
         val throughputPart = if (processed > 1) {
             val eta = asTime((duration / (processed.toDouble() / totalItems)).toLong() - duration)
             val throughput = asThroughput(processed, duration)
@@ -193,8 +222,11 @@ private class Bounded(title: String?,
     }
 }
 
-private class Unbounded(title: String?,
-                        timeOutNanos: Long) : Progress(title ?: "Processed items", timeOutNanos) {
+private class Unbounded(
+        title: String?,
+        timeOutNanos: Long,
+        reportToStderr: Boolean
+) : Progress(title ?: "Processed items", timeOutNanos, reportToStderr = reportToStderr) {
 
     override fun processedItems() = accumulator.get()
 
