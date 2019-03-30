@@ -56,7 +56,7 @@ fun OptionParser.parse(
         }
 
         if (!acceptNonOptionArguments && options.nonOptionArguments().isNotEmpty()) {
-            fail("Unrecognized options: ${options.nonOptionArguments()}")
+            fail("Unrecognized options: ${options.nonOptionArguments()}", args)
         }
 
         block(options)
@@ -84,19 +84,24 @@ fun OptionParser.parse(
         //    sys property in checkOrFail() method which is useful in method checking CLI behaviour.
         if (e is OptionException) {
             if (e.cause != null && e.cause is ValueConversionException) {
-                fail(e.cause!!.message!!)
+                fail(e.cause!!.message!!, args)
             } else {
-                fail(e.message!!)
+                fail(e.message!!, args)
             }
         } else {
             e.printStackTrace()
-            fail(e.cause?.message ?: e.message!!)
+            fail(e.cause?.message ?: e.message!!, args)
         }
     }
 }
 
-fun OptionParser.fail(message: String) {
+fun OptionParser.fail(message: String, args: Array<String>? = null) {
     val help = StringWriter()
+
+    if (args != null) {
+        System.err.print("Arguments: ")
+        System.err.println(Arrays.toString(args))
+    }
     printHelpOn(help)
     checkOrFail(false) { "$message\n$help" }
 }
