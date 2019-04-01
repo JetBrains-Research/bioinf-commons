@@ -1,6 +1,7 @@
 package org.jetbrains.bio.statistics.emission
 
 import org.apache.commons.math3.special.Gamma
+import org.apache.log4j.Logger
 import org.jetbrains.bio.statistics.MoreMath
 import org.jetbrains.bio.statistics.distribution.NegativeBinomialDistribution
 import org.jetbrains.bio.statistics.distribution.Sampling
@@ -18,9 +19,12 @@ class NegBinEmissionScheme(mean: Double, failures: Double) :
     var failures: Double = failures
         private set
 
-    @Transient private var logMean: Double = 0.0
-    @Transient private var fLog1MinusPMinusLogGammaF: Double = 0.0
-    @Transient private var logP: Double = 0.0
+    @Transient
+    private var logMean: Double = 0.0
+    @Transient
+    private var fLog1MinusPMinusLogGammaF: Double = 0.0
+    @Transient
+    private var logP: Double = 0.0
 
     init {
         updateTransients()
@@ -47,6 +51,7 @@ class NegBinEmissionScheme(mean: Double, failures: Double) :
     override fun update(sample: IntArray, weights: F64Array) {
         mean = weights.dot(sample) / weights.sum()
         failures = NegativeBinomialDistribution.fitNumberOfFailures(sample, weights, mean, failures)
+        LOG.debug("Mean $mean\tFailures $failures")
         updateTransients()
     }
 
@@ -59,5 +64,9 @@ class NegBinEmissionScheme(mean: Double, failures: Double) :
         } else {
             failures * Math.log(1.0 - p) - Gamma.logGamma(failures)
         }
+    }
+
+    companion object {
+        private val LOG = Logger.getLogger(NegBinEmissionScheme::class.java)
     }
 }
