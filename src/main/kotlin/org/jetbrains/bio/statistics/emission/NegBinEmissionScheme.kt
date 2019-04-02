@@ -49,9 +49,16 @@ class NegBinEmissionScheme(mean: Double, failures: Double) :
     }
 
     override fun update(sample: IntArray, weights: F64Array) {
-        mean = weights.dot(sample) / weights.sum()
+        val d = weights.dot(sample) / weights.sum()
+        // SPAN Guard to avoid mean vanishing in -> 0
+        // 0.01 stays for 1 read in bin 100, which sounds like a reasonable value.
+        mean = Math.max(0.01, d)
         failures = NegativeBinomialDistribution.fitNumberOfFailures(sample, weights, mean, failures)
-        LOG.debug("Mean $mean\tFailures $failures")
+        if (d != mean) {
+            LOG.debug("Mean $d\tCorrected $mean\tFailures $failures")
+        } else {
+            LOG.debug("Mean $mean\tFailures $failures")
+        }
         updateTransients()
     }
 
