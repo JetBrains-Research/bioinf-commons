@@ -3,6 +3,15 @@ bioinf-commons changelog
 
 Here you can see the full list of changes between each release.
 
+Version 0.0.4
+-------------
+
+Released on April 2, 2019
+
+- Reduced default number of iterations and log likelihood threshold for faster statistical models convergence
+- Improved `OptionParserExtensions` - show cmd line arguments in case of error
+- `Classes` object removed
+
 Version 0.0.3
 -------------
 
