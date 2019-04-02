@@ -205,8 +205,8 @@ interface Fitter<out Model : ClassificationModel> {
 
     companion object {
         const val TITLE = "unknown"
-        const val THRESHOLD = 0.1
-        const val MAX_ITERATIONS = 1000
+        const val THRESHOLD = 1.0
+        const val MAX_ITERATIONS = 100
     }
 }
 
