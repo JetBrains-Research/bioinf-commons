@@ -20,8 +20,8 @@ class OptionParserExtensionsTest {
         private val ERR = System.err
     }
 
-    private lateinit var stdErr: ByteArrayOutputStream
-    private lateinit var stdOut: ByteArrayOutputStream
+    private var stdErr: ByteArrayOutputStream? = null
+    private var stdOut: ByteArrayOutputStream? = null
 
     @Before
     fun setUp() {
@@ -36,23 +36,41 @@ class OptionParserExtensionsTest {
 
     @After
     fun tearDown() {
-        System.setOut(OUT)
-        System.setErr(ERR)
-        try {
-            stdOut.close()
-        } catch (e: Exception) {
-            // Do nothing
-        }
-        try {
-            stdErr.close()
-        } catch (e: Exception) {
-            // Do nothing
-        }
+        restoreCapturedStreams()
         if (prevSuppressExitValue == null) {
             System.getProperties().remove(JOPTSIMPLE_SUPPRESS_EXIT)
         } else {
             System.getProperties().setProperty(JOPTSIMPLE_SUPPRESS_EXIT, prevSuppressExitValue)
         }
+    }
+
+    private fun restoreCapturedStreams(): Pair<String, String> {
+        System.setOut(OUT)
+        System.setErr(ERR)
+
+        val out = stdOut.toString().replace("\r", "")
+        if (stdOut != null) {
+            try {
+                stdOut!!.close()
+                stdOut = null
+            } catch (e: Exception) {
+                // Do nothing
+            }
+        }
+
+        val err = stdErr.toString().replace("\r", "")
+        if (stdErr != null) {
+            try {
+                stdErr!!.close()
+                stdErr = null
+            } catch (e: Exception) {
+                // Do nothing
+            }
+        }
+
+        println("STDERR: <$out>")
+        println("STDOUT: <$err>")
+        return out to err
     }
 
     @Test
@@ -61,8 +79,10 @@ class OptionParserExtensionsTest {
             parse(arrayOf("foo")) { _ ->
             }
         }
-        assertTrue("Unrecognized options: [foo]" in stdErr.toString())
-        assertEquals("", stdOut.toString())
+
+        val (stdOut, stdErr) = restoreCapturedStreams()
+        assertTrue("Unrecognized options: [foo]" in stdErr)
+        assertEquals("", stdOut)
     }
 
     @Test
@@ -74,14 +94,16 @@ class OptionParserExtensionsTest {
                 print("Done")
             }
         }
-        assertEquals("", stdErr.toString())
-        assertEquals("Done", stdOut.toString())
+
+        val (stdOut, stdErr) = restoreCapturedStreams()
+        assertEquals("", stdErr)
+        assertEquals("Done", stdOut)
     }
 
     @Test
-    fun dumbTerminalWarnings() {
+    fun dumbTerminalWarningsOnWrongOption() {
         // Fixes current behaviour: show warning only if need to show help msg
-        
+
         with(OptionParser()) {
             accepts("foo", "some option")
 
@@ -90,9 +112,27 @@ class OptionParserExtensionsTest {
             }
         }
 
-        assertTrue("WARNING: Unable to create a system terminal, creating a dumb terminal" in stdErr.toString())
-        assertTrue("ERROR: boo is not a recognized option" in stdErr.toString())
-        assertEquals("", stdOut.toString())
+        val (stdOut, stdErr) = restoreCapturedStreams()
+        assertTrue("ERROR: boo is not a recognized option" in stdErr)
+        assertEquals("", stdOut)
+    }
+
+    @Test
+    fun dumbTerminalWarningsOnHelp() {
+        // Fixes current behaviour: show warning only if need to show help msg
+
+        with(OptionParser()) {
+            accepts("foo", "some option")
+
+            parse(arrayOf("-h")) { _ ->
+                print("Done")
+            }
+        }
+
+        val (stdOut, stdErr) = restoreCapturedStreams()
+        assertTrue("WARNING: Unable to create a system terminal, creating a dumb terminal" in stdErr)
+        assertTrue("-?, -h, --help  Show help" in stdErr, stdErr)
+        assertEquals("Done", stdOut, stdOut)
     }
 
     @Test
@@ -103,26 +143,28 @@ class OptionParserExtensionsTest {
             }
         }
 
-        assertTrue("Bah!" in stdErr.toString())
-        assertEquals("", stdOut.toString())
+        val (stdOut, stdErr) = restoreCapturedStreams()
+        assertTrue("Bah!" in stdErr)
+        assertEquals("", stdOut)
     }
 
     @Test
     fun description() {
-            with(OptionParser()) {
-                accepts("foo", "some option")
+        with(OptionParser()) {
+            accepts("foo", "some option")
 
-                parse(arrayOf("-h"), description = "My description") { _ ->
-                }
+            parse(arrayOf("-h"), description = "My description") { _ ->
             }
-        val stdErrText = stdErr.toString().replace("\r", "")
+        }
+
+        val (stdOut, stdErr) = restoreCapturedStreams()
         assertTrue("""
             |My description
             |
             |
-            |Arguments: [-h]""".trimMargin().trim() in stdErrText)
-        
-        assertEquals("", stdOut.toString())
+            |Arguments: [-h]""".trimMargin().trim() in stdErr)
+
+        assertEquals("", stdOut)
     }
 
 
@@ -139,8 +181,10 @@ class OptionParserExtensionsTest {
                 assertEquals("foo", path.name)
             }
         }
-        assertEquals("", stdErr.toString())
-        assertEquals("", stdOut.toString())
+
+        val (stdOut, stdErr) = restoreCapturedStreams()
+        assertEquals("", stdErr)
+        assertEquals("", stdOut)
     }
 
     @Test
@@ -156,8 +200,9 @@ class OptionParserExtensionsTest {
             }
         }
 
+        val (stdOut, stdErr) = restoreCapturedStreams()
         assertMatches(stdErr, "(.|\\n)*ERROR: Path (.*)foo does not exist(.|\\n)*".toRegex())
-        assertEquals("", stdOut.toString())
+        assertEquals("", stdOut)
     }
 
     @Test
@@ -175,8 +220,9 @@ class OptionParserExtensionsTest {
                 }
             }
 
-            assertEquals("", stdErr.toString())
-            assertEquals("", stdOut.toString())
+            val (stdOut, stdErr) = restoreCapturedStreams()
+            assertEquals("", stdErr)
+            assertEquals("", stdOut)
         }
     }
 
@@ -195,8 +241,9 @@ class OptionParserExtensionsTest {
                 }
             }
 
-            assertEquals("", stdErr.toString())
-            assertEquals("", stdOut.toString())
+            val (stdOut, stdErr) = restoreCapturedStreams()
+            assertEquals("", stdErr)
+            assertEquals("", stdOut)
         }
     }
 
@@ -216,8 +263,9 @@ class OptionParserExtensionsTest {
                 }
             }
 
-            assertEquals("", stdErr.toString())
-            assertEquals("", stdOut.toString())
+            val (stdOut, stdErr) = restoreCapturedStreams()
+            assertEquals("", stdErr)
+            assertEquals("", stdOut)
         }
     }
 
@@ -236,8 +284,9 @@ class OptionParserExtensionsTest {
                 }
             }
 
-            assertTrue("ERROR: Expected *.bed file, but was ${file.name}" in stdErr.toString())
-            assertEquals("", stdOut.toString())
+            val (stdOut, stdErr) = restoreCapturedStreams()
+            assertTrue("ERROR: Expected *.bed file, but was ${file.name}" in stdErr)
+            assertEquals("", stdOut)
         }
     }
 
@@ -254,8 +303,9 @@ class OptionParserExtensionsTest {
             }
         }
 
+        val (stdOut, stdErr) = restoreCapturedStreams()
         assertMatches(stdErr, "(.|\\n)*ERROR: Path (.*)foo does not exist(.|\\n)*".toRegex())
-        assertEquals("", stdOut.toString())
+        assertEquals("", stdOut)
     }
 
     @Test
@@ -273,8 +323,9 @@ class OptionParserExtensionsTest {
                 }
             }
 
-            assertTrue("ERROR: Expected *.bed file, but was ${file.name}" in stdErr.toString())
-            assertEquals("", stdOut.toString())
+            val (stdOut, stdErr) = restoreCapturedStreams()
+            assertTrue("ERROR: Expected *.bed file, but was ${file.name}" in stdErr)
+            assertEquals("", stdOut)
         }
     }
 
@@ -295,8 +346,9 @@ class OptionParserExtensionsTest {
                 }
             }
 
-            assertTrue("ERROR: Expected TAB separated file, but separator is [ ]" in stdErr.toString())
-            assertEquals("", stdOut.toString())
+            val (stdOut, stdErr) = restoreCapturedStreams()
+            assertTrue("ERROR: Expected TAB separated file, but separator is [ ]" in stdErr)
+            assertEquals("", stdOut)
         }
     }
 
@@ -316,12 +368,13 @@ class OptionParserExtensionsTest {
                 }
             }
 
+            val (stdOut, stdErr) = restoreCapturedStreams()
             assertTrue("""
                 |Unknown BED format:
                 |chr1#2#3
                 |Fields number in BED file is between 3 and 15, but was 1
-                """.trimMargin().trim() in stdErr.toString())
-            assertEquals("", stdOut.toString())
+                """.trimMargin().trim() in stdErr)
+            assertEquals("", stdOut)
         }
     }
 
@@ -341,12 +394,13 @@ class OptionParserExtensionsTest {
                 }
             }
 
+            val (stdOut, stdErr) = restoreCapturedStreams()
             assertTrue("""
                 |Unknown BED format:
                 |chr1 2
                 |Fields number in BED file is between 3 and 15, but was 2
-                """.trimMargin().trim() in stdErr.toString())
-            assertEquals("", stdOut.toString())
+                """.trimMargin().trim() in stdErr)
+            assertEquals("", stdOut)
         }
     }
 
@@ -366,12 +420,13 @@ class OptionParserExtensionsTest {
                 }
             }
 
+            val (stdOut, stdErr) = restoreCapturedStreams()
             assertTrue("""
                            |Unknown BED format:
                            |chr1 2 0.24
                            |Fields number in BED file is between 3 and 15, but was 2
-                           """.trimMargin().trim() in stdErr.toString())
-            assertEquals("", stdOut.toString())
+                           """.trimMargin().trim() in stdErr)
+            assertEquals("", stdOut)
         }
     }
 
@@ -391,8 +446,9 @@ class OptionParserExtensionsTest {
                 }
             }
 
-            assertEquals("", stdErr.toString())
-            assertEquals("", stdOut.toString())
+            val (stdOut, stdErr) = restoreCapturedStreams()
+            assertEquals("", stdErr)
+            assertEquals("", stdOut)
         }
     }
 
@@ -412,8 +468,9 @@ class OptionParserExtensionsTest {
                 }
             }
 
-            assertEquals("", stdErr.toString())
-            assertEquals("", stdOut.toString())
+            val (stdOut, stdErr) = restoreCapturedStreams()
+            assertEquals("", stdErr)
+            assertEquals("", stdOut)
         }
     }
 
@@ -433,8 +490,9 @@ class OptionParserExtensionsTest {
                 }
             }
 
-            assertEquals("", stdErr.toString())
-            assertEquals("", stdOut.toString())
+            val (stdOut, stdErr) = restoreCapturedStreams()
+            assertEquals("", stdErr)
+            assertEquals("", stdOut)
         }
     }
 
@@ -454,8 +512,9 @@ class OptionParserExtensionsTest {
                 }
             }
 
-            assertEquals("", stdErr.toString())
-            assertEquals("", stdOut.toString())
+            val (stdOut, stdErr) = restoreCapturedStreams()
+            assertEquals("", stdErr)
+            assertEquals("", stdOut)
         }
     }
 
@@ -475,18 +534,13 @@ class OptionParserExtensionsTest {
                 }
             }
 
-            assertTrue("ERROR: Bedtools will fail recognize strand column, your format is [bed4+2]" in stdErr.toString())
-            assertEquals("", stdOut.toString())
+            val (stdOut, stdErr) = restoreCapturedStreams()
+            assertTrue("ERROR: Bedtools will fail recognize strand column, your format is [bed4+2]" in stdErr)
+            assertEquals("", stdOut)
         }
     }
 
-    private fun assertMatches(outputStream: ByteArrayOutputStream, regex: Regex) {
-        outputStream.toString().let { content ->
-            assertTrue(
-                    regex.matches(content.replace("\r", "")),
-                    "Doesn't match content:\n<$content>"
-            )
-        }
+    private fun assertMatches(output: String, regex: Regex) {
+        assertTrue(regex.matches(output), "Doesn't match content:\n<$output>")
     }
-
 }
