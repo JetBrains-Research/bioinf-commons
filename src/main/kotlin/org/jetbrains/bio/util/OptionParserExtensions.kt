@@ -6,7 +6,6 @@ import org.jline.terminal.TerminalBuilder
 import java.io.StringWriter
 import java.nio.file.Path
 import java.util.*
-import kotlin.math.max
 
 /**
  * NOTE:
@@ -27,15 +26,23 @@ fun OptionParser.parse(
         block: (OptionSet) -> Unit
 ) {
     try {
-        formatHelpWith(BuiltinHelpFormatter(
-                max(80, try {
-                    TerminalBuilder.terminal().width
-                } catch (e: Exception) {
-                    System.err.println("Warning: Cannot defined terminal width: ${e.message}")
-                    0
-                }),
-                2
-        ))
+        formatHelpWith(object : HelpFormatter {
+            // here we need to calculate terminal width lazy only if is needed to show help
+            // so in terminal-less mode we wont show warnings during normal usage
+            val formatter: BuiltinHelpFormatter by lazy {
+                BuiltinHelpFormatter(
+                        maxOf(80, try {
+                            TerminalBuilder.terminal().width
+                        } catch (e: Exception) {
+                            System.err.println("Warning: Cannot defined terminal width: ${e.message}")
+                            0
+                        }),
+                        2
+                )
+            }
+
+            override fun format(options: MutableMap<String, out OptionDescriptor>?) = formatter.format(options)
+        })
 
         acceptsAll(listOf("h", "?", "help"), "Show help").forHelp()
 

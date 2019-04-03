@@ -54,13 +54,44 @@ class OptionParserExtensionsTest {
             System.getProperties().setProperty(JOPTSIMPLE_SUPPRESS_EXIT, prevSuppressExitValue)
         }
     }
+
     @Test
     fun unrecognized() {
         with(OptionParser()) {
             parse(arrayOf("foo")) { _ ->
             }
         }
-        assert("Unrecognized options: [foo]" in stdErr.toString())
+        assertTrue("Unrecognized options: [foo]" in stdErr.toString())
+        assertEquals("", stdOut.toString())
+    }
+
+    @Test
+    fun notDumbTerminalWarning() {
+        with(OptionParser()) {
+            accepts("foo", "some option")
+
+            parse(arrayOf("--foo")) { _ ->
+                print("Done")
+            }
+        }
+        assertEquals("", stdErr.toString())
+        assertEquals("Done", stdOut.toString())
+    }
+
+    @Test
+    fun dumbTerminalWarnings() {
+        // Fixes current behaviour: show warning only if need to show help msg
+        
+        with(OptionParser()) {
+            accepts("foo", "some option")
+
+            parse(arrayOf("--boo")) { _ ->
+                print("Done")
+            }
+        }
+
+        assertTrue("WARNING: Unable to create a system terminal, creating a dumb terminal" in stdErr.toString())
+        assertTrue("ERROR: boo is not a recognized option" in stdErr.toString())
         assertEquals("", stdOut.toString())
     }
 
@@ -72,7 +103,7 @@ class OptionParserExtensionsTest {
             }
         }
 
-        assert("Bah!" in stdErr.toString())
+        assertTrue("Bah!" in stdErr.toString())
         assertEquals("", stdOut.toString())
     }
 
