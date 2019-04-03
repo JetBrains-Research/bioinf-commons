@@ -86,56 +86,6 @@ class OptionParserExtensionsTest {
     }
 
     @Test
-    fun notDumbTerminalWarning() {
-        with(OptionParser()) {
-            accepts("foo", "some option")
-
-            parse(arrayOf("--foo")) { _ ->
-                print("Done")
-            }
-        }
-
-        val (stdOut, stdErr) = restoreCapturedStreams()
-        assertEquals("", stdErr)
-        assertEquals("Done", stdOut)
-    }
-
-    @Test
-    fun dumbTerminalWarningsOnWrongOption() {
-        // Fixes current behaviour: show warning only if need to show help msg
-
-        with(OptionParser()) {
-            accepts("foo", "some option")
-
-            parse(arrayOf("--boo")) { _ ->
-                print("Done")
-            }
-        }
-
-        val (stdOut, stdErr) = restoreCapturedStreams()
-        assertTrue("ERROR: boo is not a recognized option" in stdErr)
-        assertEquals("", stdOut)
-    }
-
-    @Test
-    fun dumbTerminalWarningsOnHelp() {
-        // Fixes current behaviour: show warning only if need to show help msg
-
-        with(OptionParser()) {
-            accepts("foo", "some option")
-
-            parse(arrayOf("-h")) { _ ->
-                print("Done")
-            }
-        }
-
-        val (stdOut, stdErr) = restoreCapturedStreams()
-        assertTrue("WARNING: Unable to create a system terminal, creating a dumb terminal" in stdErr)
-        assertTrue("-?, -h, --help  Show help" in stdErr, stdErr)
-        assertEquals("Done", stdOut, stdOut)
-    }
-
-    @Test
     fun exception() {
         with(OptionParser()) {
             parse(arrayOf()) { _ ->
