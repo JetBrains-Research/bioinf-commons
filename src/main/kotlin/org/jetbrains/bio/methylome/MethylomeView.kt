@@ -1,6 +1,7 @@
 package org.jetbrains.bio.methylome
 
 import com.google.common.base.MoreObjects
+import org.jetbrains.bio.dataframe.BitterSet
 import org.jetbrains.bio.dataframe.DataFrame
 
 /**
@@ -25,12 +26,10 @@ data class ChromosomeMethylomeView internal constructor(
         private val framePlus: MethylomeFrame,
         private val frameMinus: MethylomeFrame) : MethylomeView {
 
-    override fun peel(): DataFrame {
-        val df = DataFrame.rowBind(
-                framePlus.peel().with("strand", Array(framePlus.size) { "+" }),
-                frameMinus.peel().with("strand", Array(frameMinus.size) { "-" }))
-        return df.reorder("offset")
-    }
+    override fun peel() = DataFrame.rowBind(
+            framePlus.peel().with("strand", BitterSet(framePlus.size) { true }),
+            frameMinus.peel().with("strand", BitterSet(frameMinus.size) { false })
+    ).reorder("offset")
 
     override val size = framePlus.size + frameMinus.size
 

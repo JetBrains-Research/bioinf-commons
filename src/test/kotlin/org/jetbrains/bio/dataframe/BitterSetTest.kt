@@ -75,6 +75,21 @@ class BitterSetTest {
         assertEquals(3, setBits.size)
         assertEquals(listOf(2,4, 5), setBits)
     }
+
+    @Test fun toBitterSet() {
+        assertEquals(
+                booleanArrayOf(false, false, true, false, true, true).toBitterSet(),
+                BitterSet(6) { it in setOf(2, 4, 5) }
+        )
+        assertEquals(
+                booleanArrayOf(false, false, false, false).toBitterSet(),
+                BitterSet(4)
+        )
+        assertEquals(
+                booleanArrayOf(true, true, true, true, true).toBitterSet(),
+                BitterSet(5) { true }
+        )
+    }
 }
 
 @RunWith(Parameterized::class)

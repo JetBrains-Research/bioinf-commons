@@ -1,5 +1,6 @@
 package org.jetbrains.bio.methylome
 
+import org.jetbrains.bio.dataframe.toBitterSet
 import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Strand
@@ -28,7 +29,10 @@ class MethylomeToDataFrameTest {
                                       CytosineContext.CG.tag),
                           df.sliceAsByte("tag"))
         assertArrayEquals(intArrayOf(Int.MAX_VALUE, 100), df.sliceAsInt("d"))
-        assertArrayEquals(arrayOf("+", "-"), df.sliceAsObj<String>("strand"))
+        assertEquals(
+                booleanArrayOf(true, false).toBitterSet(),
+                df.sliceAsBool("strand")
+        )
     }
 
     @Test fun double() {
@@ -55,7 +59,11 @@ class MethylomeToDataFrameTest {
         val df = MethylomeToDataFrame.create(StrandFilter.BOTH, CytosineContext.CG)
                 .apply(listOf(methylome, methylome, methylome), chromosome)
         assertEquals(1, df.rowsNumber)
-        assertArrayEquals(arrayOf("+"), df.sliceAsObj<String>("strand"))
+
+        assertEquals(
+                booleanArrayOf(true).toBitterSet(),
+                df.sliceAsBool("strand")
+        )
         assertArrayEquals(byteArrayOf(CytosineContext.CG.tag),
                           df.sliceAsByte("tag"))
     }

@@ -116,6 +116,10 @@ class BitterSet(private val universe: Int) : BitSet() {
     }
 }
 
+fun BooleanArray.toBitterSet() = let { arr ->
+    BitterSet(arr.size) { i -> arr[i] }
+}
+
 data class BitRange(
         /** 0-based start index (inclusive). */
         val fromIndex: Int,
