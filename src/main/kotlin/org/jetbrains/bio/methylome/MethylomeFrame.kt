@@ -44,11 +44,11 @@ internal class MethylomeFrame {
      * Loads a methylome frame in _sorted_ order from a given HDF5 file.
      */
     fun load(key: String, reader: NpzFile.Reader) {
-        offsets = reader[key + "/offsets"].asIntArray()
-        cytosineContextTags = reader[key + "/tags"].asByteArray()
-        methylatedCounts = reader[key + "/methylated"].asShortArray()
-        totalCounts = reader[key + "/total"].asShortArray()
-        size = reader[key + "/size"].asIntArray().single()
+        offsets = reader["$key/offsets"].asIntArray()
+        cytosineContextTags = reader["$key/tags"].asByteArray()
+        methylatedCounts = reader["$key/methylated"].asShortArray()
+        totalCounts = reader["$key/total"].asShortArray()
+        size = reader["$key/size"].asIntArray().single()
     }
 
     /**
