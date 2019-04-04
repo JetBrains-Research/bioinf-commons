@@ -58,11 +58,11 @@ internal class MethylomeFrame {
         trimToSize()
 
         with(writer) {
-            write(key + "/offsets", offsets)
-            write(key + "/tags", cytosineContextTags)
-            write(key + "/methylated", methylatedCounts)
-            write(key + "/total", totalCounts)
-            write(key + "/size", intArrayOf(size))
+            write("$key/offsets", offsets)
+            write("$key/tags", cytosineContextTags)
+            write("$key/methylated", methylatedCounts)
+            write("$key/total", totalCounts)
+            write("$key/size", intArrayOf(size))
         }
     }
 
