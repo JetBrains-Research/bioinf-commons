@@ -90,6 +90,15 @@ class BitterSetTest {
                 BitterSet(5) { true }
         )
     }
+
+    @Test fun getOutOfUniverse() {
+        val bs = BitterSet(6) { it in setOf(2, 4, 5) }
+        require(bs.get(5))
+        
+        assertFalse(bs.get(6))
+        assertFalse(bs.get(7))
+        assertFalse(bs.get(1000))
+    }
 }
 
 @RunWith(Parameterized::class)
