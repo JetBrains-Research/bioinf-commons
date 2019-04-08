@@ -47,8 +47,24 @@ class TranscriptTest {
 
     @Test
     fun transcripts5IndexSorted() {
-        val bounds5 = Transcripts.bound5Index(chromosome.genome)[chromosome]!!.first
+        val bounds5 = Transcripts.bound5Index(chromosome.genome, false)[chromosome]!!.second
         assert(Ordering.natural<Int>().isOrdered(bounds5.toList()))
+    }
+
+    @Test
+    fun transcripts5AllGenes() {
+        val (transcripts, bounds5) = Transcripts.bound5Index(chromosome.genome, false)[chromosome]!!
+        assertEquals(transcripts.size, bounds5.size)
+        assertTrue(transcripts.any { it.isCoding })
+        assertTrue(transcripts.any { !it.isCoding })
+    }
+
+    @Test
+    fun transcripts5CodingGenes() {
+        val (transcripts, bounds5) = Transcripts.bound5Index(chromosome.genome, true)[chromosome]!!
+        assertEquals(transcripts.size, bounds5.size)
+        assertTrue(transcripts.any { it.isCoding })
+        assertTrue(transcripts.filterNot { it.isCoding }.isEmpty())
     }
 
     /**
