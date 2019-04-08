@@ -144,8 +144,7 @@ data class BedFormat(
         fun detectDelimiter(path: Path) = detectDelimiter(path.toUri())
 
         fun detectDelimiter(source: URI) = source.reader().use { reader ->
-            val delimiterCandidate = if (source.hasExt("csv")) ',' else '\t'
-
+            val csvFile = source.hasExt("csv")
             val maxAttempts = 1000
             var currentAttempt = 0
 
@@ -155,10 +154,16 @@ data class BedFormat(
                 val line = reader.readLine() ?: break
 
                 if (!NON_DATA_LINE_PATTERN.matches(line)) {
+                    val delimiterCandidate = when {
+                        // normally *.csv files with \t are actually tab separated and
+                        // comma could be from name field
+                        csvFile && !line.contains('\t') -> ','
+                        else -> '\t'
+                    }
                     delimiter = detectDelimiterFromLine(line, delimiterCandidate)
                 }
             }
-            delimiter ?: delimiterCandidate
+            delimiter ?: if (csvFile) ',' else '\t'
         }
 
         internal fun detectDelimiter(text: String, defaultDelimiter: Char): Char {

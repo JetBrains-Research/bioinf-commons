@@ -654,13 +654,30 @@ Fields number in BED file is between 3 and 15, but was 2""")
     @Test
     fun detectDelimiterCsv() {
         withFile("csv", "chr1,2\t3") {
-            assertEquals(',', BedFormat.detectDelimiter(it))
+            // normally *.csv files with \t are actually tab separated
+            assertEquals('\t', BedFormat.detectDelimiter(it))
         }
         withFile("csv", "chr1\t2\t3") {
             assertEquals('\t', BedFormat.detectDelimiter(it))
         }
         withFile("cSv", "chr1 2 3") {
             assertEquals(' ', BedFormat.detectDelimiter(it))
+        }
+    }
+
+    @Test
+    fun delimiterInCsvTabSeparatedFile() {
+        val contents = """
+               chr1	17338765	17338766	cg20822990-ATP13A2,SDHB
+               chr1	26855764	26855765	cg22512670-RPS6KA1
+               chr1	28241576	28241577	cg25410668-RPA2,SMPDL3B
+               chr1	117665052	117665053	cg04400972-TRIM45,TTF2
+           """.trimIndent().trim()
+        withFile("csv", contents) { p ->
+            assertEquals(
+                    BedFormat.fromString("(bed4, '\t')"),
+                    BedFormat.auto(p.toUri())
+            )
         }
     }
 
