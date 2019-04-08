@@ -207,7 +207,7 @@ object Transcripts {
     private val BOUND5_INDEX_CACHE = CacheBuilder.newBuilder()
                 .softValues()
                 .initialCapacity(1)
-                .build<Genome, Map<Chromosome, Pair<IntArray, BinaryLut>>>()
+                .build<Pair<Genome, Boolean>, Map<Chromosome, Triple<List<Transcript>, IntArray, BinaryLut>>>()
 
     /** Visible only for [TestOrganismDataGenerator]. */
     val GSON = GsonBuilder()
@@ -215,14 +215,17 @@ object Transcripts {
             .registerTypeAdapter(Location::class.java, Location.ADAPTER)
             .create()
 
-    internal fun bound5Index(genome: Genome):  Map<Chromosome, Pair<IntArray, BinaryLut>> {
-        return BOUND5_INDEX_CACHE.get(genome) {
-            val transcripts = all(genome)
+    internal fun bound5Index(
+            genome: Genome,
+            onlyCodingGenes: Boolean
+    ) = BOUND5_INDEX_CACHE.get(genome to onlyCodingGenes) {
+        val allTranscripts = all(genome)
 
-            transcripts.keySet().associate { chr ->
-                val bounds5 = transcripts[chr].map { it.location.get5Bound() }.toIntArray()
-                chr to (bounds5 to BinaryLut.of(bounds5, 24))
-            }
+        allTranscripts.keySet().associate { chr ->
+            val transcripts = allTranscripts[chr].filter { !onlyCodingGenes || it.isCoding }
+
+            val bounds5 = transcripts.map { it.location.get5Bound() }.toIntArray()
+            chr to (Triple(transcripts, bounds5, BinaryLut.of(bounds5, 24)))
         }
     }
 
@@ -287,7 +290,7 @@ object Transcripts {
     }
 
     enum class AssociationStrategy {
-        SINGLE, TWO, BASAL_PLUS_EXT
+        SINGLE, TWO, BASAL_PLUS_EXT, MULTIPLE
     }
 
     /**
@@ -295,14 +298,31 @@ object Transcripts {
      * the association strategy is GREAT's "single nearest gene", adapted for use with transcripts.
      * See corresponding internal methods for more information.
      */
-    fun associatedTranscripts(location: Location, strategy: AssociationStrategy = AssociationStrategy.SINGLE
+    fun associatedTranscripts(
+            location: Location,
+            strategy: AssociationStrategy = AssociationStrategy.SINGLE,
+            limit: Int = 1000000,
+            codingOnly: Boolean = false
     ): List<Transcript> = when (strategy) {
-        Transcripts.AssociationStrategy.SINGLE -> associatedTranscriptsSingle(location)
-        Transcripts.AssociationStrategy.TWO -> associatedTranscriptsTwo(location)
-        Transcripts.AssociationStrategy.BASAL_PLUS_EXT -> associatedTranscriptsPlus(location)
+        Transcripts.AssociationStrategy.SINGLE -> associatedTranscriptsSingle(
+                location, limit, codingOnly
+        )
+        Transcripts.AssociationStrategy.TWO -> associatedTranscriptsTwo(
+                location, limit, codingOnly
+        )
+        Transcripts.AssociationStrategy.BASAL_PLUS_EXT -> associatedTranscriptsPlus(
+                location, codingOnly = codingOnly, distal = limit
+        )
+        Transcripts.AssociationStrategy.MULTIPLE -> associatedTranscriptsMultiple(
+                location, codingOnly = codingOnly, limit = limit
+        )
     }
 
-    fun associatedTranscriptsSingle(location: Location, limit: Int = 1000000): List<Transcript> {
+    fun associatedTranscriptsSingle(
+            location: Location,
+            limit: Int = 1000000,
+            codingOnly: Boolean = false
+    ): List<Transcript> {
         // XXX GREAT: "single nearest gene" strategy: we use it because it simple, feel free to change it to
         // XXX "basal plus ext" or "two nearest genes"
 
@@ -320,8 +340,9 @@ object Transcripts {
         // but no more than the maximum extension in one direction (1000 kb)
 
         val chr = location.chromosome
-        val transcripts = chr.transcripts
-        val (bounds5, bound5Lut) = Transcripts.bound5Index(chr.genome)[chr]!!
+        val (transcripts, bounds5, bound5Lut) = Transcripts.bound5Index(
+                chr.genome, onlyCodingGenes = codingOnly
+        ).getValue(chr)
 
         val midpoint = (location.startOffset + location.endOffset) / 2
 
@@ -338,7 +359,11 @@ object Transcripts {
         return (low..high).map { transcripts[it] }
     }
 
-    internal fun associatedTranscriptsTwo(location: Location, limit: Int = 1000000): List<Transcript> {
+    fun associatedTranscriptsTwo(
+            location: Location,
+            limit: Int = 1000000,
+            codingOnly: Boolean = false
+    ): List<Transcript> {
         // XXX GREAT: "two nearest genes" strategy
 
         // Description from http://bejerano.stanford.edu/help/display/GREAT/Association+Rules :
@@ -355,8 +380,9 @@ object Transcripts {
         // than the maximum extension in one direction (1000 kb)
 
         val chr = location.chromosome
-        val transcripts = chr.transcripts
-        val (bounds5, bound5Lut) = Transcripts.bound5Index(chr.genome)[chr]!!
+        val (transcripts, bounds5, bound5Lut) = Transcripts.bound5Index(
+                chr.genome, onlyCodingGenes = codingOnly
+        ).getValue(chr)
 
         val midpoint = (location.startOffset + location.endOffset) / 2
 
@@ -370,8 +396,43 @@ object Transcripts {
         return (low..high).filter { Math.abs(bounds5[it] - midpoint) <= limit }.map { transcripts[it] }
     }
 
-    internal fun associatedTranscriptsPlus(location: Location, upstream: Int = 5000, downstream: Int = 1000,
-                                           distal: Int = 1000000): List<Transcript> {
+    fun associatedTranscriptsMultiple(
+            location: Location,
+            limit: Int = 1000000,
+            closeGenesAreaThreshold: Int = 50000,
+            codingOnly: Boolean = false
+    ): List<Transcript> {
+        val chr = location.chromosome
+        val (transcripts, bounds5, bound5Lut) = Transcripts.bound5Index(
+                chr.genome, onlyCodingGenes = codingOnly
+        ).getValue(chr)
+
+        val midpoint = (location.startOffset + location.endOffset) / 2
+        val midpointLeft = maxOf(0, midpoint - closeGenesAreaThreshold)
+        val midpointRight = minOf(chr.length, midpoint + closeGenesAreaThreshold)
+
+        if (bounds5.isEmpty()) {
+            check(transcripts.isEmpty())
+            return emptyList()
+        }
+        val (lowL, _) = bound5Lut.nearestElemLR(bounds5, midpointLeft)
+        val (_, highR) = bound5Lut.nearestElemLR(bounds5, midpointRight)
+        val low = lowL
+        val high = highR
+
+        check(low != -1)
+        check(high != -1)
+
+        return (low..high).filter { Math.abs(bounds5[it] - midpoint) <= limit }.map { transcripts[it] }
+    }
+
+    fun associatedTranscriptsPlus(
+            location: Location,
+            upstream: Int = 5000,
+            downstream: Int = 1000,
+            distal: Int = 1000000,
+            codingOnly: Boolean = false
+    ): List<Transcript> {
         // XXX GREAT: "basal plus extension" strategy
 
         // Description from http://bejerano.stanford.edu/help/display/GREAT/Association+Rules :
@@ -391,8 +452,9 @@ object Transcripts {
         // is "left" of G's transcription start site (and analogously for extending "right").
 
         val chr = location.chromosome
-        val transcripts = chr.transcripts
-        val (bounds5, bound5Lut) = Transcripts.bound5Index(chr.genome)[chr]!!
+        val (transcripts, bounds5, bound5Lut) = Transcripts.bound5Index(
+                chr.genome, onlyCodingGenes = codingOnly
+        ).getValue(chr)
 
         val midpoint = (location.startOffset + location.endOffset) / 2
 
