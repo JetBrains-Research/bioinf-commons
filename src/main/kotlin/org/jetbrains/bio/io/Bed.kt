@@ -205,6 +205,7 @@ data class BedFormat(
         private fun auto(stream: InputStream, delimiter: Char, source: String?) =
                 stream.bufferedReader().use { reader ->
                     var format = BedFormat.from("bed3", delimiter)
+                    var headerCandidateMet = false
                     while (true) {
                         val line = reader.readLine() ?: break
 
@@ -212,7 +213,22 @@ data class BedFormat(
                             continue
                         }
 
-                        format = detectFormatFromLine(delimiter, line, source)
+                        // Try to parse 1st line, if failed it could be header
+                        // with 'start' 'end' fields instead of integer offsets,
+                        // so try again with 2nd line, if fails again => throw an
+                        // error
+                        format = try {
+                            detectFormatFromLine(delimiter, line, source)
+                        } catch (e: IllegalArgumentException) {
+                            if (!headerCandidateMet) {
+                                headerCandidateMet = true
+                                // try again with next line
+                                continue
+                            } else {
+                                // give up
+                                throw e
+                            }
+                        }
                         break
                     }
                     format
@@ -329,7 +345,13 @@ class BedParser(internal val reader: BufferedReader,
             )
         } catch (e: Exception) {
             LOG.error("$source: invalid BED: '$line'", e)
-            null
+
+            // XXX: do not return 'null' here because it is "EOF" marker, return
+            // empty value, most likely it is just header entry
+            BedEntry(
+                    chunks[0], 0, 0,
+                    if (chunks.size == 3) "" else chunks[3]
+            )
         }
     }
 

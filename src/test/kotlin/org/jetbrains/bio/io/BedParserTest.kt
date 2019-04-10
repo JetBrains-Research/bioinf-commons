@@ -27,20 +27,22 @@ class BedParserTest {
     @get:Rule
         var expectedEx = ExpectedException.none()
 
-    private val CONTENT_RGB_EXAMPLE_SPACE_INSTEAD_OF_TABS =
-            "chr2    127471196  127472363  Pos1  0  +  127471196  127472363  255,0,0\n" +
-                    "chr2    127472363  127473530  Pos2  0  +  127472363  127473530  255,0,0\n" +
-                    "chr2    127473530  127474697  Pos3  0  +  127473530  127474697  255,0,0\n" +
-                    "chr2    127474697  127475864  Pos4  0  +  127474697  127475864  255,0,0\n" +
-                    "chr2    127475864  127477031  Neg1  0  -  127475864  127477031  0,0,255"
+    companion object {
+        private const val CONTENT_RGB_EXAMPLE_SPACE_INSTEAD_OF_TABS =
+                "chr2    127471196  127472363  Pos1  0  +  127471196  127472363  255,0,0\n" +
+                        "chr2    127472363  127473530  Pos2  0  +  127472363  127473530  255,0,0\n" +
+                        "chr2    127473530  127474697  Pos3  0  +  127473530  127474697  255,0,0\n" +
+                        "chr2    127474697  127475864  Pos4  0  +  127474697  127475864  255,0,0\n" +
+                        "chr2    127475864  127477031  Neg1  0  -  127475864  127477031  0,0,255"
 
-    private val CONTENT_RGB_EXAMPLE =
-            "chr2\t127471196\t127472363\tPos1\t0\t+\t127471196\t127472363\t255,0,0\n" +
-                    "chr2\t127472363\t127473530\tPos2\t0\t+\t127472363\t127473530\t255,0,0\n" +
-                    "chr2\t127473530\t127474697\tPos3\t0\t+\t127473530\t127474697\t255,0,0\n" +
-                    "chr2\t127474697\t127475864\tPos4\t0\t+\t127474697\t127475864\t255,0,0\n" +
-                    "chr2\t127475864\t127477031\tNeg1\t0\t-\t127475864\t127477031\t0,0,255"
+        private const val CONTENT_RGB_EXAMPLE =
+                "chr2\t127471196\t127472363\tPos1\t0\t+\t127471196\t127472363\t255,0,0\n" +
+                        "chr2\t127472363\t127473530\tPos2\t0\t+\t127472363\t127473530\t255,0,0\n" +
+                        "chr2\t127473530\t127474697\tPos3\t0\t+\t127473530\t127474697\t255,0,0\n" +
+                        "chr2\t127474697\t127475864\tPos4\t0\t+\t127474697\t127475864\t255,0,0\n" +
+                        "chr2\t127475864\t127477031\tNeg1\t0\t-\t127475864\t127477031\t0,0,255"
 
+    }
 
     @Test
     fun testDefaultBedFormat_noRgb() {
@@ -202,9 +204,10 @@ class BedParserTest {
 
         withBedFile(content) { path ->
             expectedEx.expect(IllegalArgumentException::class.java)
+            // 1-st line treated as header, so error in 2-nd file line
             expectedEx.expectMessage("""Source: $path
 Unknown BED format:
-chr1 1000 cloneA + 1000 5000 2 0,3512
+chr1 2000 cloneB - 2000 6000 2 0,3601
 Fields number in BED file is between 3 and 15, but was 2""")
 
             BedFormat.auto(path)
@@ -483,6 +486,18 @@ Fields number in BED file is between 3 and 15, but was 2""")
         )
     }
 
+    @Test
+    fun testAuto_BedFileWithHeader() {
+        val contents = "chr\tstart\tend\tMarker;Genes;CpG Island\tCoefficient\n" +
+                "chr1\t17\t18\tcg20822990;ATP13A2,SDHB;No\t-15,7\n" +
+                "chr1\t26\t27\tcg22512670;RPS6KA1;No\t1,05"
+
+        withBedFile(contents) { path ->
+            val format = BedFormat.auto(path)
+
+            assertEquals(BedFormat.from("bed4+1", '\t'), format)
+        }
+    }
 
     private fun doCheckAuto(contents: String, delimiter: Char, expectedFormat: String,
                             expectedEntry: ExtendedBedEntry) {
@@ -575,6 +590,32 @@ Fields number in BED file is between 3 and 15, but was 2""")
     @Test(expected = NumberFormatException::class)
     fun parseFormatStringMalformated3() {
         BedFormat.parseFormatString("bed3p4")
+    }
+
+    @Test
+    fun testParseBedFileWithHeader() {
+        val contents = "chr\tstart\tend\tMarker;Genes;CpG Island\tCoefficient\n" +
+                "chr1\t17\t18\tcg20822990;ATP13A2,SDHB;No\t-15,7\n" +
+                "chr1\t26\t27\tcg22512670;RPS6KA1;No\t1,05"
+
+        withBedFile(contents) { path ->
+            val format = BedFormat.auto(path)
+
+            require(BedFormat.from("bed4+1", '\t') == format)
+
+            val entries = format.parse(path) {
+                it.use { p ->
+                    p.toList()
+                }
+            }
+            val genome = Genome["to1"]
+
+            val validEntries = entries.filter { it.chrom in genome.chromSizesMap }
+            assertEquals(2, validEntries.size)
+
+            val locs = validEntries.map { it.unpack(format).toLocation(genome) }
+            assertEquals(2, locs.size)
+        }
     }
 
     @Test fun formatContains() {
