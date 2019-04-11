@@ -27,7 +27,24 @@ class ByteColumn(label: String, data: ByteArray) :
 
     override fun merge(other: Column<*>): Column<ByteArray> {
         val seen = TByteHashSet(data)
-        check(seen.size() == data.size) { "duplicates found" }
+        check(seen.size() == data.size) {
+            check(seen.size() == data.size) {
+                val seenElements = TByteHashSet(data.size)
+                val duplicates = arrayListOf<Pair<Int, Byte>>()
+                for ((idx, e) in data.withIndex()) {
+                    if (e in seenElements) {
+                        duplicates.add(idx to e)
+                        if (duplicates.size >= 10) {
+                            break
+                        }
+                    } else {
+                        seenElements.add(e)
+                    }
+                }
+                "duplicates found in '$label' column: unique items: ${seenElements.size()}, column size: ${data.size}" +
+                        " Duplicates: ${duplicates.joinToString { (i, e) -> "($i: $e)" }}"
+            }
+        }
 
         val merged = TByteArrayList(data)
         for (value in other.data as ByteArray) {
@@ -110,7 +127,24 @@ class ShortColumn(label: String, data: ShortArray) :
 
     override fun merge(other: Column<*>): Column<ShortArray> {
         val seen = TShortHashSet(data)
-        check(seen.size() == data.size) { "duplicates found" }
+        check(seen.size() == data.size) {
+            check(seen.size() == data.size) {
+                val seenElements = TShortHashSet(data.size)
+                val duplicates = arrayListOf<Pair<Int, Short>>()
+                for ((idx, e) in data.withIndex()) {
+                    if (e in seenElements) {
+                        duplicates.add(idx to e)
+                        if (duplicates.size >= 10) {
+                            break
+                        }
+                    } else {
+                        seenElements.add(e)
+                    }
+                }
+                "duplicates found in '$label' column: unique items: ${seenElements.size()}, column size: ${data.size}" +
+                        " Duplicates: ${duplicates.joinToString { (i, e) -> "($i: $e)" }}"
+            }
+        }
 
         val merged = TShortArrayList(data)
         for (value in other.data as ShortArray) {
@@ -193,7 +227,22 @@ class IntColumn(label: String, data: IntArray) :
 
     override fun merge(other: Column<*>): Column<IntArray> {
         val seen = TIntHashSet(data)
-        check(seen.size() == data.size) { "duplicates found" }
+        check(seen.size() == data.size) {
+            val seenElements = TIntHashSet(data.size)
+            val duplicates = arrayListOf<Pair<Int, Int>>()
+            for ((idx, e) in data.withIndex()) {
+                if (e in seenElements) {
+                    duplicates.add(idx to e)
+                    if (duplicates.size >= 10) {
+                        break
+                    }
+                } else {
+                    seenElements.add(e)
+                }
+            }
+            "duplicates found in '$label' column: unique items: ${seenElements.size()}, column size: ${data.size}" +
+                    " Duplicates: ${duplicates.joinToString { (i, e) -> "($i: $e)" }}"
+        }
 
         val merged = TIntArrayList(data)
         for (value in other.data as IntArray) {
@@ -281,7 +330,24 @@ class LongColumn(label: String, data: LongArray) :
 
     override fun merge(other: Column<*>): Column<LongArray> {
         val seen = TLongHashSet(data)
-        check(seen.size() == data.size) { "duplicates found" }
+        check(seen.size() == data.size) {
+            check(seen.size() == data.size) {
+                val seenElements = TLongHashSet(data.size)
+                val duplicates = arrayListOf<Pair<Int, Long>>()
+                for ((idx, e) in data.withIndex()) {
+                    if (e in seenElements) {
+                        duplicates.add(idx to e)
+                        if (duplicates.size >= 10) {
+                            break
+                        }
+                    } else {
+                        seenElements.add(e)
+                    }
+                }
+                "duplicates found in '$label' column: unique items: ${seenElements.size()}, column size: ${data.size}" +
+                        " Duplicates: ${duplicates.joinToString { (i, e) -> "($i: $e)" }}"
+            }
+        }
 
         val merged = TLongArrayList(data)
         for (value in other.data as LongArray) {
@@ -363,7 +429,24 @@ class DoubleColumn(label: String, data: DoubleArray) :
 
     override fun merge(other: Column<*>): Column<DoubleArray> {
         val seen = TDoubleHashSet(data)
-        check(seen.size() == data.size) { "duplicates found" }
+        check(seen.size() == data.size) {
+            check(seen.size() == data.size) {
+                val seenElements = TDoubleHashSet(data.size)
+                val duplicates = arrayListOf<Pair<Int, Double>>()
+                for ((idx, e) in data.withIndex()) {
+                    if (e in seenElements) {
+                        duplicates.add(idx to e)
+                        if (duplicates.size >= 10) {
+                            break
+                        }
+                    } else {
+                        seenElements.add(e)
+                    }
+                }
+                "duplicates found in '$label' column: unique items: ${seenElements.size()}, column size: ${data.size}" +
+                        " Duplicates: ${duplicates.joinToString { (i, e) -> "($i: $e)" }}"
+            }
+        }
 
         val merged = TDoubleArrayList(data)
         for (value in other.data as DoubleArray) {
@@ -446,7 +529,24 @@ class FloatColumn(label: String, data: FloatArray) :
 
     override fun merge(other: Column<*>): Column<FloatArray> {
         val seen = TFloatHashSet(data)
-        check(seen.size() == data.size) { "duplicates found" }
+        check(seen.size() == data.size) {
+            check(seen.size() == data.size) {
+                val seenElements = TFloatHashSet(data.size)
+                val duplicates = arrayListOf<Pair<Int, Float>>()
+                for ((idx, e) in data.withIndex()) {
+                    if (e in seenElements) {
+                        duplicates.add(idx to e)
+                        if (duplicates.size >= 10) {
+                            break
+                        }
+                    } else {
+                        seenElements.add(e)
+                    }
+                }
+                "duplicates found in '$label' column: unique items: ${seenElements.size()}, column size: ${data.size}" +
+                        " Duplicates: ${duplicates.joinToString { (i, e) -> "($i: $e)" }}"
+            }
+        }
 
         val merged = TFloatArrayList(data)
         for (value in other.data as FloatArray) {

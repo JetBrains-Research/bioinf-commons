@@ -7,7 +7,9 @@ import java.util.function.IntPredicate
 import kotlin.test.assertEquals
 
 class DataFrameTest {
-    val TRUE = RowPredicateFactory { IntPredicate { true } }
+    companion object {
+        val TRUE = RowPredicateFactory { IntPredicate { true } }
+    }
 
     @Test fun testWithAdd() {
         val x = doubleArrayOf(42.0)
