@@ -294,6 +294,11 @@ class SingleEndCoverageTest {
     }
 }
 
+/**
+ * Simplifies reading and writing test code
+ */
+internal fun SingleEndCoverage.withFragment(fragment: Int): SingleEndCoverage = withFragment(FixedFragment(fragment))
+
 
 internal fun SingleEndCoverage.Builder.putAll(chromosome: Chromosome,
                                      strand: Strand,

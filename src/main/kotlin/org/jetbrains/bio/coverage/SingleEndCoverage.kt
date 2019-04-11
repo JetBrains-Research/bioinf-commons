@@ -87,10 +87,10 @@ class SingleEndCoverage private constructor(
      * Sets fragment size to specified value or reverts to a detected one if "null" is provided.
      * Returns a copy of the immutable [SingleEndCoverage] object.
      */
-    fun withFragment(fragment: Int?): SingleEndCoverage = if (fragment == null) {
-        SingleEndCoverage(genomeQuery, detectedFragment, data = data)
+    fun withFragment(fragment: Fragment): SingleEndCoverage = if (fragment is FixedFragment) {
+        SingleEndCoverage(genomeQuery, detectedFragment, fragment.size, data)
     } else {
-        SingleEndCoverage(genomeQuery, detectedFragment, fragment, data)
+        SingleEndCoverage(genomeQuery, detectedFragment, data = data)
     }
 
     /**

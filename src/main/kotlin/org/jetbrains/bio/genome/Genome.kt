@@ -47,6 +47,11 @@ class Genome private constructor(
          * if **not exists** will be downloaded automatically. */
         chromSizesPath: Path?,
 
+        /**
+         * Content of chrom.sizes file. Preserves original order during iteration.
+         */
+        chromSizesMapLambda: () -> LinkedHashMap<String, Int>,
+
         val cpgIslandsPath: Path?,
         val cytobandsPath: Path?,
         repeatsPath: Path?,
@@ -115,39 +120,7 @@ class Genome private constructor(
     /** Species token, e.g. `"mm"`. */
     val species: String get() = build.takeWhile { !it.isDigit() }
 
-    /**
-     * Content of chrom.sizes file. Preserves original order during iteration.
-     */
-    internal val chromSizesMap: LinkedHashMap<String, Int> by lazy {
-        val path: Path = this.chromSizesPath
-
-        // Fetch chrom sizes path if not exists
-        path.checkOrRecalculate { (p) ->
-            requireNotNull(annotationsConfig) {
-                "Cannot save chromosomes sizes to $path. Annotations information isn't available" +
-                        " for $build."
-            }
-
-            annotationsConfig.chromsizesUrl.downloadTo(p)
-        }
-
-        LOG.debug("Loading chrom.sizes $path")
-        val map = LinkedHashMap<String, Int>()
-        CSVFormat.TDF.parse(path.bufferedReader()).use { parser ->
-            parser.records.forEach {
-                try {
-                    map[it[0]] = it[1].toInt()
-                } catch (t: Throwable) {
-                    LOG.error(
-                            "Failed to parse chrom.sizes file: $path," +
-                                    " line: ${it.joinToString("\t")}", t
-                    )
-                }
-            }
-            LOG.debug("DONE Loading chrom.sizes $path")
-            return@lazy map
-        }
-    }
+    internal val chromSizesMap: LinkedHashMap<String, Int> by lazy(chromSizesMapLambda)
 
     val chromosomes: List<Chromosome> by lazy {
         chromSizesMap.map { (name, length) ->
@@ -188,9 +161,9 @@ class Genome private constructor(
 
     private fun <T: Any> ensureNotNull(value:T?, tag: String): T {
         requireNotNull(value) {
-             "$tag information was requested but it isn't available in '$build' genome." +
-                     " This could happen if you are using customized genome which doesn't configure path to" +
-                     " the information which is accessed later in your program."
+            "$tag information was requested but it isn't available in '$build' genome." +
+                    " This could happen if you are using customized genome which doesn't configure path to" +
+                    " the information which is accessed later in your program."
 
         }
         return value
@@ -216,9 +189,9 @@ class Genome private constructor(
 
                     val annCfg: GenomeAnnotationsConfig = when {
                         to -> GenomeAnnotationsConfig(
-                                "Test Organism", null, "<n/a>", emptyMap(), false,
-                                "<n/a>", "<n/a>", "<n/a>", "<n/a>", "<n/a>",
-                                null, "<n/a>", null)
+                            "Test Organism", null, "<n/a>", emptyMap(), false,
+                            "<n/a>", "<n/a>", "<n/a>", "<n/a>", "<n/a>",
+                            null, "<n/a>", null)
 
                         else -> {
                             if (!AnnotationsConfig.initialized) {
@@ -235,19 +208,20 @@ class Genome private constructor(
                     })
 
                     Genome(
-                            build,
-                            annotationsConfig = annCfg,
-                            // we don't expect test genome to save smth in test data dir
-                            dataPath = if (to) null else dataPath,
+                        build,
+                        annotationsConfig = annCfg,
+                        // we don't expect test genome to save smth in test data dir
+                        dataPath = if (to) null else dataPath,
 
-                            chromSizesPath = dataPath / "$build.chrom.sizes",
-                            cpgIslandsPath = annCfg.cpgIslandsUrl?.let { dataPath / CpGIslands.ISLANDS_FILE_NAME },
-                            cytobandsPath = annCfg.cytobandsUrl?.let { dataPath / CytoBands.FILE_NAME },
-                            repeatsPath = dataPath / Repeats.FILE_NAME,
-                            gapsPath = dataPath / Gaps.FILE_NAME,
-                            twoBitPath = dataPath / "$build.2bit",
-                            genesGTFPath = genesGTFPath,
-                            genesDescriptionsPath = genesDescriptionsPath
+                        chromSizesPath = dataPath / "$build.chrom.sizes",
+                        chromSizesMapLambda = { chromSizesFromPath(build, dataPath / "$build.chrom.sizes", annCfg) },
+                        cpgIslandsPath = annCfg.cpgIslandsUrl?.let { dataPath / CpGIslands.ISLANDS_FILE_NAME },
+                        cytobandsPath = annCfg.cytobandsUrl?.let { dataPath / CytoBands.FILE_NAME },
+                        repeatsPath = dataPath / Repeats.FILE_NAME,
+                        gapsPath = dataPath / Gaps.FILE_NAME,
+                        twoBitPath = dataPath / "$build.2bit",
+                        genesGTFPath = genesGTFPath,
+                        genesDescriptionsPath = genesDescriptionsPath
                     )
                 }
 
@@ -270,20 +244,42 @@ class Genome private constructor(
                 genesDescriptionsPath: Path? = null
         ) = getOrAdd(build, true) {
             Genome(
-                    build,
-                    annotationsConfig = annotationsConfig,
-                    dataPath = dataPath,
-                    chromSizesPath = chromSizesPath,
-                    cpgIslandsPath = cpgIslandsPath,
-                    cytobandsPath = cytobandsPath,
-                    repeatsPath = repeatsPath,
-                    gapsPath = gapsPath,
-                    twoBitPath = twoBitPath,
-                    genesGTFPath = genesGTFPath,
-                    genesDescriptionsPath = genesDescriptionsPath
+                build,
+                annotationsConfig = annotationsConfig,
+                dataPath = dataPath,
+                chromSizesPath = chromSizesPath,
+                chromSizesMapLambda = { chromSizesFromPath(build, chromSizesPath, annotationsConfig) },
+                cpgIslandsPath = cpgIslandsPath,
+                cytobandsPath = cytobandsPath,
+                repeatsPath = repeatsPath,
+                gapsPath = gapsPath,
+                twoBitPath = twoBitPath,
+                genesGTFPath = genesGTFPath,
+                genesDescriptionsPath = genesDescriptionsPath
 
             )
         }
+
+        /**
+         * A custom genome with given chromosome sizes -- no paths required
+         */
+        operator fun get(
+                build: String,
+                chromSizesMap: LinkedHashMap<String, Int>
+        ) = getOrAdd(build, false) { Genome(
+            build = build,
+            annotationsConfig = null,
+            dataPath = null,
+            chromSizesPath = null,
+            chromSizesMapLambda = { chromSizesMap },
+            cpgIslandsPath = null,
+            cytobandsPath = null,
+            repeatsPath = null,
+            gapsPath = null,
+            twoBitPath = null,
+            genesGTFPath = null,
+            genesDescriptionsPath = null
+        ) }
 
         private fun getOrAdd(build: String, customized: Boolean, genomeProvider: () -> Genome): Genome =
                 if (!customized) {
@@ -335,6 +331,38 @@ class Genome private constructor(
             LOG.debug("Chrom sizes name: $fileName. Detected build: $build")
             return build
         }
+
+        private fun chromSizesFromPath(
+                build: String, chromSizesPath: Path, annotationsConfig: GenomeAnnotationsConfig?
+        ): LinkedHashMap<String, Int> {
+
+            // Fetch chrom sizes path if not exists
+            chromSizesPath.checkOrRecalculate { (p) ->
+                requireNotNull(annotationsConfig) {
+                    "Cannot save chromosomes sizes to $chromSizesPath. Annotations information isn't available" +
+                            " for $build."
+                }
+
+                annotationsConfig.chromsizesUrl.downloadTo(p)
+            }
+
+            LOG.debug("Loading chrom.sizes $chromSizesPath")
+            val map = LinkedHashMap<String, Int>()
+            CSVFormat.TDF.parse(chromSizesPath.bufferedReader()).use { parser ->
+                parser.records.forEach {
+                    try {
+                        map[it[0]] = it[1].toInt()
+                    } catch (t: Throwable) {
+                        LOG.error(
+                            "Failed to parse chrom.sizes file: $chromSizesPath," +
+                                    " line: ${it.joinToString("\t")}", t
+                        )
+                    }
+                }
+                LOG.debug("DONE Loading chrom.sizes $chromSizesPath")
+                return map
+            }
+        }
     }
 }
 
@@ -371,7 +399,7 @@ data class Chromosome private constructor(
                     TwoBitReader.read(twoBitPath, name)
                 } catch (e: IOException) {
                     throw UncheckedIOException(
-                            "Error loading $name from ${genome.twoBitPath(false)}", e)
+                        "Error loading $name from ${genome.twoBitPath(false)}", e)
                 }
 
                 sequenceRef = WeakReference(s)
