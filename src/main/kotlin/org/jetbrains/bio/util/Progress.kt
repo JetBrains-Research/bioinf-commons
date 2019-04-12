@@ -178,7 +178,14 @@ private class Bounded(
     private var progressPercent: Long = -1
 
     override fun report(update: Long) {
-        check(!isDone) { "$title progress is done" }
+        if (update == 0L) {
+            // nothing to do
+            return
+        }
+
+        check(!isDone) {
+            "$title progress is done: ${accumulator.get()} / $totalItems. Updated requested: $update"
+        }
         accumulator.accumulate(update)
 
         val duration = getDuration()
