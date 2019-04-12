@@ -16,9 +16,7 @@ import org.jetbrains.bio.util.createDirectories
 import org.jetbrains.bio.viktor.F64Array
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
 import java.util.function.IntToDoubleFunction
-import java.util.stream.Collectors
 
 
 /**
@@ -164,42 +162,68 @@ interface Fitter<out Model : ClassificationModel> {
      * @return guessed classification model.
      */
     fun guess(preprocessed: Preprocessed<DataFrame>,
-              title: String, threshold: Double, maxIter: Int): Model
+              title: String, threshold: Double, maxIter: Int, attempt: Int): Model
 
     fun guess(preprocessed: List<Preprocessed<DataFrame>>,
-              title: String, threshold: Double, maxIter: Int): Model =
-            guess(preprocessed.first(), title, threshold, maxIter)
+              title: String, threshold: Double, maxIter: Int, attempt: Int): Model =
+            guess(preprocessed.first(), title, threshold, maxIter, attempt)
 
     fun fit(preprocessed: Preprocessed<DataFrame>,
             title: String = TITLE, threshold: Double = THRESHOLD,
-            maxIter: Int = MAX_ITERATIONS): Model = fit(listOf(preprocessed), title, threshold, maxIter)
+            maxIter: Int = MAX_ITERATIONS,
+            attempt: Int = 0): Model = fit(listOf(preprocessed), title, threshold, maxIter, attempt)
 
     fun fit(preprocessed: List<Preprocessed<DataFrame>>,
             title: String = TITLE, threshold: Double = THRESHOLD,
-            maxIter: Int = MAX_ITERATIONS): Model {
+            maxIter: Int = MAX_ITERATIONS,
+            attempt: Int = 0): Model {
         require(threshold > 0) { "threshold $threshold must be >0" }
         require(maxIter > 0) { "maximum number of iterations $maxIter must be >0" }
 
-        val model = guess(preprocessed, title, threshold, maxIter)
+        val model = guess(preprocessed, title, threshold, maxIter, attempt)
         model.fit(preprocessed, title, threshold, maxIter)
         return model
     }
 
     /**
-     * Returns a new fitter which runs the original one [numStarts] times
+     * Returns a new fitter which runs the original one [multiStarts] times
      * and picks the model producing the highest log-likelihood.
      */
-    fun multiStarted(numStarts: Int): Fitter<Model> = object : Fitter<Model> by this {
+    fun multiStarted(
+            multiStarts: Int = MULTISTARTS,
+            multiStartIter: Int = MULTISTART_ITERATIONS): Fitter<Model> = object : Fitter<Model> by this {
         init {
-            require(numStarts > 1) { "number of starts $numStarts must be >1" }
+            require(multiStarts > 1) { "number of starts $multiStarts must be >1" }
         }
 
         override fun fit(preprocessed: Preprocessed<DataFrame>, title: String,
-                         threshold: Double, maxIter: Int): Model {
-            val comparator = Comparator.comparing<Model, Double> { it.logLikelihood(preprocessed) }
-            return (0 until numStarts).parallel().mapToObj {
-                super.fit(preprocessed, "multistart $it: $title", threshold, maxIter)
-            }.collect(Collectors.maxBy(comparator)).get()
+                         threshold: Double, maxIter: Int, attempt: Int): Model {
+            require(attempt == 0) {
+                "cyclic multistart is not allowed"
+            }
+            require(maxIter > multiStartIter) {
+                "maximum number of iterations $maxIter must be > multistart $multiStartIter"
+            }
+            val msModel = (0 until multiStarts).map {
+                super.fit(preprocessed, "multistart $it: $title", threshold, multiStartIter, it)
+            }.maxBy { it.logLikelihood(preprocessed) }!!
+            msModel.fit(preprocessed, title, threshold, maxIter - multiStartIter)
+            return msModel
+        }
+
+        override fun fit(preprocessed: List<Preprocessed<DataFrame>>, title: String,
+                         threshold: Double, maxIter: Int, attempt: Int): Model {
+            require(attempt == 0) {
+                "cyclic multistart is not allowed"
+            }
+            require(maxIter > multiStartIter) {
+                "maximum number of iterations $maxIter must be > multistart $multiStartIter"
+            }
+            val msModel = (0 until multiStarts).map {
+                super.fit(preprocessed, "multistart $it: $title", threshold, multiStartIter, it)
+            }.maxBy { m -> preprocessed.map { m.logLikelihood(it) }.sum() }!!
+            msModel.fit(preprocessed, title, threshold, maxIter - multiStartIter)
+            return msModel
         }
     }
 
@@ -207,6 +231,8 @@ interface Fitter<out Model : ClassificationModel> {
         const val TITLE = "unknown"
         const val THRESHOLD = 0.1
         const val MAX_ITERATIONS = 100
+        const val MULTISTARTS = 5
+        const val MULTISTART_ITERATIONS = 5
     }
 }
 
@@ -274,7 +300,7 @@ object MultiLabels {
         return if (numLabels == 1) {
             arrayOf(prefix)
         } else {
-            (0 until numLabels).map { (prefix + (it + 1)).intern() }.toTypedArray()
+            Array(numLabels) { "${prefix}_${it + 1}" }
         }
     }
 }
