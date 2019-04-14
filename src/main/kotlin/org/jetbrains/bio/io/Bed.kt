@@ -20,7 +20,7 @@ import java.net.URI
 import java.nio.file.Path
 
 
-private val NON_DATA_LINE_PATTERN = "^(?:#|track|browser).+$".toRegex()
+private val NON_DATA_LINE_PATTERN = "^(?:#|track|browser).*$".toRegex()
 
 /**
  * Even though BED has a well-defined spec it is widely known

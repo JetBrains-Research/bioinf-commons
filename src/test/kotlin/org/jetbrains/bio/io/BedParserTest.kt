@@ -41,7 +41,19 @@ class BedParserTest {
                         "chr2\t127473530\t127474697\tPos3\t0\t+\t127473530\t127474697\t255,0,0\n" +
                         "chr2\t127474697\t127475864\tPos4\t0\t+\t127474697\t127475864\t255,0,0\n" +
                         "chr2\t127475864\t127477031\tNeg1\t0\t-\t127475864\t127477031\t0,0,255"
-
+        private val HOMER_FORMAT = """
+            # HOMER Peaks
+            # Peak finding parameters:
+            # tag directory = AH29_Calu3H3K4Me1ChIP_TagDirectory
+            #
+            # total peaks = 31950
+            # peak size = 500
+            # ...
+            # Column Headers:
+            #PeakID	chr	start	end	strand	Normalized Tag Count	region size	findPeaks Score	Total Tags	Control Tags (normalized to IP Experiment)	Fold Change vs Control	p-value vs Control	Clonal Fold Change
+            chr1	0927	1721	chr1-17	744	+
+            chr1	7242	7868	chr1-13	579	+
+        """.trimIndent().trim()
     }
 
     @Test
@@ -834,6 +846,13 @@ Fields number in BED file is between 3 and 15, but was 2""")
 
         BedFormat(4, null).let { f ->
             assertEquals(f, BedFormat.fromString(f.toString()))
+        }
+    }
+
+    @Test
+    fun fromHomerPeakCallerBedFiles() {
+        withBedFile(HOMER_FORMAT) { path ->
+            assertEquals("(bed6, '\t')", BedFormat.auto(path).toString())
         }
     }
 
