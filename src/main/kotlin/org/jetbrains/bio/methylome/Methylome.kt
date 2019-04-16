@@ -3,6 +3,7 @@ package org.jetbrains.bio.methylome
 import com.google.common.base.MoreObjects
 import com.google.common.primitives.Shorts
 import gnu.trove.map.hash.TObjectIntHashMap
+import org.jetbrains.bio.dataframe.BitterSet
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Strand
@@ -12,6 +13,7 @@ import org.jetbrains.bio.npy.NpzFile
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * A container for WGBS data.
@@ -69,7 +71,9 @@ open class Methylome internal constructor(
         /** Binary format version.  */
         internal val VERSION: Int = 6
 
-        fun builder(genomeQuery: GenomeQuery) = MethylomeBuilder(genomeQuery)
+        fun builder(genomeQuery: GenomeQuery, ignoreDuplicatedOffsets: Boolean = false): MethylomeBuilder = MethylomeBuilder(
+                genomeQuery, ignoreDuplicatedOffsets
+        )
 
         fun lazy(genomeQuery: GenomeQuery, inputPath: Path): Methylome {
             return LazyMethylome(genomeQuery, inputPath)
@@ -128,9 +132,18 @@ private fun Pair<Chromosome, Strand>.toKey(): String {
  *
  * Guarantees that the constructed [Methylome] is **always** sorted.
  */
-class MethylomeBuilder(private val genomeQuery: GenomeQuery) {
+class MethylomeBuilder(
+        private val genomeQuery: GenomeQuery,
+        private val ignoreDuplicatedOffsets: Boolean
+) {
     private val plusData = frameMap(genomeQuery)
     private val minusData = frameMap(genomeQuery)
+    private val uniqueOffsets = genomeMap(genomeQuery) {
+            BitterSet(it.length)
+    }
+
+    private val duplicatedOffsets = AtomicLong()
+    fun duplicatedOffsets() = duplicatedOffsets.get()
 
     fun add(chromosome: Chromosome, strand: Strand,
             offset: Int, context: CytosineContext?,
@@ -138,11 +151,20 @@ class MethylomeBuilder(private val genomeQuery: GenomeQuery) {
         // Note(lebedev): this will silently skip possible "overflows". Not
         // sure if this is what we want.
         if (totalCount > 0) {
-            val frame = strand.choose(plusData, minusData)[chromosome]
-            // The magic constant is # of contexts + 1.
-            frame.add(offset, context?.tag ?: 3,
-                      Shorts.saturatedCast(methylatedCount.toLong()),
-                      Shorts.saturatedCast(totalCount.toLong()))
+            val seenOffsets = uniqueOffsets[chromosome]
+            val alreadySeen = seenOffsets[offset]
+            if (alreadySeen) {
+                duplicatedOffsets.incrementAndGet()
+            }
+            seenOffsets.set(offset)
+
+            if (!ignoreDuplicatedOffsets || !alreadySeen) {
+                val frame = strand.choose(plusData, minusData)[chromosome]
+                // The magic constant is # of contexts + 1.
+                frame.add(offset, context?.tag ?: 3,
+                        Shorts.saturatedCast(methylatedCount.toLong()),
+                        Shorts.saturatedCast(totalCount.toLong()))
+            }
         }
         return this
     }

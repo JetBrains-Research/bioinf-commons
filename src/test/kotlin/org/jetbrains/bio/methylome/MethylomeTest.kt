@@ -69,6 +69,32 @@ class MethylomeTest {
         }
     }
 
+    @Test
+    fun duplicatedOffsets() {
+        val builder = Methylome.builder(genomeQuery)
+        val chromosome = genomeQuery.get().first()
+        val strand = Strand.PLUS
+        builder.add(chromosome, strand, 42, CytosineContext.CG, 10, 20)
+        builder.add(chromosome, strand, 42, CytosineContext.CG, 11, 18)
+        builder.add(chromosome, strand, 42, CytosineContext.CHH, 1, 8)
+        builder.add(chromosome, strand, 2, CytosineContext.CHH, 8, 8)
+        assertEquals(2, builder.duplicatedOffsets())
+        assertEquals(4, builder.build()[chromosome, strand].size)
+    }
+
+    @Test
+    fun duplicatedOffsetsIgnored() {
+        val builder = Methylome.builder(genomeQuery, true)
+        val chromosome = genomeQuery.get().first()
+        val strand = Strand.PLUS
+        builder.add(chromosome, strand, 42, CytosineContext.CG, 10, 20)
+        builder.add(chromosome, strand, 42, CytosineContext.CG, 11, 18)
+        builder.add(chromosome, strand, 42, CytosineContext.CHH, 1, 8)
+        builder.add(chromosome, strand, 2, CytosineContext.CHH, 8, 8)
+        assertEquals(2, builder.duplicatedOffsets())
+        assertEquals(2, builder.build()[chromosome, strand].size)
+    }
+
     private fun assertSerializedCorrectly(methylome0: Methylome) {
         withTempFile("methylome", ".npz") { path ->
             methylome0.save(path)
