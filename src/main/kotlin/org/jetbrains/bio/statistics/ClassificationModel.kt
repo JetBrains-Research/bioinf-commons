@@ -295,12 +295,15 @@ abstract class IterationContext(protected val numStates: Int,
 object MultiLabels {
     const val MAX_LABELS = 40
 
+    /**
+     * Labels should interned, because [DataFrame.getLabelIndex] works with reference equality for speed? reasons.
+     */
     fun generate(prefix: String, numLabels: Int = MAX_LABELS): Array<String> {
         require(numLabels > 0) { "number of labels $numLabels must be >0" }
         return if (numLabels == 1) {
-            arrayOf(prefix)
+            arrayOf(prefix.intern())
         } else {
-            Array(numLabels) { "${prefix}_${it + 1}" }
+            Array(numLabels) { "${prefix}_${it + 1}".intern() }
         }
     }
 }
