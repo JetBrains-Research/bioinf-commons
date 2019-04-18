@@ -40,4 +40,9 @@ object Tests {
             "Expected ${expected.simpleName}, got ${actual::class.java.simpleName}.")
     }
 
+    fun assertMatches(output: String, regex: Regex) = assertTrue(
+        regex.matches(output),
+        "Regex ${regex.pattern} doesn't match content:\n<$output>"
+    )
+
 }
