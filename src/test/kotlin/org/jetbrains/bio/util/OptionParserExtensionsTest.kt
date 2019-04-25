@@ -106,7 +106,7 @@ class OptionParserExtensionsTest {
                 }
             }
         }
-        assertMatches(stdErr, "(.|\\n)*ERROR: Path (.*)foo does not exist(.|\\n)*".toRegex())
+        assertMatches(stdErr, "(.|\\n|\\r\\n)*ERROR: Path (.*)foo does not exist(.|\\n|\\r\\n)*".toRegex())
         assertEquals("", stdOut)
     }
 
@@ -214,7 +214,7 @@ class OptionParserExtensionsTest {
             }
         }
 
-        assertMatches(stdErr, "(.|\\n)*ERROR: Path (.*)foo does not exist(.|\\n)*".toRegex())
+        assertMatches(stdErr, "(.|\\n|\\r\\n)*ERROR: Path (.*)foo does not exist(.|\\n|\\r\\n)*".toRegex())
         assertEquals("", stdOut)
     }
 
