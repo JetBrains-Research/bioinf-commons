@@ -10,6 +10,7 @@ import org.jetbrains.bio.statistics.distribution.Sampling
 import org.jetbrains.bio.statistics.gson.F64ArrayTypeAdapter
 import org.jetbrains.bio.statistics.gson.GSONUtil
 import org.jetbrains.bio.statistics.gson.NotDirectlyDeserializable
+import org.jetbrains.bio.util.MultitaskProgress
 import org.jetbrains.bio.util.bufferedReader
 import org.jetbrains.bio.util.bufferedWriter
 import org.jetbrains.bio.util.createDirectories
@@ -181,7 +182,9 @@ interface Fitter<out Model : ClassificationModel> {
         require(maxIter > 0) { "maximum number of iterations $maxIter must be >0" }
 
         val model = guess(preprocessed, title, threshold, maxIter, attempt)
+        MultitaskProgress.addTask(title, Fitter.MAX_ITERATIONS.toLong())
         model.fit(preprocessed, title, threshold, maxIter)
+        MultitaskProgress.finishTask(title)
         return model
     }
 
@@ -204,11 +207,14 @@ interface Fitter<out Model : ClassificationModel> {
             require(maxIter > multiStartIter) {
                 "maximum number of iterations $maxIter must be > multistart $multiStartIter"
             }
-            LOG.info("multistart: $title $MULTISTARTS x $MULTISTART_ITERATIONS iterations")
+            LOG.info("Multistart: $title $MULTISTARTS x $MULTISTART_ITERATIONS iterations")
             val msModel = (0 until multiStarts).map {
-                super.fit(preprocessed, "multistart ${it + 1}/$MULTISTARTS: $title", threshold, multiStartIter, it)
+                super.fit(preprocessed, "Multistart ${it + 1}/$MULTISTARTS: $title", threshold, multiStartIter, it)
             }.maxBy { it.logLikelihood(preprocessed) }!!
+            LOG.info("Multistart done")
+            MultitaskProgress.addTask(title, Fitter.MAX_ITERATIONS.toLong())
             msModel.fit(preprocessed, title, threshold, maxIter - multiStartIter)
+            MultitaskProgress.finishTask(title)
             return msModel
         }
 
@@ -220,11 +226,14 @@ interface Fitter<out Model : ClassificationModel> {
             require(maxIter > multiStartIter) {
                 "maximum number of iterations $maxIter must be > multistart $multiStartIter"
             }
-            LOG.info("multistart: $title $MULTISTARTS x $MULTISTART_ITERATIONS iterations")
+            LOG.info("Multistart: $title $MULTISTARTS x $MULTISTART_ITERATIONS iterations")
             val msModel = (0 until multiStarts).map {
-                super.fit(preprocessed, "multistart ${it + 1}/$MULTISTARTS: $title", threshold, multiStartIter, it)
+                super.fit(preprocessed, "Multistart ${it + 1}/$MULTISTARTS: $title", threshold, multiStartIter, it)
             }.maxBy { m -> preprocessed.map { m.logLikelihood(it) }.sum() }!!
+            LOG.info("Multistart done")
+            MultitaskProgress.addTask(title, Fitter.MAX_ITERATIONS.toLong())
             msModel.fit(preprocessed, title, threshold, maxIter - multiStartIter)
+            MultitaskProgress.finishTask(title)
             return msModel
         }
     }
