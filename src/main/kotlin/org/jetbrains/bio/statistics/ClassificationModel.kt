@@ -204,8 +204,9 @@ interface Fitter<out Model : ClassificationModel> {
             require(maxIter > multiStartIter) {
                 "maximum number of iterations $maxIter must be > multistart $multiStartIter"
             }
+            LOG.info("multistart: $title $MULTISTARTS x $MULTISTART_ITERATIONS iterations")
             val msModel = (0 until multiStarts).map {
-                super.fit(preprocessed, "multistart $it: $title", threshold, multiStartIter, it)
+                super.fit(preprocessed, "multistart ${it + 1}/$MULTISTARTS: $title", threshold, multiStartIter, it)
             }.maxBy { it.logLikelihood(preprocessed) }!!
             msModel.fit(preprocessed, title, threshold, maxIter - multiStartIter)
             return msModel
@@ -219,8 +220,9 @@ interface Fitter<out Model : ClassificationModel> {
             require(maxIter > multiStartIter) {
                 "maximum number of iterations $maxIter must be > multistart $multiStartIter"
             }
+            LOG.info("multistart: $title $MULTISTARTS x $MULTISTART_ITERATIONS iterations")
             val msModel = (0 until multiStarts).map {
-                super.fit(preprocessed, "multistart $it: $title", threshold, multiStartIter, it)
+                super.fit(preprocessed, "multistart ${it + 1}/$MULTISTARTS: $title", threshold, multiStartIter, it)
             }.maxBy { m -> preprocessed.map { m.logLikelihood(it) }.sum() }!!
             msModel.fit(preprocessed, title, threshold, maxIter - multiStartIter)
             return msModel
@@ -228,6 +230,7 @@ interface Fitter<out Model : ClassificationModel> {
     }
 
     companion object {
+        private val LOG = Logger.getLogger(ClassificationModel::class.java)
         const val TITLE = "unknown"
         const val THRESHOLD = 0.1
         const val MAX_ITERATIONS = 100
