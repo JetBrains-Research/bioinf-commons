@@ -10,6 +10,10 @@ import kotlin.test.assertTrue
  * expected the message to help me identify the problem. Guess we're both disappointed.
  *
  * So, I've collected a few assert helper methods which cover popular use cases of [assertTrue].
+ *
+ * This object is not visible from outside of "bioinf-commons" and is thus partially copied to other repositories;
+ * for the reasons see the comments to
+ * https://github.com/JetBrains-Research/span/commit/fabb0b91827dd098dd3b96760b540b337018a6b2
  */
 object Tests {
 

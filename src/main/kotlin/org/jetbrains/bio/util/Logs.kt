@@ -32,7 +32,7 @@ object Logs {
         })
         System.setOut(nullPrintStream)
         System.setErr(nullPrintStream)
-        Logs.addConsoleAppender(Level.INFO)
+        addConsoleAppender(Level.INFO)
     }
 
     /**
@@ -90,13 +90,13 @@ object Logs {
         val errStream = ByteArrayOutputStream()
         System.setOut(PrintStream(outStream))
         System.setErr(PrintStream(errStream))
-        Logs.addConsoleAppender(Level.INFO)
+        addConsoleAppender(Level.INFO)
         try {
             block()
         } finally {
             System.setOut(out)
             System.setErr(err)
-            Logs.addConsoleAppender(Level.INFO)
+            addConsoleAppender(Level.INFO)
         }
         return String(outStream.toByteArray()) to String(errStream.toByteArray())
     }
