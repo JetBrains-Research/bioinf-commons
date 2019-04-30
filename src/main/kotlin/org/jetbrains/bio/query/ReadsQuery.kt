@@ -59,8 +59,9 @@ class ReadsQuery(
             }
         }
         val coverage = Coverage.load(npz, genomeQuery, fragment)
+        val libraryDepth = coverage.depth
         if (logFragmentSize) {
-            val logMessage = "Library: ${path.name}, Depth: ${coverage.depth}, " + when (coverage) {
+            val logMessage = "Library: ${path.name}, Depth: $libraryDepth, " + when (coverage) {
                 is SingleEndCoverage -> "Reads: single-ended, " + when {
                     coverage.actualFragment != coverage.detectedFragment ->
                         "Fragment size: ${coverage.actualFragment} bp " +
@@ -83,6 +84,11 @@ class ReadsQuery(
             }
             LOG.info(logMessage)
         }
+        val genomeSize = genomeQuery.get().map { it.length.toLong() }.sum()
+        if (libraryDepth < genomeSize * MIN_DEPTH_THRESHOLD_PERCENT / 100.0) {
+            LOG.warn("Library: ${path.name}, Depth: $libraryDepth is less than " +
+                    "$MIN_DEPTH_THRESHOLD_PERCENT% x $genomeSize of genome ${genomeQuery.id}")
+        }
         return coverage
     }
 
@@ -99,6 +105,8 @@ class ReadsQuery(
 
     companion object {
         val LOG: Logger = Logger.getLogger(ReadsQuery::class.java)
+
+        private const val MIN_DEPTH_THRESHOLD_PERCENT = 0.1
     }
 }
 
