@@ -381,6 +381,7 @@ class BedParser(
      * Returns the parsed [BedEntry], or throws [IllegalArgumentException] if parsing failed.
      */
     private fun parse(line: String): BedEntry {
+        @Suppress("UnstableApiUsage")
         val chunks = splitter.splitToList(line)
         return try {
             BedEntry(
@@ -393,6 +394,7 @@ class BedParser(
     }
 
     override fun close() {
+        @Suppress("UnstableApiUsage")
         Closeables.closeQuietly(reader)
     }
 
@@ -424,6 +426,7 @@ class BedPrinter(private val writer: BufferedWriter, private val format: BedForm
         print(toLine(entry, format))
     }
 
+    @Suppress("UnstableApiUsage")
     override fun close() = Closeables.close(writer, true)
 
     companion object {
