@@ -6,10 +6,15 @@ import org.apache.commons.math3.linear.*
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.dataframe.DataFrameBuilder
 import org.jetbrains.bio.statistics.distribution.Sampling
+import org.jetbrains.bio.statistics.mixture.MLFreeMixture
 import java.util.*
 import org.jetbrains.bio.viktor.F64Array
+import org.jetbrains.bio.viktor.asF64Array
+import org.jetbrains.bio.viktor.toF64Array
 import org.tukaani.xz.check.None
 import java.util.function.IntPredicate
+import java.util.function.IntSupplier
+import javax.lang.model.type.ArrayType
 import kotlin.math.exp
 import kotlin.random.Random
 
@@ -21,8 +26,8 @@ abstract class RegressionEmissionScheme(covariateLabels: List<String>, regressio
     abstract val linkDerivative: (Double) -> Double
     abstract val linkVariance: (Double) -> Double
 
-    fun update(df: DataFrame, t:Int){
-        var y = df.sliceAsDouble(df.labels[t].intern())
+    override fun update(df: DataFrame, d:Int, weights: F64Array){
+        var y = df.sliceAsDouble(df.labels[d].intern())
         var xFromCovariates = emptyArray<DoubleArray>()
         for (label in covariateLabels){
             xFromCovariates += df.sliceAsDouble(label)
@@ -56,10 +61,10 @@ abstract class RegressionEmissionScheme(covariateLabels: List<String>, regressio
             val z:RealVector = eta.add(Y.subtract(countedLink).ebeDivide(countedLinkDeriv))
             val countedLinkVar = countedLink.map { linkVariance(it) }
             val W = countedLinkDeriv.ebeMultiply(countedLinkDeriv).ebeDivide(countedLinkVar).toArray()
-
+            
             wlr.newSampleData(z.toArray(), x, W)
 
-            X1 = wlr.calculateBeta()
+            X1 = ArrayRealVector(wlr.calculateBeta().toArray().zip(weights.data){ a, b -> a*b }.toDoubleArray())
             if (X1.subtract(X0).l1Norm < tol) {
                 break
             }
@@ -73,6 +78,7 @@ class PoissonRegressionEmissionScheme (
         covariateLabels: List<String>,
         regressionCoefficients: DoubleArray,
         override val degreesOfFreedom: Int): RegressionEmissionScheme(covariateLabels, regressionCoefficients) {
+
     override val link: (Double) -> Double = {Math.exp(it)}
     override val linkDerivative: (Double) -> Double = {Math.exp(it)}
     override val linkVariance: (Double) -> Double = {it}
@@ -94,16 +100,51 @@ class PoissonRegressionEmissionScheme (
     }
 
     override fun logProbability(df: DataFrame, t: Int, d: Int): Double {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        TODO("not implemented")
+    }
+}
+
+class ConstantRegressionEmissionScheme (
+        covariateLabels: List<String>,
+        regressionCoefficients: DoubleArray,
+        override val degreesOfFreedom: Int = 0,
+        private val emission: Int): RegressionEmissionScheme(covariateLabels, regressionCoefficients) {
+
+    override val link: (Double) -> Double
+        get() = TODO("not implemented")
+    override val linkDerivative: (Double) -> Double
+        get() = TODO("not implemented")
+    override val linkVariance: (Double) -> Double
+        get() = TODO("not implemented")
+
+    override fun sample(df: DataFrame, d: Int, fill: IntPredicate) {
+        IntSupplier { emission }
     }
 
-    override fun update(df: DataFrame, d: Int, weights: F64Array) {
+    override fun logProbability(df: DataFrame, t: Int, d: Int): Double {
+        TODO("not implemented")
     }
 
 
+}
+// 0 - zero-inflated component
+// 1 - LOW
+// 2 - HIGH
+class ZeroPoissonMixture(weights: F64Array, covariateLabels: List<String>, regressionCoefficients: DoubleArray): MLFreeMixture(numComponents = 3, numDimensions = 1, weights = weights){
+    val covariateLabels: List<String> = covariateLabels
+    var regressionCoefficients: DoubleArray = regressionCoefficients
+        protected set
 
-
-
+    override fun getEmissionScheme(i: Int, d: Int): EmissionScheme {
+        if(i == 0) return ConstantRegressionEmissionScheme(
+                    covariateLabels = covariateLabels,
+                    regressionCoefficients = regressionCoefficients,
+                    emission = 0)
+        else return PoissonRegressionEmissionScheme(
+                    covariateLabels = covariateLabels,
+                    regressionCoefficients = regressionCoefficients,
+                    degreesOfFreedom = covariateLabels.size)
+    }
 }
 
 
@@ -113,27 +154,15 @@ fun main(args: Array<String>) {
             .with("x1", DoubleArray(1000000) { Random.nextDouble(0.0, 1.0) })
             .with("x2", DoubleArray(1000000) { Random.nextDouble(0.0, 1.0) })
             .with("y", DoubleArray(1000000))
-    //2
+    //проверка, что с внешними весами все еще работает
     var regrES = PoissonRegressionEmissionScheme(listOf("x1", "x2"), doubleArrayOf(4.0, -2.0), 2)
     val pred = IntPredicate {true}
 
-    val startTime = System.nanoTime()
-    var maxDiff = doubleArrayOf(0.0, 0.0, 0.0)
-    val trueValues = doubleArrayOf(0.0, 4.0, -2.0)
-    for(j in 1..100){
 
-        regrES.sample(covar, 2, pred)
+    regrES.sample(covar, 2, pred)
+    regrES.update(covar, 2, doubleArrayOf(1.0, 1.0, 1.0).asF64Array())
 
-        regrES.update(covar, 2)
+    print("Beta: ${regrES.regressionCoefficients.asList()}")
 
-        regrES.regressionCoefficients.forEachIndexed { index, d ->
-            if (maxDiff[index] <= Math.abs(d - trueValues[index])) maxDiff[index] = Math.abs(d - trueValues[index])
-        }
-
-
-        regrES = PoissonRegressionEmissionScheme(listOf("x1", "x2"), doubleArrayOf(4.0, -2.0), 2)
-
-    }
-    print(maxDiff.toList())
-    println("Mean working time: ${(System.nanoTime() - startTime)/100}")
+    // MLFreeMixture
 }
