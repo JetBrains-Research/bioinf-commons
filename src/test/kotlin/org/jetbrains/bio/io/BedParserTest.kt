@@ -172,7 +172,8 @@ class BedParserTest {
                     "chr1", 1000, 5000, "cloneA", 0,
                     extraFields = "+\t1000\t5000\t0\t2\t567,488,\t0,3512".split('\t').toTypedArray()
                 ),
-                firstEntry.unpack(bedFormat))
+                firstEntry.unpack(bedFormat)
+            )
         }
     }
 
@@ -223,6 +224,33 @@ chr1 2000 cloneB - 2000 6000 2 0,3601
 Fields number in BED file is between 3 and 15, but was 2""")
 
             BedFormat.auto(path)
+        }
+    }
+
+    /**
+     * The "tricky BED" file will fail to parse with auto format due to issue
+     * https://github.com/JetBrains-Research/bioinf-commons/issues/2
+     * It first tricks the parser in thinking that it's bed11+, but then presents fractional values
+     * in the 5th column.
+     *
+     * The user should either provide a custom BED format, make sure that the BED file is not tricky,
+     * or consider a more robust autodetection approach.
+     */
+    @Test
+    fun testTrickyBed() {
+        val content = "chr1 1000 2000 cloneA 960 + 1000 5000 255,0,0 2 0,3512\n" +
+                "chr1 2000 3000 cloneB 3.14 - 2000 6000 0,255,0 2 0,3601"
+
+        withBedFile(content) { path ->
+            val autoFormat = BedFormat.auto(path)
+            assertEquals(BedFormat.from("bed11+", ' '), autoFormat)
+
+            expectedEx.expect(NumberFormatException::class.java)
+            expectedEx.expectMessage("For input string: \"3.14\"")
+
+            autoFormat.parse(path) { it.forEach { entry ->
+                entry.unpack(autoFormat.fieldsNumber, null, autoFormat.delimiter)
+            }}
         }
     }
 
