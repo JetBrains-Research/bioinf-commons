@@ -25,7 +25,7 @@ import kotlin.test.assertTrue
  */
 class BedParserTest {
     @get:Rule
-        var expectedEx = ExpectedException.none()
+    var expectedEx = ExpectedException.none()
 
     companion object {
         private const val CONTENT_RGB_EXAMPLE_SPACE_INSTEAD_OF_TABS =
@@ -70,9 +70,9 @@ class BedParserTest {
             // Items
             val firstEntry = format.parse(path) { it.first() }
             assertEquals(ExtendedBedEntry("chr1", 1000, 5000, "cloneA",
-                                          960, '+', 1000, 5000, 0, 2,
-                                          intArrayOf(567, 488), intArrayOf(0, 3512)),
-                         firstEntry.unpack(format))
+                960, '+', 1000, 5000, 0, 2,
+                intArrayOf(567, 488), intArrayOf(0, 3512)),
+                firstEntry.unpack(format))
         }
     }
 
@@ -93,8 +93,8 @@ class BedParserTest {
                 iterator.next()
                 val secondEntry = iterator.next()
                 assertEquals(ExtendedBedEntry("chr1", 2000, 6000, "cloneB",
-                                              900, '-', 2000, 6000),
-                             secondEntry.unpack(format))
+                    900, '-', 2000, 6000),
+                    secondEntry.unpack(format))
             }
         }
     }
@@ -109,9 +109,9 @@ class BedParserTest {
             // Items
             val firstEntry = format.parse(path) { it.first() }
             assertEquals(ExtendedBedEntry("chr2", 127471196, 127472363, "Pos1",
-                                          0, '+', 127471196, 127472363,
-                                          Color(255, 0, 0).rgb),
-                         firstEntry.unpack(BedFormat.from("bed9")))
+                0, '+', 127471196, 127472363,
+                Color(255, 0, 0).rgb),
+                firstEntry.unpack(BedFormat.from("bed9")))
         }
     }
 
@@ -126,9 +126,9 @@ class BedParserTest {
             // Items
             val firstEntry = format.parse(path) { it.first() }
             assertEquals(ExtendedBedEntry("chr2", 127471196, 127472363, "Pos1",
-                                          0, '+', 127471196, 127472363,
-                                          Color(255, 0, 0).rgb),
-                         firstEntry.unpack(BedFormat.from("bed9",' '), omitEmptyStrings = true))
+                0, '+', 127471196, 127472363,
+                Color(255, 0, 0).rgb),
+                firstEntry.unpack(BedFormat.from("bed9",' '), omitEmptyStrings = true))
         }
     }
 
@@ -168,11 +168,11 @@ class BedParserTest {
             // Items
             val firstEntry = bedFormat.parse(path) { it.first() }
             assertEquals(
-                    ExtendedBedEntry(
-                            "chr1", 1000, 5000, "cloneA", 0,
-                            extraFields = "+\t1000\t5000\t0\t2\t567,488,\t0,3512".split('\t').toTypedArray()
-                    ),
-                    firstEntry.unpack(bedFormat))
+                ExtendedBedEntry(
+                    "chr1", 1000, 5000, "cloneA", 0,
+                    extraFields = "+\t1000\t5000\t0\t2\t567,488,\t0,3512".split('\t').toTypedArray()
+                ),
+                firstEntry.unpack(bedFormat))
         }
     }
 
@@ -248,20 +248,23 @@ Fields number in BED file is between 3 and 15, but was 2""")
     }
 
     @Test
-    fun testWriteBedWithSkippedRecords() {
+    fun testWriteBedWithExtraRecords() {
         // XXX: skipping records not supported
         val bedFormat = BedFormat.from("bed8+1")
 
         val writer = StringWriter()
         bedFormat.print(writer).use { bedPrinter ->
-            bedPrinter.print(ExtendedBedEntry("chr1", 1000, 5000, "cloneA",
-                                              777, '-', 2000, 4000, Color.WHITE.rgb, 2,
-                                              intArrayOf(567, 488), intArrayOf(0, 3512), arrayOf("f1", "f2")))
+            bedPrinter.print(ExtendedBedEntry(
+                "chr1", 1000, 5000, "cloneA",
+                777, '-', 2000, 4000, Color.WHITE.rgb, 2,
+                intArrayOf(567, 488), intArrayOf(0, 3512), arrayOf("f1", "f2"))
+            )
         }
 
         assertEquals(
-                "chr1\t1000\t5000\tcloneA\t777\t-\t2000\t4000\tf1\n",
-                writer.toString().replace("\r", ""))
+            "chr1\t1000\t5000\tcloneA\t777\t-\t2000\t4000\tf1\tf2\n",
+            writer.toString().replace("\r", "")
+        )
     }
 
     @Test
@@ -270,13 +273,13 @@ Fields number in BED file is between 3 and 15, but was 2""")
         val writer = StringWriter()
         bedFormat.print(writer).use { bedPrinter ->
             bedPrinter.print(ExtendedBedEntry("chr1", 1000, 5000, "cloneA",
-                                              777, '-', 1000, 5000, Color.BLACK.rgb, 2,
-                                              intArrayOf(567, 488), intArrayOf(0, 3512)))
+                777, '-', 1000, 5000, Color.BLACK.rgb, 2,
+                intArrayOf(567, 488), intArrayOf(0, 3512)))
         }
 
         assertEquals(
-                "chr1\t1000\t5000\tcloneA\t777\t-\t1000\t5000\t0,0,0\t2\t567,488\t0,3512\n",
-                writer.toString().replace("\r", ""))
+            "chr1\t1000\t5000\tcloneA\t777\t-\t1000\t5000\t0,0,0\t2\t567,488\t0,3512\n",
+            writer.toString().replace("\r", ""))
     }
 
     @Test
@@ -285,13 +288,13 @@ Fields number in BED file is between 3 and 15, but was 2""")
         val writer = StringWriter()
         bedFormat.print(writer).use { bedPrinter ->
             bedPrinter.print(ExtendedBedEntry("chr1", 1000, 5000, "cloneA",
-                                              777, '-', 1000, 5000, Color.BLACK.rgb, 2,
-                                              intArrayOf(567, 488), intArrayOf(0, 3512)))
+                777, '-', 1000, 5000, Color.BLACK.rgb, 2,
+                intArrayOf(567, 488), intArrayOf(0, 3512)))
         }
 
         assertEquals(
-                "chr1\t1000\t5000\tcloneA\t777\t-\n",
-                writer.toString().replace("\r", ""))
+            "chr1\t1000\t5000\tcloneA\t777\t-\n",
+            writer.toString().replace("\r", ""))
     }
 
     @Test
@@ -300,54 +303,54 @@ Fields number in BED file is between 3 and 15, but was 2""")
         val writer = StringWriter()
         bedFormat.print(writer).use { bedPrinter ->
             bedPrinter.print(ExtendedBedEntry("chr1", 1000, 5000, "cloneA",
-                                              777, '-', 1000, 5000, Color.BLACK.rgb, 2,
-                                              intArrayOf(567, 488), intArrayOf(0, 3512)))
+                777, '-', 1000, 5000, Color.BLACK.rgb, 2,
+                intArrayOf(567, 488), intArrayOf(0, 3512)))
         }
 
         assertEquals(
-                "chr1\t1000\t5000\tcloneA\t777\t-\t1000\t5000\t0,0,0\n",
-                writer.toString().replace("\r", ""))
+            "chr1\t1000\t5000\tcloneA\t777\t-\t1000\t5000\t0,0,0\n",
+            writer.toString().replace("\r", ""))
     }
 
     @Test
     fun testAuto_FromText() {
         assertEquals(
-                BedFormat(12, 0),
-                BedFormat.auto("chr2\t1\t2\tDescription\t0\t+\t1000\t5000\t255,0,0\t2\t10,20\t1,2", null)
+            BedFormat(12),
+            BedFormat.auto("chr2\t1\t2\tDescription\t0\t+\t1000\t5000\t255,0,0\t2\t10,20\t1,2", null)
         )
         assertEquals(
-                BedFormat(12, 0, ' '),
-                BedFormat.auto("chr2 1 2 Description 0 + 1000 5000 255,0,0 2 10,20 1,2", null)
+            BedFormat(12, ' '),
+            BedFormat.auto("chr2 1 2 Description 0 + 1000 5000 255,0,0 2 10,20 1,2", null)
         )
     }
 
     @Test
     fun testAuto_Default() {
         doCheckAuto("chr2\t1\t2\tDescription\t0\t+\t1000\t5000\t255,0,0\t2\t10,20\t1,2",
-                    '\t', "bed12",
-                    ExtendedBedEntry("chr2", 1, 2, "Description",
-                                      0, '+', 1000, 5000, Color.RED.rgb,
-                                      2, intArrayOf(10, 20), intArrayOf(1, 2)))
+            '\t', "bed12",
+            ExtendedBedEntry("chr2", 1, 2, "Description",
+                0, '+', 1000, 5000, Color.RED.rgb,
+                2, intArrayOf(10, 20), intArrayOf(1, 2)))
     }
 
     @Test
     fun testAuto_FromBed() {
         withResource(BedParserTest::class.java, "bed12.bed") { path ->
-            assertEquals("(bed12, '\t')", BedFormat.auto(path).toString())
+            assertEquals("(bed12+, '\t')", BedFormat.auto(path).toString())
         }
     }
 
     @Test
     fun testAuto_FromBedZip() {
         withResource(BedParserTest::class.java, "bed12.bed.zip") { path ->
-            assertEquals("(bed12, '\t')", BedFormat.auto(path).toString())
+            assertEquals("(bed12+, '\t')", BedFormat.auto(path).toString())
         }
     }
 
     @Test
     fun testAuto_FromBedGz() {
         withResource(BedParserTest::class.java, "bed12.bed.gz") { path ->
-            assertEquals("(bed12, '\t')", BedFormat.auto(path).toString())
+            assertEquals("(bed12+, '\t')", BedFormat.auto(path).toString())
         }
     }
 
@@ -403,10 +406,10 @@ Fields number in BED file is between 3 and 15, but was 2""")
     @Test
     fun testAuto_WhitespaceSep() {
         doCheckAuto("chr2 1 2 Description 960 + 1000 5000 0 2 10,20, 1,2",
-                    ' ', "bed12",
-                    ExtendedBedEntry("chr2", 1, 2, "Description",
-                                      960, '+', 1000, 5000, 0, 2,
-                                      intArrayOf(10, 20), intArrayOf(1, 2)))
+            ' ', "bed12",
+            ExtendedBedEntry("chr2", 1, 2, "Description",
+                960, '+', 1000, 5000, 0, 2,
+                intArrayOf(10, 20), intArrayOf(1, 2)))
     }
 
     @Test
@@ -414,7 +417,7 @@ Fields number in BED file is between 3 and 15, but was 2""")
         // BED lines have three required fields and nine additional optional fields:
 
         doCheckAuto("chr2\t1\t2", '\t', "bed3",
-                    ExtendedBedEntry("chr2", 1, 2))
+            ExtendedBedEntry("chr2", 1, 2))
     }
 
     @Test
@@ -422,9 +425,9 @@ Fields number in BED file is between 3 and 15, but was 2""")
         // XXX: Not supported:
 
         doCheckAuto("chr2\t1\t2\tDescription\t0\t1000\t5000\t255\t2\t10,20\t1,2",
-                    '\t', "bed5+6",
-                    ExtendedBedEntry("chr2", 1, 2, "Description",
-                                      extraFields = "1000\t5000\t255\t2\t10,20\t1,2".split('\t').toTypedArray())
+            '\t', "bed5+6",
+            ExtendedBedEntry("chr2", 1, 2, "Description",
+                extraFields = "1000\t5000\t255\t2\t10,20\t1,2".split('\t').toTypedArray())
         )
     }
 
@@ -434,27 +437,27 @@ Fields number in BED file is between 3 and 15, but was 2""")
         //XXX: skipping fields not supported
 
         doCheckAuto("chr2\t1\t2\tDescription\t-",
-                    '\t', "bed4+1",
-                    ExtendedBedEntry("chr2", 1, 2, "Description",
-                                      extraFields = arrayOf("-"))
+            '\t', "bed4+1",
+            ExtendedBedEntry("chr2", 1, 2, "Description",
+                extraFields = arrayOf("-"))
         )
     }
 
     @Test
     fun testAuto_DoubleScore() {
         doCheckAuto("chr2\t1\t2\tDescription\t0.200\t-",
-                    '\t', "bed4+2",
-                    ExtendedBedEntry("chr2", 1, 2, "Description",
-                                      extraFields = arrayOf("0.200", "-"))
+            '\t', "bed4+2",
+            ExtendedBedEntry("chr2", 1, 2, "Description",
+                extraFields = arrayOf("0.200", "-"))
         )
     }
 
     @Test
     fun testAuto_DoubleScore2() {
         doCheckAuto("chr2\t1\t2\tDescription\t0.200",
-                    '\t', "bed4+1",
-                    ExtendedBedEntry("chr2", 1, 2, "Description",
-                                      extraFields = arrayOf("0.200"))
+            '\t', "bed4+1",
+            ExtendedBedEntry("chr2", 1, 2, "Description",
+                extraFields = arrayOf("0.200"))
         )
     }
 
@@ -464,17 +467,17 @@ Fields number in BED file is between 3 and 15, but was 2""")
         //XXX: skipping fields not supported
 
         doCheckAuto("chr2\t1\t2\t+\t1000", '\t', "bed3+2",
-                    ExtendedBedEntry("chr2", 1, 2,
-                                      extraFields = arrayOf("+", "1000"))
+            ExtendedBedEntry("chr2", 1, 2,
+                extraFields = arrayOf("+", "1000"))
         )
     }
 
     @Test
     fun testAuto_Simple() {
         doCheckAuto("chr1\t10051\t10250\tHWI-ST700693:250:D0TG9ACXX:3:2112:8798:84378\t1\t-\n",
-                    '\t', "bed6",
-                    ExtendedBedEntry("chr1", 10051, 10250,
-                                      "HWI-ST700693:250:D0TG9ACXX:3:2112:8798:84378", 1, '-')
+            '\t', "bed6",
+            ExtendedBedEntry("chr1", 10051, 10250,
+                "HWI-ST700693:250:D0TG9ACXX:3:2112:8798:84378", 1, '-')
         )
     }
 
@@ -483,10 +486,10 @@ Fields number in BED file is between 3 and 15, but was 2""")
         //XXX: skipping fields not supported
 
         doCheckAuto("chr1\t10051\t10250\tHWI-ST700693:250:D0TG9ACXX:3:2112:8798:84378\t-\n",
-                    '\t', "bed4+1",
-                    ExtendedBedEntry("chr1", 10051, 10250,
-                                      "HWI-ST700693:250:D0TG9ACXX:3:2112:8798:84378", 0, '.',
-                                      extraFields = arrayOf("-"))
+            '\t', "bed4+1",
+            ExtendedBedEntry("chr1", 10051, 10250,
+                "HWI-ST700693:250:D0TG9ACXX:3:2112:8798:84378", 0, '.',
+                extraFields = arrayOf("-"))
         )
     }
 
@@ -495,12 +498,12 @@ Fields number in BED file is between 3 and 15, but was 2""")
         withBedFile { path ->
             BedFormat().print(path.bufferedWriter()).use { bedPrinter ->
                 val entry = ExtendedBedEntry("chr2", 1, 2, "Description",
-                                                  0, '+', 1000, 5000, Color.RED.rgb)
+                    0, '+', 1000, 5000, Color.RED.rgb)
                 bedPrinter.print(entry)
             }
 
             doCheckAuto(path.read(), '\t', "bed6",
-                        ExtendedBedEntry("chr2", 1, 2, "Description", strand = '+'))
+                ExtendedBedEntry("chr2", 1, 2, "Description", strand = '+'))
         }
     }
 
@@ -508,18 +511,18 @@ Fields number in BED file is between 3 and 15, but was 2""")
     @Test
     fun testAutoMacs2Peaks_Extra3() {
         doCheckAuto("chr1\t713739\t714020\tout_peak_1\t152\t.\t6.84925\t17.97400\t173\n",
-                    '\t', "bed6+3",
-                    ExtendedBedEntry("chr1", 713739, 714020, "out_peak_1", 152, '.',
-                                      extraFields = "6.84925\t17.97400\t173".split('\t').toTypedArray())
+            '\t', "bed6+3",
+            ExtendedBedEntry("chr1", 713739, 714020, "out_peak_1", 152, '.',
+                extraFields = "6.84925\t17.97400\t173".split('\t').toTypedArray())
         )
     }
 
     @Test
     fun testAutoMacs2Peaks_Extra4() {
         doCheckAuto("chr1\t713739\t714020\tout_peak_1\t152\t.\t6.84925\t17.97400\t15.25668\t173\n",
-                    '\t', "bed6+4",
-                    ExtendedBedEntry("chr1", 713739, 714020, "out_peak_1", 152, '.',
-                                      extraFields = "6.84925\t17.97400\t15.25668\t173".split('\t').toTypedArray())
+            '\t', "bed6+4",
+            ExtendedBedEntry("chr1", 713739, 714020, "out_peak_1", 152, '.',
+                extraFields = "6.84925\t17.97400\t15.25668\t173".split('\t').toTypedArray())
         )
     }
 
@@ -537,14 +540,14 @@ Fields number in BED file is between 3 and 15, but was 2""")
     }
 
     private fun doCheckAuto(contents: String, delimiter: Char, expectedFormat: String,
-                            expectedEntry: ExtendedBedEntry) {
+            expectedEntry: ExtendedBedEntry) {
         withBedFile(contents) { path ->
             val format = BedFormat.auto(path)
 
             assertEquals(BedFormat.from(expectedFormat,delimiter), format)
 
             assertEquals(expectedEntry,
-                         format.parse(path) {it.first().unpack(format)})
+                format.parse(path) {it.first().unpack(format)})
         }
     }
 
@@ -557,61 +560,61 @@ Fields number in BED file is between 3 and 15, but was 2""")
         assertEquals(BedFormat.from("bed6"), BedFormat.auto(BedEntry("chr1", 1, 3, ".\t1000\t+")))
 
         assertEquals(BedFormat.from("bed6", ' '),
-                     BedFormat.auto(BedEntry("chr1", 1, 3, ". 1000 +")))
+            BedFormat.auto(BedEntry("chr1", 1, 3, ". 1000 +")))
 
         assertEquals(BedFormat.from("bed6", ' '),
-                     BedFormat.auto(BedEntry("chr1", 1, 3, ".  1000  +")))
+            BedFormat.auto(BedEntry("chr1", 1, 3, ".  1000  +")))
 
         assertEquals(
-                BedFormat.from("bed12"),
-                BedFormat.auto(ExtendedBedEntry("chr1", 1, 3, "foo").pack())
+            BedFormat.from("bed12"),
+            BedFormat.auto(ExtendedBedEntry("chr1", 1, 3, "foo").pack())
         )
 
         assertEquals(
-                BedFormat.from("bed12+2"),
-                BedFormat.auto(ExtendedBedEntry("chr1", 1, 3, "foo",
-                                                extraFields = arrayOf("f1", "f2")).pack())
+            BedFormat.from("bed12+2"),
+            BedFormat.auto(ExtendedBedEntry("chr1", 1, 3, "foo",
+                extraFields = arrayOf("f1", "f2")).pack())
         )
 
         assertEquals(
-                BedFormat.from("bed12", ' '),
-                BedFormat.auto(ExtendedBedEntry("chr1", 1, 3, "foo").pack(delimiter = ' '))
+            BedFormat.from("bed12", ' '),
+            BedFormat.auto(ExtendedBedEntry("chr1", 1, 3, "foo").pack(delimiter = ' '))
         )
 
         assertEquals(
-                BedFormat.from("bed3"),
-                BedFormat.auto(ExtendedBedEntry("chr1", 1, 3, "foo",
-                                                extraFields = arrayOf("f1", "f2")).pack(3, 0))
+            BedFormat.from("bed3"),
+            BedFormat.auto(ExtendedBedEntry("chr1", 1, 3, "foo",
+                extraFields = arrayOf("f1", "f2")).pack(3, 0))
         )
 
         assertEquals(
-                BedFormat.from("bed4"),
-                BedFormat.auto(ExtendedBedEntry("chr1", 1, 3, "foo",
-                                                extraFields = arrayOf("f1", "f2")).pack(3, 1))
+            BedFormat.from("bed4"),
+            BedFormat.auto(ExtendedBedEntry("chr1", 1, 3, "foo",
+                extraFields = arrayOf("f1", "f2")).pack(3, 1))
         )
 
         assertEquals(
-                BedFormat.from("bed6"),
-                BedFormat.auto(ExtendedBedEntry("chr1", 1, 3, "foo",
-                                                extraFields = arrayOf("f1", "f2")).pack(6, 0))
+            BedFormat.from("bed6"),
+            BedFormat.auto(ExtendedBedEntry("chr1", 1, 3, "foo",
+                extraFields = arrayOf("f1", "f2")).pack(6, 0))
         )
 
         assertEquals(
-                BedFormat.from("bed6+2"),
-                BedFormat.auto(ExtendedBedEntry("chr1", 1, 3, "foo",
-                                                extraFields = arrayOf("f1", "f2")).pack(6))
+            BedFormat.from("bed6+2"),
+            BedFormat.auto(ExtendedBedEntry("chr1", 1, 3, "foo",
+                extraFields = arrayOf("f1", "f2")).pack(6))
         )
     }
 
     @Test
     fun parseFormatString() {
-        assertEquals(6.toByte() to null, BedFormat.parseFormatString("bed6+"))
-        assertEquals(6.toByte() to 3, BedFormat.parseFormatString("bed6+3"))
-        assertEquals(3.toByte() to 0, BedFormat.parseFormatString("bed3"))
-        assertEquals(15.toByte() to 0, BedFormat.parseFormatString("bed15"))
+        assertEquals(6.toByte(), BedFormat.parseFormatString("bed6+"))
+        assertEquals(6.toByte(), BedFormat.parseFormatString("bed6+3"))
+        assertEquals(3.toByte(), BedFormat.parseFormatString("bed3"))
+        assertEquals(15.toByte(), BedFormat.parseFormatString("bed15"))
 
-        assertEquals(2.toByte() to 0, BedFormat.parseFormatString("bed2"))
-        assertEquals(16.toByte() to 0, BedFormat.parseFormatString("bed16"))
+        assertEquals(2.toByte(), BedFormat.parseFormatString("bed2"))
+        assertEquals(16.toByte(), BedFormat.parseFormatString("bed16"))
     }
 
     @Test(expected = IllegalStateException::class)
@@ -665,34 +668,34 @@ Fields number in BED file is between 3 and 15, but was 2""")
     }
 
     @Test fun bedFormatFromField() {
-        assertEquals("bed6", BedFormat(BedField.STRAND).fmtStr)
-        assertEquals("bed9", BedFormat(BedField.ITEM_RGB).fmtStr)
+        assertEquals("bed6+", BedFormat(BedField.STRAND).fmtStr)
+        assertEquals("bed9+", BedFormat(BedField.ITEM_RGB).fmtStr)
     }
 
     @Test
     fun detectDelimiterInText() {
         assertEquals(
-                '\t',
-                BedFormat.detectDelimiter("chr1\t2\t3\nchr1\t2\t3\n", ';')
+            '\t',
+            BedFormat.detectDelimiter("chr1\t2\t3\nchr1\t2\t3\n", ';')
         )
         assertEquals(
-                ' ',
-                BedFormat.detectDelimiter("chr1 2 3\nchr1\t2\t3\n", ';')
+            ' ',
+            BedFormat.detectDelimiter("chr1 2 3\nchr1\t2\t3\n", ';')
         )
         assertEquals(
-                '\t',
-                BedFormat.detectDelimiter("#chr1 2 3\nchr1\t2\t3\n", ';')
+            '\t',
+            BedFormat.detectDelimiter("#chr1 2 3\nchr1\t2\t3\n", ';')
         )
         assertEquals(
-                ';',
-                BedFormat.detectDelimiter("chr1,2,3\nchr1\t2\t3\n", ';')
+            ';',
+            BedFormat.detectDelimiter("chr1,2,3\nchr1\t2\t3\n", ';')
         )
         assertEquals(
-                ';',
-                BedFormat.detectDelimiter("chr1#2#3\nchr1\t2\t3\n", ';')
+            ';',
+            BedFormat.detectDelimiter("chr1#2#3\nchr1\t2\t3\n", ';')
         )
     }
-    
+
     @Test
     fun detectDelimiter() {
         withFile(null, "chr1\t2\t3") {
@@ -753,8 +756,8 @@ Fields number in BED file is between 3 and 15, but was 2""")
            """.trimIndent().trim()
         withFile("csv", contents) { p ->
             assertEquals(
-                    BedFormat.fromString("(bed4, '\t')"),
-                    BedFormat.auto(p.toUri())
+                BedFormat.fromString("(bed4, '\t')"),
+                BedFormat.auto(p.toUri())
             )
         }
     }
@@ -807,8 +810,8 @@ Fields number in BED file is between 3 and 15, but was 2""")
     @Test
     fun testWriteEmptyName() {
         val entries = listOf(
-                ExtendedBedEntry("chr1", 1, 5, name="", strand = '+'),
-                ExtendedBedEntry("chr1", 1, 5, name="", strand = '-'))
+            ExtendedBedEntry("chr1", 1, 5, name="", strand = '+'),
+            ExtendedBedEntry("chr1", 1, 5, name="", strand = '-'))
 
         withBedFile { trackPath ->
             val format = BedFormat()
@@ -818,11 +821,11 @@ Fields number in BED file is between 3 and 15, but was 2""")
 
             assertEquals(format, BedFormat.auto(trackPath))
             assertEquals(entries.map { it.copy(name = ".") },
-                         format.parse(trackPath) {
-                             it.map { e ->
-                                 e.unpack(format)
-                             }.toList()
-                         })
+                format.parse(trackPath) {
+                    it.map { e ->
+                        e.unpack(format)
+                    }.toList()
+                })
         }
     }
 
@@ -830,8 +833,8 @@ Fields number in BED file is between 3 and 15, but was 2""")
     fun testToBedEntry() {
         val chr = GenomeQuery(Genome["to1"]).get()[0]
         val loci = listOf(
-                Location(1, 5, chr, Strand.PLUS),
-                Location(1, 5, chr, Strand.MINUS))
+            Location(1, 5, chr, Strand.PLUS),
+            Location(1, 5, chr, Strand.MINUS))
 
         withBedFile { trackPath ->
             val bedFormat = BedFormat()
@@ -849,27 +852,27 @@ Fields number in BED file is between 3 and 15, but was 2""")
 
     @Test
     fun fromFormatString() {
-        BedFormat(3, 0, '\t').let { f ->
+        BedFormat(3, '\t').let { f ->
             assertEquals(f, BedFormat.fromString(f.toString()))
         }
 
-        BedFormat(3, 0, ',').let { f ->
+        BedFormat(3, ',').let { f ->
             assertEquals(f, BedFormat.fromString(f.toString()))
         }
 
-        BedFormat(3, 0, ' ').let { f ->
+        BedFormat(3, ' ').let { f ->
             assertEquals(f, BedFormat.fromString(f.toString()))
         }
 
-        BedFormat(4, 0).let { f ->
+        BedFormat(4).let { f ->
             assertEquals(f, BedFormat.fromString(f.toString()))
         }
 
-        BedFormat(4, 2).let { f ->
+        BedFormat(4).let { f ->
             assertEquals(f, BedFormat.fromString(f.toString()))
         }
 
-        BedFormat(4, null).let { f ->
+        BedFormat(4).let { f ->
             assertEquals(f, BedFormat.fromString(f.toString()))
         }
     }
@@ -877,7 +880,7 @@ Fields number in BED file is between 3 and 15, but was 2""")
     @Test
     fun fromHomerPeakCallerBedFiles() {
         withBedFile(HOMER_FORMAT) { path ->
-            assertEquals("(bed6, '\t')", BedFormat.auto(path).toString())
+            assertEquals("(bed6+, '\t')", BedFormat.auto(path).toString())
         }
     }
 
