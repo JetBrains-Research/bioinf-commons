@@ -47,7 +47,7 @@ abstract class RegressionEmissionScheme(covariateLabels: List<String>, regressio
         val x0 = DoubleArray(x[0].size+1)
         Arrays.fill(x0, 0.0)
 
-        var X0: RealVector = ArrayRealVector(x0)
+        var X0:RealVector = ArrayRealVector(x0)
         var X1:RealVector = ArrayRealVector(x0)
 
         //
@@ -60,11 +60,11 @@ abstract class RegressionEmissionScheme(covariateLabels: List<String>, regressio
             val countedLinkDeriv = eta.map { linkDerivative(it) }
             val z:RealVector = eta.add(Y.subtract(countedLink).ebeDivide(countedLinkDeriv))
             val countedLinkVar = countedLink.map { linkVariance(it) }
-            val W = countedLinkDeriv.ebeMultiply(countedLinkDeriv).ebeDivide(countedLinkVar).toArray()
+            val W = countedLinkDeriv.ebeMultiply(countedLinkDeriv).ebeDivide(countedLinkVar).ebeMultiply(ArrayRealVector(weights.data)).toArray()
             
             wlr.newSampleData(z.toArray(), x, W)
 
-            X1 = ArrayRealVector(wlr.calculateBeta().toArray().zip(weights.data){ a, b -> a*b }.toDoubleArray())
+            X1 = ArrayRealVector(wlr.calculateBeta())
             if (X1.subtract(X0).l1Norm < tol) {
                 break
             }
@@ -104,46 +104,29 @@ class PoissonRegressionEmissionScheme (
     }
 }
 
-class ConstantRegressionEmissionScheme (
-        covariateLabels: List<String>,
-        regressionCoefficients: DoubleArray,
-        override val degreesOfFreedom: Int = 0,
-        private val emission: Int): RegressionEmissionScheme(covariateLabels, regressionCoefficients) {
 
-    override val link: (Double) -> Double
-        get() = TODO("not implemented")
-    override val linkDerivative: (Double) -> Double
-        get() = TODO("not implemented")
-    override val linkVariance: (Double) -> Double
-        get() = TODO("not implemented")
-
-    override fun sample(df: DataFrame, d: Int, fill: IntPredicate) {
-        IntSupplier { emission }
-    }
-
-    override fun logProbability(df: DataFrame, t: Int, d: Int): Double {
-        TODO("not implemented")
-    }
-
-
-}
 // 0 - zero-inflated component
 // 1 - LOW
 // 2 - HIGH
-class ZeroPoissonMixture(weights: F64Array, covariateLabels: List<String>, regressionCoefficients: DoubleArray): MLFreeMixture(numComponents = 3, numDimensions = 1, weights = weights){
+class ZeroPoissonMixture (weights: F64Array, covariateLabels: List<String>, regressionCoefficients: Array<DoubleArray>): MLFreeMixture(numComponents = 3, numDimensions = 1, weights = weights){
     val covariateLabels: List<String> = covariateLabels
-    var regressionCoefficients: DoubleArray = regressionCoefficients
+    var regressionCoefficients: Array<DoubleArray> = regressionCoefficients
         protected set
 
+    val components: MutableList<EmissionScheme> = mutableListOf<EmissionScheme>(
+            ConstantIntegerEmissionScheme(0),
+            PoissonRegressionEmissionScheme(
+                    covariateLabels = covariateLabels,
+                    regressionCoefficients = regressionCoefficients[0],
+                    degreesOfFreedom = covariateLabels.size),
+            PoissonRegressionEmissionScheme(
+                    covariateLabels = covariateLabels,
+                    regressionCoefficients = regressionCoefficients[1],
+                    degreesOfFreedom = covariateLabels.size))
+
+
     override fun getEmissionScheme(i: Int, d: Int): EmissionScheme {
-        if(i == 0) return ConstantRegressionEmissionScheme(
-                    covariateLabels = covariateLabels,
-                    regressionCoefficients = regressionCoefficients,
-                    emission = 0)
-        else return PoissonRegressionEmissionScheme(
-                    covariateLabels = covariateLabels,
-                    regressionCoefficients = regressionCoefficients,
-                    degreesOfFreedom = covariateLabels.size)
+        return components[i]
     }
 }
 
@@ -160,7 +143,7 @@ fun main(args: Array<String>) {
 
 
     regrES.sample(covar, 2, pred)
-    regrES.update(covar, 2, doubleArrayOf(1.0, 1.0, 1.0).asF64Array())
+    regrES.update(covar, 2, DoubleArray(1000000, {1.0}).asF64Array())
 
     print("Beta: ${regrES.regressionCoefficients.asList()}")
 
