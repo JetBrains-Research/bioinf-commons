@@ -87,7 +87,7 @@ class ReadsQueryTest {
             val readsQuery = ReadsQuery(genomeQuery, path, false)
             val (out, err) = Logs.captureLoggingOutput { readsQuery.get() }
             assertIn("Library: single_end.bam", out)
-            assertIn("Depth: $SINGLE_END_BAM_READS", out)
+            assertIn("Depth: ${"%,d".format(SINGLE_END_BAM_READS)}", out)
             assertIn("Reads: single-ended", out)
             assertIn(
                 "Fragment size: $SINGLE_END_BAM_DETECTED_FRAGMENT bp (cross-correlation estimate)",
@@ -104,7 +104,7 @@ class ReadsQueryTest {
             val readsQuery = ReadsQuery(genomeQuery, path, false, fragment = FixedFragment(100))
             val (out, err) = Logs.captureLoggingOutput { readsQuery.get() }
             assertIn("Library: single_end.bam", out)
-            assertIn("Depth: $SINGLE_END_BAM_READS", out)
+            assertIn("Depth: ${"%,d".format(SINGLE_END_BAM_READS)}", out)
             assertIn("Reads: single-ended", out)
             assertIn(
                 "Fragment size: 100 bp (overrides cross-correlation estimate $SINGLE_END_BAM_DETECTED_FRAGMENT)",
@@ -121,7 +121,7 @@ class ReadsQueryTest {
             val readsQuery = ReadsQuery(genomeQuery, path, false)
             val (out, err) = Logs.captureLoggingOutput { readsQuery.get() }
             assertIn("Library: paired_end.bam", out)
-            assertIn("Depth: $PAIRED_END_BAM_PAIRS", out)
+            assertIn("Depth: ${"%,d".format(PAIRED_END_BAM_PAIRS)}", out)
             assertIn("Reads: paired-ended", out)
             assertIn(
                 "Fragment size: $PAIRED_END_BAM_INFERRED_FRAGMENT bp (average; inferred from read pairs)",
@@ -137,8 +137,8 @@ class ReadsQueryTest {
             val genomeQuery = GenomeQuery(Genome["to1"])
             val readsQuery = ReadsQuery(genomeQuery, path, false, fragment = FixedFragment(100))
             val (out, err) = Logs.captureLoggingOutput { readsQuery.get() }
-            assertIn("Library: single_end.bam, Depth: $SINGLE_END_BAM_READS" +
-                    " is less than 0.1% x 14000000 of genome to1", out)
+            assertIn("Library: single_end.bam, Depth: ${"%,d".format(SINGLE_END_BAM_READS)}" +
+                    " is less than 0.1% x 14,000,000 of genome to1", out)
             assertEquals("", err)
         }
     }
