@@ -3,6 +3,8 @@ package org.jetbrains.bio.statistics.emission
 import org.apache.commons.math3.linear.*
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.statistics.MoreMath
+import org.jetbrains.bio.statistics.Preprocessed
+import org.jetbrains.bio.statistics.emission.WLSMultipleLinearRegression
 import org.jetbrains.bio.statistics.distribution.Sampling
 import org.jetbrains.bio.statistics.mixture.MLFreeMixture
 import java.util.*
@@ -54,7 +56,7 @@ abstract class RegressionEmissionScheme(covariateLabels: List<String>, regressio
             val countedLinkDeriv = eta.map { linkDerivative(it) }
             val z:RealVector = eta.add(Y.subtract(countedLink).ebeDivide(countedLinkDeriv))
             val countedLinkVar = countedLink.map { linkVariance(it) }
-            val W = countedLinkDeriv.ebeMultiply(countedLinkDeriv).ebeDivide(countedLinkVar).ebeMultiply(ArrayRealVector(weights.data)).toArray()
+            val W = countedLinkDeriv.ebeMultiply(countedLinkDeriv).ebeDivide(countedLinkVar).ebeMultiply(ArrayRealVector(weights.toDoubleArray())).toArray()
             
             wlr.newSampleData(z.toArray(), x, W)
 
@@ -133,7 +135,7 @@ class PoissonRegressionEmissionScheme (
             val countedLinkDeriv = eta.map { linkDerivative(it) }
             val z:RealVector = eta.add(Y.subtract(countedLink).ebeDivide(countedLinkDeriv))
             val countedLinkVar = countedLink.map { linkVariance(it) }
-            val W = countedLinkDeriv.ebeMultiply(countedLinkDeriv).ebeDivide(countedLinkVar).ebeMultiply(ArrayRealVector(weights.data)).toArray()
+            val W = countedLinkDeriv.ebeMultiply(countedLinkDeriv).ebeDivide(countedLinkVar).ebeMultiply(ArrayRealVector(weights.toDoubleArray())).toArray()
 
             wlr.newSampleData(z.toArray(), x, W)
 
@@ -177,30 +179,34 @@ class ZeroPoissonMixture (weights: F64Array, covariateLabels: List<String>, regr
 
 fun main(args: Array<String>) {
     //1
-    /*
+
     var covar = DataFrame()
+            .with("y", IntArray(1000000))
             .with("x1", DoubleArray(1000000) { Random.nextDouble(0.0, 1.0) })
             .with("x2", DoubleArray(1000000) { Random.nextDouble(0.0, 1.0) })
-            .with("y", IntArray(1000000))
+    /*
     //проверка, что с внешними весами все еще работает
     var regrES = PoissonRegressionEmissionScheme(listOf("x1", "x2"), doubleArrayOf(4.0, -2.0), 2)
     val pred = IntPredicate {true}
 
 
-    regrES.sample(covar, 2, pred)
+    regrES.sample(covar, 0, pred)
     println("Update")
-    regrES.update(covar, 2, DoubleArray(1000000, {1.0}).asF64Array())
+    regrES.update(covar, 0, DoubleArray(1000000, {1.0}).asF64Array())
 
     print("Beta: ${regrES.regressionCoefficients.asList()}")
-    */
+*/
     // MLFreeMixture
-
     var mix = ZeroPoissonMixture(
             doubleArrayOf(0.4, 0.5, 0.1).asF64Array(),
-            listOf("d0", "d1"),
+            listOf("x1", "x2"),
             arrayOf(doubleArrayOf(1.0, 2.0, 3.0), doubleArrayOf(4.0, 5.0, 6.0)))
 
-    var dat = mix.sample(1000000)
-    println(dat.rowAsDouble(1))
+    mix.sample(covar, intArrayOf(0))
 
+    var yaMix = ZeroPoissonMixture(
+            doubleArrayOf(1/3.0, 1/3.0, 1/3.0).asF64Array(),
+            listOf("x1", "x2"),
+            arrayOf(doubleArrayOf(0.0, 0.0, 0.0), doubleArrayOf(5.0, 0.0, 0.0)))
+    yaMix.fit(Preprocessed.of(covar), 10e-3, 100)
 }
