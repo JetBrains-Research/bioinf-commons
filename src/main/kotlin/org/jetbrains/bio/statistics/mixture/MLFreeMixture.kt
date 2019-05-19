@@ -47,6 +47,16 @@ abstract class MLFreeMixture(numComponents: Int,
         return res.with("state", states)
     }
 
+    open fun sample(df:DataFrame, d: IntArray) {
+        val states = sampleStates(df.rowsNumber)
+        for (t in 0 until numDimensions) {
+            for (i in 0 until numComponents) {
+                getEmissionScheme(i, t).sample(df, d[t], IntPredicate { states[it] == i })
+            }
+
+        }
+    }
+
     override fun degreesOfFreedom(): Int {
         var res = super.degreesOfFreedom()
         for (i in 0 until numComponents) {
