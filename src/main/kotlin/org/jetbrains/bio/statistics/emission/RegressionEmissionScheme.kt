@@ -97,7 +97,7 @@ class PoissonRegressionEmissionScheme (
     }
 
     override fun logProbability(df: DataFrame, t: Int, d: Int): Double {
-            return(df.getAsInt(t, df.labels[d])*regressionCoefficients.zip(df.rowAsDouble(t)) { a, b -> a*b }.sum() - MoreMath.factorialLog(df.getAsInt(t, df.labels[d])))
+            return(df.getAsInt(t, df.labels[d])*regressionCoefficients.zip(df.rowAsDouble(t).filterIndexed { index, d ->  covariateLabels.contains(df.labels[index])}) { a, b -> a*b }.sum() - MoreMath.factorialLog(df.getAsInt(t, df.labels[d])))
 
     }
 
@@ -173,6 +173,16 @@ class ZeroPoissonMixture (weights: F64Array, covariateLabels: List<String>, regr
 
     override fun getEmissionScheme(i: Int, d: Int): EmissionScheme {
         return components[i]
+    }
+
+    fun sample(df:DataFrame, d: IntArray) {
+        val states = sampleStates(df.rowsNumber)
+        for (t in 0 until numDimensions) {
+            for (i in 0 until numComponents) {
+                getEmissionScheme(i, t).sample(df, d[t], IntPredicate { states[it] == i })
+            }
+
+        }
     }
 }
 
