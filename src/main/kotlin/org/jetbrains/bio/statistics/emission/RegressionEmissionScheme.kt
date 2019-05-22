@@ -1,12 +1,14 @@
 package org.jetbrains.bio.statistics.emission
 
 import org.apache.commons.math3.linear.*
+import org.apache.commons.math3.util.FastMath
+import org.apache.log4j.Level
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.statistics.MoreMath
 import org.jetbrains.bio.statistics.Preprocessed
-import org.jetbrains.bio.statistics.emission.WLSMultipleLinearRegression
 import org.jetbrains.bio.statistics.distribution.Sampling
 import org.jetbrains.bio.statistics.mixture.MLFreeMixture
+import org.jetbrains.bio.util.Logs
 import java.util.*
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.asF64Array
@@ -36,15 +38,12 @@ abstract class RegressionEmissionScheme(covariateLabels: List<String>, regressio
         Arrays.fill(weights_0, 0.0)
         wlr.newSampleData(y, x, weights_0)
 
-        val iterMax = 250
+        val iterMax = 5
         val tol = 1e-8
 
-        //fill x0 with zeros
-        val x0 = DoubleArray(x[0].size+1)
-        Arrays.fill(x0, 0.0)
 
-        var X0:RealVector = ArrayRealVector(x0)
-        var X1:RealVector = ArrayRealVector(x0)
+        var X0:RealVector = ArrayRealVector(regressionCoefficients)
+        var X1:RealVector = ArrayRealVector(regressionCoefficients)
 
         //
         val X = wlr.getx()
@@ -56,7 +55,7 @@ abstract class RegressionEmissionScheme(covariateLabels: List<String>, regressio
             val countedLinkDeriv = eta.map { linkDerivative(it) }
             val z:RealVector = eta.add(Y.subtract(countedLink).ebeDivide(countedLinkDeriv))
             val countedLinkVar = countedLink.map { linkVariance(it) }
-            val W = countedLinkDeriv.ebeMultiply(countedLinkDeriv).ebeDivide(countedLinkVar).ebeMultiply(ArrayRealVector(weights.toDoubleArray())).toArray()
+            val W = countedLinkDeriv.ebeMultiply(countedLinkDeriv).ebeDivide(countedLinkVar).ebeDivide(ArrayRealVector(weights.toDoubleArray())).toArray()
             
             wlr.newSampleData(z.toArray(), x, W)
 
@@ -85,19 +84,28 @@ class PoissonRegressionEmissionScheme (
     override fun sample(df: DataFrame, d: Int, fill: IntPredicate) {
 
         val observations = df.sliceAsInt(df.labels[d])
-        var observation = DoubleArray(covariateLabels.size)
+        var observation = DoubleArray(covariateLabels.size + 1, {1.0})
         (0 until df.rowsNumber).forEach { row ->
             if(fill.test(row)){
                 this.covariateLabels.forEachIndexed { index, label ->
-                    observation[index] = df.getAsDouble(row, label)
+                    observation[index + 1] = df.getAsDouble(row, label)
                 }
+                observations[row] = Sampling.samplePoisson(exp(regressionCoefficients.zip(observation) { a, b -> a*b }.sum())).toInt()
             }
-            observations[row] = Sampling.samplePoisson(exp(regressionCoefficients.zip(observation) { a, b -> a*b }.sum())).toInt()
         }
     }
 
     override fun logProbability(df: DataFrame, t: Int, d: Int): Double {
-            return(df.getAsInt(t, df.labels[d])*regressionCoefficients.zip(df.rowAsDouble(t).filterIndexed { index, d ->  covariateLabels.contains(df.labels[index])}) { a, b -> a*b }.sum() - MoreMath.factorialLog(df.getAsInt(t, df.labels[d])))
+        val logLambda = regressionCoefficients
+                .zip(
+                        doubleArrayOf(1.0)
+                                .plus(
+                                        df.rowAsDouble(t)
+                                                .filterIndexed
+                                                { index, d -> covariateLabels.contains(df.labels[index]) }))
+                { a, b -> a * b }
+                .sum()
+        return(df.getAsInt(t, df.labels[d])* logLambda - MoreMath.factorialLog(df.getAsInt(t, df.labels[d]))) - FastMath.exp(logLambda)
 
     }
 
@@ -115,15 +123,15 @@ class PoissonRegressionEmissionScheme (
         Arrays.fill(weights_0, 0.0)
         wlr.newSampleData(y, x, weights_0)
 
-        val iterMax = 250
+        val iterMax = 5
         val tol = 1e-8
 
         //fill x0 with zeros
-        val x0 = DoubleArray(x[0].size+1)
-        Arrays.fill(x0, 0.0)
+        //val x0 = DoubleArray(x[0].size+1)
+        //Arrays.fill(x0, 0.0)
 
-        var X0:RealVector = ArrayRealVector(x0)
-        var X1:RealVector = ArrayRealVector(x0)
+        var X0:RealVector = ArrayRealVector(regressionCoefficients)
+        var X1:RealVector = ArrayRealVector(regressionCoefficients)
 
         //
         val X = wlr.getx()
@@ -146,6 +154,7 @@ class PoissonRegressionEmissionScheme (
             X0 = X1
         }
         this.regressionCoefficients = X1.toArray()
+        println(regressionCoefficients.toList())
     }
 }
 
@@ -181,7 +190,16 @@ class ZeroPoissonMixture (weights: F64Array, covariateLabels: List<String>, regr
             for (i in 0 until numComponents) {
                 getEmissionScheme(i, t).sample(df, d[t], IntPredicate { states[it] == i })
             }
+        }
+    }
 
+    //For this moment suppose that numDimension = 1
+    override fun updateParameters(df: DataFrame, gammas: F64Array) {
+        super.updateParameters(df, gammas)
+        for (d in 0 until numDimensions) {
+            for (i in 0 until numComponents) {
+                getEmissionScheme(i, d).update(df, d, gammas.V[i])
+            }
         }
     }
 }
@@ -192,8 +210,8 @@ fun main(args: Array<String>) {
 
     var covar = DataFrame()
             .with("y", IntArray(1000000))
-            .with("x1", DoubleArray(1000000) { Random.nextDouble(0.0, 1.0) })
-            .with("x2", DoubleArray(1000000) { Random.nextDouble(0.0, 1.0) })
+            .with("x1", DoubleArray(1000000) { Random.nextDouble(0.5, 1.0) })
+            /*.with("x2", DoubleArray(1000000) { Random.nextDouble(0.0, 1.0) })*/
     /*
     //проверка, что с внешними весами все еще работает
     var regrES = PoissonRegressionEmissionScheme(listOf("x1", "x2"), doubleArrayOf(4.0, -2.0), 2)
@@ -207,16 +225,17 @@ fun main(args: Array<String>) {
     print("Beta: ${regrES.regressionCoefficients.asList()}")
 */
     // MLFreeMixture
+    Logs.addConsoleAppender(Level.DEBUG)
     var mix = ZeroPoissonMixture(
             doubleArrayOf(0.4, 0.5, 0.1).asF64Array(),
-            listOf("x1", "x2"),
-            arrayOf(doubleArrayOf(1.0, 2.0, 3.0), doubleArrayOf(4.0, 5.0, 6.0)))
+            listOf("x1"/*, "x2"*/),
+            arrayOf(doubleArrayOf(1.0, 1.0), doubleArrayOf(2.0, 2.0)))
 
     mix.sample(covar, intArrayOf(0))
 
     var yaMix = ZeroPoissonMixture(
             doubleArrayOf(1/3.0, 1/3.0, 1/3.0).asF64Array(),
-            listOf("x1", "x2"),
-            arrayOf(doubleArrayOf(0.0, 0.0, 0.0), doubleArrayOf(5.0, 0.0, 0.0)))
-    yaMix.fit(Preprocessed.of(covar), 10e-3, 100)
+            listOf("x1"/*, "x2"*/),
+            arrayOf(doubleArrayOf(0.0, 1.5), doubleArrayOf(1.6, 0.0)))
+    yaMix.fit(Preprocessed.of(covar), 10e-3, 12)
 }
