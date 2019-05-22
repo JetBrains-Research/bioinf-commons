@@ -25,15 +25,15 @@ abstract class RegressionEmissionScheme(covariateLabels: List<String>, regressio
     abstract val linkVariance: (Double) -> Double
 
     override fun update(df: DataFrame, d:Int, weights: F64Array){
-        var y = df.sliceAsDouble(df.labels[d].intern())
+        val y = df.sliceAsDouble(df.labels[d].intern())
         var xFromCovariates = emptyArray<DoubleArray>()
         for (label in covariateLabels){
             xFromCovariates += df.sliceAsDouble(label)
         }
 
-        var x  = Array2DRowRealMatrix(xFromCovariates).transpose().data
+        val x  = Array2DRowRealMatrix(xFromCovariates).transpose().data
 
-        var wlr = WLSMultipleLinearRegression()
+        val wlr = WLSMultipleLinearRegression()
         val weights_0 = DoubleArray(x.size)
         Arrays.fill(weights_0, 0.0)
         wlr.newSampleData(y, x, weights_0)
@@ -84,13 +84,13 @@ class PoissonRegressionEmissionScheme (
     override fun sample(df: DataFrame, d: Int, fill: IntPredicate) {
 
         val observations = df.sliceAsInt(df.labels[d])
-        var observation = DoubleArray(covariateLabels.size + 1, {1.0})
+        val observation = DoubleArray(covariateLabels.size + 1, {1.0})
         (0 until df.rowsNumber).forEach { row ->
             if(fill.test(row)){
                 this.covariateLabels.forEachIndexed { index, label ->
                     observation[index + 1] = df.getAsDouble(row, label)
                 }
-                observations[row] = Sampling.samplePoisson(exp(regressionCoefficients.zip(observation) { a, b -> a*b }.sum())).toInt()
+                observations[row] = Sampling.samplePoisson(exp(regressionCoefficients.zip(observation) { a, b -> a*b }.sum()))
             }
         }
     }
@@ -110,15 +110,15 @@ class PoissonRegressionEmissionScheme (
     }
 
     override fun update(df: DataFrame, d:Int, weights: F64Array){
-        var y = Arrays.stream(df.sliceAsInt(df.labels[d].intern())).asDoubleStream().toArray()
+        val y = Arrays.stream(df.sliceAsInt(df.labels[d].intern())).asDoubleStream().toArray()
         var xFromCovariates = emptyArray<DoubleArray>()
         for (label in covariateLabels){
             xFromCovariates += df.sliceAsDouble(label)
         }
 
-        var x  = Array2DRowRealMatrix(xFromCovariates).transpose().data
+        val x  = Array2DRowRealMatrix(xFromCovariates).transpose().data
 
-        var wlr = WLSMultipleLinearRegression()
+        val wlr = WLSMultipleLinearRegression()
         val weights_0 = DoubleArray(x.size)
         Arrays.fill(weights_0, 0.0)
         wlr.newSampleData(y, x, weights_0)
@@ -163,7 +163,8 @@ class PoissonRegressionEmissionScheme (
 // 0 - zero-inflated component
 // 1 - LOW
 // 2 - HIGH
-class ZeroPoissonMixture (weights: F64Array, covariateLabels: List<String>, regressionCoefficients: Array<DoubleArray>): MLFreeMixture(numComponents = 3, numDimensions = 1, weights = weights){
+class ZeroPoissonMixture (weights: F64Array, covariateLabels: List<String>, regressionCoefficients: Array<DoubleArray>):
+        MLFreeMixture(numComponents = 3, numDimensions = 1, weights = weights){
     val covariateLabels: List<String> = covariateLabels
     var regressionCoefficients: Array<DoubleArray> = regressionCoefficients
         protected set
@@ -184,21 +185,11 @@ class ZeroPoissonMixture (weights: F64Array, covariateLabels: List<String>, regr
         return components[i]
     }
 
-    fun sample(df:DataFrame, d: IntArray) {
+    override fun sample(df:DataFrame, d: IntArray) {
         val states = sampleStates(df.rowsNumber)
         for (t in 0 until numDimensions) {
             for (i in 0 until numComponents) {
                 getEmissionScheme(i, t).sample(df, d[t], IntPredicate { states[it] == i })
-            }
-        }
-    }
-
-    //For this moment suppose that numDimension = 1
-    override fun updateParameters(df: DataFrame, gammas: F64Array) {
-        super.updateParameters(df, gammas)
-        for (d in 0 until numDimensions) {
-            for (i in 0 until numComponents) {
-                getEmissionScheme(i, d).update(df, d, gammas.V[i])
             }
         }
     }
@@ -208,7 +199,7 @@ class ZeroPoissonMixture (weights: F64Array, covariateLabels: List<String>, regr
 fun main(args: Array<String>) {
     //1
 
-    var covar = DataFrame()
+    val covar = DataFrame()
             .with("y", IntArray(1000000))
             .with("x1", DoubleArray(1000000) { Random.nextDouble(0.5, 1.0) })
             /*.with("x2", DoubleArray(1000000) { Random.nextDouble(0.0, 1.0) })*/
@@ -226,14 +217,14 @@ fun main(args: Array<String>) {
 */
     // MLFreeMixture
     Logs.addConsoleAppender(Level.DEBUG)
-    var mix = ZeroPoissonMixture(
+    val mix = ZeroPoissonMixture(
             doubleArrayOf(0.4, 0.5, 0.1).asF64Array(),
             listOf("x1"/*, "x2"*/),
             arrayOf(doubleArrayOf(1.0, 1.0), doubleArrayOf(2.0, 2.0)))
 
     mix.sample(covar, intArrayOf(0))
 
-    var yaMix = ZeroPoissonMixture(
+    val yaMix = ZeroPoissonMixture(
             doubleArrayOf(1/3.0, 1/3.0, 1/3.0).asF64Array(),
             listOf("x1"/*, "x2"*/),
             arrayOf(doubleArrayOf(0.0, 1.5), doubleArrayOf(1.6, 0.0)))
