@@ -16,30 +16,30 @@ import java.util.function.IntPredicate
  * @author Elena Kartysheva
  * @date 5/25/19
  */
-class ZeroPoissonMixture(weights: F64Array, covariateLabels: List<String>, regressionCoefficients: Array<DoubleArray>) :
-        MLFreeMixture(numComponents = 3, numDimensions = 1, weights = weights) {
+class ZeroPoissonMixture(
+        weights: F64Array, covariateLabels: List<String>, regressionCoefficients: Array<DoubleArray>
+) : MLFreeMixture(numComponents = 3, numDimensions = 1, weights = weights) {
 
     private val components: List<EmissionScheme> = listOf(
             ConstantIntegerEmissionScheme(0),
             PoissonRegressionEmissionScheme(
                     covariateLabels = covariateLabels,
-                    regressionCoefficients = regressionCoefficients[0],
-                    degreesOfFreedom = covariateLabels.size),
+                    regressionCoefficients = regressionCoefficients[0]
+            ),
             PoissonRegressionEmissionScheme(
                     covariateLabels = covariateLabels,
-                    regressionCoefficients = regressionCoefficients[1],
-                    degreesOfFreedom = covariateLabels.size))
+                    regressionCoefficients = regressionCoefficients[1]
+            )
+    )
 
 
-    override fun getEmissionScheme(i: Int, d: Int): EmissionScheme {
-        return components[i]
-    }
+    override fun getEmissionScheme(i: Int, d: Int): EmissionScheme = components[i]
 
-    override fun sample(df: DataFrame, d: IntArray) {
+    override fun sample(df: DataFrame, ds: IntArray) {
         val states = sampleStates(df.rowsNumber)
-        for (t in 0 until numDimensions) {
+        for (d in 0 until numDimensions) {
             for (i in 0 until numComponents) {
-                getEmissionScheme(i, t).sample(df, d[t], IntPredicate { states[it] == i })
+                getEmissionScheme(i, d).sample(df, ds[d], IntPredicate { states[it] == i })
             }
         }
     }
