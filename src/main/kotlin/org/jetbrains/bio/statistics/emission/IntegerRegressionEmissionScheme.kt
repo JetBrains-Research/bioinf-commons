@@ -39,9 +39,9 @@ abstract class IntegerRegressionEmissionScheme(val covariateLabels: List<String>
         val x  = Array2DRowRealMatrix(xFromCovariates).transpose().data
 
         val wlr = WLSMultipleLinearRegression()
-        val weights_0 = DoubleArray(x.size)
-        Arrays.fill(weights_0, 0.0)
-        wlr.newSampleData(y, x, weights_0)
+        val weights0 = DoubleArray(x.size)
+        Arrays.fill(weights0, 0.0)
+        wlr.newSampleData(y, x, weights0)
 
         val iterMax = 5
         val tol = 1e-8
@@ -57,11 +57,11 @@ abstract class IntegerRegressionEmissionScheme(val covariateLabels: List<String>
         for (i in 0 until iterMax) {
             val eta = X.operate(X0)
             val countedLink = eta.map { link(it) }
-            val countedLinkDeriv = eta.map { linkDerivative(it) }
-            val z:RealVector = eta.add(Y.subtract(countedLink).ebeDivide(countedLinkDeriv))
+            val countedLinkDerivative = eta.map { linkDerivative(it) }
+            val z: RealVector = eta.add(Y.subtract(countedLink).ebeDivide(countedLinkDerivative))
             val countedLinkVar = countedLink.map { linkVariance(it) }
-            val W = countedLinkDeriv
-                    .ebeMultiply(countedLinkDeriv)
+            val W = countedLinkDerivative
+                    .ebeMultiply(countedLinkDerivative)
                     .ebeDivide(countedLinkVar)
                     .ebeMultiply(ArrayRealVector(weights.toDoubleArray()))
                     .toArray()
