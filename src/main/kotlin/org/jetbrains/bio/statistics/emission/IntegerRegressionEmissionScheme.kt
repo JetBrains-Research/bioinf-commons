@@ -6,7 +6,6 @@ import org.apache.commons.math3.linear.RealVector
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.viktor.F64Array
 import java.util.function.IntPredicate
-import kotlin.math.exp
 
 /**
  *
@@ -97,7 +96,7 @@ abstract class IntegerRegressionEmissionScheme(
         val observations = df.sliceAsInt(df.labels[d])
         (0 until df.rowsNumber).forEach { row ->
             if (fill.test(row)) {
-                observations[row] = sampler(exp(getLogObservation(df, row)))
+                observations[row] = sampler(link(getLogObservation(df, row)))
             }
         }
     }
