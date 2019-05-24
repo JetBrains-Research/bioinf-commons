@@ -5,6 +5,8 @@ import org.apache.commons.math3.linear.ArrayRealVector
 import org.apache.commons.math3.linear.RealVector
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.viktor.F64Array
+import java.util.function.IntPredicate
+import kotlin.math.exp
 
 /**
  *
@@ -23,6 +25,7 @@ abstract class IntegerRegressionEmissionScheme(
     abstract val link: (Double) -> Double
     abstract val linkDerivative: (Double) -> Double
     abstract val linkVariance: (Double) -> Double
+    abstract val sampler: (Double) -> Int
     override val degreesOfFreedom: Int = regressionCoefficients.size
 
     /**
@@ -70,8 +73,32 @@ abstract class IntegerRegressionEmissionScheme(
             beta0 = beta1
         }
         regressionCoefficients = beta1.toArray()
-        println(regressionCoefficients.toList())
     }
 
-    abstract fun getLogObservation(df: DataFrame, t: Int): Double
+    //abstract fun getLogObservation(df: DataFrame, t: Int): Double
+
+    /**
+     * @param t - number of row
+     */
+    fun getLogObservation(df: DataFrame, t: Int): Double {
+        val observation = DoubleArray(covariateLabels.size + 1) { 1.0 }
+        covariateLabels.forEachIndexed { index, label ->
+            observation[index + 1] = df.getAsDouble(t, label)
+        }
+        return regressionCoefficients.zip(observation) { a, b -> a * b }.sum()
+    }
+
+    /**
+     * @param d - number of column in which we want to sample
+     * @param fill - predicate which marks rows we need to use for sampling
+     */
+    override fun sample(df: DataFrame, d: Int, fill: IntPredicate) {
+
+        val observations = df.sliceAsInt(df.labels[d])
+        (0 until df.rowsNumber).forEach { row ->
+            if (fill.test(row)) {
+                observations[row] = sampler(exp(getLogObservation(df, row)))
+            }
+        }
+    }
 }
