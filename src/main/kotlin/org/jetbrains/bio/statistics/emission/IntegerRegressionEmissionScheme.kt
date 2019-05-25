@@ -74,12 +74,10 @@ abstract class IntegerRegressionEmissionScheme(
         regressionCoefficients = beta1.toArray()
     }
 
-    //abstract fun getLogObservation(df: DataFrame, t: Int): Double
-
     /**
      * @param t - number of row
      */
-    fun getLogObservation(df: DataFrame, t: Int): Double {
+    fun getPredictor(df: DataFrame, t: Int): Double {
         val observation = DoubleArray(covariateLabels.size + 1) { 1.0 }
         covariateLabels.forEachIndexed { index, label ->
             observation[index + 1] = df.getAsDouble(t, label)
@@ -96,7 +94,7 @@ abstract class IntegerRegressionEmissionScheme(
         val observations = df.sliceAsInt(df.labels[d])
         (0 until df.rowsNumber).forEach { row ->
             if (fill.test(row)) {
-                observations[row] = sampler(link(getLogObservation(df, row)))
+                observations[row] = sampler(link(getPredictor(df, row)))
             }
         }
     }
