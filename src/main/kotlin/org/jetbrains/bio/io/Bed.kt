@@ -97,13 +97,13 @@ data class BedFormat(
     override fun toString() = "($fmtStr, '$delimiter')"
 
     companion object {
-        val DEFAULT = BedFormat.from("bed12")
+        val DEFAULT = from("bed12")
         /**
          * chromosome, start, end, name, score, strand, coverage/foldchange, -log(pvalue), -log(qvalue)
          */
         @Suppress("unused")
-        val MACS2 = BedFormat.from("bed6+3")
-        val RGB = BedFormat.from("bed9")
+        val MACS2 = from("bed6+3")
+        val RGB = from("bed9")
 
         fun from(fmtStr: String, delimiter: Char = '\t') = parseFormatString(fmtStr).let { fmt ->
             BedFormat(fmt.first, fmt.second, delimiter = delimiter)
@@ -116,7 +116,7 @@ data class BedFormat(
                     val fmtStr = s.substring(1, sep)
                     val delimiterStr = s.substring(sep + 1, s.length - 1).trim()
                     if (delimiterStr.length == 3 && delimiterStr.first() == '\'' && delimiterStr.last() == '\'' ) {
-                        return BedFormat.from(fmtStr, delimiterStr[1])
+                        return from(fmtStr, delimiterStr[1])
                     }
                 }
             }
@@ -204,7 +204,7 @@ data class BedFormat(
 
         private fun auto(stream: InputStream, delimiter: Char, source: String?) =
                 stream.bufferedReader().use { reader ->
-                    var format = BedFormat.from("bed3", delimiter)
+                    var format = from("bed3", delimiter)
                     var headerCandidateMet = false
                     while (true) {
                         val line = reader.readLine() ?: break
@@ -339,7 +339,7 @@ class BedParser(internal val reader: BufferedReader,
         }
 
         return try {
-            org.jetbrains.bio.big.BedEntry(
+            BedEntry(
                     chunks[0], chunks[1].toInt(), chunks[2].toInt(),
                     if (chunks.size == 3) "" else chunks[3]
             )
