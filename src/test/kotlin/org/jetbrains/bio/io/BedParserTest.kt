@@ -375,6 +375,29 @@ Fields number in BED file is between 3 and 15, but was 2""")
         }
     }
 
+    @Test(expected = BedFormatException::class)
+    fun testParse_Strict() {
+        val incorrectBed = "chr start end score\nchr1 1 10 100"
+        withBedFile(incorrectBed) { path ->
+            BedFormat.auto(path).parse(path) {
+                it.leniency = BedParser.Companion.Leniency.STRICT
+                it.toList()
+            }
+        }
+    }
+
+    @Test
+    fun testParse_Lenient() {
+        val incorrectBed = "chr start end score\nchr1 1 10 100"
+        withBedFile(incorrectBed) { path ->
+            val entries = BedFormat.auto(path).parse(path) {
+                it.leniency = BedParser.Companion.Leniency.LENIENT
+                it.toList()
+            }
+            assertEquals(1, entries.size)
+        }
+    }
+
     @Test
     fun testAuto_WhitespaceSep() {
         doCheckAuto("chr2 1 2 Description 960 + 1000 5000 0 2 10,20, 1,2",
