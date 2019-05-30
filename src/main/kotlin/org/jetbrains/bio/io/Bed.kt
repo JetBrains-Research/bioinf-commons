@@ -13,6 +13,8 @@ import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.containers.LocationsMergingList
 import org.jetbrains.bio.genome.toStrand
 import org.jetbrains.bio.io.BedFormat.Companion.auto
+import org.jetbrains.bio.io.BedParser.Companion.Leniency.LENIENT
+import org.jetbrains.bio.io.BedParser.Companion.Leniency.STRICT
 import org.jetbrains.bio.util.*
 import java.awt.Color
 import java.io.*
@@ -299,20 +301,25 @@ data class BedFormat(
     }
 }
 
-class BedParser(internal val reader: BufferedReader,
-                private val source: String,
-                val separator: Char
+/**
+ * Reads [BedEntry]-s from the supplied [reader].
+ */
+class BedParser(
+        internal val reader: BufferedReader,
+        private val source: String,
+        val separator: Char,
+        var leniency: Leniency = STRICT
 ): Iterable<BedEntry>, AutoCloseable {
 
     private val splitter = Splitter.on(separator).limit(4).trimResults().omitEmptyStrings()
 
     override fun iterator(): UnmodifiableIterator<BedEntry> {
         return object : UnmodifiableIterator<BedEntry>() {
-            private var nextEntry: BedEntry? = parse(readLine())
+            private var nextEntry: BedEntry? = parseNext()
 
-            override fun next(): BedEntry? {
-                val entry = nextEntry
-                nextEntry = parse(readLine())
+            override fun next(): BedEntry {
+                val entry = nextEntry ?: throw NoSuchElementException()
+                nextEntry = parseNext()
                 return entry
             }
 
@@ -321,6 +328,30 @@ class BedParser(internal val reader: BufferedReader,
         }
     }
 
+    /**
+     * Parses the next line. Depending on [leniency], either throws [BedFormatException]
+     * or keeps going on parsing errors.
+     * @return the parsed entry or null if there are no more lines to parse.
+     */
+    private fun parseNext(): BedEntry? {
+        do {
+            val line = readLine() ?: return null
+            try {
+                return parse(line)
+            } catch (e: IllegalArgumentException) {
+                val message = "$source: failed to parse BED line:\n$line"
+                when (leniency) {
+                    STRICT -> throw BedFormatException(message, e)
+                    LENIENT -> LOG.debug(message, e)
+                }
+            }
+        // this statement is normally unreachable
+        } while (true)
+    }
+
+    /**
+     * Returns the next line that doesn't match [NON_DATA_LINE_PATTERN], or null if end-of-file was reached.
+     */
     private fun readLine(): String? {
         var line: String?
         do {
@@ -329,29 +360,18 @@ class BedParser(internal val reader: BufferedReader,
         return line
     }
 
-    private fun parse(line: String?): BedEntry? {
-        if (line == null) {
-            return null
-        }
+    /**
+     * Returns the parsed [BedEntry], or throws [IllegalArgumentException] if parsing failed.
+     */
+    private fun parse(line: String): BedEntry {
         val chunks = splitter.splitToList(line)
-        if (chunks.size < 3) {
-            throw IllegalArgumentException("invalid BED: '$line'")
-        }
-
         return try {
             BedEntry(
                     chunks[0], chunks[1].toInt(), chunks[2].toInt(),
                     if (chunks.size == 3) "" else chunks[3]
             )
         } catch (e: Exception) {
-            LOG.error("$source: invalid BED: '$line'", e)
-
-            // XXX: do not return 'null' here because it is "EOF" marker, return
-            // empty value, most likely it is just header entry
-            BedEntry(
-                    chunks[0], 0, 0,
-                    if (chunks.size == 3) "" else chunks[3]
-            )
+            throw IllegalArgumentException("invalid BED: '$line'", e)
         }
     }
 
@@ -361,6 +381,14 @@ class BedParser(internal val reader: BufferedReader,
 
     companion object {
         private val LOG = Logger.getLogger(BedParser::class.java)
+
+        /**
+         * [STRICT] parser throws a [BedFormatException] on entries it can't parse.
+         * [LENIENT] parser just logs the error and continues.
+         */
+        enum class Leniency {
+            STRICT, LENIENT
+        }
     }
 }
 
@@ -581,3 +609,5 @@ fun BedEntry.unpackRegularFields(format: BedFormat, omitEmptyStrings: Boolean = 
 interface BedProvider {
     val bedSource: URI
 }
+
+class BedFormatException(message: String, cause: Throwable) : Exception(message, cause)
