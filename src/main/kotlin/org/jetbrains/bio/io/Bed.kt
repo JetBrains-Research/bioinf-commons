@@ -311,7 +311,7 @@ class BedParser(
         internal val reader: BufferedReader,
         private val source: String,
         val separator: Char,
-        var leniency: Leniency = STRICT
+        var leniency: Leniency = LENIENT
 ): Iterable<BedEntry>, AutoCloseable {
 
     private val splitter = Splitter.on(separator).limit(4).trimResults().omitEmptyStrings()
