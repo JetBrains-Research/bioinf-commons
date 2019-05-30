@@ -13,6 +13,7 @@ import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.containers.LocationsMergingList
 import org.jetbrains.bio.genome.toStrand
 import org.jetbrains.bio.io.BedFormat.Companion.auto
+import org.jetbrains.bio.io.BedParser.Companion.Leniency
 import org.jetbrains.bio.io.BedParser.Companion.Leniency.LENIENT
 import org.jetbrains.bio.io.BedParser.Companion.Leniency.STRICT
 import org.jetbrains.bio.util.*
@@ -303,6 +304,8 @@ data class BedFormat(
 
 /**
  * Reads [BedEntry]-s from the supplied [reader].
+ *
+ * Set [leniency] to your preferred mode before starting to parse. See [Leniency] for mode explanation.
  */
 class BedParser(
         internal val reader: BufferedReader,
@@ -383,7 +386,7 @@ class BedParser(
         private val LOG = Logger.getLogger(BedParser::class.java)
 
         /**
-         * [STRICT] parser throws a [BedFormatException] on entries it can't parse.
+         * [STRICT] parser throws a [BedFormatException] on lines it can't parse.
          * [LENIENT] parser just logs the error and continues.
          */
         enum class Leniency {
