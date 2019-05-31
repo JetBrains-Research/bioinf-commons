@@ -13,9 +13,9 @@ import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.containers.LocationsMergingList
 import org.jetbrains.bio.genome.toStrand
 import org.jetbrains.bio.io.BedFormat.Companion.auto
-import org.jetbrains.bio.io.BedParser.Companion.Leniency
-import org.jetbrains.bio.io.BedParser.Companion.Leniency.LENIENT
-import org.jetbrains.bio.io.BedParser.Companion.Leniency.STRICT
+import org.jetbrains.bio.io.BedParser.Companion.Stringency
+import org.jetbrains.bio.io.BedParser.Companion.Stringency.LENIENT
+import org.jetbrains.bio.io.BedParser.Companion.Stringency.STRICT
 import org.jetbrains.bio.util.*
 import java.awt.Color
 import java.io.*
@@ -305,13 +305,13 @@ data class BedFormat(
 /**
  * Reads [BedEntry]-s from the supplied [reader].
  *
- * Set [leniency] to your preferred mode before starting to parse. See [Leniency] for mode explanation.
+ * Set [stringency] to your preferred mode before starting to parse. See [Stringency] for mode explanation.
  */
 class BedParser(
         internal val reader: BufferedReader,
         private val source: String,
         val separator: Char,
-        var leniency: Leniency = LENIENT
+        var stringency: Stringency = LENIENT
 ): Iterable<BedEntry>, AutoCloseable {
 
     private val splitter = Splitter.on(separator).limit(4).trimResults().omitEmptyStrings()
@@ -332,7 +332,7 @@ class BedParser(
     }
 
     /**
-     * Parses the next line. Depending on [leniency], either throws [BedFormatException]
+     * Parses the next line. Depending on [stringency], either throws [BedFormatException]
      * or keeps going on parsing errors.
      * @return the parsed entry or null if there are no more lines to parse.
      */
@@ -343,7 +343,7 @@ class BedParser(
                 return parse(line)
             } catch (e: IllegalArgumentException) {
                 val message = "$source: failed to parse BED line:\n$line"
-                when (leniency) {
+                when (stringency) {
                     STRICT -> throw BedFormatException(message, e)
                     LENIENT -> LOG.debug(message, e)
                 }
@@ -389,7 +389,7 @@ class BedParser(
          * [STRICT] parser throws a [BedFormatException] on lines it can't parse.
          * [LENIENT] parser just logs the error and continues.
          */
-        enum class Leniency {
+        enum class Stringency {
             STRICT, LENIENT
         }
     }

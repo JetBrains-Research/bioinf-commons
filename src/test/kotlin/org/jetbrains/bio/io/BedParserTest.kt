@@ -380,7 +380,7 @@ Fields number in BED file is between 3 and 15, but was 2""")
         val incorrectBed = "chr start end score\nchr1 1 10 100"
         withBedFile(incorrectBed) { path ->
             BedFormat.auto(path).parse(path) {
-                it.leniency = BedParser.Companion.Leniency.STRICT
+                it.stringency = BedParser.Companion.Stringency.STRICT
                 it.toList()
             }
         }
@@ -391,7 +391,7 @@ Fields number in BED file is between 3 and 15, but was 2""")
         val incorrectBed = "chr start end score\nchr1 1 10 100"
         withBedFile(incorrectBed) { path ->
             val entries = BedFormat.auto(path).parse(path) {
-                it.leniency = BedParser.Companion.Leniency.LENIENT
+                it.stringency = BedParser.Companion.Stringency.LENIENT
                 it.toList()
             }
             assertEquals(1, entries.size)
