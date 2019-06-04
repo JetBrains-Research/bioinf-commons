@@ -306,6 +306,8 @@ data class BedFormat(
  * Reads [BedEntry]-s from the supplied [reader].
  *
  * Set [stringency] to your preferred mode before starting to parse. See [Stringency] for mode explanation.
+ *
+ * Use [linesFailedToParse] property to find out how many lines were skipped due to parsing errors.
  */
 class BedParser(
         internal val reader: BufferedReader,
@@ -315,6 +317,9 @@ class BedParser(
 ): Iterable<BedEntry>, AutoCloseable {
 
     private val splitter = Splitter.on(separator).limit(4).trimResults().omitEmptyStrings()
+
+    var linesFailedToParse: Int = 0
+        private set
 
     override fun iterator(): UnmodifiableIterator<BedEntry> {
         return object : UnmodifiableIterator<BedEntry>() {
@@ -345,7 +350,10 @@ class BedParser(
                 val message = "$source: failed to parse BED line:\n$line"
                 when (stringency) {
                     STRICT -> throw BedFormatException(message, e)
-                    LENIENT -> LOG.debug(message, e)
+                    LENIENT -> {
+                        linesFailedToParse++
+                        LOG.debug(message, e)
+                    }
                 }
             }
         // this statement is normally unreachable

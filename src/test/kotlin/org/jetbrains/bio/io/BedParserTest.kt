@@ -392,7 +392,9 @@ Fields number in BED file is between 3 and 15, but was 2""")
         withBedFile(incorrectBed) { path ->
             val entries = BedFormat.auto(path).parse(path) {
                 it.stringency = BedParser.Companion.Stringency.LENIENT
-                it.toList()
+                val res = it.toList()
+                assertEquals(1, it.linesFailedToParse)
+                res
             }
             assertEquals(1, entries.size)
         }
@@ -638,10 +640,10 @@ Fields number in BED file is between 3 and 15, but was 2""")
 
             require(BedFormat.from("bed4+1", '\t') == format)
 
-            val entries = format.parse(path) {
-                it.use { p ->
-                    p.toList()
-                }
+            val entries = format.parse(path) { p ->
+                val res = p.toList()
+                assertEquals(1, p.linesFailedToParse)
+                res
             }
             val genome = Genome["to1"]
 
@@ -662,7 +664,7 @@ Fields number in BED file is between 3 and 15, but was 2""")
         assertFalse(BedField.ITEM_RGB in BedFormat.from("bed8"))
     }
 
-    @Test fun bedFormatFromFiled() {
+    @Test fun bedFormatFromField() {
         assertEquals("bed6", BedFormat(BedField.STRAND).fmtStr)
         assertEquals("bed9", BedFormat(BedField.ITEM_RGB).fmtStr)
     }
