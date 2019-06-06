@@ -18,7 +18,8 @@ import kotlin.concurrent.getOrSet
 class CancellableState private constructor() {
     // volatile for ThreadLocal is required here to propagate cancellation to another threads
     // Can be used in the scheme where singe instance is shared across different children threads
-    @Volatile private var cancelled = false
+    @Volatile
+    private var cancelled = false
 
     /**
      * Sets cancellation flag for the calling thread.
@@ -35,7 +36,7 @@ class CancellableState private constructor() {
     }
 
     /**
-     * Throws [CancellationException] if cancellation flag is set.
+     * @throws [CancellationException] if cancellation flag is set.
      */
     fun checkCanceled() {
         if (cancelled) {
