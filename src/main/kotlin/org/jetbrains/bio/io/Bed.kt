@@ -305,18 +305,33 @@ data class BedFormat(
 /**
  * Reads [BedEntry]-s from the supplied [reader].
  *
- * Set [stringency] to your preferred mode before starting to parse. See [Stringency] for mode explanation.
+ * [BedParser] is usually used via [BedFormat.parse] method. It implements [Iterable] over [BedEntry],
+ * so it's normally a receiver of [map] or [forEach] calls:
+ *      bedFormat.parse(file) { parser ->
+ *          parser.forEach { bedEntry -> println(bedEntry) }
+ *      }
  *
- * Use [linesFailedToParse] property to find out how many lines were skipped due to parsing errors.
+ * @param reader The reader that provides lines to convert into [BedEntry]-s.
+ * @param source The BED source description, used in log and exception messages.
+ * @param separator The separator character for line parsing.
+ *
+ * @property stringency controls the parser stringency (see [Stringency] for detailed explanation).
+ * It can be changed at any time:
+ *      parser.stringency = Stringency.STRICT
+ * It's set to [LENIENT] by default.
+ *
+ * @property linesFailedToParse shows how many lines were skipped due to parsing errors. Note that it's useless
+ * with [stringency] == [STRICT], since the parser will throw on any line that fails to parse.
  */
 class BedParser(
         internal val reader: BufferedReader,
         private val source: String,
-        val separator: Char,
-        var stringency: Stringency = LENIENT
+        val separator: Char
 ): Iterable<BedEntry>, AutoCloseable {
 
     private val splitter = Splitter.on(separator).limit(4).trimResults().omitEmptyStrings()
+
+    var stringency = LENIENT
 
     var linesFailedToParse: Int = 0
         private set
