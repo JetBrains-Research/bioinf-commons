@@ -311,9 +311,9 @@ data class BedFormat(
  *          parser.forEach { bedEntry -> println(bedEntry) }
  *      }
  *
- * @param reader The reader that provides lines to convert into [BedEntry]-s.
- * @param source The BED source description, used in log and exception messages.
- * @param separator The separator character for line parsing.
+ * @property reader The reader that provides lines to convert into [BedEntry]-s.
+ * @property source The BED source description, used in log and exception messages.
+ * @property separator The separator character for line parsing.
  *
  * @property stringency controls the parser stringency (see [Stringency] for detailed explanation).
  * It can be changed at any time:
