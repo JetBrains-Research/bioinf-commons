@@ -1,6 +1,5 @@
 package org.jetbrains.bio.genome.containers
 
-import com.google.common.collect.Iterables
 import com.google.common.collect.Lists
 import kotlinx.support.jdk7.use
 import org.jetbrains.bio.genome.*
@@ -27,7 +26,7 @@ private fun <T> GenomeStrandMap<T>.merge(
  */
 class LocationsMergingList private constructor(
         private val rangeLists: GenomeStrandMap<RangesMergingList>)
-    : GenomeStrandMapLike<List<Location>>, Iterable<Location> {
+    : GenomeStrandMapLike<List<Location>> {
 
     override val genomeQuery: GenomeQuery get() = rangeLists.genomeQuery
 
@@ -86,15 +85,13 @@ class LocationsMergingList private constructor(
     @Throws(IOException::class)
     fun save(path: Path, format: BedFormat = BedFormat()) {
         format.print(path).use { printer ->
-            forEach { printer.print(it.toBedEntry()) }
+            locationIterator().forEach { printer.print(it.toBedEntry()) }
         }
     }
 
-    override fun iterator(): Iterator<Location> {
-        return Iterables.concat(genomeQuery.get().map {
-            Iterables.concat(get(it, Strand.PLUS), get(it, Strand.MINUS))
-        }).iterator()
-    }
+    fun locationIterator(): Iterator<Location> = asSequence().flatMap { it.asSequence() }.iterator()
+
+    fun asLocationSequence(): Sequence<Location> = Sequence { locationIterator() }
 
     /** The number of locations in this list. */
     val size: Int
@@ -107,7 +104,7 @@ class LocationsMergingList private constructor(
 
     fun filter(predicate: (Location) -> Boolean): LocationsMergingList {
         val builder = builder(genomeQuery)
-        forEach { if (predicate(it)) builder.add(it) }
+        locationIterator().forEach { if (predicate(it)) builder.add(it) }
         return builder.build()
     }
 
@@ -143,7 +140,7 @@ class LocationsMergingList private constructor(
 
         @Throws(IOException::class)
         fun load(genomeQuery: GenomeQuery, path: Path, format: BedFormat = BedFormat.auto(path)): LocationsMergingList {
-            val builder = LocationsMergingList.builder(genomeQuery)
+            val builder = builder(genomeQuery)
             format.parse(path) {
                 it.forEach {
                     val chromosome = genomeQuery[it.chrom]

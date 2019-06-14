@@ -94,13 +94,13 @@ class GenomeMap<T> internal constructor(
  *
  * @author Roman Chernyatchik
  */
-interface GenomeStrandMapLike<T> {
+interface GenomeStrandMapLike<T> : Iterable<T> {
     val genomeQuery: GenomeQuery
     operator fun get(chromosome: Chromosome, strand: Strand): T
 
-    fun asSequence(): Sequence<T> = genomeQuery.get().asSequence().flatMap { chromosome ->
-        Strand.values().asSequence().map { strand -> this[chromosome, strand] }
-    }
+    override fun iterator(): Iterator<T> = genomeQuery.get().flatMap {  chromosome ->
+        Strand.values().map { strand -> this[chromosome, strand] }
+    }.iterator()
 }
 
 /**

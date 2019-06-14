@@ -599,8 +599,10 @@ fun ExtendedBedEntry.toLocation(genome: Genome) =
 
 fun LocationsMergingList.saveWithUniqueNames(bedPath: Path) {
     val printer = BedFormat().print(bedPath)
-    forEachIndexed { i, (start, end, chr) ->
+    var i = 0
+    locationIterator().forEach { (start, end, chr) ->
         printer.print(ExtendedBedEntry(chr.name, start, end, "$i", strand = '+'))
+        i++
     }
     printer.close()
 }
