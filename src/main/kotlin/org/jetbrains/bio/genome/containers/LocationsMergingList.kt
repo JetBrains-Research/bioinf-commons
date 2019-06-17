@@ -93,6 +93,8 @@ class LocationsMergingList private constructor(
 
     fun asLocationSequence(): Sequence<Location> = Sequence { locationIterator() }
 
+    fun toLocationList(): List<Location> = asLocationSequence().toList()
+
     /** The number of locations in this list. */
     val size: Int
         get() = genomeQuery.get().sumBy {
