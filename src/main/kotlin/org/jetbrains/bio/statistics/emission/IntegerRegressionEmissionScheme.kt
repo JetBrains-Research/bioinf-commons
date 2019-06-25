@@ -34,7 +34,7 @@ abstract class IntegerRegressionEmissionScheme(
      * @param d - number of column which contains observations
      */
     override fun update(df: DataFrame, d: Int, weights: F64Array) {
-        val x = Array2DRowRealMatrix(covariateLabels.map { df.sliceAsDouble(it) }.toTypedArray())
+        val x = Array2DRowRealMatrix(covariateLabels.map { df.sliceAsDouble(it) }.toTypedArray(), false)
                 .transpose()
                 .data
 
@@ -42,14 +42,14 @@ abstract class IntegerRegressionEmissionScheme(
         val wlr = WLSMultipleLinearRegression()
         wlr.newSampleData(DoubleArray(x.size), x, DoubleArray(x.size))
         val X = wlr.getx()
-        val y = ArrayRealVector(df.sliceAsInt(df.labels[d]).map { it.toDouble() }.toDoubleArray())
+        val y = ArrayRealVector(df.sliceAsInt(df.labels[d]).map { it.toDouble() }.toDoubleArray(), false)
 
         val iterMax = 5
         val tol = 1e-8
 
 
-        var beta0: RealVector = ArrayRealVector(regressionCoefficients)
-        var beta1: RealVector = ArrayRealVector(regressionCoefficients)
+        var beta0: RealVector = ArrayRealVector(regressionCoefficients, false)
+        var beta1: RealVector = ArrayRealVector(regressionCoefficients, false)
 
         for (i in 0 until iterMax) {
             val eta = X.operate(beta0)
@@ -65,7 +65,7 @@ abstract class IntegerRegressionEmissionScheme(
 
             wlr.newSampleData(z.toArray(), x, W)
 
-            beta1 = ArrayRealVector(wlr.calculateBeta())
+            beta1 = wlr.calculateBeta()
             if (beta1.getL1Distance(beta0) < tol) {
                 break
             }
