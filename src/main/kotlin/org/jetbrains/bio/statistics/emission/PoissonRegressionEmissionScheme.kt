@@ -27,7 +27,7 @@ class PoissonRegressionEmissionScheme(
      * @param d - number of column, should be a column with observations.
      */
     override fun logProbability(df: DataFrame, t: Int, d: Int): Double {
-        val logLambda = getLogObservation(df, t)
+        val logLambda = getPredictor(df, t)
         return (
                 df.getAsInt(t, df.labels[d])
                         * logLambda
