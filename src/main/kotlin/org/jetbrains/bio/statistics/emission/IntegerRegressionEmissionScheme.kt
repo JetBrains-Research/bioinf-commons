@@ -3,9 +3,20 @@ package org.jetbrains.bio.statistics.emission
 import org.apache.commons.math3.linear.Array2DRowRealMatrix
 import org.apache.commons.math3.linear.ArrayRealVector
 import org.apache.commons.math3.linear.RealVector
+import org.apache.log4j.Level
 import org.jetbrains.bio.dataframe.DataFrame
+import org.jetbrains.bio.genome.ChromosomeRange
+import org.jetbrains.bio.genome.Genome
+import org.jetbrains.bio.genome.GenomeQuery
+import org.jetbrains.bio.query.ReadsQuery
+import org.jetbrains.bio.statistics.Preprocessed
+import org.jetbrains.bio.statistics.mixture.ZeroPoissonMixture
+import org.jetbrains.bio.util.Logs
 import org.jetbrains.bio.viktor.F64Array
+import org.jetbrains.bio.viktor.asF64Array
+import java.nio.file.Paths
 import java.util.function.IntPredicate
+import kotlin.random.Random
 
 /**
  *
@@ -58,7 +69,7 @@ abstract class IntegerRegressionEmissionScheme(
             val z: RealVector = eta.add(y.subtract(countedLink).ebeDivide(countedLinkDerivative))
             val countedLinkVar = countedLink.map { linkVariance(it) }
             val W = countedLinkDerivative
-                    .ebeMultiply(countedLinkDerivative)
+                    .mapToSelf { it * it }
                     .ebeDivide(countedLinkVar)
                     .ebeMultiply(ArrayRealVector(weights.toDoubleArray()))
                     .toArray()
@@ -72,6 +83,7 @@ abstract class IntegerRegressionEmissionScheme(
             beta0 = beta1
         }
         regressionCoefficients = beta1.toArray()
+        println(regressionCoefficients.toList())
     }
 
     /**
@@ -98,4 +110,77 @@ abstract class IntegerRegressionEmissionScheme(
             }
         }
     }
+}
+
+fun main(args: Array<String>) {
+    //1
+
+    //var covar = DataFrame()
+    //        .with("y", IntArray(1000000))
+    //        .with("x1", DoubleArray(1000000) { Random.nextDouble(0.5, 1.0) })
+    //.with("x2", DoubleArray(1000000) { Random.nextDouble(0.0, 1.0) })
+    /*
+    //проверка, что с внешними весами все еще работает
+    var regrES = PoissonRegressionEmissionScheme(listOf("x1", "x2"), doubleArrayOf(4.0, -2.0))
+    val pred = IntPredicate {true}
+
+
+    regrES.sample(covar, 0, pred)
+    println("Update")
+    regrES.update(covar, 0, DoubleArray(1000000, {1.0}).asF64Array())
+
+    print("Beta: ${regrES.regressionCoefficients.asList()}")
+    */
+    // MLFreeMixture
+    /*
+    Logs.addConsoleAppender(Level.DEBUG)
+    var mix = ZeroPoissonMixture(
+            doubleArrayOf(0.4, 0.5, 0.1).asF64Array(),
+            listOf("x1"/*, "x2"*/),
+            arrayOf(doubleArrayOf(1.0, 1.0), doubleArrayOf(2.0, 2.0)))
+    var start = System.currentTimeMillis()
+    mix.sample(covar, intArrayOf(0))
+    println("Sample time: ${(System.currentTimeMillis() - start)}")
+
+    var yaMix = ZeroPoissonMixture(
+            doubleArrayOf(1/3.0, 1/3.0, 1/3.0).asF64Array(),
+            listOf("x1"/*, "x2"*/),
+            arrayOf(doubleArrayOf(0.0, 1.5), doubleArrayOf(1.6, 0.0)))
+    start = System.currentTimeMillis()
+    yaMix.fit(Preprocessed.of(covar), 1e-3, 12)
+    println("Fit time: ${(System.currentTimeMillis() - start)}")
+    */
+
+    val path_me = Paths.get("/home/karl-crl/BI/SPAN_proj/Data/test_data/GSM409308_UCSD.H3K4me3.bam")
+    val genomeQuery = GenomeQuery(Genome["hg19"])
+    var readsQuery = ReadsQuery(genomeQuery, path_me, false)
+    val coverage_me = readsQuery.get()
+    val chr1 = genomeQuery["chr1"]!!
+    val len = 249250621 / 200 + 1
+    val cover_me = IntArray(len)
+    for (i in 0 until len) {
+        cover_me[i] = coverage_me.getBothStrandsCoverage(ChromosomeRange(i * 200, (i + 1) * 200, chr1))
+    }
+
+    val path_input = Paths.get("/home/karl-crl/BI/SPAN_proj/Data/test_data/GSM605333_UCSD.H1.Input.LL-H1-I1.bed.gz")
+    readsQuery = ReadsQuery(genomeQuery, path_input, false)
+    val coverage_input = readsQuery.get()
+    val cover_input = IntArray(len)
+    for (i in 0 until len) {
+        cover_input[i] = coverage_input.getBothStrandsCoverage(ChromosomeRange(i * 200, (i + 1) * 200, chr1))
+    }
+
+    val covar = DataFrame()
+            .with("y", cover_me)
+            .with("x1", DoubleArray(len) { Random.nextDouble(0.5, 1.0) })
+
+    Logs.addConsoleAppender(Level.DEBUG)
+
+    val yaMix = ZeroPoissonMixture(
+            doubleArrayOf(1 / 3.0, 1 / 3.0, 1 / 3.0).asF64Array(),
+            listOf("x1"),
+            arrayOf(doubleArrayOf(0.0, 1.5), doubleArrayOf(1.6, 0.0)))
+    val start = System.currentTimeMillis()
+    yaMix.fit(Preprocessed.of(covar), 1e-3, 12)
+    println("Fit time: ${(System.currentTimeMillis() - start)}")
 }
