@@ -21,6 +21,7 @@ plugins {
 
 apply plugin: 'kotlin'
 apply plugin: 'maven-publish'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 sourceCompatibility = 1.8
 targetCompatibility = sourceCompatibility
@@ -138,4 +139,9 @@ bintray {
 
 task wrapper(type: Wrapper, overwrite: true) {
     gradleVersion = '4.10'
+}
+
+shadowJar {
+    baseName = 'bioinf-commons-shadow'
+    classifier = ''
 }
