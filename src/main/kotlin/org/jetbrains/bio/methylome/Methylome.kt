@@ -159,6 +159,12 @@ private fun Pair<Chromosome, Strand>.toKey(): String {
  * A builder for [Methylome].
  *
  * Guarantees that the constructed [Methylome] is **always** sorted.
+ *
+ * @param genomeQuery Genome info
+ * @param ignoreDuplicatedOffsets Ignore duplicated positions while converting methylome to NPZ,
+ *   e.g. liftOver could map different positions to the same place. Otherwise we cannot use
+ *   "offset" column as index when building consensus methylomes
+ * @param stranded False if strand independent data, e.g. merged counts for CpG dinucleotides.
  */
 class MethylomeBuilder(
         private val genomeQuery: GenomeQuery,
