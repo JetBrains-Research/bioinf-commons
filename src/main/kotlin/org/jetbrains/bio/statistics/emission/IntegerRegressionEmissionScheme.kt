@@ -8,6 +8,7 @@ import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.genome.ChromosomeRange
 import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
+import org.jetbrains.bio.genome.sequence.TwoBitSequence
 import org.jetbrains.bio.query.ReadsQuery
 import org.jetbrains.bio.statistics.Preprocessed
 import org.jetbrains.bio.statistics.mixture.ZeroPoissonMixture
@@ -151,6 +152,7 @@ fun main(args: Array<String>) {
     println("Fit time: ${(System.currentTimeMillis() - start)}")
     */
 
+    //H3K4me3
     val path_me = Paths.get("/home/karl-crl/BI/SPAN_proj/Data/test_data/GSM409308_UCSD.H3K4me3.bam")
     val genomeQuery = GenomeQuery(Genome["hg19"])
     var readsQuery = ReadsQuery(genomeQuery, path_me, false)
@@ -158,29 +160,38 @@ fun main(args: Array<String>) {
     val chr1 = genomeQuery["chr1"]!!
     val len = 249250621 / 200 + 1
     val cover_me = IntArray(len)
-    for (i in 0 until len) {
-        cover_me[i] = coverage_me.getBothStrandsCoverage(ChromosomeRange(i * 200, (i + 1) * 200, chr1))
-    }
-
+    //input
     val path_input = Paths.get("/home/karl-crl/BI/SPAN_proj/Data/test_data/GSM605333_UCSD.H1.Input.LL-H1-I1.bed.gz")
     readsQuery = ReadsQuery(genomeQuery, path_input, false)
     val coverage_input = readsQuery.get()
-    val cover_input = IntArray(len)
-    for (i in 0 until len) {
-        cover_input[i] = coverage_input.getBothStrandsCoverage(ChromosomeRange(i * 200, (i + 1) * 200, chr1))
+    val cover_input = DoubleArray(len)
+    //gc-content
+    val seq: TwoBitSequence = chr1.sequence
+    val GCcontent = DoubleArray(len)
+
+    for (i in 0 until len - 1) {
+        cover_me[i] = coverage_me.getBothStrandsCoverage(ChromosomeRange(i * 200, (i + 1) * 200, chr1))
+        cover_input[i] = coverage_input.getBothStrandsCoverage(ChromosomeRange(i * 200, (i + 1) * 200, chr1)).toDouble()
+        GCcontent[i] = seq.substring(i*200, (i + 1)*200).count { it == 'c' || it == 'g' }.toDouble()/200
     }
+    cover_me[len - 1] = coverage_me.getBothStrandsCoverage(ChromosomeRange((len-1) * 200, chr1.length, chr1))
+    cover_input[len - 1] = coverage_input.getBothStrandsCoverage(ChromosomeRange((len-1) * 200, chr1.length, chr1)).toDouble()
+    GCcontent[len - 1] = seq.substring((len-1)*200, seq.length).count { it == 'c'|| it == 'g' }.toDouble()/( seq.length - (len-1)*200)
+
 
     val covar = DataFrame()
             .with("y", cover_me)
-            .with("x1", DoubleArray(len) { Random.nextDouble(0.5, 1.0) })
+            .with("x1", cover_input)
+            .with("x2", GCcontent)
 
     Logs.addConsoleAppender(Level.DEBUG)
 
     val yaMix = ZeroPoissonMixture(
             doubleArrayOf(1 / 3.0, 1 / 3.0, 1 / 3.0).asF64Array(),
-            listOf("x1"),
-            arrayOf(doubleArrayOf(0.0, 1.5), doubleArrayOf(1.6, 0.0)))
+            listOf("x1", "x2"),
+            arrayOf(doubleArrayOf(0.0, 1.5, 1.0), doubleArrayOf(1.0, 0.5, 0.0)))
     val start = System.currentTimeMillis()
-    yaMix.fit(Preprocessed.of(covar), 1e-3, 12)
+    yaMix.fit(Preprocessed.of(covar), 1e-3, 100)
     println("Fit time: ${(System.currentTimeMillis() - start)}")
+    println("weights: ${yaMix.weights}")
 }
