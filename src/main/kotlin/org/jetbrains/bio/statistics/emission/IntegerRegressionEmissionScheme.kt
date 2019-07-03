@@ -3,6 +3,7 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix
 import org.apache.commons.math3.linear.ArrayRealVector
 import org.apache.commons.math3.linear.RealVector
 import org.apache.log4j.Level
+import org.jetbrains.bio.coverage.Coverage
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.ChromosomeRange
@@ -17,7 +18,6 @@ import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.asF64Array
 import java.nio.file.Paths
 import java.util.function.IntPredicate
-import java.nio.file.Path
 /**
  *
  *Regression with integer support.
@@ -98,9 +98,7 @@ abstract class IntegerRegressionEmissionScheme(
         }
     }
 }
-fun getIntCover(chr1: Chromosome, path: Path, genomeQuery: GenomeQuery): IntArray {
-    val readsQuery = ReadsQuery(genomeQuery, path, false)
-    val coverage = readsQuery.get()
+fun getIntCover(chr1: Chromosome, coverage: Coverage): IntArray {
     val len = chr1.length / 200 + 1
     val cover = IntArray(len)
     for (i in 0 until len - 1) {
@@ -109,9 +107,7 @@ fun getIntCover(chr1: Chromosome, path: Path, genomeQuery: GenomeQuery): IntArra
     cover[len - 1] = coverage.getBothStrandsCoverage(ChromosomeRange((len-1) * 200, chr1.length, chr1))
     return cover
 }
-fun getDoubleCover(chr1: Chromosome, path: Path, genomeQuery: GenomeQuery): DoubleArray {
-    val readsQuery = ReadsQuery(genomeQuery, path, false)
-    val coverage = readsQuery.get()
+fun getDoubleCover(chr1: Chromosome, coverage: Coverage): DoubleArray {
     val len = chr1.length / 200 + 1
     val cover = DoubleArray(len)
     for (i in 0 until len - 1) {
@@ -174,24 +170,16 @@ fun main(args: Array<String>) {
     val path_me = Paths.get("/home/elena.kartysheva/Documents/test_data/1/GSM409308_UCSD.H3K4me3.bam")
     val path_input = Paths.get("/home/elena.kartysheva/Documents/test_data/1/GSM605333_UCSD.H1.Input.LL-H1-I1.bed.gz")
     val genomeQuery = GenomeQuery(Genome["hg19"])
-    var chr1 = genomeQuery["chr1"]!!
+    val readsQueryMe = ReadsQuery(genomeQuery, path_me, false)
+    val readsQueryInput = ReadsQuery(genomeQuery, path_input, false)
+    val coverageMe = readsQueryMe.get()
+    val coverageInput = readsQueryInput.get()
 
-    var coverMe = getIntCover(chr1, path_me, genomeQuery)
-    var coverInput = getDoubleCover(chr1, path_input, genomeQuery)
-    var GCcontent = getGC(chr1)
+    val chrList: List<Chromosome> = (1..22).map { genomeQuery["chr$it"]!! }
 
-    for(i in 2..22){
-        println("chr$i")
-        chr1 = genomeQuery["chr$i"]!!
-        coverMe += getIntCover(chr1, path_me, genomeQuery)
-        coverInput += getDoubleCover(chr1, path_input, genomeQuery)
-        GCcontent += getGC(chr1)
-    }
-
-    chr1 = genomeQuery["chrX"]!!
-    coverMe += getIntCover(chr1, path_me, genomeQuery)
-    coverInput += getDoubleCover(chr1, path_input, genomeQuery)
-    GCcontent += getGC(chr1)
+    val coverMe = chrList.flatMap { getIntCover(it, coverageMe).toList() }.toIntArray()
+    val coverInput = chrList.flatMap { getDoubleCover(it, coverageInput).toList() }.toDoubleArray()
+    val GCcontent = chrList.flatMap { getGC(it).toList() }.toDoubleArray()
 
 
     val covar = DataFrame()
