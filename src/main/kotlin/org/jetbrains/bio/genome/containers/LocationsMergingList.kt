@@ -89,9 +89,9 @@ class LocationsMergingList private constructor(
         }
     }
 
-    fun locationIterator(): Iterator<Location> = asSequence().flatMap { it.asSequence() }.iterator()
+    private fun asLocationSequence(): Sequence<Location> = asSequence().flatMap { it.asSequence() }
 
-    fun asLocationSequence(): Sequence<Location> = Sequence { locationIterator() }
+    fun locationIterator(): Iterator<Location> = asLocationSequence().iterator()
 
     fun toLocationList(): List<Location> = asLocationSequence().toList()
 
