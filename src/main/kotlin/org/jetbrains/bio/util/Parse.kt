@@ -33,7 +33,7 @@ open class Lexeme constructor(val token: String) {
 class RegexLexeme(regex: String) : Lexeme(regex) {
     override fun locate(text: String, offset: Int): Match? {
         val matchResult = Regex(token).find(text, offset) ?: return null
-        return Match(this, matchResult.range.start, matchResult.range.endInclusive + 1)
+        return Match(this, matchResult.range.first, matchResult.range.last + 1)
     }
 }
 
@@ -42,7 +42,7 @@ class ParseException(msg: String) : IllegalStateException(msg)
 class Tokenizer(val text: String, private val keywords: Set<Lexeme>) {
 
     var match: Match? = null
-    var tokenOffset: Int = 0
+    private var tokenOffset: Int = 0
 
     fun atEnd() = tokenOffset == text.length
 
@@ -57,10 +57,7 @@ class Tokenizer(val text: String, private val keywords: Set<Lexeme>) {
         if (atEnd()) {
             return null
         }
-        val keyword = keywords
-                .mapNotNull { it.locate(text, tokenOffset) }
-                .sorted()
-                .firstOrNull()
+        val keyword = keywords.mapNotNull { it.locate(text, tokenOffset) }.min()
         // No more keywords
         if (keyword == null) {
             // Trailing whitespace
