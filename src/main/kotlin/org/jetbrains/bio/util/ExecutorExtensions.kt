@@ -1,11 +1,10 @@
 package org.jetbrains.bio.util
 
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.MoreExecutors
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.min
 
 const val PARALLELISM = "parallelism.level"
 
@@ -15,7 +14,7 @@ const val PARALLELISM = "parallelism.level"
 fun parallelismLevel(): Int {
     val p = System.getProperty(PARALLELISM)
     if (p != null) {
-        return Math.min(Runtime.getRuntime().availableProcessors(), p.toInt())
+        return min(Runtime.getRuntime().availableProcessors(), p.toInt())
     }
     return Runtime.getRuntime().availableProcessors()
 }
@@ -34,10 +33,9 @@ fun configureParallelism(parallelism: Int?) {
  * Executes tasks re-throwing any exception occurred.
  */
 fun ExecutorService.awaitAll(tasks: Iterable<Callable<*>>) {
-    val wrapper = MoreExecutors.listeningDecorator(this)
-    for (future in Futures.inCompletionOrder(tasks.map { wrapper.submit(it) })) {
+    tasks.map { submit(it) }.toList().forEach {
         try {
-            future.get()
+            it.get()
         } catch (e: ExecutionException) {
             shutdownNow()
             throw e.cause ?: e
@@ -47,7 +45,7 @@ fun ExecutorService.awaitAll(tasks: Iterable<Callable<*>>) {
 
 fun <T> List<Callable<T>>.await(parallel: Boolean) {
     if (parallel) {
-        val executor = Executors.newFixedThreadPool(Math.min(size, parallelismLevel()))
+        val executor = Executors.newFixedThreadPool(min(size, parallelismLevel()))
         executor.awaitAll(this)
         check(executor.shutdownNow().isEmpty())
     } else {
