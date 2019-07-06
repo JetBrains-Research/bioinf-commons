@@ -45,7 +45,7 @@ fun ExecutorService.awaitAll(tasks: Iterable<Callable<*>>) {
 
 fun <T> List<Callable<T>>.await(parallel: Boolean) {
     if (parallel) {
-        val executor = Executors.newFixedThreadPool(min(size, parallelismLevel()))
+        val executor = Executors.newWorkStealingPool(min(size, parallelismLevel()))
         executor.awaitAll(this)
         check(executor.shutdownNow().isEmpty())
     } else {
