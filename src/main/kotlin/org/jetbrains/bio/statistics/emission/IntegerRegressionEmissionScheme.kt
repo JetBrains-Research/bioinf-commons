@@ -47,34 +47,10 @@ abstract class IntegerRegressionEmissionScheme(
      * @param d - number of column which contains observations
      */
     override fun update(df: DataFrame, d: Int, weights: F64Array) {
-
-        val x = Array2DRowRealMatrix(covariateLabels.map { df.sliceAsDouble(it) }.toTypedArray(), false)
-                .transpose()
-                .data
-/*
-        val x = Array<DoubleArray> (covariateLabels.size + 1)
-        { if (it == 0)
-            DoubleArray(df.rowsNumber) {1.0}
-        else
-            df.sliceAsDouble(covariateLabels[it-1])}
-        val X = Array2DRowRealMatrix(x, false).transpose() */
-
-        /*
-        val x = Array<DoubleArray> (df.rowsNumber) { DoubleArray(covariateLabels.size) {1.0} }
-
-         covariateLabels.forEachIndexed { index, label ->
-             (0 until df.rowsNumber).forEach { i ->
-                 x[i][index] = df.getAsDouble(i, label)
-             }
-         } */
-
-
-
-        //val xx = covariateLabels.map { df.sliceAsDouble(it) }
-        // needed here to add intercept to X
+        val x = Array(covariateLabels.size) {df.sliceAsDouble(covariateLabels[it])}
         val wlr = WLSMultipleLinearRegression()
-        wlr.newSampleData(DoubleArray(x.size), x, DoubleArray(x.size))
-        val X = wlr.getx()
+        wlr.newSampleData(DoubleArray(x[0].size), x, DoubleArray(x[0].size))
+        val X = wlr.getX()
         val yInt = df.sliceAsInt(df.labels[d])
         val y = DoubleArray (yInt.size) {yInt[it].toDouble()}
         df.sliceAsInt(df.labels[d])
@@ -91,7 +67,7 @@ abstract class IntegerRegressionEmissionScheme(
             val countedLinkVar = countedLink.map { linkVariance(it) }
             val W = DoubleArray(countedLink.dimension)
             {countedLink.getEntry(it) * countedLink.getEntry(it) / countedLinkVar.getEntry(it) * weights[it]}
-            wlr.newSampleData(z, x, W)
+            wlr.newSampleData(z, W)
             beta1 = wlr.calculateBeta()
             if (beta1.getL1Distance(beta0) < tol) {
                 break
