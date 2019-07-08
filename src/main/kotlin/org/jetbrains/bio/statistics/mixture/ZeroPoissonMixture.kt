@@ -43,4 +43,8 @@ class ZeroPoissonMixture(
             }
         }
     }
+
+    companion object {
+        @Transient @JvmField var VERSION = 1
+    }
 }

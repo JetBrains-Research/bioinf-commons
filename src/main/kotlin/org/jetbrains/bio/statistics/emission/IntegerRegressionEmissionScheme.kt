@@ -16,8 +16,11 @@ import org.jetbrains.bio.statistics.mixture.ZeroPoissonMixture
 import org.jetbrains.bio.util.Logs
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.asF64Array
+import java.io.*
 import java.nio.file.Paths
 import java.util.function.IntPredicate
+import kotlin.random.Random
+
 /**
  *
  *Regression with integer support.
@@ -44,14 +47,37 @@ abstract class IntegerRegressionEmissionScheme(
      * @param d - number of column which contains observations
      */
     override fun update(df: DataFrame, d: Int, weights: F64Array) {
+
         val x = Array2DRowRealMatrix(covariateLabels.map { df.sliceAsDouble(it) }.toTypedArray(), false)
                 .transpose()
                 .data
+/*
+        val x = Array<DoubleArray> (covariateLabels.size + 1)
+        { if (it == 0)
+            DoubleArray(df.rowsNumber) {1.0}
+        else
+            df.sliceAsDouble(covariateLabels[it-1])}
+        val X = Array2DRowRealMatrix(x, false).transpose() */
+
+        /*
+        val x = Array<DoubleArray> (df.rowsNumber) { DoubleArray(covariateLabels.size) {1.0} }
+
+         covariateLabels.forEachIndexed { index, label ->
+             (0 until df.rowsNumber).forEach { i ->
+                 x[i][index] = df.getAsDouble(i, label)
+             }
+         } */
+
+
+
+        //val xx = covariateLabels.map { df.sliceAsDouble(it) }
         // needed here to add intercept to X
         val wlr = WLSMultipleLinearRegression()
         wlr.newSampleData(DoubleArray(x.size), x, DoubleArray(x.size))
         val X = wlr.getx()
-        val y = ArrayRealVector(df.sliceAsInt(df.labels[d]).map { it.toDouble() }.toDoubleArray(), false)
+        val yInt = df.sliceAsInt(df.labels[d])
+        val y = DoubleArray (yInt.size) {yInt[it].toDouble()}
+        df.sliceAsInt(df.labels[d])
         val iterMax = 5
         val tol = 1e-8
         var beta0: RealVector = ArrayRealVector(regressionCoefficients, false)
@@ -61,7 +87,7 @@ abstract class IntegerRegressionEmissionScheme(
             val countedLink = eta.map { link(it) }
             val countedLinkDerivative = eta.map { linkDerivative(it) }
             val z = DoubleArray(eta.dimension)
-            {i -> eta.getEntry(i) + (y.getEntry(i) - countedLink.getEntry(i)) / countedLinkDerivative.getEntry(i)}
+            {eta.getEntry(it) + (y[it] - countedLink.getEntry(it)) / countedLinkDerivative.getEntry(it)}
             val countedLinkVar = countedLink.map { linkVariance(it) }
             val W = DoubleArray(countedLink.dimension)
             {countedLink.getEntry(it) * countedLink.getEntry(it) / countedLinkVar.getEntry(it) * weights[it]}
@@ -133,21 +159,53 @@ fun getGC(chr1: Chromosome): DoubleArray {
             .toDouble()/( seq.length - (len-1)*200)
     return GCcontent
 }
+
+fun fitK4Me3Bam(dirIn: String, dirOut: String, fileMe: String, fileInput: String) {
+    println("Start $fileMe")
+    val path_me = Paths.get("$dirIn$fileMe")
+    val path_input = Paths.get("$dirIn$fileInput")
+    val genomeQuery = GenomeQuery(Genome["hg19"])
+    val readsQueryMe = ReadsQuery(genomeQuery, path_me, true)
+    val readsQueryInput = ReadsQuery(genomeQuery, path_input, true)
+    val coverageMe = readsQueryMe.get()
+    val coverageInput = readsQueryInput.get()
+
+    val chrList: List<Chromosome> = (1..23).map { if (it < 23) genomeQuery["chr$it"]!! else genomeQuery["chrx"]!!}
+
+    val coverMe = chrList.flatMap { getIntCover(it, coverageMe).toList() }.toIntArray()
+    val coverInput = chrList.flatMap { getDoubleCover(it, coverageInput).toList() }.toDoubleArray()
+    val GCcontent = chrList.flatMap { getGC(it).toList() }.toDoubleArray()
+
+    val covar = DataFrame()
+            .with("y", coverMe)
+            .with("x1", coverInput)
+            .with("x2", GCcontent)
+    Logs.addConsoleAppender(Level.DEBUG)
+    val yaMix = ZeroPoissonMixture(
+            doubleArrayOf(1 / 3.0, 1 / 3.0, 1 / 3.0).asF64Array(),
+            listOf("x1", "x2"),
+            arrayOf(doubleArrayOf(0.0, 0.0, 0.0), doubleArrayOf(1.0, 0.0, 0.0)))
+    yaMix.fit(Preprocessed.of(covar), 1e-3, 30)
+    yaMix.save(Paths.get("$dirOut$fileMe.json"))
+    println("Done $path_me")
+}
+
 fun main(args: Array<String>) {
     //1
-    //var covar = DataFrame()
-    //        .with("y", IntArray(1000000))
-    //        .with("x1", DoubleArray(1000000) { Random.nextDouble(0.5, 1.0) })
-    //.with("x2", DoubleArray(1000000) { Random.nextDouble(0.0, 1.0) })
     /*
+    var covar = DataFrame()
+           .with("y", IntArray(1000000))
+           .with("x1", DoubleArray(1000000) { Random.nextDouble(0.5, 1.0) })
+    .with("x2", DoubleArray(1000000) { Random.nextDouble(0.0, 1.0) })
+
     //проверка, что с внешними весами все еще работает
-    var regrES = PoissonRegressionEmissionScheme(listOf("x1", "x2"), doubleArrayOf(4.0, -2.0))
+    var regrES = PoissonRegressionEmissionScheme(listOf("x1", "x2"), doubleArrayOf(0.0, 4.0, -2.0))
     val pred = IntPredicate {true}
     regrES.sample(covar, 0, pred)
     println("Update")
-    regrES.update(covar, 0, DoubleArray(1000000, {1.0}).asF64Array())
+    regrES.update(covar, 0, DoubleArray(1000000) {1.0}.asF64Array())
     print("Beta: ${regrES.regressionCoefficients.asList()}")
-    */
+*/
     // MLFreeMixture
     /*
     Logs.addConsoleAppender(Level.DEBUG)
@@ -166,33 +224,19 @@ fun main(args: Array<String>) {
     yaMix.fit(Preprocessed.of(covar), 1e-3, 12)
     println("Fit time: ${(System.currentTimeMillis() - start)}")
     */
-    //H3K4me3
-    val path_me = Paths.get("/home/elena.kartysheva/Documents/test_data/1/GSM409308_UCSD.H3K4me3.bam")
-    val path_input = Paths.get("/home/elena.kartysheva/Documents/test_data/1/GSM605333_UCSD.H1.Input.LL-H1-I1.bed.gz")
-    val genomeQuery = GenomeQuery(Genome["hg19"])
-    val readsQueryMe = ReadsQuery(genomeQuery, path_me, false)
-    val readsQueryInput = ReadsQuery(genomeQuery, path_input, false)
-    val coverageMe = readsQueryMe.get()
-    val coverageInput = readsQueryInput.get()
 
-    val chrList: List<Chromosome> = (1..22).map { genomeQuery["chr$it"]!! }
+    //обучение на 2х параметрах
 
-    val coverMe = chrList.flatMap { getIntCover(it, coverageMe).toList() }.toIntArray()
-    val coverInput = chrList.flatMap { getDoubleCover(it, coverageInput).toList() }.toDoubleArray()
-    val GCcontent = chrList.flatMap { getGC(it).toList() }.toDoubleArray()
+    val directIn = "/mnt/stripe/bio/experiments/aging/chipseq/k4me3/k4me3_20vs20_bams/"
 
+    File(directIn)
+            .list()
+            .filter { it.endsWith(".bam") && !it.contains("unique") && it != "input.bam" }
+            .subList(20, 40)
+            .forEach { fitK4Me3Bam(
+                    directIn,
+                    "/home/elena.kartysheva/Documents/aging_json_40/",
+                    it,
+                    "input.bam") }
 
-    val covar = DataFrame()
-            .with("y", coverMe)
-            .with("x1", coverInput)
-            .with("x2", GCcontent)
-    Logs.addConsoleAppender(Level.DEBUG)
-    val yaMix = ZeroPoissonMixture(
-            doubleArrayOf(1 / 3.0, 1 / 3.0, 1 / 3.0).asF64Array(),
-            listOf("x1", "x2"),
-            arrayOf(doubleArrayOf(0.0, 1.5, 1.0), doubleArrayOf(1.0, 0.5, 0.0)))
-    val start = System.currentTimeMillis()
-    yaMix.fit(Preprocessed.of(covar), 1e-3, 50)
-    println("Fit time: ${(System.currentTimeMillis() - start)}")
-    println("weights: ${yaMix.weights}")
 }
