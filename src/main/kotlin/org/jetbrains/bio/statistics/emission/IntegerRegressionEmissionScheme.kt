@@ -181,7 +181,7 @@ fun main(args: Array<String>) {
     println("Update")
     regrES.update(covar, 0, DoubleArray(1000000) {1.0}.asF64Array())
     print("Beta: ${regrES.regressionCoefficients.asList()}")
-*/
+    */
     // MLFreeMixture
     /*
     Logs.addConsoleAppender(Level.DEBUG)
