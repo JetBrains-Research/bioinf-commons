@@ -4,6 +4,7 @@ import org.apache.commons.math3.linear.ArrayRealVector
 import org.apache.commons.math3.linear.RealVector
 import org.apache.log4j.Level
 import org.jetbrains.bio.coverage.Coverage
+import org.jetbrains.bio.coverage.SingleEndCoverage
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.ChromosomeRange
@@ -81,11 +82,11 @@ abstract class IntegerRegressionEmissionScheme(
      * @param t - number of row
      */
     fun getPredictor(df: DataFrame, t: Int): Double {
-        val observation = DoubleArray(covariateLabels.size + 1) { 1.0 }
+        var res = regressionCoefficients[0]
         covariateLabels.forEachIndexed { index, label ->
-            observation[index + 1] = df.getAsDouble(t, label)
+            res += df.getAsDouble(t, label)*regressionCoefficients[index + 1]
         }
-        return regressionCoefficients.zip(observation) { a, b -> a * b }.sum()
+        return res
     }
     /**
      * @param d - number of column in which we want to sample
