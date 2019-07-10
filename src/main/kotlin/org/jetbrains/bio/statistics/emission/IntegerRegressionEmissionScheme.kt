@@ -150,8 +150,20 @@ fun fitK4Me3Bam(dirIn: String, dirOut: String, fileMe: String, fileInput: String
     val chrList: List<Chromosome> = (1..23).map { if (it < 23) genomeQuery["chr$it"]!! else genomeQuery["chrx"]!!}
 
     val coverMe = chrList.flatMap { getIntCover(it, coverageMe).toList() }.toIntArray()
-    val coverInput = chrList.flatMap { getDoubleCover(it, coverageInput).toList() }.toDoubleArray()
-    val GCcontent = chrList.flatMap { getGC(it).toList() }.toDoubleArray()
+    val coverInput = DoubleArray (coverMe.size)
+    var prevIdx = 0
+    chrList.forEach { chr ->
+        val ls = getDoubleCover(chr, coverageInput)
+        ls.forEachIndexed {index, elem -> coverInput[prevIdx + index] = elem }
+        prevIdx += ls.size
+    }
+    val GCcontent = DoubleArray (coverMe.size)
+    prevIdx = 0
+    chrList.forEach { chr ->
+        val ls = getGC(chr)
+        ls.forEachIndexed {index, elem -> GCcontent[prevIdx + index] = elem }
+        prevIdx += ls.size
+    }
 
     val covar = DataFrame()
             .with("y", coverMe)
