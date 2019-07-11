@@ -22,6 +22,8 @@ import java.lang.System.arraycopy
 import java.nio.file.Paths
 import java.util.function.IntPredicate
 import kotlin.random.Random
+import org.jetbrains.bio.big.BigWigFile
+import java.nio.file.Path
 
 /**
  *
@@ -139,10 +141,18 @@ fun getGC(chr1: Chromosome): DoubleArray {
     return GCcontent
 }
 
+fun getMappability(chr1: Chromosome, path_mappability: Path): DoubleArray {
+    val mapSummary = BigWigFile
+            .read(path_mappability)
+            .summarize(chr1.name, 0, 0, numBins = (chr1.length/200 + 1))
+    return DoubleArray (mapSummary.size) {mapSummary[it].sum/mapSummary[it].count}
+}
+
 fun fitK4Me3Bam(dirIn: String, dirOut: String, fileMe: String, fileInput: String) {
     println("Start $fileMe")
     val path_me = Paths.get("$dirIn$fileMe")
     val path_input = Paths.get("$dirIn$fileInput")
+    val path_mappability = Paths.get("/home/elena.kartysheva/Documents/test_data/wgEncodeDukeMapabilityUniqueness35bp.bigWig")
     val genomeQuery = GenomeQuery(Genome["hg19"])
     val readsQueryMe = ReadsQuery(genomeQuery, path_me, true)
     val readsQueryInput = ReadsQuery(genomeQuery, path_input, true)
@@ -155,11 +165,13 @@ fun fitK4Me3Bam(dirIn: String, dirOut: String, fileMe: String, fileInput: String
     val coverMe = IntArray (coverLength)
     val coverInput = DoubleArray (coverLength)
     val GCcontent = DoubleArray (coverLength)
+    val mappability = DoubleArray (coverLength)
     var prevIdx = 0
     chrList.forEach {
         arraycopy(getIntCover(it, coverageMe), 0, coverMe, prevIdx, it.length/200 + 1)
         arraycopy(getDoubleCover(it, coverageInput), 0, coverInput, prevIdx, it.length/200 + 1)
         arraycopy(getGC(it), 0, GCcontent, prevIdx, it.length/200 + 1)
+        arraycopy(getMappability(it, path_mappability), 0, mappability, prevIdx, it.length/200 + 1)
         prevIdx += (it.length/200 + 1)
     }
 
@@ -167,11 +179,12 @@ fun fitK4Me3Bam(dirIn: String, dirOut: String, fileMe: String, fileInput: String
             .with("y", coverMe)
             .with("x1", coverInput)
             .with("x2", GCcontent)
+            .with("x3", mappability)
     Logs.addConsoleAppender(Level.DEBUG)
     val yaMix = ZeroPoissonMixture(
             doubleArrayOf(1 / 3.0, 1 / 3.0, 1 / 3.0).asF64Array(),
-            listOf("x1", "x2"),
-            arrayOf(doubleArrayOf(0.0, 0.0, 0.0), doubleArrayOf(1.0, 0.0, 0.0)))
+            listOf("x1", "x2", "x3"),
+            arrayOf(doubleArrayOf(0.0, 0.0, 0.0, 0.0), doubleArrayOf(1.0, 0.0, 0.0, 0.0)))
     yaMix.fit(Preprocessed.of(covar), 1e-3, 30)
     yaMix.save(Paths.get("$dirOut$fileMe.json"))
     println("Done $path_me")
