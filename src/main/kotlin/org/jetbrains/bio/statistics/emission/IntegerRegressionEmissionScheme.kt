@@ -18,6 +18,7 @@ import org.jetbrains.bio.util.Logs
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.asF64Array
 import java.io.*
+import java.lang.System.arraycopy
 import java.nio.file.Paths
 import java.util.function.IntPredicate
 import kotlin.random.Random
@@ -60,6 +61,7 @@ abstract class IntegerRegressionEmissionScheme(
         var beta0: RealVector = ArrayRealVector(regressionCoefficients, false)
         var beta1: RealVector = ArrayRealVector(regressionCoefficients, false)
         for (i in 0 until iterMax) {
+            println("Iter $i")
             val eta = X.operate(beta0)
             val countedLink = eta.map { link(it) }
             val countedLinkDerivative = eta.map { linkDerivative(it) }
@@ -149,20 +151,16 @@ fun fitK4Me3Bam(dirIn: String, dirOut: String, fileMe: String, fileInput: String
 
     val chrList: List<Chromosome> = (1..23).map { if (it < 23) genomeQuery["chr$it"]!! else genomeQuery["chrx"]!!}
 
-    val coverMe = chrList.flatMap { getIntCover(it, coverageMe).toList() }.toIntArray()
-    val coverInput = DoubleArray (coverMe.size)
+    val coverLength = chrList.map { it.length/200 + 1 }.sum()
+    val coverMe = IntArray (coverLength)
+    val coverInput = DoubleArray (coverLength)
+    val GCcontent = DoubleArray (coverLength)
     var prevIdx = 0
-    chrList.forEach { chr ->
-        val ls = getDoubleCover(chr, coverageInput)
-        ls.forEachIndexed {index, elem -> coverInput[prevIdx + index] = elem }
-        prevIdx += ls.size
-    }
-    val GCcontent = DoubleArray (coverMe.size)
-    prevIdx = 0
-    chrList.forEach { chr ->
-        val ls = getGC(chr)
-        ls.forEachIndexed {index, elem -> GCcontent[prevIdx + index] = elem }
-        prevIdx += ls.size
+    chrList.forEach {
+        arraycopy(getIntCover(it, coverageMe), 0, coverMe, prevIdx, it.length/200 + 1)
+        arraycopy(getDoubleCover(it, coverageInput), 0, coverInput, prevIdx, it.length/200 + 1)
+        arraycopy(getGC(it), 0, GCcontent, prevIdx, it.length/200 + 1)
+        prevIdx += (it.length/200 + 1)
     }
 
     val covar = DataFrame()
