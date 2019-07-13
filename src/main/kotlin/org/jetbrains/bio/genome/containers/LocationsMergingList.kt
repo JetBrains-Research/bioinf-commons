@@ -93,7 +93,7 @@ class LocationsMergingList private constructor(
 
     fun locationIterator(): Iterator<Location> = asLocationSequence().iterator()
 
-    fun toLocationList(): List<Location> = asLocationSequence().toList()
+    fun toList(): List<Location> = asLocationSequence().toList()
 
     /** The number of locations in this list. */
     val size: Int
