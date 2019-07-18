@@ -17,10 +17,10 @@ class PoissonRegressionEmissionScheme(
         regressionCoefficients: DoubleArray
 ) : IntegerRegressionEmissionScheme(covariateLabels, regressionCoefficients) {
 
-    override val link: (Double) -> Double = { Math.exp(it) }
-    override val linkDerivative: (Double) -> Double = { Math.exp(it) }
-    override val linkVariance: (Double) -> Double = { it }
-    override val sampler: (Double) -> Int = { Sampling.samplePoisson(it) }
+    override fun link(x: Double): Double { return Math.exp(x) }
+    override fun linkDerivative(x: Double): Double { return Math.exp(x) }
+    override fun linkVariance(x: Double): Double { return x }
+    override fun sampler(x: Double): Int { return Sampling.samplePoisson(x) }
 
     /**
      * @param t - number of row
