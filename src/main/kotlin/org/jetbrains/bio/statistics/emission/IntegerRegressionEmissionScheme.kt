@@ -3,7 +3,6 @@ import org.apache.commons.math3.distribution.FDistribution
 import org.apache.commons.math3.linear.*
 import org.apache.log4j.Level
 import org.jetbrains.bio.coverage.Coverage
-import org.jetbrains.bio.coverage.SingleEndCoverage
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.ChromosomeRange
@@ -16,15 +15,12 @@ import org.jetbrains.bio.statistics.mixture.ZeroPoissonMixture
 import org.jetbrains.bio.util.Logs
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.asF64Array
-import java.io.*
 import java.lang.System.arraycopy
 import java.nio.file.Paths
 import java.util.function.IntPredicate
-import kotlin.random.Random
 import org.jetbrains.bio.big.BigWigFile
 import java.nio.file.Path
 import kotlin.math.ln
-import kotlin.math.pow
 
 /**
  *
@@ -64,7 +60,6 @@ abstract class IntegerRegressionEmissionScheme(
         var beta0: RealVector = ArrayRealVector(regressionCoefficients, false)
         var beta1: RealVector = ArrayRealVector(regressionCoefficients, false)
         for (i in 0 until iterMax) {
-            println("Iter $i")
             val eta = X.operate(beta0)
             val countedLink = eta.map { link(it) }
             val countedLinkDerivative = eta.map { linkDerivative(it) }
@@ -82,7 +77,6 @@ abstract class IntegerRegressionEmissionScheme(
             beta0 = beta1
         }
         regressionCoefficients = beta1.toArray()
-        println(regressionCoefficients.toList())
     }
     /**
      * @param t - number of row
@@ -254,104 +248,4 @@ fun fitK4Me3Bam(
             ArrayRealVector(doubleArrayOf(0.0)))
     println("P-value: ${pval[index].toList()}")
     println("Done $path_me")
-}
-
-fun main(args: Array<String>) {
-    //1
-    /*
-    var covar = DataFrame()
-           .with("y", IntArray(1000000))
-           .with("x1", DoubleArray(1000000) { Random.nextDouble(0.5, 1.0) })
-    .with("x2", DoubleArray(1000000) { Random.nextDouble(0.0, 1.0) })
-
-    //проверка, что с внешними весами все еще работает
-    var regrES = PoissonRegressionEmissionScheme(listOf("x1", "x2"), doubleArrayOf(0.0, 4.0, -2.0))
-    val pred = IntPredicate {true}
-    regrES.sample(covar, 0, pred)
-    println("Update")
-    regrES.update(covar, 0, DoubleArray(1000000) {1.0}.asF64Array())
-    print("Beta: ${regrES.regressionCoefficients.asList()}")
-    */
-    // MLFreeMixture
-    /*
-    Logs.addConsoleAppender(Level.DEBUG)
-    var mix = ZeroPoissonMixture(
-            doubleArrayOf(0.4, 0.5, 0.1).asF64Array(),
-            listOf("x1"/*, "x2"*/),
-            arrayOf(doubleArrayOf(1.0, 1.0), doubleArrayOf(2.0, 2.0)))
-    var start = System.currentTimeMillis()
-    mix.sample(covar, intArrayOf(0))
-    println("Sample time: ${(System.currentTimeMillis() - start)}")
-    var yaMix = ZeroPoissonMixture(
-            doubleArrayOf(1/3.0, 1/3.0, 1/3.0).asF64Array(),
-            listOf("x1"/*, "x2"*/),
-            arrayOf(doubleArrayOf(0.0, 1.5), doubleArrayOf(1.6, 0.0)))
-    start = System.currentTimeMillis()
-    yaMix.fit(Preprocessed.of(covar), 1e-3, 12)
-    println("Fit time: ${(System.currentTimeMillis() - start)}")
-    */
-
-    //verify F-test
-    /*
-    val model = PoissonRegressionEmissionScheme(listOf("x2", "x3", "x4", "x5"), doubleArrayOf(1.0, 0.0, 0.0, 0.0, 0.0))
-    var dat = DataFrame()
-            .with("y", intArrayOf(2, 6, 2, 8, 5, 6))
-            .with("x2", doubleArrayOf(1.0, 5.0, 3.0, 8.0, 4.0, 6.0))
-            .with("x3", doubleArrayOf(0.0, 1.0, 0.0, 1.0, 0.0, 1.0))
-            .with("x4", doubleArrayOf(55.2, 51.4, 47.2, 50.2, 49.0, 49.5))
-            .with("x5", doubleArrayOf(3047.04, 2641.96, 2227.84, 2520.04, 2401.00, 2450.25))
-
-    model.update(dat, 0, DoubleArray(6){1.0}.asF64Array())
-    val pv = model.Ftest(dat, 0, Array2DRowRealMatrix(doubleArrayOf(0.0, 0.0, 1.0, 0.0, 1.0)),
-            ArrayRealVector(doubleArrayOf(0.0)))
-    println(pv)
-    */
-
-
-    val directIn = "/mnt/stripe/bio/experiments/aging/chipseq/k4me3/k4me3_20vs20_bams/"
-    val bic = DoubleArray (40)
-    val aic = DoubleArray (40)
-    val pval = Array(40) { doubleArrayOf(1.0, 1.0)}
-    val fileList = File(directIn)
-            .list()
-            .filter { it.endsWith(".bam") && !it.contains("unique") && it != "input.bam" }
-
-    fileList.forEachIndexed {index, item -> fitK4Me3Bam(
-            directIn,
-            "/home/elena.kartysheva/Documents/aging_json_40/",
-            item,
-            "input.bam",
-            bic,
-            aic,
-            pval,
-            index) }
-
-    var fileOut = "/home/elena.kartysheva/Documents/test_data/bic_with_GC^2.txt"
-    var myfile = File(fileOut)
-
-    myfile.printWriter().use { out ->
-        bic.forEachIndexed { index, d ->
-            out.println(fileList[index] + ": " + d.toString())
-        }
-    }
-
-    fileOut = "/home/elena.kartysheva/Documents/test_data/aic__with_GC^2.txt"
-    myfile = File(fileOut)
-
-    myfile.printWriter().use { out ->
-        aic.forEachIndexed { index, d ->
-            out.println(fileList[index] + ": " + d.toString())
-        }
-    }
-
-    fileOut = "/home/elena.kartysheva/Documents/test_data/pval.txt"
-    myfile = File(fileOut)
-
-    myfile.printWriter().use { out ->
-        pval.forEachIndexed { index, d ->
-            out.println(fileList[index] + ": " + d.toList())
-        }
-    }
-
-    println("Wrote to file")
 }
