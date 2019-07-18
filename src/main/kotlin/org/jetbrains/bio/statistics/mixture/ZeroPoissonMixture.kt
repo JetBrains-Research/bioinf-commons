@@ -1,11 +1,15 @@
 package org.jetbrains.bio.statistics.mixture
 
+import org.apache.commons.math3.linear.RealMatrix
+import org.apache.commons.math3.linear.RealVector
 import org.jetbrains.bio.dataframe.DataFrame
+import org.jetbrains.bio.statistics.Preprocessed
 import org.jetbrains.bio.statistics.emission.ConstantIntegerEmissionScheme
 import org.jetbrains.bio.statistics.emission.EmissionScheme
 import org.jetbrains.bio.statistics.emission.PoissonRegressionEmissionScheme
 import org.jetbrains.bio.viktor.F64Array
 import java.util.function.IntPredicate
+import kotlin.math.ln
 
 /**
  * Mixture of 3 components:
@@ -19,6 +23,8 @@ import java.util.function.IntPredicate
 class ZeroPoissonMixture(
         weights: F64Array, covariateLabels: List<String>, regressionCoefficients: Array<DoubleArray>
 ) : MLFreeMixture(numComponents = 3, numDimensions = 1, weights = weights) {
+
+    val covariatesNum = covariateLabels.size
 
     private val components: List<EmissionScheme> = listOf(
             ConstantIntegerEmissionScheme(0),
@@ -43,6 +49,38 @@ class ZeroPoissonMixture(
             }
         }
     }
+
+    fun BIC(df: DataFrame): Double {
+        return ln(df.rowsNumber.toDouble()) *(2*covariatesNum) - 2*this.logLikelihood(Preprocessed.of(df))
+    }
+
+    fun AIC(df: DataFrame): Double {
+        return 2 *(2*covariatesNum) - 2*this.logLikelihood(Preprocessed.of(df))
+    }
+
+    fun Ftest(df: DataFrame, d: Int, R: RealMatrix, r: RealVector): DoubleArray {
+        return doubleArrayOf(
+                (components[1] as PoissonRegressionEmissionScheme).Ftest(df, d, R, r),
+                (components[2] as PoissonRegressionEmissionScheme).Ftest(df, d, R, r))
+    }
+
+/*
+    fun fitter() = object : Fitter<ZeroPoissonMixture> {
+        override fun guess(preprocessed: Preprocessed<DataFrame>, title: String,
+                           threshold: Double, maxIter: Int, attempt: Int): ZeroPoissonMixture =
+                guess(listOf(preprocessed), title, threshold, maxIter, attempt)
+
+        override fun guess(preprocessed: List<Preprocessed<DataFrame>>, title: String,
+                           threshold: Double, maxIter: Int, attempt: Int): ZeroPoissonMixture {
+            // Filter out 0s, since they are covered by dedicated ZERO state
+            val emissions = preprocessed.flatMap {
+                it.get().let { df -> df.sliceAsInt(df.labels.first()).toList() }
+            }.filter { it != 0 }.toIntArray()
+            check(emissions.isNotEmpty()) { "Model can't be trained on empty coverage, exiting." }
+            val mean = emissions.average()
+            return ZeroPoissonMixture()
+        }
+    }*/
 
     companion object {
         @Transient @JvmField var VERSION = 1

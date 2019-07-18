@@ -11,7 +11,8 @@ import org.apache.commons.math3.linear.*;
 
 public class WLSMultipleLinearRegression extends AbstractMultipleLinearRegression {
     /** Entries of the matrix. */
-    private DesignMatrix X;
+    private DesignMatrix xMatrix;
+    private RealVector yVector;
     //use DiagonalMatrix instead of RealMatrix
     private DiagonalMatrix Omega;
 
@@ -19,7 +20,7 @@ public class WLSMultipleLinearRegression extends AbstractMultipleLinearRegressio
     }
 
     public RealMatrix getX() {
-        return X;
+        return xMatrix;
     }
 
     public void newSampleData(double[] y, double[][] x, double[] weights) { //weight now is double[] instead of double[][]
@@ -31,7 +32,7 @@ public class WLSMultipleLinearRegression extends AbstractMultipleLinearRegressio
     }
 
     public void newSampleData(double[] y, double[] weights) {
-        if (this.X == null) {
+        if (this.xMatrix == null) {
             throw new NullArgumentException();
         }
         this.validateSampleData(y);
@@ -47,29 +48,40 @@ public class WLSMultipleLinearRegression extends AbstractMultipleLinearRegressio
         if (x.length == 0) {
             throw new NoDataException();
         }
-        X = new DesignMatrix(x);
+
+        xMatrix = new DesignMatrix(x);
+    }
+    //override
+    protected void newYSampleData(double[] y) {
+        if (y == null) {
+            throw new NullArgumentException();
+        }
+        if (y.length == 0) {
+            throw new NoDataException();
+        }
+        this.yVector = new ArrayRealVector(y);
     }
 
     protected void validateCovarianceData(double[] weights) {
-        if (this.X.getRowDimension() != weights.length) {
-            throw new DimensionMismatchException(this.X.getRowDimension(), weights.length);
+        if (this.xMatrix.getRowDimension() != weights.length) {
+            throw new DimensionMismatchException(this.xMatrix.getRowDimension(), weights.length);
         }
     }
 
     protected void validateSampleData(double[] y){
-        if ((this.X == null) || (y == null)) {
+        if ((this.xMatrix == null) || (y == null)) {
             throw new NullArgumentException();
         }
-        if (this.X.getRowDimension() != y.length) {
-            throw new DimensionMismatchException(y.length, this.X.getRowDimension());
+        if (this.xMatrix.getRowDimension() != y.length) {
+            throw new DimensionMismatchException(y.length, this.xMatrix.getRowDimension());
         }
-        if (this.X.getRowDimension() == 0) {  // Must be no y data either
+        if (this.xMatrix.getRowDimension() == 0) {  // Must be no y data either
             throw new NoDataException();
         }
-        if (this.X.getColumnDimension() > this.X.getRowDimension()) {
+        if (this.xMatrix.getColumnDimension() > this.xMatrix.getRowDimension()) {
             throw new MathIllegalArgumentException(
                     LocalizedFormats.NOT_ENOUGH_DATA_FOR_NUMBER_OF_PREDICTORS,
-                    this.X.getRowDimension(), this.X.getColumnDimension());
+                    this.xMatrix.getRowDimension(), this.xMatrix.getColumnDimension());
         }
     }
     //use DiagonalMatrix
@@ -78,21 +90,15 @@ public class WLSMultipleLinearRegression extends AbstractMultipleLinearRegressio
     }
 
     public RealVector calculateBeta() {
-        RealMatrix XT = this.X.transpose();
-        RealMatrix XTOTX = XT.multiply(Omega.multiply(this.X));
+        RealMatrix XT = xMatrix.transpose();
+        RealMatrix XTOTX = XT.multiply(Omega.multiply(xMatrix));
         RealMatrix inverse = (new LUDecomposition(XTOTX)).getSolver().getInverse();
-        return inverse.multiply(XT).operate((Omega).operate(this.getY()));
+        return inverse.multiply(XT).operate((Omega).operate(yVector));
     }
 
     protected RealMatrix calculateBetaVariance() {
-        RealMatrix XTOX = this.X.transpose().multiply(Omega.multiply(this.X));
+        RealMatrix XTOX = xMatrix.transpose().multiply(Omega.multiply(xMatrix));
         return (new LUDecomposition(XTOX)).getSolver().getInverse();
-    }
-
-    protected double calculateErrorVariance() {
-        RealVector residuals = this.calculateResiduals();
-        double t = residuals.dotProduct(this.Omega.operate(residuals));
-        return t / (double)(this.X.getRowDimension() - this.X.getColumnDimension());
     }
 }
 
