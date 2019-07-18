@@ -4,7 +4,11 @@ import com.google.common.io.Files
 import com.google.common.io.Resources
 import htsjdk.samtools.seekablestream.SeekableStreamFactory
 import htsjdk.tribble.util.RemoteURLHelper
+import org.apache.log4j.Logger
+import java.io.IOException
 import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.HttpURLConnection.*
 import java.net.URI
 import java.net.URLDecoder
 import java.nio.file.Path
@@ -14,6 +18,7 @@ import java.util.regex.Pattern
 /**
  * @author Roman.Chernyatchik
  */
+private val LOG = Logger.getLogger("org.jetbrains.bio.util.URIExtensions")
 
 fun URI.isFile() = this.scheme == null || this.scheme == "file"
 
@@ -60,20 +65,49 @@ fun URI.checkAccessible() {
     if (isFile()) {
         toPath().checkAccessible()
     } else {
-        val url = this.toString()
-        check(this.isSupportedURL()) { "URL not supported: $url" }
+        val urlStr = this.toString()
+        check(this.isSupportedURL()) { "URL not supported: $urlStr" }
 
         // If ftp url isn't accessible socket timeout while reading takes long time
         // in order to do fast check do:
-        if (!RemoteURLHelper(this.toURL()).exists()) {
-            error("URL is not accessible $url")
+        val url = this.toURL()
+
+        val (urlAccessible, details) = if (url.protocol.toLowerCase().startsWith("http")) {
+            // http or https
+            var conn: HttpURLConnection? = null
+            try {
+                conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "HEAD"
+
+                val status = conn.responseCode
+                when (status) {
+                    HTTP_MOVED_TEMP, HTTP_MOVED_PERM, HTTP_SEE_OTHER -> {
+                        // most likely HTTP -> HTTPS redirect, don't do it for
+                        // security reasons (passwords / cookies insecure transfer)
+                        val redirectUrl = conn.getHeaderField("Location")
+                        false to (" (http response $status, use $redirectUrl instead)")
+                    }
+                    HttpURLConnection.HTTP_OK -> true to ""
+                    else -> false to " (http response $status)"
+                }
+            } catch (e: IOException) {
+                LOG.debug("URL not accessible: $urlStr (${e.message})", e)
+                false to " (${e.message})"
+            } finally {
+                conn?.disconnect()
+            }
+        } else {
+            RemoteURLHelper(url).exists() to ""
+        }
+        if (!urlAccessible) {
+            error("URL is not accessible: $urlStr$details")
         }
 
         try {
             // try to read one byre from url to be 100% sure:
             SeekableStreamFactory.getInstance().getStreamFor(this.toString()).use { it.read() }
         } catch (e: Exception) {
-            throw IllegalStateException("Cannot read URL $url", e)
+            throw IllegalStateException("Cannot read URL $urlStr", e)
         }
     }
 }

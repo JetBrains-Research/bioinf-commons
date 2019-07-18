@@ -15,15 +15,17 @@ import java.util.concurrent.ConcurrentHashMap
  * sequentially otherwise for each chromosome [init] is
  * called in a separate thread.
  */
-fun <T> genomeMap(genomeQuery: GenomeQuery, parallel: Boolean = false,
-                  init: (Chromosome) -> T): GenomeMap<T> {
-    return GenomeMap(genomeQuery, parallel, init)
-}
+fun <T> genomeMap(
+        genomeQuery: GenomeQuery,
+        parallel: Boolean = false,
+        init: (Chromosome) -> T
+) = GenomeMap(genomeQuery, parallel, init)
 
-fun <T> genomeStrandMap(genomeQuery: GenomeQuery, parallel: Boolean = false,
-                        init: (Chromosome, Strand) -> T): GenomeStrandMap<T> {
-    return GenomeStrandMap(genomeQuery, parallel, init)
-}
+fun <T> genomeStrandMap(
+        genomeQuery: GenomeQuery,
+        parallel: Boolean = false,
+        init: (Chromosome, Strand) -> T
+) = GenomeStrandMap(genomeQuery, parallel, init)
 
 /**
  * A map with a fixed set of keys, defined by [GenomeQuery].
@@ -32,9 +34,11 @@ fun <T> genomeStrandMap(genomeQuery: GenomeQuery, parallel: Boolean = false,
  *
  * @author Sergei Lebedev
  */
-class GenomeMap<T> internal constructor(val genomeQuery: GenomeQuery,
-                                        parallel: Boolean,
-                                        f: (Chromosome) -> T) {
+class GenomeMap<T> internal constructor(
+        val genomeQuery: GenomeQuery,
+        parallel: Boolean,
+        f: (Chromosome) -> T
+) {
 
     private val data: ConcurrentHashMap<String, T> = ConcurrentHashMap()
 
@@ -90,9 +94,13 @@ class GenomeMap<T> internal constructor(val genomeQuery: GenomeQuery,
  *
  * @author Roman Chernyatchik
  */
-interface GenomeStrandMapLike<T> {
+interface GenomeStrandMapLike<T> : Iterable<T> {
     val genomeQuery: GenomeQuery
     operator fun get(chromosome: Chromosome, strand: Strand): T
+
+    override fun iterator(): Iterator<T> = genomeQuery.get().flatMap {  chromosome ->
+        Strand.values().map { strand -> this[chromosome, strand] }
+    }.iterator()
 }
 
 /**

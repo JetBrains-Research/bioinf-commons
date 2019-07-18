@@ -375,6 +375,31 @@ Fields number in BED file is between 3 and 15, but was 2""")
         }
     }
 
+    @Test(expected = BedFormatException::class)
+    fun testParse_Strict() {
+        val incorrectBed = "chr start end score\nchr1 1 10 100"
+        withBedFile(incorrectBed) { path ->
+            BedFormat.auto(path).parse(path) {
+                it.stringency = BedParser.Companion.Stringency.STRICT
+                it.toList()
+            }
+        }
+    }
+
+    @Test
+    fun testParse_Lenient() {
+        val incorrectBed = "chr start end score\nchr1 1 10 100"
+        withBedFile(incorrectBed) { path ->
+            val entries = BedFormat.auto(path).parse(path) {
+                it.stringency = BedParser.Companion.Stringency.LENIENT
+                val res = it.toList()
+                assertEquals(1, it.linesFailedToParse)
+                res
+            }
+            assertEquals(1, entries.size)
+        }
+    }
+
     @Test
     fun testAuto_WhitespaceSep() {
         doCheckAuto("chr2 1 2 Description 960 + 1000 5000 0 2 10,20, 1,2",
@@ -615,10 +640,10 @@ Fields number in BED file is between 3 and 15, but was 2""")
 
             require(BedFormat.from("bed4+1", '\t') == format)
 
-            val entries = format.parse(path) {
-                it.use { p ->
-                    p.toList()
-                }
+            val entries = format.parse(path) { p ->
+                val res = p.toList()
+                assertEquals(1, p.linesFailedToParse)
+                res
             }
             val genome = Genome["to1"]
 
@@ -639,7 +664,7 @@ Fields number in BED file is between 3 and 15, but was 2""")
         assertFalse(BedField.ITEM_RGB in BedFormat.from("bed8"))
     }
 
-    @Test fun bedFormatFromFiled() {
+    @Test fun bedFormatFromField() {
         assertEquals("bed6", BedFormat(BedField.STRAND).fmtStr)
         assertEquals("bed9", BedFormat(BedField.ITEM_RGB).fmtStr)
     }

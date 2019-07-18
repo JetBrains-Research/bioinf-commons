@@ -49,6 +49,7 @@ abstract class IntegerRegressionEmissionScheme(
      * @param d - number of column which contains observations
      */
     override fun update(df: DataFrame, d: Int, weights: F64Array) {
+
         val x = Array(covariateLabels.size) {df.sliceAsDouble(covariateLabels[it])}
         val wlr = WLSMultipleLinearRegression()
         wlr.newSampleData(DoubleArray(x[0].size), x, DoubleArray(x[0].size))
@@ -78,6 +79,7 @@ abstract class IntegerRegressionEmissionScheme(
         }
         regressionCoefficients = beta1.toArray()
     }
+  
     /**
      * @param t - number of row
      */
@@ -88,6 +90,7 @@ abstract class IntegerRegressionEmissionScheme(
         }
         return res
     }
+  
     /**
      * @param d - number of column in which we want to sample
      * @param fill - predicate which marks rows we need to use for sampling
@@ -100,7 +103,7 @@ abstract class IntegerRegressionEmissionScheme(
             }
         }
     }
-
+  
     fun Ftest(df: DataFrame, d: Int, R: RealMatrix, r: RealVector): Double {
         val x = Array(covariateLabels.size) {df.sliceAsDouble(covariateLabels[it])}
         val yInt = df.sliceAsInt(df.labels[d])

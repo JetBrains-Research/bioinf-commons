@@ -10,12 +10,15 @@ class CancellableTask<T>(private val callable: Callable<T>) {
     /** Process-unique task ID. */
     val id = TASK_COUNTER.incrementAndGet()
 
-    @Volatile var cancelled = false
+    @Volatile
+    var cancelled = false
         private set
 
-    @Volatile private var cancellableState: CancellableState? = null
+    @Volatile
+    private var cancellableState: CancellableState? = null
 
-    @Volatile var task: Future<T>? = null
+    @Volatile
+    var task: Future<T>? = null
         internal set
 
     val isDone: Boolean get() = task != null && task!!.isDone
@@ -79,23 +82,23 @@ class CancellableTask<T>(private val callable: Callable<T>) {
     fun waitAndGet(waitMillis: Long = 1000L): T? {
         while (true) {
             if (cancelled) {
-                println("Cancelled $id")
+                LOG.trace("Cancelled $id")
                 return null
             }
             if (isDone) {
-                println("Loaded task $id")
+                LOG.trace("Loaded task $id")
                 return get()
             }
 
             try {
                 Thread.sleep(waitMillis)
             } catch (ignored: InterruptedException) {
+                // ignored
             }
         }
     }
 
-    override fun toString() = MoreObjects.toStringHelper(this)
-            .addValue(id).toString()
+    override fun toString() = MoreObjects.toStringHelper(this).addValue(id).toString()
 
     companion object {
         private val LOG = Logger.getLogger(CancellableTask::class.java)
@@ -104,6 +107,7 @@ class CancellableTask<T>(private val callable: Callable<T>) {
 
         private val TASK_COUNTER = AtomicInteger(0)
 
-        @VisibleForTesting fun resetCounter() = TASK_COUNTER.set(0)
+        @VisibleForTesting
+        fun resetCounter() = TASK_COUNTER.set(0)
     }
 }
