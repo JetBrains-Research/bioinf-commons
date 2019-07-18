@@ -37,10 +37,10 @@ abstract class IntegerRegressionEmissionScheme(
     var regressionCoefficients: DoubleArray = regressionCoefficients
         protected set
     var omega = emptyArray<Double>()
-    abstract val link: (Double) -> Double
-    abstract val linkDerivative: (Double) -> Double
-    abstract val linkVariance: (Double) -> Double
-    abstract val sampler: (Double) -> Int
+    abstract fun link(x: Double): Double
+    abstract fun linkDerivative(x: Double): Double
+    abstract fun linkVariance(x: Double): Double
+    abstract fun sampler(x: Double): Int
     override val degreesOfFreedom: Int = regressionCoefficients.size
     /**
      * IRLS algorithm is used for coefficients prediction.
