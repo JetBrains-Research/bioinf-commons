@@ -7,6 +7,7 @@ import org.apache.commons.math3.distribution.AbstractIntegerDistribution
 import org.apache.log4j.Logger
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.statistics.distribution.Sampling
+import org.jetbrains.bio.statistics.emission.EmissionScheme
 import org.jetbrains.bio.statistics.gson.F64ArrayTypeAdapter
 import org.jetbrains.bio.statistics.gson.GSONUtil
 import org.jetbrains.bio.statistics.gson.NotDirectlyDeserializable
@@ -138,6 +139,10 @@ interface ClassificationModel {
                 .registerTypeAdapterFactory(
                         GSONUtil.classSpecificFactory(ClassificationModel::class.java) { gson, factory ->
                             GSONUtil.classAndVersionAdapter(gson, factory, "model.class.fqn", "model.class.format")
+                        })
+                .registerTypeAdapterFactory(
+                        GSONUtil.classSpecificFactory(EmissionScheme::class.java) { gson, factory ->
+                            GSONUtil.classAwareAdapter(gson, factory, "model.class.fqn")
                         })
                 .serializeSpecialFloatingPointValues()
                 .create()
