@@ -2,6 +2,7 @@ package org.jetbrains.bio.io
 
 import kotlinx.support.jdk7.use
 import org.jetbrains.bio.big.BedEntry
+import org.jetbrains.bio.big.BedEntryUnpackException
 import org.jetbrains.bio.big.ExtendedBedEntry
 import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
@@ -81,7 +82,7 @@ class BedParserTest {
         val contents = "chr1 1000 5000 cloneA 960 + 1000 5000\n" +
                 "chr1 2000 6000 cloneB 900 - 2000 6000"
 
-        val format = BedFormat.DEFAULT.delimiter(' ')
+        val format = BedFormat(8, ' ')
 
         withBedFile(contents) { path ->
             // Count
@@ -245,11 +246,13 @@ Fields number in BED file is between 3 and 15, but was 2""")
             val autoFormat = BedFormat.auto(path)
             assertEquals(BedFormat.from("bed11+", ' '), autoFormat)
 
-            expectedEx.expect(NumberFormatException::class.java)
-            expectedEx.expectMessage("For input string: \"3.14\"")
+            expectedEx.expect(BedEntryUnpackException::class.java)
+            expectedEx.expectMessage(
+                "Unpacking BED entry failed at field 5. Reason: score value 3.14 is not an integer"
+            )
 
             autoFormat.parse(path) { it.forEach { entry ->
-                entry.unpack(autoFormat.fieldsNumber, null, autoFormat.delimiter)
+                entry.unpack(autoFormat.fieldsNumber, true, autoFormat.delimiter)
             }}
         }
     }
