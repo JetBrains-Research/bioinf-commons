@@ -1,14 +1,8 @@
 package org.jetbrains.bio.statistics.emission
 import org.apache.commons.math3.distribution.FDistribution
 import org.apache.commons.math3.linear.*
-import org.jetbrains.bio.big.BigWigFile
-import org.jetbrains.bio.coverage.Coverage
 import org.jetbrains.bio.dataframe.DataFrame
-import org.jetbrains.bio.genome.Chromosome
-import org.jetbrains.bio.genome.ChromosomeRange
-import org.jetbrains.bio.genome.sequence.TwoBitSequence
 import org.jetbrains.bio.viktor.F64Array
-import java.nio.file.Path
 import java.util.function.IntPredicate
 
 /**
@@ -115,52 +109,6 @@ abstract class IntegerRegressionEmissionScheme(
     }
 }
 
-fun getIntCover(chr1: Chromosome, coverage: Coverage, bin: Int): IntArray {
-    val len = (chr1.length - 1) / bin + 1
-    val cover = IntArray(len)
-    for (i in 0 until len - 1) {
-        cover[i] = coverage.getBothStrandsCoverage(ChromosomeRange(i * bin, (i + 1) * bin, chr1))
-    }
-    cover[len - 1] = coverage.getBothStrandsCoverage(ChromosomeRange((len-1) * bin, chr1.length, chr1))
-    return cover
-}
-fun getDoubleCover(chr1: Chromosome, coverage: Coverage, bin: Int): DoubleArray {
-    val len = (chr1.length - 1) / bin + 1
-    val cover = DoubleArray(len)
-    for (i in 0 until len - 1) {
-        cover[i] = coverage
-                .getBothStrandsCoverage(ChromosomeRange(i * bin, (i + 1) * bin, chr1))
-                .toDouble()
-    }
-    cover[len - 1] = coverage
-            .getBothStrandsCoverage(ChromosomeRange((len-1) * bin, chr1.length, chr1))
-            .toDouble()
-    return cover
-}
-fun getGC(chr1: Chromosome, bin: Int): DoubleArray {
-    val len = (chr1.length - 1) / bin + 1
-    val seq: TwoBitSequence = chr1.sequence
-    val GCcontent = DoubleArray(len)
-    for (i in 0 until len - 1) {
-        GCcontent[i] = seq.substring(i*bin, (i + 1)*bin).count { it == 'c' || it == 'g' }.toDouble()/bin
-    }
-    GCcontent[len - 1] = seq
-            .substring((len-1)*bin, seq.length)
-            .count { it == 'c'|| it == 'g' }
-            .toDouble()/( seq.length - (len-1)*bin)
-    return GCcontent
-}
-
-fun getMappability(chr1: Chromosome, path_mappability: Path, bin: Int): DoubleArray {
-    val mapSummary = BigWigFile
-            .read(path_mappability)
-            .summarize(chr1.name, 0, chr1.length - chr1.length%bin, numBins = (chr1.length - 1)/bin)
-    val result = DoubleArray (mapSummary.size + 1) {
-        if (it < mapSummary.size) mapSummary[it].sum/bin else 1.0}
-    result[mapSummary.size] = BigWigFile
-            .read(path_mappability)
-            .summarize(chr1.name, chr1.length - chr1.length%bin, 0)[0].sum / chr1.length%bin
-    return result}
 /*
 fun getLocalBGEstimate(chr1: Chromosome, path_mappability: Path, coverage: Coverage): DoubleArray {
     val shiftLength = 2500
