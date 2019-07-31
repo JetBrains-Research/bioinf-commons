@@ -76,7 +76,7 @@ data class BedFormat(
             path.toAbsolutePath().toString()) {
         it.map { entry ->
             entry.unpack(
-                minOf(fieldsNumber, (BedField.STRAND.field.index + 1).toByte()), 0, delimiter
+                minOf(fieldsNumber, (BedField.STRAND.field.index + 1).toByte()), false, delimiter
             ).toLocation(genome)
         }
     }
@@ -620,13 +620,13 @@ fun String.splitToInts(size: Int): IntArray {
 }
 
 fun BedEntry.unpack(format: BedFormat, omitEmptyStrings: Boolean = false) =
-        unpack(format.fieldsNumber, null, format.delimiter, omitEmptyStrings)
+        unpack(format.fieldsNumber, true, format.delimiter, omitEmptyStrings)
 
 /**
  * Only unpack regular BED fields, omit any extra ones.
  */
 fun BedEntry.unpackRegularFields(format: BedFormat, omitEmptyStrings: Boolean = false) =
-        unpack(format.fieldsNumber, 0, format.delimiter, omitEmptyStrings)
+        unpack(format.fieldsNumber, false, format.delimiter, omitEmptyStrings)
 
 interface BedProvider {
     val bedSource: URI
