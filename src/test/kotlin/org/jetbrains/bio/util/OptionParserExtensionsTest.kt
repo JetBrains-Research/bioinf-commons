@@ -452,7 +452,7 @@ class OptionParserExtensionsTest {
                 }
             }
 
-            assertIn("ERROR: Bedtools will fail recognize strand column, your format is [bed4+2]", stdErr)
+            assertIn("ERROR: Bedtools will fail to recognize the strand column, your format is [bed4+]", stdErr)
             assertEquals("", stdOut)
         }
     }

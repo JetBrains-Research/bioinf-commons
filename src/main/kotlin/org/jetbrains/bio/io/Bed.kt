@@ -31,6 +31,9 @@ private val NON_DATA_LINE_PATTERN = "^(?:#|track|browser).*$".toRegex()
  * help you fight the chaos, allowing for various subsets
  * of fields (aka columns) to be included or excluded.
  *
+ * We consider all BED files as having a bedN+ format, where 3 <= N <= 15. Thus, we don't pose any limit
+ * on the number (and existence) of the extra fields.
+ *
  * If you have a good BED file, just use [auto].
  *
  * See https://genome.ucsc.edu/FAQ/FAQformat.html#format1 for
@@ -41,7 +44,6 @@ private val NON_DATA_LINE_PATTERN = "^(?:#|track|browser).*$".toRegex()
  */
 data class BedFormat(
         val fieldsNumber: Byte = 6,
-        val extraFieldsNumber: Int? = 0,
         val delimiter: Char = '\t'
 ) {
 
@@ -50,19 +52,15 @@ data class BedFormat(
     /**
      * Create Format containing standard BedEntry fields up to given one
      */
-    constructor(field: BedField, extraFieldsNumber: Int? = 0)
-            : this((field.field.index + 1).toByte(), extraFieldsNumber)
+    constructor(field: BedField)
+            : this((field.field.index + 1).toByte())
 
     init {
-        require(fieldsNumber >= 3) {
+        require(fieldsNumber in 3..15) {
             "Fields number in BED file is between 3 and 15, but was $fieldsNumber"
         }
 
-        fmtStr = when (extraFieldsNumber) {
-            null -> "bed$fieldsNumber+"
-            0 -> "bed$fieldsNumber"
-            else -> "bed$fieldsNumber+$extraFieldsNumber"
-        }
+        fmtStr = "bed$fieldsNumber+"
     }
 
     fun <T> parse(reader: Reader, src: String = "unknown source", f: (BedParser) -> T) = parse(
@@ -108,9 +106,8 @@ data class BedFormat(
         val MACS2 = from("bed6+3")
         val RGB = from("bed9")
 
-        fun from(fmtStr: String, delimiter: Char = '\t') = parseFormatString(fmtStr).let { fmt ->
-            BedFormat(fmt.first, fmt.second, delimiter = delimiter)
-        }
+        fun from(fmtStr: String, delimiter: Char = '\t') =
+                BedFormat(parseFormatString(fmtStr), delimiter = delimiter)
 
         fun fromString(s: String): BedFormat {
             if (s.first() == '(' && s.last() == ')') {
@@ -126,7 +123,7 @@ data class BedFormat(
             error("Unsupported string: $s")
         }
 
-        fun parseFormatString(fmtStr: String): Pair<Byte, Int?> {
+        fun parseFormatString(fmtStr: String): Byte {
             var s = fmtStr.toLowerCase()
             check(s.startsWith("bed")) {
                 "Format name is required to start with 'bed' prefix, e.g. bed3, bed6+ or bed3+6, but was: $fmtStr"
@@ -136,12 +133,7 @@ data class BedFormat(
             check(chunks.size <= 2) {
                 "No more than one '+' is expected, but was: $fmtStr"
             }
-            return if (chunks.size == 1) {
-                chunks[0].toByte() to 0
-            } else {
-                val ef = chunks[1]
-                chunks[0].toByte() to (if (ef.isEmpty()) null else ef.toInt())
-            }
+            return chunks[0].toByte()
         }
 
         fun detectDelimiter(path: Path) = detectDelimiter(path.toUri())
@@ -288,14 +280,13 @@ data class BedFormat(
             }
 
             val fieldsNumber = ci
-            val extraFieldsNumber = chunks.size - fieldsNumber
 
             require(fieldsNumber in 3..15) {
                 val fileInfo = if (source != null) "Source: $source\nUnknown BED format:\n" else ""
                 "$fileInfo$line\nFields number in BED file is between 3 and 15, but was $fieldsNumber"
             }
 
-            return BedFormat(ci.toByte(), extraFieldsNumber, delimiter)
+            return BedFormat(ci.toByte(), delimiter)
         }
 
 
@@ -390,6 +381,7 @@ class BedParser(
      * Returns the parsed [BedEntry], or throws [IllegalArgumentException] if parsing failed.
      */
     private fun parse(line: String): BedEntry {
+        @Suppress("UnstableApiUsage")
         val chunks = splitter.splitToList(line)
         return try {
             BedEntry(
@@ -402,6 +394,7 @@ class BedParser(
     }
 
     override fun close() {
+        @Suppress("UnstableApiUsage")
         Closeables.closeQuietly(reader)
     }
 
@@ -433,6 +426,7 @@ class BedPrinter(private val writer: BufferedWriter, private val format: BedForm
         print(toLine(entry, format))
     }
 
+    @Suppress("UnstableApiUsage")
     override fun close() = Closeables.close(writer, true)
 
     companion object {
@@ -449,7 +443,7 @@ class BedPrinter(private val writer: BufferedWriter, private val format: BedForm
             return when (format.fieldsNumber) {
                 3.toByte() -> prefix
                 else -> {
-                    val rest = entry.pack(format.fieldsNumber, format.extraFieldsNumber, delimiter).rest
+                    val rest = entry.pack(format.fieldsNumber, null, delimiter).rest
                     "$prefix$delimiter$rest"
                 }
             }
@@ -626,7 +620,7 @@ fun String.splitToInts(size: Int): IntArray {
 }
 
 fun BedEntry.unpack(format: BedFormat, omitEmptyStrings: Boolean = false) =
-        unpack(format.fieldsNumber, format.extraFieldsNumber, format.delimiter, omitEmptyStrings)
+        unpack(format.fieldsNumber, null, format.delimiter, omitEmptyStrings)
 
 /**
  * Only unpack regular BED fields, omit any extra ones.
