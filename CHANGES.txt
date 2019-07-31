@@ -3,6 +3,15 @@ bioinf-commons changelog
 
 Here you can see the full list of changes between each release.
 
+Version 0.0.6
+-------------
+
+Released on XXXXXX
+
+ - `big` library upgraded to 0.9.0; corresponding code changes were made
+ - `BedFormat` dropped the `extraFieldsNumber` parameter, since it was never used anyway
+ - Consequently, the only type of BED format recognized from now on is `bedN+`
+
 Version 0.0.5
 -------------
 
