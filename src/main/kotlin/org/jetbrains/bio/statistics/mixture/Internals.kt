@@ -14,7 +14,7 @@ import org.jetbrains.bio.viktor._I
 object MixtureInternals {
     @JvmStatic
     fun predict(logGammas: F64Array): IntArray {
-        return IntArray(logGammas.shape[0]) { logGammas.V[_I, it].argMax() }
+        return IntArray(logGammas.shape[1]) { logGammas.V[_I, it].argMax() }
     }
 
     @JvmStatic
