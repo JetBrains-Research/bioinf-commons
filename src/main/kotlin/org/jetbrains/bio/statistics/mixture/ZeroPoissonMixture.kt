@@ -81,8 +81,10 @@ class ZeroPoissonMixture(
                 check(emissions.isNotEmpty()) { "Model can't be trained on empty coverage, exiting." }
                 return ZeroPoissonMixture(
                         doubleArrayOf(1 / 3.0, 1 / 3.0, 1 / 3.0).asF64Array(),
-                        listOf("input", "GC", "mappability", "GC2"),
-                        arrayOf(doubleArrayOf(0.0, 0.0, 0.0, 0.0, 0.0), doubleArrayOf(1.0, 0.0, 0.0, 0.0, 0.0)))
+                        preprocessed.get(0).get().labels.drop(1),
+                        arrayOf(
+                                DoubleArray(preprocessed.get(0).get().columnsNumber) { 0.0 },
+                                DoubleArray(preprocessed.get(0).get().columnsNumber){if (it == 0) 1.0 else 0.0}))
             }
         }
     }
