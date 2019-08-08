@@ -25,6 +25,24 @@ abstract class IntegerRegressionEmissionScheme(
     abstract fun linkVariance(x: Double): Double
     abstract fun sampler(x: Double): Int
     override val degreesOfFreedom: Int = regressionCoefficients.size
+
+    open fun linkInPlace(x: DoubleArray) {
+        for(i in 0 until x.size) {
+            x[i] = link(x[i])
+        }
+    }
+
+    open fun linkDerivativeInPlace(x:DoubleArray) {
+        for(i in 0 until x.size) {
+            x[i] = linkDerivative(x[i])
+        }
+    }
+
+    open fun linkVarianceInPlace(x: DoubleArray) {
+        for(i in 0 until x.size) {
+            x[i] = linkVariance(x[i])
+        }
+    }
     /**
      * IRLS algorithm is used for coefficients prediction.
      * For more details: https://bwlewis.github.io/GLM/
@@ -32,7 +50,6 @@ abstract class IntegerRegressionEmissionScheme(
      * @param d - number of column which contains observations
      */
     override fun update(df: DataFrame, d: Int, weights: F64Array) {
-
         val x = Array(covariateLabels.size) {df.sliceAsDouble(covariateLabels[it])}
         val wlr = WLSMultipleLinearRegression()
         wlr.newSampleData(DoubleArray(x[0].size), x, DoubleArray(x[0].size))
@@ -45,13 +62,13 @@ abstract class IntegerRegressionEmissionScheme(
         var beta1: RealVector = ArrayRealVector(regressionCoefficients, false)
         for (i in 0 until iterMax) {
             val eta = X.operate(beta0)
-            val countedLink = eta.map { link(it) }
-            val countedLinkDerivative = eta.map { linkDerivative(it) }
+            val countedLink = eta.toArray().apply { linkInPlace(this) }
+            val countedLinkDerivative = eta.toArray().apply { linkDerivativeInPlace(this) }
             val z = DoubleArray(eta.dimension)
-            {eta.getEntry(it) + (y[it] - countedLink.getEntry(it)) / countedLinkDerivative.getEntry(it)}
-            val countedLinkVar = countedLink.map { linkVariance(it) }
-            W = DoubleArray(countedLink.dimension)
-            {countedLink.getEntry(it) * countedLink.getEntry(it) / countedLinkVar.getEntry(it) * weights[it]}
+            {eta.getEntry(it) + (y[it] - countedLink[it]) / countedLinkDerivative[it]}
+            val countedLinkVar = countedLink.apply { linkVarianceInPlace(this) }
+            W = DoubleArray(countedLink.size)
+            {countedLink[it] * countedLink[it] / countedLinkVar[it] * weights[it]}
             wlr.newSampleData(z, W)
             beta1 = wlr.calculateBeta()
             if (beta1.getL1Distance(beta0) < tol) {

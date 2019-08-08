@@ -4,6 +4,7 @@ import org.apache.commons.math3.util.FastMath
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.statistics.MoreMath
 import org.jetbrains.bio.statistics.distribution.Sampling
+import org.jetbrains.bio.viktor.asF64Array
 
 /**
  *
@@ -21,6 +22,15 @@ class PoissonRegressionEmissionScheme(
     override fun linkDerivative(x: Double): Double { return Math.exp(x) }
     override fun linkVariance(x: Double): Double { return x }
     override fun sampler(x: Double): Int { return Sampling.samplePoisson(x) }
+    override fun linkInPlace(x: DoubleArray) {
+        x.asF64Array().apply { expInPlace() }.toDoubleArray()
+    }
+
+    override fun linkDerivativeInPlace(x: DoubleArray) {
+        x.asF64Array().apply { expInPlace() }.toDoubleArray()
+    }
+
+    override fun linkVarianceInPlace(x: DoubleArray) { }
 
     /**
      * @param t - number of row
