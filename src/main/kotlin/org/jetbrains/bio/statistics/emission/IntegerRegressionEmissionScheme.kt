@@ -57,7 +57,7 @@ abstract class IntegerRegressionEmissionScheme(
         val countedLinkVar = countedLink.copy().apply { linkVarianceInPlace(this) }
         val W = countedLink.apply {timesAssign(countedLink)}.apply {divAssign(countedLinkVar)}
 
-        return Pair(z, W)
+        return z to W
     }
     /**
      * IRLS algorithm is used for coefficients prediction.
@@ -78,9 +78,8 @@ abstract class IntegerRegressionEmissionScheme(
         var beta1: RealVector = ArrayRealVector(regressionCoefficients, false)
         for (i in 0 until iterMax) {
             val eta = (X.operate(beta0) as ArrayRealVector).dataRef.asF64Array()
-            val zWRes = zW(y, eta)
-            W = zWRes.second.apply { timesAssign(weights)}.data
-            wlr.newSampleData(zWRes.first.data, W)
+            val (z, W) = zW(y, eta)
+            wlr.newSampleData(z.data, W.apply { timesAssign(weights)}.data)
             beta1 = wlr.calculateBeta()
             if (beta1.getL1Distance(beta0) < tol) {
                 break

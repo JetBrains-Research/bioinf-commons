@@ -42,7 +42,7 @@ class PoissonRegressionEmissionScheme(
                                         .apply { divAssign(countedLink)})}
         val W = countedLink
 
-        return Pair(z, W)
+        return z to W
     }
     /**
      * @param t - number of row
