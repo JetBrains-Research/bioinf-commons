@@ -32,6 +32,18 @@ class PoissonRegressionEmissionScheme(
 
     override fun linkVarianceInPlace(x: F64Array) { }
 
+    override fun zW(y: F64Array, eta: F64Array): Pair<F64Array, F64Array> {
+        val countedLink = eta.copy().apply { linkInPlace(this) }
+        val z =
+                eta
+                        .apply { plusAssign(
+                                y.copy()
+                                        .apply { minusAssign(countedLink)}
+                                        .apply { divAssign(countedLink)})}
+        val W = countedLink
+
+        return Pair(z, W)
+    }
     /**
      * @param t - number of row
      * @param d - number of column, should be a column with observations.

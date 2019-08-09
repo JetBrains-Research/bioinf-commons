@@ -44,6 +44,21 @@ abstract class IntegerRegressionEmissionScheme(
             x[i] = linkVariance(x[i])
         }
     }
+
+    open fun zW(y: F64Array, eta: F64Array): Pair<F64Array, F64Array> {
+        val countedLink = eta.copy().apply { linkInPlace(this) }
+        val countedLinkDerivative = eta.copy().apply { linkDerivativeInPlace(this) }
+        val z =
+                eta
+                        .apply { plusAssign(
+                                y.copy()
+                                        .apply { minusAssign(countedLink)}
+                                        .apply { divAssign(countedLinkDerivative)})}
+        val countedLinkVar = countedLink.copy().apply { linkVarianceInPlace(this) }
+        val W = countedLink.apply {timesAssign(countedLink)}.apply {divAssign(countedLinkVar)}
+
+        return Pair(z, W)
+    }
     /**
      * IRLS algorithm is used for coefficients prediction.
      * For more details: https://bwlewis.github.io/GLM/
@@ -62,18 +77,10 @@ abstract class IntegerRegressionEmissionScheme(
         var beta0: RealVector = ArrayRealVector(regressionCoefficients, false)
         var beta1: RealVector = ArrayRealVector(regressionCoefficients, false)
         for (i in 0 until iterMax) {
-            val eta = X.operate(beta0).toArray().asF64Array()
-            val countedLink = eta.copy().apply { linkInPlace(this) }
-            val countedLinkDerivative = eta.copy().apply { linkDerivativeInPlace(this) }
-            val z =
-            eta
-                    .apply { plusAssign(
-                            y.copy()
-                                    .apply { minusAssign(countedLink)}
-                                    .apply { divAssign(countedLinkDerivative)})}.data
-            val countedLinkVar = countedLink.copy().apply { linkVarianceInPlace(this) }
-            W = countedLink.times(countedLink).apply {divAssign(countedLinkVar)}.apply { timesAssign(weights)}.data
-            wlr.newSampleData(z, W)
+            val eta = (X.operate(beta0) as ArrayRealVector).dataRef.asF64Array()
+            val zWRes = zW(y, eta)
+            W = zWRes.second.apply { timesAssign(weights)}.data
+            wlr.newSampleData(zWRes.first.data, W)
             beta1 = wlr.calculateBeta()
             if (beta1.getL1Distance(beta0) < tol) {
                 break
