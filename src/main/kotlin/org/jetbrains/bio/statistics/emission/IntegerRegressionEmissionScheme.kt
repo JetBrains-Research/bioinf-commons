@@ -3,6 +3,7 @@ import org.apache.commons.math3.distribution.FDistribution
 import org.apache.commons.math3.linear.*
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.viktor.F64Array
+import org.jetbrains.bio.viktor.asF64Array
 import java.util.function.IntPredicate
 
 /**
@@ -26,19 +27,19 @@ abstract class IntegerRegressionEmissionScheme(
     abstract fun sampler(x: Double): Int
     override val degreesOfFreedom: Int = regressionCoefficients.size
 
-    open fun linkInPlace(x: DoubleArray) {
+    open fun linkInPlace(x: F64Array) {
         for(i in 0 until x.size) {
             x[i] = link(x[i])
         }
     }
 
-    open fun linkDerivativeInPlace(x:DoubleArray) {
+    open fun linkDerivativeInPlace(x: F64Array) {
         for(i in 0 until x.size) {
             x[i] = linkDerivative(x[i])
         }
     }
 
-    open fun linkVarianceInPlace(x: DoubleArray) {
+    open fun linkVarianceInPlace(x: F64Array) {
         for(i in 0 until x.size) {
             x[i] = linkVariance(x[i])
         }
@@ -55,20 +56,23 @@ abstract class IntegerRegressionEmissionScheme(
         wlr.newSampleData(DoubleArray(x[0].size), x, DoubleArray(x[0].size))
         val X = wlr.x
         val yInt = df.sliceAsInt(df.labels[d])
-        val y = DoubleArray (yInt.size) {yInt[it].toDouble()}
+        val y = DoubleArray (yInt.size) {yInt[it].toDouble()}.asF64Array()
         val iterMax = 5
         val tol = 1e-8
         var beta0: RealVector = ArrayRealVector(regressionCoefficients, false)
         var beta1: RealVector = ArrayRealVector(regressionCoefficients, false)
         for (i in 0 until iterMax) {
-            val eta = X.operate(beta0)
-            val countedLink = eta.toArray().apply { linkInPlace(this) }
-            val countedLinkDerivative = eta.toArray().apply { linkDerivativeInPlace(this) }
-            val z = DoubleArray(eta.dimension)
-            {eta.getEntry(it) + (y[it] - countedLink[it]) / countedLinkDerivative[it]}
-            val countedLinkVar = countedLink.apply { linkVarianceInPlace(this) }
-            W = DoubleArray(countedLink.size)
-            {countedLink[it] * countedLink[it] / countedLinkVar[it] * weights[it]}
+            val eta = X.operate(beta0).toArray().asF64Array()
+            val countedLink = eta.copy().apply { linkInPlace(this) }
+            val countedLinkDerivative = eta.copy().apply { linkDerivativeInPlace(this) }
+            val z =
+            eta
+                    .apply { plusAssign(
+                            y.copy()
+                                    .apply { minusAssign(countedLink)}
+                                    .apply { divAssign(countedLinkDerivative)})}.data
+            val countedLinkVar = countedLink.copy().apply { linkVarianceInPlace(this) }
+            W = countedLink.times(countedLink).apply {divAssign(countedLinkVar)}.apply { timesAssign(weights)}.data
             wlr.newSampleData(z, W)
             beta1 = wlr.calculateBeta()
             if (beta1.getL1Distance(beta0) < tol) {
