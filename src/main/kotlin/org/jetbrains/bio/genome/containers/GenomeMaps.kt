@@ -101,6 +101,12 @@ interface GenomeStrandMapLike<T> : Iterable<T> {
     override fun iterator(): Iterator<T> = genomeQuery.get().flatMap {  chromosome ->
         Strand.values().map { strand -> this[chromosome, strand] }
     }.iterator()
+
+    fun entries(): Iterable<Triple<Chromosome, Strand, T>> = genomeQuery.get().flatMap {  chromosome ->
+        Strand.values().map { strand ->
+            Triple(chromosome, strand, this[chromosome, strand])
+        }
+    }
 }
 
 /**
