@@ -78,12 +78,10 @@ class WLSMultipleLinearRegression : AbstractMultipleLinearRegression() {
     }
 
     public override fun calculateBeta(): RealVector {
-        var XTOTX = Array (xMatrix.columnDimension) { DoubleArray(xMatrix.columnDimension)}
-        for (i in 0 until xMatrix.columnDimension) {
-            for (j in 0 until xMatrix.columnDimension) {
-                XTOTX[i][j] = xMatrix.getColumn(i).asF64Array().dot(xMatrix.getColumn(j))
-            }
-        }
+        var XTOTX = Array (xMatrix.columnDimension) { i ->
+            DoubleArray(xMatrix.columnDimension) {j ->
+                xMatrix.getColumn(i).asF64Array().apply { timesAssign(Omega.dataRef.asF64Array()) }.dot(xMatrix.getColumn(j))
+            }}
         val inverse = LUDecomposition(Array2DRowRealMatrix(XTOTX)).solver.inverse
         val Oy = Omega.dataRef.asF64Array().apply { timesAssign(yVector) }
         val XTOy = F64Array (xMatrix.columnDimension) {xMatrix.getColumn(it).asF64Array().dot(Oy)}
