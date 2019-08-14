@@ -6,11 +6,13 @@ import org.apache.commons.math3.exception.NoDataException
 import org.apache.commons.math3.exception.util.LocalizedFormats
 import org.apache.commons.math3.linear.*
 import org.apache.commons.math3.stat.regression.AbstractMultipleLinearRegression
+import org.jetbrains.bio.viktor.F64Array
+import org.jetbrains.bio.viktor.asF64Array
 
 class WLSMultipleLinearRegression : AbstractMultipleLinearRegression() {
     /** Entries of the matrix.  */
     private var xMatrix: DesignMatrix = DesignMatrix(Array(0){ DoubleArray(0) })
-    private var yVector: RealVector = ArrayRealVector()
+    private var yVector: F64Array = DoubleArray(0).asF64Array()
     //use DiagonalMatrix instead of RealMatrix
     private var Omega: DiagonalMatrix = DiagonalMatrix(DoubleArray(0))
 
@@ -47,7 +49,7 @@ class WLSMultipleLinearRegression : AbstractMultipleLinearRegression() {
         if (y.size == 0) {
             throw NoDataException()
         }
-        this.yVector = ArrayRealVector(y)
+        this.yVector = y.asF64Array()
     }
 
     protected fun validateCovarianceData(weights: DoubleArray) {
@@ -76,10 +78,16 @@ class WLSMultipleLinearRegression : AbstractMultipleLinearRegression() {
     }
 
     public override fun calculateBeta(): RealVector {
-        val XT = xMatrix.transpose()
-        val XTOTX = XT.multiply(Omega.multiply(xMatrix))
-        val inverse = LUDecomposition(XTOTX).solver.inverse
-        return inverse.multiply(XT).operate(Omega.operate(yVector))
+        var XTOTX = Array (xMatrix.columnDimension) { DoubleArray(xMatrix.columnDimension)}
+        for (i in 0 until xMatrix.columnDimension) {
+            for (j in 0 until xMatrix.columnDimension) {
+                XTOTX[i][j] = xMatrix.getColumn(i).asF64Array().dot(xMatrix.getColumn(j))
+            }
+        }
+        val inverse = LUDecomposition(Array2DRowRealMatrix(XTOTX)).solver.inverse
+        val Oy = Omega.dataRef.asF64Array().apply { timesAssign(yVector) }
+        val XTOy = F64Array (xMatrix.columnDimension) {xMatrix.getColumn(it).asF64Array().dot(Oy)}
+        return ArrayRealVector(DoubleArray (xMatrix.columnDimension) {inverse.getRow(it).asF64Array().dot(XTOy)}, false)
     }
 
     public override fun calculateBetaVariance(): RealMatrix {
