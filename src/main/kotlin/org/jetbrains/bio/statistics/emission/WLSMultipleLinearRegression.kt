@@ -5,19 +5,20 @@ import org.apache.commons.math3.exception.MathIllegalArgumentException
 import org.apache.commons.math3.exception.NoDataException
 import org.apache.commons.math3.exception.util.LocalizedFormats
 import org.apache.commons.math3.linear.*
-import org.apache.commons.math3.stat.regression.AbstractMultipleLinearRegression
 import org.jetbrains.bio.viktor.F64Array
+import org.jetbrains.bio.viktor._I
 import org.jetbrains.bio.viktor.asF64Array
+import org.jetbrains.bio.viktor.toF64Array
 
-class WLSMultipleLinearRegression : AbstractMultipleLinearRegression() {
+class WLSMultipleLinearRegression {
     /** Entries of the matrix.  */
-    private var xMatrix: DesignMatrix = DesignMatrix(Array(0){ DoubleArray(0) })
+    private var xMatrix: F64Array = DoubleArray(0).asF64Array()
     private var yVector: F64Array = DoubleArray(0).asF64Array()
     //use DiagonalMatrix instead of RealMatrix
-    private var Omega: DiagonalMatrix = DiagonalMatrix(DoubleArray(0))
+    private var Omega: F64Array = DoubleArray(0).asF64Array()
 
-    public override fun getX(): RealMatrix {
-        return xMatrix
+    fun getX(): RealMatrix {
+       return Array2DRowRealMatrix(Array (xMatrix.shape[0]) { xMatrix.V[it].toDoubleArray()})
     }
 
     fun newSampleData(y: DoubleArray, x: Array<DoubleArray>, weights: DoubleArray) { //weight now is double[] instead of double[][]
@@ -36,16 +37,17 @@ class WLSMultipleLinearRegression : AbstractMultipleLinearRegression() {
     }
 
     //override
-    override fun newXSampleData(x: Array<DoubleArray>) {
+    fun newXSampleData(x: Array<DoubleArray>) {
         if (x.size == 0) {
             throw NoDataException()
         }
 
-        xMatrix = DesignMatrix(x)
+        xMatrix = DoubleArray(x[0].size){1.0}.asF64Array().T.append(x.toF64Array().T, 1)
+        val l = 0
     }
 
     //override
-    override fun newYSampleData(y: DoubleArray) {
+    fun newYSampleData(y: DoubleArray) {
         if (y.size == 0) {
             throw NoDataException()
         }
@@ -53,43 +55,39 @@ class WLSMultipleLinearRegression : AbstractMultipleLinearRegression() {
     }
 
     protected fun validateCovarianceData(weights: DoubleArray) {
-        if (this.xMatrix.rowDimension != weights.size) {
-            throw DimensionMismatchException(this.xMatrix.rowDimension, weights.size)
+        if (this.xMatrix.shape[0] != weights.size) {
+            throw DimensionMismatchException(this.xMatrix.shape[0], weights.size)
         }
     }
 
     protected fun validateSampleData(y: DoubleArray) {
-        if (this.xMatrix.rowDimension != y.size) {
-            throw DimensionMismatchException(y.size, this.xMatrix.rowDimension)
+        if (this.xMatrix.shape[0] != y.size) {
+            throw DimensionMismatchException(y.size, this.xMatrix.shape[0])
         }
-        if (this.xMatrix.rowDimension == 0) {  // Must be no y data either
+        if (this.xMatrix.shape[0] == 0) {  // Must be no y data either
             throw NoDataException()
         }
-        if (this.xMatrix.columnDimension > this.xMatrix.rowDimension) {
+        if (this.xMatrix.shape[1] > this.xMatrix.shape[0]) {
             throw MathIllegalArgumentException(
                     LocalizedFormats.NOT_ENOUGH_DATA_FOR_NUMBER_OF_PREDICTORS,
-                    this.xMatrix.rowDimension, this.xMatrix.columnDimension)
+                    this.xMatrix.shape[0], this.xMatrix.shape[1])
         }
     }
 
     //use DiagonalMatrix
     protected fun newCovarianceData(omega: DoubleArray) {
-        this.Omega = DiagonalMatrix(omega)
+        this.Omega = omega.asF64Array()
     }
 
-    public override fun calculateBeta(): RealVector {
-        var XTOTX = Array (xMatrix.columnDimension) { i ->
-            DoubleArray(xMatrix.columnDimension) {j ->
-                xMatrix.getColumn(i).asF64Array().apply { timesAssign(Omega.dataRef.asF64Array()) }.dot(xMatrix.getColumn(j))
-            }}
+    fun calculateBeta(): RealVector {
+        var XTOTX = Array (xMatrix.shape[1]) { i ->
+            DoubleArray(xMatrix.shape[1]) {j ->
+                xMatrix.V[_I, i].times(Omega).dot(xMatrix.V[_I, j])
+            }
+        }
         val inverse = LUDecomposition(Array2DRowRealMatrix(XTOTX)).solver.inverse
-        val Oy = Omega.dataRef.asF64Array().apply { timesAssign(yVector) }
-        val XTOy = F64Array (xMatrix.columnDimension) {xMatrix.getColumn(it).asF64Array().dot(Oy)}
-        return ArrayRealVector(DoubleArray (xMatrix.columnDimension) {inverse.getRow(it).asF64Array().dot(XTOy)}, false)
-    }
-
-    public override fun calculateBetaVariance(): RealMatrix {
-        val XTOX = xMatrix.transpose().multiply(Omega.multiply(xMatrix))
-        return LUDecomposition(XTOX).solver.inverse
+        val Oy = Omega.times(yVector)
+        val XTOy = F64Array (xMatrix.shape[1]) {xMatrix.V[_I, it].dot(Oy)}
+        return ArrayRealVector(DoubleArray (xMatrix.shape[1]) {inverse.getRow(it).asF64Array().dot(XTOy)}, false)
     }
 }

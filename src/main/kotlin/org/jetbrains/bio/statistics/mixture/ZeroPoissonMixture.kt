@@ -1,6 +1,4 @@
 package org.jetbrains.bio.statistics.mixture
-import org.apache.commons.math3.linear.RealMatrix
-import org.apache.commons.math3.linear.RealVector
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.statistics.Fitter
 import org.jetbrains.bio.statistics.Preprocessed
@@ -59,11 +57,13 @@ class ZeroPoissonMixture(
         return 2 *(2*covariatesNum) - 2*this.logLikelihood(Preprocessed.of(df))
     }
 
+    /*
     fun Ftest(df: DataFrame, d: Int, R: RealMatrix, r: RealVector): DoubleArray {
         return doubleArrayOf(
                 (components[1] as PoissonRegressionEmissionScheme).Ftest(df, d, R, r),
                 (components[2] as PoissonRegressionEmissionScheme).Ftest(df, d, R, r))
     }
+    */
 
     companion object {
         @Transient @JvmField var VERSION = 1

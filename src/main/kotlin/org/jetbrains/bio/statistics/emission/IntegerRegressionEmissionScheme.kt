@@ -1,6 +1,6 @@
 package org.jetbrains.bio.statistics.emission
-import org.apache.commons.math3.distribution.FDistribution
-import org.apache.commons.math3.linear.*
+import org.apache.commons.math3.linear.ArrayRealVector
+import org.apache.commons.math3.linear.RealVector
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.asF64Array
@@ -69,7 +69,7 @@ abstract class IntegerRegressionEmissionScheme(
         val x = Array(covariateLabels.size) {df.sliceAsDouble(covariateLabels[it])}
         val wlr = WLSMultipleLinearRegression()
         wlr.newSampleData(DoubleArray(x[0].size), x, DoubleArray(x[0].size))
-        val X = wlr.x
+        val X = wlr.getX()
         val yInt = df.sliceAsInt(df.labels[d])
         val y = DoubleArray (yInt.size) {yInt[it].toDouble()}.asF64Array()
         val iterMax = 5
@@ -112,13 +112,14 @@ abstract class IntegerRegressionEmissionScheme(
             }
         }
     }
+    /*
     fun Ftest(df: DataFrame, d: Int, R: RealMatrix, r: RealVector): Double {
         val x = Array(covariateLabels.size) {df.sliceAsDouble(covariateLabels[it])}
         val yInt = df.sliceAsInt(df.labels[d])
         val y = DoubleArray (yInt.size) {yInt[it].toDouble()}
         val wlr = WLSMultipleLinearRegression()
         wlr.newSampleData(y, x, W)
-        val X = wlr.x
+        val X = wlr.getX()
         val residuals = X
                 .operate(ArrayRealVector(regressionCoefficients, false))
                 .subtract(ArrayRealVector(y, false))
@@ -133,7 +134,7 @@ abstract class IntegerRegressionEmissionScheme(
         val pVal = 1 - FDistribution(r.dimension.toDouble(), (X.rowDimension - X.columnDimension).toDouble()).cumulativeProbability(Fstat)
 
         return pVal
-    }
+    } */
 }
 
 /*
