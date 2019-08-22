@@ -1,6 +1,6 @@
 package org.jetbrains.bio.statistics.emission
-import org.apache.commons.math3.linear.ArrayRealVector
-import org.apache.commons.math3.linear.RealVector
+import org.apache.commons.math3.distribution.FDistribution
+import org.apache.commons.math3.linear.*
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.asF64Array
@@ -69,7 +69,7 @@ abstract class IntegerRegressionEmissionScheme(
         val x = Array(covariateLabels.size) {df.sliceAsDouble(covariateLabels[it])}
         val wlr = WLSMultipleLinearRegression()
         wlr.newSampleData(DoubleArray(x[0].size), x, DoubleArray(x[0].size))
-        val X = wlr.getX()
+        val X = wlr.x
         val yInt = df.sliceAsInt(df.labels[d])
         val y = DoubleArray (yInt.size) {yInt[it].toDouble()}.asF64Array()
         val iterMax = 5
@@ -88,7 +88,7 @@ abstract class IntegerRegressionEmissionScheme(
         }
         regressionCoefficients = beta1.toArray()
     }
-  
+
     /**
      * @param t - number of row
      */
@@ -99,7 +99,7 @@ abstract class IntegerRegressionEmissionScheme(
         }
         return res
     }
-  
+
     /**
      * @param d - number of column in which we want to sample
      * @param fill - predicate which marks rows we need to use for sampling
@@ -112,20 +112,19 @@ abstract class IntegerRegressionEmissionScheme(
             }
         }
     }
-    /*
     fun Ftest(df: DataFrame, d: Int, R: RealMatrix, r: RealVector): Double {
         val x = Array(covariateLabels.size) {df.sliceAsDouble(covariateLabels[it])}
         val yInt = df.sliceAsInt(df.labels[d])
         val y = DoubleArray (yInt.size) {yInt[it].toDouble()}
         val wlr = WLSMultipleLinearRegression()
         wlr.newSampleData(y, x, W)
-        val X = wlr.getX()
+        val X = wlr.x
         val residuals = X
                 .operate(ArrayRealVector(regressionCoefficients, false))
                 .subtract(ArrayRealVector(y, false))
         val sigma = residuals
                 .dotProduct(DiagonalMatrix(W)
-                .operate(residuals)) / (X.rowDimension - X.columnDimension)
+                        .operate(residuals)) / (X.rowDimension - X.columnDimension)
         val inverseXTX = wlr.calculateBetaVariance()
         val RBeta = R.transpose().operate(ArrayRealVector(regressionCoefficients))
         val RBetaMinusr = RBeta.subtract(r)
@@ -134,7 +133,7 @@ abstract class IntegerRegressionEmissionScheme(
         val pVal = 1 - FDistribution(r.dimension.toDouble(), (X.rowDimension - X.columnDimension).toDouble()).cumulativeProbability(Fstat)
 
         return pVal
-    } */
+    }
 }
 
 /*
@@ -156,5 +155,3 @@ fun getLocalBGEstimate(chr1: Chromosome, path_mappability: Path, coverage: Cover
     val len = (chr1.length - 1) / 200 + 1
     val result = DoubleArray (len).forEach { it =  }
 } */
-
-

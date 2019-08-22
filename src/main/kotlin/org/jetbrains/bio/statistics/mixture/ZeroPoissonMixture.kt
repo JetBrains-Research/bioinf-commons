@@ -25,7 +25,7 @@ class ZeroPoissonMixture(
 
     val covariatesNum = covariateLabels.size
 
-    private val components: List<EmissionScheme> = listOf(
+    private val components: Array<EmissionScheme> = arrayOf(
             ConstantIntegerEmissionScheme(0),
             PoissonRegressionEmissionScheme(
                     covariateLabels = covariateLabels,
@@ -37,6 +37,17 @@ class ZeroPoissonMixture(
             )
     )
 
+    operator fun get(i: Int): EmissionScheme {
+        return components[i]
+    }
+
+    operator fun set(i: Int, e: PoissonRegressionEmissionScheme) {
+        if (i == 0) {
+            throw IllegalArgumentException()
+        } else {
+            components[i] = e
+        }
+    }
 
     override fun getEmissionScheme(i: Int, d: Int): EmissionScheme = components[i]
 
