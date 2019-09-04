@@ -16,12 +16,12 @@ class TranscriptTest {
         val ordering = Ordering.natural<Location>()
 
         val transcriptPlus = transcripts.first { it.strand.isPlus() }
-        assertTrue(ordering.isOrdered(transcriptPlus.exons))
-        assertTrue(ordering.isOrdered(transcriptPlus.introns))
+        assertTrue(ordering.isOrdered(transcriptPlus.exons), "Exons aren't ordered")
+        assertTrue(ordering.isOrdered(transcriptPlus.introns), "Introns aren't ordered")
 
         val transcriptMinus = transcripts.first { it.strand.isMinus() }
-        assertTrue(ordering.isOrdered(transcriptMinus.exons))
-        assertTrue(ordering.isOrdered(transcriptMinus.introns))
+        assertTrue(ordering.isOrdered(transcriptMinus.exons), "Exons aren't ordered")
+        assertTrue(ordering.isOrdered(transcriptMinus.introns), "Introns aren't ordered")
     }
 
     @Test fun equalsHashCode() {
@@ -55,16 +55,15 @@ class TranscriptTest {
     fun transcripts5AllGenes() {
         val (transcripts, bounds5) = Transcripts.bound5Index(chromosome.genome, false)[chromosome]!!
         assertEquals(transcripts.size, bounds5.size)
-        assertTrue(transcripts.any { it.isCoding })
-        assertTrue(transcripts.any { !it.isCoding })
+        assertTrue(transcripts.any { it.isCoding }, "No coding genes found")
+        assertTrue(transcripts.any { !it.isCoding }, "No non-coding genes found")
     }
 
     @Test
     fun transcripts5CodingGenes() {
         val (transcripts, bounds5) = Transcripts.bound5Index(chromosome.genome, true)[chromosome]!!
         assertEquals(transcripts.size, bounds5.size)
-        assertTrue(transcripts.any { it.isCoding })
-        assertTrue(transcripts.filterNot { it.isCoding }.isEmpty())
+        assertTrue(transcripts.all { it.isCoding }, "Coding genes query returned some non-coding genes")
     }
 
     /**
@@ -337,12 +336,12 @@ class TranscriptTest {
 
         val chr = Chromosome(Genome["to1"], "chr1")
         var t = chr.transcripts.stream().filter { it.ensemblId == "ENSTSIMGENE.CHR1.0"}.findFirst().get()
-        assertTrue(!t.isCoding)
-        assertNull(t.cdsRange)
+        assertTrue(!t.isCoding, "ENSTSIMGENE.CHR1.0 should be non-coding")
+        assertNull(t.cdsRange, "CDS of a non-coding gene should be null")
 
         t = chr.transcripts.stream().filter { it.ensemblId == "ENSTSIMGENE.CHR1.1"}.findFirst().get()
-        assertTrue(t.isCoding)
-        assertNotNull(t.cdsRange)
+        assertTrue(t.isCoding, "ENSTSIMGENE.CHR1.1 should be coding")
+        assertNotNull(t.cdsRange, "CDS of a coding gene shouldn't be null")
     }
 
     @Test

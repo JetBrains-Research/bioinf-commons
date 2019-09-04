@@ -185,8 +185,14 @@ abstract class PathConverter : ValueConverter<Path> {
                 if (bedFormat.fieldsNumber < 3) {
                     throw ValueConversionException("Expected at least first 3 BED fields, but format is [${bedFormat.fmtStr}]")
                 }
-                if (bedFormat.fieldsNumber < 6 && (bedFormat.extraFieldsNumber != null && bedFormat.extraFieldsNumber > 0)) {
-                    throw ValueConversionException("Bedtools will fail recognize strand column, your format is [${bedFormat.fmtStr}]")
+                // we also check for a special case where BED has 6+ fields, but the 6th one isn't the strand
+                if (bedFormat.fieldsNumber < 6) {
+                    val entry = bedFormat.parse(path) { it.firstOrNull() }
+                    if (entry != null && entry.rest.split(bedFormat.delimiter).size >= 3) {
+                        throw ValueConversionException(
+                            "Bedtools will fail to recognize the strand column, your format is [${bedFormat.fmtStr}]"
+                        )
+                    }
                 }
             }
         }
