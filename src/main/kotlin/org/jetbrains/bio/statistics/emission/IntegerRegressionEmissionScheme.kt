@@ -1,10 +1,14 @@
 package org.jetbrains.bio.statistics.emission
 import org.apache.commons.math3.distribution.FDistribution
-import org.apache.commons.math3.linear.*
+import org.apache.commons.math3.linear.ArrayRealVector
+import org.apache.commons.math3.linear.LUDecomposition
+import org.apache.commons.math3.linear.RealMatrix
+import org.apache.commons.math3.linear.RealVector
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.asF64Array
 import java.util.function.IntPredicate
+import kotlin.math.abs
 
 /**
  *
@@ -56,7 +60,6 @@ abstract class IntegerRegressionEmissionScheme(
                                         .apply { divAssign(countedLinkDerivative)})}
         val countedLinkVar = countedLink.copy().apply { linkVarianceInPlace(this) }
         val W = countedLink.apply {timesAssign(countedLink)}.apply {divAssign(countedLinkVar)}
-
         return z to W
     }
     /**
@@ -66,27 +69,24 @@ abstract class IntegerRegressionEmissionScheme(
      * @param d - number of column which contains observations
      */
     override fun update(df: DataFrame, d: Int, weights: F64Array) {
-        val x = Array(covariateLabels.size) {df.sliceAsDouble(covariateLabels[it])}
-        val wlr = WLSMultipleLinearRegression()
-        wlr.newSampleData(DoubleArray(x[0].size), x, DoubleArray(x[0].size))
-        val X = wlr.x
+        val X = WLSRegression.designMatrix(Array(covariateLabels.size) { df.sliceAsDouble(covariateLabels[it]) })
         val yInt = df.sliceAsInt(df.labels[d])
         val y = DoubleArray (yInt.size) {yInt[it].toDouble()}.asF64Array()
         val iterMax = 5
         val tol = 1e-8
-        var beta0: RealVector = ArrayRealVector(regressionCoefficients, false)
-        var beta1: RealVector = ArrayRealVector(regressionCoefficients, false)
+        var beta0 = regressionCoefficients
+        var beta1 = regressionCoefficients
         for (i in 0 until iterMax) {
-            val eta = (X.operate(beta0) as ArrayRealVector).dataRef.asF64Array()
+            val eta = WLSRegression.calculateEta(X, beta0)
             val (z, W) = zW(y, eta)
-            wlr.newSampleData(z.data, W.apply { timesAssign(weights)}.data)
-            beta1 = wlr.calculateBeta()
-            if (beta1.getL1Distance(beta0) < tol) {
+            W *= weights
+            beta1 = WLSRegression.calculateBeta(X, z, W)
+            if ((beta1.zip(beta0) { a, b -> abs(a - b) }).sum() < tol) {
                 break
             }
             beta0 = beta1
         }
-        regressionCoefficients = beta1.toArray()
+        regressionCoefficients = beta1
     }
 
     /**
@@ -95,7 +95,7 @@ abstract class IntegerRegressionEmissionScheme(
     fun getPredictor(df: DataFrame, t: Int): Double {
         var res = regressionCoefficients[0]
         covariateLabels.forEachIndexed { index, label ->
-            res += df.getAsDouble(t, label)*regressionCoefficients[index + 1]
+            res += df.getAsDouble(t, label) * regressionCoefficients[index + 1]
         }
         return res
     }
@@ -112,46 +112,20 @@ abstract class IntegerRegressionEmissionScheme(
             }
         }
     }
+
     fun Ftest(df: DataFrame, d: Int, R: RealMatrix, r: RealVector): Double {
         val x = Array(covariateLabels.size) {df.sliceAsDouble(covariateLabels[it])}
         val yInt = df.sliceAsInt(df.labels[d])
         val y = DoubleArray (yInt.size) {yInt[it].toDouble()}
-        val wlr = WLSMultipleLinearRegression()
-        wlr.newSampleData(y, x, W)
-        val X = wlr.x
-        val residuals = X
-                .operate(ArrayRealVector(regressionCoefficients, false))
-                .subtract(ArrayRealVector(y, false))
-        val sigma = residuals
-                .dotProduct(DiagonalMatrix(W)
-                        .operate(residuals)) / (X.rowDimension - X.columnDimension)
-        val inverseXTX = wlr.calculateBetaVariance()
+        val X = WLSRegression.designMatrix(x)
+        val residuals = WLSRegression.calculateEta(X, regressionCoefficients).apply { minusAssign(y.asF64Array()) }
+        val sigma2 = residuals.dot(W.asF64Array() * residuals) / (X[0].size - X.size)
+        val XTWXI = WLSRegression.calculateBetaVariance(X, W.asF64Array())
         val RBeta = R.transpose().operate(ArrayRealVector(regressionCoefficients))
         val RBetaMinusr = RBeta.subtract(r)
-        val inverse = LUDecomposition(R.transpose().multiply(inverseXTX).multiply(R)).solver.inverse
-        val Fstat = inverse.operate(RBetaMinusr).dotProduct(RBetaMinusr) / (r.dimension*sigma)
-        val pVal = 1 - FDistribution(r.dimension.toDouble(), (X.rowDimension - X.columnDimension).toDouble()).cumulativeProbability(Fstat)
-
+        val inverse = LUDecomposition(R.transpose().multiply(XTWXI).multiply(R)).solver.inverse
+        val Fstat = inverse.operate(RBetaMinusr).dotProduct(RBetaMinusr) / (r.dimension*sigma2)
+        val pVal = 1 - FDistribution(r.dimension.toDouble(), (X[0].size - X.size).toDouble()).cumulativeProbability(Fstat)
         return pVal
     }
 }
-
-/*
-fun getLocalBGEstimate(chr1: Chromosome, path_mappability: Path, coverage: Coverage): DoubleArray {
-    val shiftLength = 2500
-    val slidingWindowSize = 100000
-    val numOfSlidingWindows = (chr1.length - slidingWindowSize)/shiftLength + 1
-    val mapSource = BigWigFile.read(path_mappability)
-    (0 until numOfSlidingWindows).forEach {
-        coverage.getBothStrandsCoverage(
-                ChromosomeRange(
-                        it*shiftLength,
-                        it*shiftLength + slidingWindowSize,
-                        chr1))* slidingWindowSize / mapSource.summarize(
-                        chr1.name,
-                        it*shiftLength,
-                        it*shiftLength + slidingWindowSize)[0].sum
-    }
-    val len = (chr1.length - 1) / 200 + 1
-    val result = DoubleArray (len).forEach { it =  }
-} */
