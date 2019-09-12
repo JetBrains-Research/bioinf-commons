@@ -12,26 +12,35 @@ import org.jetbrains.bio.viktor.asF64Array
 object WLSRegression {
 
     /**
-     * Prepend an appropriate-sized array filled with 1.0.
+     * Converts x to a design matrix. No copying of x is performed.
+     *
+     * Prepends an appropriate-sized array filled with 1.0.
      */
     fun designMatrix(x: Array<DoubleArray>): Array<DoubleArray> {
+        check(x.isNotEmpty()) { "empty matrix" }
         check(x.drop(1).all { it.size == x[0].size }) { "different column sizes" }
         return Array(x.size + 1) { if (it == 0) DoubleArray(x[0].size) { 1.0 } else x[it - 1] }
     }
 
     /**
      * eta = X beta
+     * @param x a matrix that is stored column-first
+     * @param beta a vector of appropriate size
      */
     fun calculateEta(x: Array<DoubleArray>, beta: DoubleArray): F64Array {
-        check(x.all { it.size == beta.size }) { "X columns and beta have different size" }
+        check(x.isNotEmpty()) { "empty matrix" }
+        check(x.size == beta.size) { "X and beta have different size" }
+        check(x.drop(1).all { it.size == x[0].size }) { "different column sizes" }
         val xColumnsTimesBetaElements = Array(x.size) { i -> x[i].asF64Array() * beta[i] }
         xColumnsTimesBetaElements.drop(1).forEach { xColumnsTimesBetaElements[0].plusAssign(it) }
         return xColumnsTimesBetaElements[0]
     }
 
     /**
-     * beta = (X^T W X)^{-1} X^T W y
-     * where X is the design matrix, y is the observation vector, and W = diag(w), where w is the weight vector.
+     * Calculates WLS estimator.
+     *
+     * beta = (X^T W X)^{-1} X^T W y, where X is the design matrix, y is the observation vector,
+     * and W = diag(w), where w is the weight vector.
      */
     fun calculateBeta(x: Array<DoubleArray>, y: F64Array, weights: F64Array): DoubleArray {
         check(weights.size == y.size) { "weights and y have different size" }
@@ -56,7 +65,7 @@ object WLSRegression {
             }
         }
         // fill the upper half
-        x.indices.forEach { i -> x.indices.forEach { j -> if (i < j) x[i][j] = x[j][i] }}
+        XTOIX.indices.forEach { i -> XTOIX.indices.forEach { j -> if (i < j) XTOIX[i][j] = XTOIX[j][i] }}
         return LUDecomposition(Array2DRowRealMatrix(XTOIX)).solver.inverse
     }
 }

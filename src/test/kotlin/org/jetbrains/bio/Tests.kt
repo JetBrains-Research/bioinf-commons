@@ -49,4 +49,8 @@ object Tests {
         "Regex ${regex.pattern} doesn't match content:\n<$output>"
     )
 
+    fun assertDeepEquals(expected: Array<*>, actual: Array<*>) {
+        assertTrue(expected.contentDeepEquals(actual), "Array contents differ")
+    }
+
 }
