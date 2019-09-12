@@ -5,6 +5,7 @@ import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.statistics.MoreMath
 import org.jetbrains.bio.statistics.distribution.Sampling
 import org.jetbrains.bio.viktor.F64Array
+import kotlin.math.exp
 
 /**
  *
@@ -18,43 +19,30 @@ class PoissonRegressionEmissionScheme(
         regressionCoefficients: DoubleArray
 ) : IntegerRegressionEmissionScheme(covariateLabels, regressionCoefficients) {
 
-    override fun link(x: Double): Double { return Math.exp(x) }
-    override fun linkDerivative(x: Double): Double { return Math.exp(x) }
-    override fun linkVariance(x: Double): Double { return x }
-    override fun sampler(x: Double): Int { return Sampling.samplePoisson(x) }
-    override fun linkInPlace(x: F64Array) {
-        x.apply { expInPlace() }
-    }
+    override fun mean(eta: Double) = exp(eta)
+    override fun meanDerivative(eta: Double) = exp(eta)
+    override fun meanVariance(mean: Double) = mean
 
-    override fun linkDerivativeInPlace(x: F64Array) {
-        x.apply { expInPlace() }
-    }
+    override fun sampler(mean: Double) = Sampling.samplePoisson(mean)
 
-    override fun linkVarianceInPlace(x: F64Array) { }
+    override fun meanInPlace(eta: F64Array) = eta.apply { expInPlace() }
+    override fun meanDerivativeInPlace(eta: F64Array) = eta.apply { expInPlace() }
+    override fun meanVarianceInPlace(mean: F64Array) = mean
 
     override fun zW(y: F64Array, eta: F64Array): Pair<F64Array, F64Array> {
-        val countedLink = eta.copy().apply { linkInPlace(this) }
-        val z =
-                eta
-                        .apply { plusAssign(
-                                y.copy()
-                                        .apply { minusAssign(countedLink)}
-                                        .apply { divAssign(countedLink)})}
-        val W = countedLink
-
-        return z to W
+        // Since h(η) = h'(η) = var(h(η)), we can skip h'(η) and var(h(η)) calculations and simplify W:
+        // W = diag(h'(η)^2 / var(h(η))) = h(η)
+        val countedLink = meanInPlace(eta.copy())
+        eta += (y - countedLink).apply { divAssign(countedLink) }
+        return eta to countedLink
     }
-    /**
-     * @param t - number of row
-     * @param d - number of column, should be a column with observations.
-     */
-    override fun logProbability(df: DataFrame, t: Int, d: Int): Double {
-        val logLambda = getPredictor(df, t)
-        return (
-                df.getAsInt(t, df.labels[d])
-                        * logLambda
-                        - MoreMath.factorialLog(df.getAsInt(t, df.labels[d]))
-                        - FastMath.exp(logLambda))
 
+    override fun logProbability(df: DataFrame, t: Int, d: Int): Double {
+        // We don't use the existing Poisson log probability because that saves us one logarithm.
+        // We would have to provide lambda = exp(logLambda), and the Poisson implementation would then have to
+        // calculate log(lambda) again.
+        val logLambda = getPredictor(df, t)
+        val y = df.getAsInt(t, df.labels[d])
+        return y * logLambda - MoreMath.factorialLog(y) - FastMath.exp(logLambda)
     }
 }
