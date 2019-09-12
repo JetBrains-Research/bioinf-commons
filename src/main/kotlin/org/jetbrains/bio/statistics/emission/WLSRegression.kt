@@ -2,7 +2,6 @@ package org.jetbrains.bio.statistics.emission
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix
 import org.apache.commons.math3.linear.LUDecomposition
-import org.apache.commons.math3.linear.RealMatrix
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.asF64Array
 
@@ -23,7 +22,8 @@ object WLSRegression {
     }
 
     /**
-     * eta = X beta
+     * Calculates η = Xβ.
+     *
      * @param x a matrix that is stored column-first
      * @param beta a vector of appropriate size
      */
@@ -37,10 +37,14 @@ object WLSRegression {
     }
 
     /**
-     * Calculates WLS estimator.
+     * Calculates WLS estimator β.
      *
-     * beta = (X^T W X)^{-1} X^T W y, where X is the design matrix, y is the observation vector,
+     * β = (X^T W X)^{-1} X^T W y, where X is the design matrix, y is the response vector,
      * and W = diag(w), where w is the weight vector.
+     *
+     * @param x the design matrix X that is stored column-first
+     * @param y the response vector y
+     * @param weights the weight vector w
      */
     fun calculateBeta(x: Array<DoubleArray>, y: F64Array, weights: F64Array): DoubleArray {
         check(weights.size == y.size) { "weights and y have different size" }
@@ -49,23 +53,25 @@ object WLSRegression {
         val inverse = calculateBetaVariance(x, weights)
         val Wy = weights * y
         val XTWy = DoubleArray(x.size) { i -> x[i].asF64Array().dot(Wy) }
-        return DoubleArray(x.size) { inverse.getRow(it).asF64Array().dot(XTWy) }
+        return DoubleArray(x.size) { inverse[it].asF64Array().dot(XTWy) }
     }
 
     /**
      * Calculates (X^T W X)^{-1}, the variance multiplier of Var beta.
      *
      * Var beta = sigma^2 (X^T W X)^{-1}
+     *
+     * @return (X^T W X)^{-1}. Since the matrix is symmetric, the storage orientation is not important.
      */
-    fun calculateBetaVariance(x: Array<DoubleArray>, weights: F64Array): RealMatrix {
+    fun calculateBetaVariance(x: Array<DoubleArray>, weights: F64Array): Array<DoubleArray> {
         // the resulting matrix is symmetric by construction, let's not waste time computing the upper half
-        val XTOIX = Array(x.size) { i ->
+        val XTWX = Array(x.size) { i ->
             DoubleArray(x.size) { j ->
                 if (i < j) 0.0 else x[i].asF64Array().times(weights).dot(x[j].asF64Array())
             }
         }
         // fill the upper half
-        XTOIX.indices.forEach { i -> XTOIX.indices.forEach { j -> if (i < j) XTOIX[i][j] = XTOIX[j][i] }}
-        return LUDecomposition(Array2DRowRealMatrix(XTOIX)).solver.inverse
+        XTWX.indices.forEach { i -> XTWX.indices.forEach { j -> if (i < j) XTWX[i][j] = XTWX[j][i] }}
+        return (LUDecomposition(Array2DRowRealMatrix(XTWX)).solver.inverse as Array2DRowRealMatrix).dataRef
     }
 }

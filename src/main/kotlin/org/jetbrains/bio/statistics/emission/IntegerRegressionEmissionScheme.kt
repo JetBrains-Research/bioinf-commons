@@ -1,9 +1,6 @@
 package org.jetbrains.bio.statistics.emission
 import org.apache.commons.math3.distribution.FDistribution
-import org.apache.commons.math3.linear.ArrayRealVector
-import org.apache.commons.math3.linear.LUDecomposition
-import org.apache.commons.math3.linear.RealMatrix
-import org.apache.commons.math3.linear.RealVector
+import org.apache.commons.math3.linear.*
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.asF64Array
@@ -236,8 +233,8 @@ abstract class IntegerRegressionEmissionScheme(
         val XTWXI = WLSRegression.calculateBetaVariance(X, W.asF64Array())
         val RBeta = R.transpose().operate(ArrayRealVector(regressionCoefficients))
         val RBetaMinusr = RBeta.subtract(r)
-        val inverse = LUDecomposition(R.transpose().multiply(XTWXI).multiply(R)).solver.inverse
-        val Fstat = inverse.operate(RBetaMinusr).dotProduct(RBetaMinusr) / (r.dimension*sigma2)
+        val inverse = LUDecomposition(R.transpose().multiply(Array2DRowRealMatrix(XTWXI)).multiply(R)).solver.inverse
+        val Fstat = inverse.operate(RBetaMinusr).dotProduct(RBetaMinusr) / (r.dimension * sigma2)
         val cumulativeProb = FDistribution(
             r.dimension.toDouble(), (X[0].size - X.size).toDouble()
         ).cumulativeProbability(Fstat)
