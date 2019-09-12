@@ -81,7 +81,6 @@ class WLSRegressionTest {
         val weights = doubleArrayOf(0.180464329, 0.825891734, 0.008628437, 0.696381745).asF64Array()
         val expectedBeta = doubleArrayOf(0.95045, -0.20516, -0.45993)
         val actualBeta = WLSRegression.calculateBeta(WLSRegression.designMatrix(x), y, weights)
-        assertEquals(expectedBeta.size, actualBeta.size)
-        expectedBeta.zip(actualBeta) { e, a -> assertEquals(e, a, 1E-5) }
+        Tests.assertEquals(expectedBeta, actualBeta, 1E-5)
     }
 }
