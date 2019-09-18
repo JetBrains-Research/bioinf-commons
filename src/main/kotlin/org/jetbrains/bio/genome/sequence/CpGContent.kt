@@ -1,6 +1,7 @@
 package org.jetbrains.bio.genome.sequence
 
 import com.google.common.annotations.VisibleForTesting
+import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.Location
 
 /**
@@ -129,6 +130,18 @@ enum class CpGContent {
                 }
             }
             return cg
+        }
+
+        /**
+         * Slice the given chromosome into bins and return an array containing the mean GC content for each bin.
+         */
+        fun binnedMeanCG(chromosome: Chromosome, binSize: Int): DoubleArray {
+            val sequence = chromosome.sequence
+            return chromosome.range.slice(binSize).mapToDouble { bin ->
+                (bin.startOffset until bin.endOffset).count { pos ->
+                    sequence.charAt(pos).let { it == 'c' || it == 'g' }
+                }.toDouble() / bin.length()
+            }.toArray()
         }
     }
 }
