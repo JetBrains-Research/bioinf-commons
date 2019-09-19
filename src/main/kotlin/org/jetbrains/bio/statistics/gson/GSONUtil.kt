@@ -127,9 +127,11 @@ object GSONUtil {
                 val element = Streams.parse(`in`)
                 val modelFQNElement = element.asJsonObject.remove(fqnField)
                 val modelFormatVersElement = element.asJsonObject.remove(versionField)
-                if (modelFQNElement == null || modelFormatVersElement == null) {
-                    deserializationError("Model class name (%s) or version field (%s) is missing."
-                                         + " Please, recalculate the model.", fqnField, versionField)
+                if (modelFQNElement == null) {
+                    deserializationError("Class name ($fqnField) is missing.")
+                }
+                if (modelFormatVersElement == null) {
+                    deserializationError("Version field ($versionField) is missing.")
                 }
                 val fqn = modelFQNElement!!.asString
                 val vers = modelFormatVersElement!!.asString
@@ -138,14 +140,14 @@ object GSONUtil {
                 try {
                     aClass = Class.forName(fqn) as Class<T>
                 } catch (e: ClassNotFoundException) {
-                    deserializationError("Cannot load model class %s", fqn, cause = e)
+                    deserializationError("Cannot load class %s", fqn, cause = e)
                     return null
                 }
 
 
                 val recentVersion = getSerializationFormatVersion(aClass)
                 if (recentVersion != vers) {
-                    deserializationError("Format has changed, '%s' expects '%s' version, but was '%s'",
+                    deserializationError("Format has changed, '%s' expects '%s' version, but got '%s'",
                                          fqn, recentVersion, vers)
                 }
 
