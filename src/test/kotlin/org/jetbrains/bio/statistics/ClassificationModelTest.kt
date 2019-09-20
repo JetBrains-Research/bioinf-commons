@@ -48,8 +48,7 @@ class ClassificationModelTest {
             path.bufferedWriter().use { gson.toJson(obj, it) }
 
             thrown.expect(JsonParseException::class.java)
-            thrown.expectMessage("Deserialization error: Model class name (model.class.fqn) or version" +
-                                 " field (model.class.format) is missing. Please, recalculate the model.")
+            thrown.expectMessage("Deserialization error: Class name (model.class.fqn) is missing.")
             ClassificationModel.load<Boo>(path)
         }
     }
@@ -76,7 +75,7 @@ class ClassificationModelTest {
 
             thrown.expect(JsonParseException::class.java)
             thrown.expectMessage("Deserialization error: Format has changed, " +
-                                 "'org.jetbrains.bio.statistics.Boo' expects '123' version, but was '222'")
+                                 "'org.jetbrains.bio.statistics.Boo' expects '123' version, but got '222'")
             ClassificationModel.load<Boo>(path)
         }
     }
@@ -92,7 +91,7 @@ class ClassificationModelTest {
 
             thrown.expect(JsonParseException::class.java)
             thrown.expectMessage("Deserialization error: Format has changed, " +
-                                 "'org.jetbrains.bio.statistics.Boo' expects '666' version, but was '222'")
+                                 "'org.jetbrains.bio.statistics.Boo' expects '666' version, but got '222'")
 
             ClassificationModel.load<Boo>(path)
         }
