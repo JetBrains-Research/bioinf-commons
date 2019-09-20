@@ -27,7 +27,7 @@ class ClassificationModelTest {
                      "  \"value\": 1,\n" +
                      "  \"name\": \"bboo\",\n" +
                      "  \"model.class.fqn\": \"org.jetbrains.bio.statistics.Boo\",\n" +
-                     "  \"model.class.format\": \"222\"\n}",
+                     "  \"model.class.format\": 222\n}",
                 path.read())
     }
 
@@ -59,7 +59,7 @@ class ClassificationModelTest {
         assertEquals("{\n  \"value\": NaN,\n  " +
                      "\"name\": \"NaN-boo\",\n  " +
                      "\"model.class.fqn\": \"org.jetbrains.bio.statistics.NanBoo\",\n  " +
-                     "\"model.class.format\": \"0\"\n}",
+                     "\"model.class.format\": 0\n}",
                 path.read())
 
         assertEquals(nanBoo, ClassificationModel.load<NanBoo>(path))
