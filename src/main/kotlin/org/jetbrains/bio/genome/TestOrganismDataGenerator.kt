@@ -256,7 +256,7 @@ object TestOrganismDataGenerator {
      */
     private fun generateRepeats(genome: Genome) {
         LOG.info("Generating repeat annotations (stub)")
-        genome.repeatsPath.bufferedWriter().use { w ->
+        genome.repeatsPath!!.bufferedWriter().use { w ->
             // This is the first line from mm9 annotations.
             w.write("607\t687\t174\t0\t0\tchr1\t3000001\t3000156\t-194195276\t-" +
                     "\tL1_Mur2\tLINE\tL1\t-4310\t1567\t1413\t1")

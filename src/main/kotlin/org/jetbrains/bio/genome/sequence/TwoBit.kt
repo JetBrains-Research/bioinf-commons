@@ -11,7 +11,6 @@ import gnu.trove.list.array.TIntArrayList
 import gnu.trove.map.TObjectIntMap
 import gnu.trove.map.hash.TObjectIntHashMap
 import org.jetbrains.bio.io.FastaReader
-import org.jetbrains.bio.io.FastaRecord
 import org.jetbrains.bio.util.size
 import java.io.DataOutput
 import java.io.DataOutputStream
@@ -368,40 +367,42 @@ object TwoBitReader {
 object TwoBitWriter {
     @Throws(IOException::class)
     @JvmStatic fun convert(fastaPath: Path, twoBitPath: Path) {
-        convert(Collections.unmodifiableList(FastaReader.read(fastaPath).collect(Collectors.toList())), twoBitPath)
+        val chrNames = FastaReader.read(fastaPath, false)
+            .map { it.description.split(' ').first() }
+            .collect(Collectors.toList())
+        convert(chrNames, fastaPath, twoBitPath)
     }
 
     @Throws(IOException::class)
-    fun convert(records: List<FastaRecord>, twoBitPath: Path) {
+    fun convert(chrNames: List<String>, fastaPath: Path, twoBitPath: Path) {
         RandomAccessFile(twoBitPath.toFile(), "rw").use { raf ->
             // XXX this always uses BE byte order.
             with(raf) {
                 writeInt(TwoBitReader.MAGIC)
                 writeInt(0)  // version.
-                writeInt(records.size)
+                writeInt(chrNames.size)
                 writeInt(0)  // reserved.
 
-                val index = IntArray(records.size)
-                for (i in records.indices) {
-                    val record = records[i]
-                    write(record.description.length)
-                    writeBytes(record.description)
+                val index = IntArray(chrNames.size)
+                chrNames.forEachIndexed { i, chrName ->
+                    write(chrName.length)
+                    writeBytes(chrName)
                     index[i] = Ints.checkedCast(filePointer)
                     writeInt(0)
                 }
 
-                for (i in records.indices) {
-                    val record = records[i]
+                var recIdx = 0
+                FastaReader.read(fastaPath, true).forEach { record ->
                     val offset = Ints.checkedCast(filePointer)
-                    seek(index[i].toLong())
+                    seek(index[recIdx].toLong())
                     writeInt(offset)
                     seek(offset.toLong())
 
-                    val outputStream = Channels.newOutputStream(raf.channel)
-                            .buffered()
-                    TwoBitSequence.encode(record.sequence)
-                            .write(DataOutputStream(outputStream))
+                    val outputStream = Channels.newOutputStream(raf.channel).buffered()
+                    TwoBitSequence.encode(record.sequence).write(DataOutputStream(outputStream))
                     outputStream.flush()
+
+                    recIdx++
                 }
             }
         }

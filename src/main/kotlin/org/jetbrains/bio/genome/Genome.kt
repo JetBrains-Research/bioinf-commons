@@ -10,6 +10,7 @@ import org.apache.log4j.Logger
 import org.jetbrains.bio.Configuration
 import org.jetbrains.bio.genome.sequence.TwoBitReader
 import org.jetbrains.bio.genome.sequence.TwoBitSequence
+import org.jetbrains.bio.genome.sequence.TwoBitWriter
 import org.jetbrains.bio.util.*
 import java.io.IOException
 import java.io.UncheckedIOException
@@ -54,14 +55,13 @@ class Genome private constructor(
 
         val cpgIslandsPath: Path?,
         val cytobandsPath: Path?,
-        repeatsPath: Path?,
+        val repeatsPath: Path?,
         gapsPath: Path?,
         private val twoBitPath: Path?,
         private val genesGTFPath: Path?,
         genesDescriptionsPath: Path?
 ) {
     val chromSizesPath by lazy { ensureNotNull(chromSizesPath, "Chromosomes Sizes") }
-    val repeatsPath by lazy { ensureNotNull(repeatsPath, "Repeats") }
     val gapsPath by lazy { ensureNotNull(gapsPath, "Gaps") }
     fun twoBitPath(downloadIfMissed: Boolean = true) =
             ensureNotNull(twoBitPath, "Genome *.2bit Sequence").also { twoBitPath ->
@@ -71,7 +71,20 @@ class Genome private constructor(
                         requireNotNull(config) {
                             "Cannot save Genome Sequence to $twoBitPath. Annotations information for $build isn't available."
                         }
-                        config.sequenceUrl.downloadTo(output.path)
+                        val sUrl = config.sequenceUrl
+                        when {
+                            sUrl.endsWith(".2bit") -> sUrl.downloadTo(output.path)
+
+                            else -> {
+                                val suffix = listOf(".fa", ".fa.gz", ".fasta", ".fasta.gz").firstOrNull() { sUrl.endsWith(it) }
+                                requireNotNull(suffix) { "Unsupported sequence type: $sUrl" }
+
+                                val faPath = "${output.path}$suffix".toPath()
+                                sUrl.downloadTo(faPath)
+                                TwoBitWriter.convert(faPath, output.path)
+                                faPath.delete()
+                            }
+                        }
                     }
                 }
             }
@@ -143,9 +156,23 @@ class Genome private constructor(
         val map = hashMapOf<String, Chromosome>()
         for (chr in chromosomes) {
             val name = chr.name
-            map[name.substringAfter("chr")] = chr
+            val altName = if (name.startsWith("chr")) {
+                name.substring(3)
+            } else {
+                "chr$name"
+            }
+            map[altName] = chr
+            map[altName.toLowerCase()] = chr
             map[name] = chr
             map[name.toLowerCase()] = chr
+        }
+        val chrAltName2CanonicalMapping = annotationsConfig?.chrAltName2CanonicalMapping ?: emptyMap()
+        chrAltName2CanonicalMapping.forEach {(altName,canonicalName) ->
+            val chr = map[canonicalName]
+            requireNotNull(chr) {
+                "Unknown chromosome '$canonicalName' in genome[$build, chrom.sizes: $chromSizesPath]"
+            }
+            map[altName] = chr
         }
         map
     }
@@ -155,8 +182,22 @@ class Genome private constructor(
     val genes: List<Gene> by lazy { groupTranscripts(transcripts) }
 
     fun presentableName(): String {
-        val alias = annotationsConfig?.alias?.let { " ($it)" } ?: ""
-        return "${annotationsConfig?.species ?: "Unknown Species"}: $build$alias"
+        val additional = StringBuffer()
+        annotationsConfig?.alias?.let {
+            if (it.isNotEmpty()) {
+                additional.append(it)
+            }
+        }
+        annotationsConfig?.description?.let {
+            if (it.isNotEmpty()) {
+                if (additional.isNotEmpty()) {
+                    additional.append("; ")
+                }
+                additional.append(it)
+            }
+        }
+        val additionalStr = if (additional.isEmpty()) "" else " [$additional]"
+        return "${annotationsConfig?.species ?: "Unknown Species"}: $build$additionalStr"
     }
 
     private fun <T: Any> ensureNotNull(value:T?, tag: String): T {
@@ -189,7 +230,7 @@ class Genome private constructor(
 
                     val annCfg: GenomeAnnotationsConfig = when {
                         to -> GenomeAnnotationsConfig(
-                            "Test Organism", null, "<n/a>", emptyMap(), false,
+                            "Test Organism", null, "test", "<n/a>", emptyMap(), false,
                             "<n/a>", "<n/a>", "<n/a>", "<n/a>", "<n/a>",
                             null, "<n/a>", null)
 

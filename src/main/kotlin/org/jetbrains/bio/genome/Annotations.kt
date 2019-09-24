@@ -3,6 +3,7 @@ package org.jetbrains.bio.genome
 import com.google.common.base.Joiner
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
+import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.ImmutableListMultimap
 import com.google.common.collect.LinkedListMultimap
 import com.google.common.collect.ListMultimap
@@ -46,9 +47,9 @@ object Repeats {
     private val CACHE = cache<Repeat>()
     internal const val FILE_NAME = "rmsk.txt.gz"
 
-    fun repeatsPath(genome: Genome): Path {
+    fun repeatsPath(genome: Genome): Path? {
         val repeatsPath = genome.repeatsPath
-        return repeatsPath.checkOrRecalculate("Repeats") { output ->
+        return repeatsPath?.checkOrRecalculate("Repeats") { output ->
             val config = genome.annotationsConfig
             requireNotNull(config) {
                 "Cannot save Repeats to $repeatsPath. Annotations information isn't available for ${genome.build}."
@@ -56,11 +57,11 @@ object Repeats {
 
             if (config.ucscAnnLegacyFormat) {
                 // Builds with per-chromosome repeat annotations.
-                val prefix = config.repeatsUrl.substringBeforeLast("/")
-                val template = "%s_${config.repeatsUrl.substringAfterLast("/")}"
+                val prefix = config.repeatsUrl!!.substringBeforeLast("/")
+                val template = "%s_${config.repeatsUrl!!.substringAfterLast("/")}"
                 UCSC.downloadBatchTo(output.path, genome, "$prefix/", template)
             } else {
-                config.repeatsUrl.downloadTo(output.path)
+                config.repeatsUrl!!.downloadTo(output.path)
             }
         }
     }
@@ -72,7 +73,7 @@ object Repeats {
             "repeat_end", "repeat_left", "id")
 
     internal fun all(genome: Genome) = CACHE.get(genome) {
-        read(genome, repeatsPath(genome))
+        repeatsPath(genome)?.let { read(genome, it) } ?: ArrayListMultimap.create()
     }
 
 
@@ -122,7 +123,7 @@ object CytoBands {
         return CACHE.get(genome) {
             val path = genome.cytobandsPath
             if (path == null ) {
-                LinkedListMultimap.create()
+                ArrayListMultimap.create()
             } else {
                 path.checkOrRecalculate("CytoBands") { output ->
                     val config = genome.annotationsConfig

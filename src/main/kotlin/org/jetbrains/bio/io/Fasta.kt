@@ -21,7 +21,7 @@ import java.util.stream.StreamSupport
  *
  * @author Sergei Lebedev
  */
-class FastaReader {
+class FastaReader(val readSequence: Boolean) {
     private fun read(it: PeekingIterator<String>): UnmodifiableIterator<FastaRecord> {
         return object : UnmodifiableIterator<FastaRecord>() {
             var next: FastaRecord? = null
@@ -33,7 +33,10 @@ class FastaReader {
 
                     val sequence = StringBuilder()
                     while (it.hasNext() && it.peek()[0] != '>') {
-                        sequence.append(it.next())
+                        val line = it.next()
+                        if (readSequence) {
+                            sequence.append(line)
+                        }
                     }
 
                     next = FastaRecord(description.substring(1), sequence.toString())
@@ -53,11 +56,11 @@ class FastaReader {
 
     companion object {
         @Throws(IOException::class)
-        fun read(path: Path): Stream<FastaRecord> {
+        fun read(path: Path, readSequence: Boolean = true): Stream<FastaRecord> {
             val lines = path.bufferedReader().lines()
                     .map { CharMatcher.whitespace().trimFrom(it) }
                     .filter(String::isNotEmpty)
-            val iterator = FastaReader().read(Iterators.peekingIterator(lines.iterator()))
+            val iterator = FastaReader(readSequence).read(Iterators.peekingIterator(lines.iterator()))
             return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false)
         }
     }

@@ -4,11 +4,12 @@ genomes:
   mm9:
     species: Mus musculus
     alias: NCBIM37
+    description: "mm9 descr"
     biomart:
       url: http://may2012.archive.ensembl.org/biomart/martservice
       dataset: mmusculus_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-67/gtf/mus_musculus/Mus_musculus.NCBIM37.67.gtf.gz
-    gtf_chrs:
+    chr_alt_name_to_canonical:
       - MT: chrM
 
     ucsc_annotations_legacy: True
@@ -23,12 +24,13 @@ genomes:
   hg19:
     species: Homo sapiens
     alias: GRCh37
+    description: "hg19 descr"
     biomart:
       url: http://feb2014.archive.ensembl.org/biomart/martservice
       dataset: hsapiens_gene_ensembl
     # Most recent is: "/pub/grch37/current/gtf/homo_sapiens/Homo_sapiens.GRCh37.*.gtf.gz" //87  
     gtf: ftp://anonymous@ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz
-    gtf_chrs:
+    chr_alt_name_to_canonical:
       - MT: chrM
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz
     cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz
@@ -41,12 +43,13 @@ genomes:
   hg38:
     species: Homo sapiens
     alias: GRCh38
+    description: "hg38 descr"
     biomart:
       url: http://mar2016.archive.ensembl.org/biomart/martservice
       dataset: hsapiens_gene_ensembl
     # Most recent is: "/pub/current-gtf/homo_sapiens/Homo_sapiens.GRCh38.*.gtf.gz" // 91  
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-89/gtf/homo_sapiens/Homo_sapiens.GRCh38.89.gtf.gz
-    gtf_chrs:
+    chr_alt_name_to_canonical:
       - MT: chrM
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/rmsk.txt.gz
     cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/cytoBand.txt.gz
@@ -61,11 +64,12 @@ genomes:
   dm3:
     species: Drosophila melanogaster
     alias: BDGP5
+    description: "dm3 descr"
     biomart:
       url: http://dec2014.archive.ensembl.org/biomart/martservice
       dataset: dmelanogaster_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-78/gtf/drosophila_melanogaster/Drosophila_melanogaster.BDGP5.78.gtf.gz
-    gtf_chrs:
+    chr_alt_name_to_canonical:
       - mitochondrion_genome: chrM
     ucsc_annotations_legacy: True
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/dm3/database/rmsk.txt.gz
@@ -79,6 +83,7 @@ genomes:
   ce6:
     species: Caenorhabditis elegans
     alias: WS190
+    description: "ce6 descr"
     biomart:
       url: http://may2009.archive.ensembl.org/biomart/martservice
       dataset: celegans_gene_ensembl

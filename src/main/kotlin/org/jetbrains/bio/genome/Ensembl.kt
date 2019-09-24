@@ -16,7 +16,7 @@ import kotlin.math.min
 object Ensembl {
 
     fun convertGTF(genome: Genome, inputStream: BufferedReader, outputPath: Path) {
-        val mapping = genome.annotationsConfig?.gtfChrsMapping ?: emptyMap()
+        val mapping = genome.annotationsConfig?.chrAltName2CanonicalMapping ?: emptyMap()
         val writer = outputPath.bufferedWriter()
         for (line in inputStream.lines()) {
             if (line.startsWith("#")) {
@@ -44,10 +44,10 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
     fun readTranscripts(): List<Transcript> {
         var hasDetailedUTRInfo: Boolean? = null
         val transcriptsMap = HashMap<String, TranscriptInfo>()
-        val chrsMapping = genome.annotationsConfig?.gtfChrsMapping ?: emptyMap()
         val genomeQuery = genome.toQuery()
+        val chrNamesMap =  genome.chromosomeNamesMap
         for (line in reader.lineSequence()) {
-            val featureType = parseLine(line, transcriptsMap, genomeQuery, chrsMapping)
+            val featureType = parseLine(line, transcriptsMap, genomeQuery, chrNamesMap)
 
             if (hasDetailedUTRInfo == null) {
                 if (featureType == "five_prime_utr" || featureType == "three_prime_utr") {
@@ -124,9 +124,11 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
         return transcripts
     }
 
-    private fun parseLine(line: String, transcriptsMap: HashMap<String, TranscriptInfo>,
-                          genomeQuery: GenomeQuery,
-                          chrsMapping: Map<String, String>): String? {
+    private fun parseLine(
+        line: String, transcriptsMap: HashMap<String, TranscriptInfo>,
+        genomeQuery: GenomeQuery,
+        chrsNamesMapping: Map<String, Chromosome>
+    ): String? {
 
         if (line.startsWith("#")) {
             return null
@@ -143,7 +145,10 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
         val chrStr = parts[0]
         val type = parts[2]
 
-        val chr = genomeQuery[chrsMapping.getOrDefault(chrStr, chrStr)] ?: return type
+        val chr = chrsNamesMapping[chrStr]?.let { chr ->
+            if (genomeQuery.accepts(chr)) chr else null
+        } ?: return type
+        
         when (type) {
             // just not to write long if condition:
             "transcript", "exon", "CDS", "start_codon", "three_prime_utr" -> { /* noop */ }

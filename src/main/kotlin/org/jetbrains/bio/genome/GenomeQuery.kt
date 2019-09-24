@@ -23,10 +23,11 @@ class GenomeQuery (val genome: Genome, vararg names: String) {
         get() = genome.build
 
     private val chromosomes: List<Chromosome> by lazy {
-        genome.chromosomes.filter { restriction == null || it.name in restriction }
+        genome.chromosomes.filter { accepts(it) }
     }
 
     fun get(): List<Chromosome> = chromosomes
+    fun accepts(chromosome: Chromosome) = restriction == null || chromosome.name in restriction
 
     val id: String
         get() = build + if (restriction != null) "[${restriction.sorted().joinToString(",")}]" else ""

@@ -1,15 +1,16 @@
 ---
-version: 3
+version: 4
 genomes:
   # http://www.ensembl.org/Mus_musculus
   mm9:
     species: Mus musculus
     alias: NCBIM37
+    description: 'Jul. 2007, genes Ensembl 67 (May 2012)'
     biomart:
       url: http://may2012.archive.ensembl.org/biomart/martservice
       dataset: mmusculus_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-67/gtf/mus_musculus/Mus_musculus.NCBIM37.67.gtf.gz
-    gtf_chrs:
+    chr_alt_name_to_canonical:
       - MT: chrM
 
     ucsc_annotations_legacy: True
@@ -24,12 +25,14 @@ genomes:
   mm10:
     species: Mus musculus
     alias: GRCm38
+    description: 'Dec. 2011, genes Ensembl 97 (March 2019)'
     biomart:
       url: http://mar2016.archive.ensembl.org/biomart/martservice
       dataset: mmusculus_gene_ensembl
-    # Most recent is: "/pub/current-gtf/gtf/Mus_musculus.GRCm38.*.gtf.gz" // 91
-    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-87/gtf/mus_musculus/Mus_musculus.GRCm38.87.gtf.gz
-    gtf_chrs:
+    # Most recent is: "/pub/current-gtf/gtf/Mus_musculus.GRCm38.*.gtf.gz"
+    # http://www.ensembl.org/Mus_musculus/Info/Index
+    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-97/gtf/mus_musculus/Mus_musculus.GRCm38.97.gtf.gz
+    chr_alt_name_to_canonical:
       - MT: chrM
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/mm10/database/rmsk.txt.gz
     cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/mm10/database/cytoBand.txt.gz
@@ -43,11 +46,12 @@ genomes:
   hg18:
     species: Homo sapiens
     alias: NCBI36
+    description: "Mar. 2006"
     biomart:
       url: http://may2009.archive.ensembl.org/biomart/martservice
       dataset: hsapiens_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-54/gtf/homo_sapiens/Homo_sapiens.NCBI36.54.gtf.gz
-    gtf_chrs:
+    chr_alt_name_to_canonical:
       - MT: chrM
     ucsc_annotations_legacy: True
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/rmsk.txt.gz
@@ -61,12 +65,13 @@ genomes:
   hg19:
     species: Homo sapiens
     alias: GRCh37
+    description: 'Feb. 2009, genes Ensembl 87 (Dec 2016)'
     biomart:
       url: http://feb2014.archive.ensembl.org/biomart/martservice
       dataset: hsapiens_gene_ensembl
     # Most recent is: "/pub/grch37/current/gtf/homo_sapiens/Homo_sapiens.GRCh37.*.gtf.gz" //87
     gtf: ftp://anonymous@ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz
-    gtf_chrs:
+    chr_alt_name_to_canonical:
       - MT: chrM
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz
     cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz
@@ -76,15 +81,63 @@ genomes:
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.2bit
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.chrom.sizes
 
+  hs37-1kg:
+    species: Homo sapiens
+    alias: b37
+    description: 'Mar 2011, GRCh37.p4 w/o alt contigs + rCRS MT genome, genes Ensembl 87 (Dec 2016)'
+    biomart:
+      url: http://feb2014.archive.ensembl.org/biomart/martservice
+      dataset: hsapiens_gene_ensembl
+    # Most recent is: "/pub/grch37/current/gtf/homo_sapiens/Homo_sapiens.GRCh37.*.gtf.gz" // e.g. 87
+    gtf: ftp://anonymous@ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz
+    chr_alt_name_to_canonical:
+      - chrM: MT
+    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz # XXX: only main chrs matches the reference
+    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz # ok, only chr1..22,X,Y in cytoBands
+    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/gap.txt.gz # XXX: only main chrs matches the reference
+    # centromeres:  n/a
+
+    # Generate using UCSC 'cpg_lh' tool:
+    #     cpg_lh hs37-1kg.fa | awk '{$2 = $2 - 1; width = $3 - $2; printf("%s\t%d\t%s\t%s %s\t%s\t%s\t%0.0f\t%0.1f\t%s\t%s\n",  \
+    #           $1, $2, $3, $5, $6, width, $6, width*$7*0.01, 100.0*2*$6/width, $7, $9);}' | sort -k1,1 -k2,2n | \
+    #           gzip > cpgIslandExt.txt.gz
+    cgis: http://localhost/cpgIslandExt.txt.gz # XXX: fake url, generate using UCSC 'cpg_lh' tool manually
+    sequence: ftp://anonymous@ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/human_g1k_v37.fasta.gz  # XXX: fake url, put file in genome dir manually, *.fasta.gz conversion not supported at the moment
+    chromsizes: http://localhost/hs37-1kg.chrom.sizes # XXX: fake url, use ucsc tool 'twoBitInfo' to generate this file
+
+  hs37d5:
+    species: Homo sapiens
+    alias: b37_decoy
+    description: 'Mar 2011, GRCh37.p4 w/o alt contigs + rCRS MT, EBV, decoy genomes, genes Ensembl 87 (Dec 2016)'
+    biomart:
+      url: http://feb2014.archive.ensembl.org/biomart/martservice
+      dataset: hsapiens_gene_ensembl
+    # Most recent is: "/pub/grch37/current/gtf/homo_sapiens/Homo_sapiens.GRCh37.*.gtf.gz" // e.g. 87
+    gtf: ftp://anonymous@ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz
+    chr_alt_name_to_canonical:
+      - chrM: MT
+    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz # XXX: only main chrs matches the reference
+    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz  # ok, only chr1..22,X,Y in cytoBands
+    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/gap.txt.gz # XXX: only main chrs matches the reference
+    # centromeres:  n/a
+    # Generate using UCSC 'cpg_lh' tool:
+    #     cpg_lh hs37d5.fa | awk '{$2 = $2 - 1; width = $3 - $2; printf("%s\t%d\t%s\t%s %s\t%s\t%s\t%0.0f\t%0.1f\t%s\t%s\n",  \
+    #           $1, $2, $3, $5, $6, width, $6, width*$7*0.01, 100.0*2*$6/width, $7, $9);}' | sort -k1,1 -k2,2n | \
+    #           gzip > cpgIslandExt.txt.gz
+    cgis: http://localhost/cpgIslandExt.txt.gz # XXX: fake url, generate using UCSC 'cpg_lh' tool manually
+    sequence: ftp://anonymous@ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz  # XXX: fake url, put file in genome dir manually, *.fasta.gz conversion not supported at the moment
+    chromsizes: http://localhost/hs37d5.chrom.sizes # XXX: fake url, use ucsc tool 'twoBitInfo' to generate this file
+
   hg38:
     species: Homo sapiens
     alias: GRCh38
+    description: 'Dec. 2013, genes Ensembl 96 (Mar 2019)'
     biomart:
-      url: http://mar2016.archive.ensembl.org/biomart/martservice
+      url: http://apr2019.archive.ensembl.org/biomart/martservice
       dataset: hsapiens_gene_ensembl
-    # Most recent is: "/pub/current-gtf/homo_sapiens/Homo_sapiens.GRCh38.*.gtf.gz" // 91
-    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-89/gtf/homo_sapiens/Homo_sapiens.GRCh38.89.gtf.gz
-    gtf_chrs:
+    # Most recent is: "/pub/current-gtf/homo_sapiens/Homo_sapiens.GRCh38.*.gtf.gz" // e.g. 97
+    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-97/gtf/homo_sapiens/Homo_sapiens.GRCh38.97.gtf.gz
+    chr_alt_name_to_canonical:
       - MT: chrM
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/rmsk.txt.gz
     cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/cytoBand.txt.gz
@@ -98,11 +151,12 @@ genomes:
   dm3:
     species: Drosophila melanogaster
     alias: BDGP5
+    description: 'Apr. 2006, genes Ensembl 78'
     biomart:
       url: http://dec2014.archive.ensembl.org/biomart/martservice
       dataset: dmelanogaster_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-78/gtf/drosophila_melanogaster/Drosophila_melanogaster.BDGP5.78.gtf.gz
-    gtf_chrs:
+    chr_alt_name_to_canonical:
       - mitochondrion_genome: chrM
     ucsc_annotations_legacy: True
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/dm3/database/rmsk.txt.gz
@@ -116,11 +170,12 @@ genomes:
   dm6:
     species: Drosophila melanogaster
     alias: BDGP6
+    description: 'Aug. 2014, genes Ensembl 97 (May 2014)'
     biomart:
       url: http://oct2016.archive.ensembl.org/biomart/martservice
       dataset: dmelanogaster_gene_ensembl
-    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-92/gtf/drosophila_melanogaster/Drosophila_melanogaster.BDGP6.92.gtf.gz
-    gtf_chrs:
+    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-97/gtf/drosophila_melanogaster/Drosophila_melanogaster.BDGP6.22.97.gtf.gz
+    chr_alt_name_to_canonical:
       - mitochondrion_genome: chrM
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/dm6/database/rmsk.txt.gz
     cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/dm6/database/cytoBand.txt.gz
@@ -134,11 +189,12 @@ genomes:
   danRer7:
     species: Zebrafish (Danio rerio)
     alias: Zv9
+    description: 'Jul. 2010, genes Ensembl 79'
     biomart:
       url: http://mar2015.archive.ensembl.org/biomart/martservice
       dataset: drerio_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-79/gtf/danio_rerio/Danio_rerio.Zv9.79.gtf.gz
-    gtf_chrs:
+    chr_alt_name_to_canonical:
       - MT: chrM
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/danRer7/database/rmsk.txt.gz
     cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/danRer7/database/cytoBandIdeo.txt.gz
@@ -151,11 +207,12 @@ genomes:
   danRer10:
     species: Zebrafish (Danio rerio)
     alias: GRCz10
+    description: 'Sep. 2014, genes Ensembl 91'
     biomart:
       url: http://dec2017.archive.ensembl.org/biomart/martservice
       dataset: drerio_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-91/gtf/danio_rerio/Danio_rerio.GRCz10.91.gtf.gz
-    gtf_chrs:
+    chr_alt_name_to_canonical:
       - MT: chrM
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/danRer10/database/rmsk.txt.gz
     cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/danRer10/database/cytoBandIdeo.txt.gz
@@ -168,12 +225,13 @@ genomes:
   danRer11:
     species: Zebrafish (Danio rerio)
     alias: GRCz11
+    description: 'May 2017, genes Ensembl 97 (Apr. 2018)'
     biomart:
-      # XXX: mirror not mentioned anywhere but works, apr2018 is release date for vers 92
-      url: http://apr2018.archive.ensembl.org/biomart/martservice
+      # XXX: mirror not mentioned anywhere but works, apr2019 is release date for vers 96
+      url: http://apr2019.archive.ensembl.org/biomart/martservice
       dataset: drerio_gene_ensembl
-    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-92/gtf/danio_rerio/Danio_rerio.GRCz11.92.gtf.gz
-    gtf_chrs:
+    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-97/gtf/danio_rerio/Danio_rerio.GRCz11.97.gtf.gz
+    chr_alt_name_to_canonical:
       - MT: chrM
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/danRer11/database/rmsk.txt.gz
     cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/danRer11/database/cytoBandIdeo.txt.gz
@@ -186,12 +244,13 @@ genomes:
   # http://www.ensembl.org/Rattus_norvegicus
   rn5:
     species: Rattus norvegicus
+    description: 'Mar. 2012, genes Ensembl 79'
     alias: RGSC 5.0
     biomart:
       url: http://mar2015.archive.ensembl.org/biomart/martservice
       dataset: rnorvegicus_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-79/gtf/rattus_norvegicus/Rattus_norvegicus.Rnor_5.0.79.gtf.gz
-    gtf_chrs:
+    chr_alt_name_to_canonical:
       - MT: chrM
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/rn5/database/rmsk.txt.gz
     cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/rn5/database/cytoBand.txt.gz
@@ -204,12 +263,13 @@ genomes:
   rn6:
     species: Rattus norvegicus
     alias: RGSC 6.0
+    description: 'Jul. 2014, genes Ensembl 97 (Jan 2017)'
     biomart:
-      # XXX: mirror not mentioned anywhere but works, apr2018 is release date for vers 92
-      url: http://apr2018.archive.ensembl.org/biomart/martservice
+      # XXX: mirror not mentioned anywhere but works, apr2019 is release date for vers 96
+      url: http://apr2019.archive.ensembl.org/biomart/martservice
       dataset: rnorvegicus_gene_ensembl
-    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-92/gtf/rattus_norvegicus/Rattus_norvegicus.Rnor_6.0.92.gtf.gz
-    gtf_chrs:
+    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-97/gtf/rattus_norvegicus/Rattus_norvegicus.Rnor_6.0.97.gtf.gz
+    chr_alt_name_to_canonical:
       - MT: chrM
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/rn6/database/rmsk.txt.gz
     cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/rn6/database/cytoBand.txt.gz
@@ -232,7 +292,7 @@ genomes:
 #      url: http://apr2018.archive.ensembl.org/biomart/martservice
 #      dataset: hmale_gene_ensembl
 #    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-92/gtf/heterocephalus_glaber_male/Heterocephalus_glaber_male.HetGla_1.0.92.gtf.gz
-#    gtf_chrs:
+#    chr_alt_name_to_canonical:
 #      - MT: chrM
 #    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/database/rmsk.txt.gz
 #    cytobands: # n/a
@@ -252,7 +312,7 @@ genomes:
 #      url: http://apr2018.archive.ensembl.org/biomart/martservice
 #      dataset: hfemale_gene_ensembl
 #    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-92/gtf/heterocephalus_glaber_female/Heterocephalus_glaber_female.HetGla_female_1.0.92.gtf.gz
-#    gtf_chrs:
+#    chr_alt_name_to_canonical:
 #      - MT: chrM
 #    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/rmsk.txt.gz
 #    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/cytoBandIdeo.txt.gz
@@ -266,6 +326,7 @@ genomes:
   ce6:
     species: Caenorhabditis elegans
     alias: WS190
+    description: 'May. 2008, genes Ensembl 54'
     biomart:
       url: http://may2009.archive.ensembl.org/biomart/martservice
       dataset: celegans_gene_ensembl
@@ -283,6 +344,7 @@ genomes:
   ce10:
     species: Caenorhabditis elegans
     alias: WS220
+    description: 'Oct. 2010, genes Ensembl 66'
     biomart:
       # for 66 release should be feb2012.archive.ensembl.org, but it doesn't exists, let's
       # take annotations for 67 release
@@ -315,11 +377,12 @@ genomes:
   ce11:
     species: Caenorhabditis elegans
     alias: WBcel235
+    description: 'Feb. 2013, genes Ensembl 97 (Jan 2019)'
     biomart:
-      # XXX: mirror not mentioned anywhere but works, apr2018 is release date for vers 92
-      url: http://apr2018.archive.ensembl.org/biomart/martservice
+      # XXX: mirror not mentioned anywhere but works, apr2019 is release date for vers 96
+      url: http://apr2019.archive.ensembl.org/biomart/martservice
       dataset: celegans_gene_ensembl
-    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-92/gtf/caenorhabditis_elegans/Caenorhabditis_elegans.WBcel235.92.gtf.gz
+    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-97/gtf/caenorhabditis_elegans/Caenorhabditis_elegans.WBcel235.97.gtf.gz
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/ce11/database/rmsk.txt.gz
     cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/ce11/database/cytoBandIdeo.txt.gz
     gaps: http://hgdownload.cse.ucsc.edu/goldenPath/ce11/database/gap.txt.gz

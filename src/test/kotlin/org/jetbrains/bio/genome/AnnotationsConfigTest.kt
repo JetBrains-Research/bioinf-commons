@@ -17,17 +17,27 @@ class AnnotationsConfigTest {
         // XXX It's important to check that versions match, otherwise
         // AnnotationsConfig fails during static initialization and NoClassDefFound error is shown in logs
         withResource(AnnotationsConfig::class.java, "annotations.yaml") { path ->
-            val (version, _) = AnnotationsConfig.parseYaml(path)
+            val (version, _, _) = AnnotationsConfig.parseYaml(path, AnnotationsConfig.VERSION)
             assertEquals(AnnotationsConfig.VERSION, version)
+        }
+    }
+
+    @Test
+    fun parseYamlOutdated() {
+        withResource(BedParserTest::class.java, "test_annotations.yaml") { path ->
+            val (version, mapping, yaml) = AnnotationsConfig.parseYaml(path, 0)
+            assertEquals(1, version)
+            assertNull(mapping)
+            assertEquals(5, yaml.genomes.size)
         }
     }
 
     @Test
     fun parseYaml() {
         withResource(BedParserTest::class.java, "test_annotations.yaml") { path ->
-            val (version, mapping) = AnnotationsConfig.parseYaml(path)
+            val (version, mapping, _) = AnnotationsConfig.parseYaml(path, 1)
             assertEquals(1, version)
-            assertEquals(5, mapping.entries.size)
+            assertEquals(5, mapping!!.entries.size)
             assertEquals(listOf("ce6", "dm3", "hg19", "hg38", "mm9"), mapping.keys.sorted())
             assertEquals("Drosophila melanogaster", mapping["dm3"]!!.species)
             assertEquals("NCBIM37", mapping["mm9"]!!.alias)
@@ -43,8 +53,8 @@ class AnnotationsConfigTest {
                     "ftp://anonymous@ftp.ensembl.org/pub/release-67/gtf/mus_musculus/Mus_musculus.NCBIM37.67.gtf.gz",
                     mapping["mm9"]!!.gtfUrl
             )
-            assertEquals("chrM", mapping["mm9"]!!.gtfChrsMapping["MT"])
-            assertEquals("chrM", mapping["dm3"]!!.gtfChrsMapping["mitochondrion_genome"])
+            assertEquals("chrM", mapping["mm9"]!!.chrAltName2CanonicalMapping["MT"])
+            assertEquals("chrM", mapping["dm3"]!!.chrAltName2CanonicalMapping["mitochondrion_genome"])
             assertTrue(mapping["mm9"]!!.ucscAnnLegacyFormat)
             assertFalse(mapping["hg19"]!!.ucscAnnLegacyFormat)
 

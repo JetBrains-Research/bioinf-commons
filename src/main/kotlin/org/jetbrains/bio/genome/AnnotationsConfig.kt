@@ -14,7 +14,7 @@ import java.util.*
  * @author Roman.Chernyatchik
  */
 object AnnotationsConfig {
-    const val VERSION: Int = 3
+    const val VERSION: Int = 4
     private val LOG = Logger.getLogger(AnnotationsConfig::class.java)
 
     @Volatile private var pathAndYamlConfig: Pair<Path, Map<String, GenomeAnnotationsConfig>>? = null
@@ -77,25 +77,30 @@ object AnnotationsConfig {
         return pathAndYamlConfig!!.second.getValue(build)
     }
 
-    internal fun parseYaml(yamlConfig: Path): Pair<Int, Map<String, GenomeAnnotationsConfig>> {
+    internal fun parseYaml(yamlConfig: Path, currentVersion: Int): Triple<Int, Map<String, GenomeAnnotationsConfig>?, YamlMapper> {
         val yaml = YamlMapper.load(yamlConfig)
+        val yamlVers = yaml.version
+        if (yamlVers != currentVersion) {
+            return Triple(yamlVers, null, yaml)
+        }
+
         val buildsConfig = yaml.genomes.keys.map { build ->
             build to yaml[build]
         }.toMap()
 
-        return yaml.version to Collections.unmodifiableMap(buildsConfig)
+        return Triple(yamlVers, Collections.unmodifiableMap(buildsConfig), yaml)
     }
 
     private fun loadOrCreateBuild2ConfigMapping(yamlConfig: Path): Map<String, GenomeAnnotationsConfig> {
         if (yamlConfig.exists) {
             // check if outdated
-            val (version, mapping) = parseYaml(yamlConfig)
-            if (version == VERSION) {
+            val (version, mapping, yaml) = parseYaml(yamlConfig, VERSION)
+            if (mapping != null) {
                 return mapping
             }
 
             val dateFormat = SimpleDateFormat("yyyy-MM-dd")
-            val hash = mapping.hashCode().toString().sha
+            val hash = yaml.genomes.hashCode().toString().sha
             val suffix = "${dateFormat.format(Date())}.$hash"
 
             val bkPath = yamlConfig.withExtension("$suffix.yaml")
@@ -112,11 +117,11 @@ object AnnotationsConfig {
             output.path.write(text)
         }
         // ensure version
-        val (newVersion, newMapping) = parseYaml(yamlConfig)
+        val (newVersion, newMapping, _) = parseYaml(yamlConfig, VERSION)
         require(newVersion == VERSION) {
             "Bundled annotations are expected to have latest format version $VERSION but was $newVersion."
         }
-        return newMapping
+        return newMapping!!
     }
 
     internal class YamlMapper {
@@ -135,8 +140,8 @@ object AnnotationsConfig {
                 checkNotNull(genomeAttrs) { "Annotations not defined for $build" }
             }
 
-            val gtf2UCSCChrNamesMapping = if ("gtf_chrs" in genomeAttrs) {
-                (genomeAttrs["gtf_chrs"] as List<Map<String, String>>).map {
+            val chrAltName2CanonicalMapping = if ("chr_alt_name_to_canonical" in genomeAttrs) {
+                (genomeAttrs["chr_alt_name_to_canonical"] as List<Map<String, String>>).map {
                     it.entries.first().let { (k, v) -> k to v }
                 }.toMap()
             } else {
@@ -151,21 +156,26 @@ object AnnotationsConfig {
             } else {
                 null
             }
-            return GenomeAnnotationsConfig(
+            try {
+                return GenomeAnnotationsConfig(
                     genomeAttrs["species"] as String,
                     genomeAttrs["alias"] as String?,
+                    genomeAttrs["description"] as String,
                     genomeAttrs["gtf"] as String,
-                    gtf2UCSCChrNamesMapping,
+                    chrAltName2CanonicalMapping,
                     genomeAttrs["ucsc_annotations_legacy"]?.toString()?.toBoolean() ?: false,
                     genomeAttrs["sequence"] as String,
                     genomeAttrs["chromsizes"] as String,
-                    genomeAttrs["repeats"] as String,
+                    genomeAttrs["repeats"] as String?,
                     genomeAttrs["cytobands"] as String?,
                     genomeAttrs["gaps"] as String,
                     genomeAttrs["centromeres"] as String?,
                     genomeAttrs["cgis"] as String?,
                     mart
-            )
+                )
+            } catch (e: Exception) {
+                throw RuntimeException("Cannot parse: [${genomeAttrs}]", e)
+            }
         }
 
         companion object {
@@ -187,8 +197,9 @@ object AnnotationsConfig {
 /**
  * @param species Species name
  * @param alias Genome build alternative name
+ * @param description About Genome build
  * @param gtfUrl GTF genes annotations url
- * @param gtfChrsMapping GTF to UCSC chr names custom mapping
+ * @param chrAltName2CanonicalMapping Mapping of alternative chr names to canonical names from *.chrom.sizes. E.g. MT -> chrM for GTF parsing with UCSC genomes
  * @param ucscAnnLegacyFormat Legacy format provides separate file for each chromosome
  * @param sequenceUrl 2bit file url
  * @param chromsizesUrl Chromosomes size file url
@@ -200,17 +211,18 @@ object AnnotationsConfig {
  * @param cpgIslandsUrl CpG islands file url.
  */
 data class GenomeAnnotationsConfig(
-        val species: String,
-        val alias: String?,
-        val gtfUrl: String,
-        val gtfChrsMapping: Map<String, String>,
-        val ucscAnnLegacyFormat: Boolean,
-        val sequenceUrl: String,
-        val chromsizesUrl: String,
-        val repeatsUrl: String,
-        val cytobandsUrl: String?,
-        val gapsUrl: String,
-        val centromeresUrl: String?,
-        val cpgIslandsUrl: String?,
-        val mart: Mart?
+    val species: String,
+    val alias: String?,
+    val description: String?,
+    val gtfUrl: String,
+    val chrAltName2CanonicalMapping: Map<String, String>,
+    val ucscAnnLegacyFormat: Boolean,
+    val sequenceUrl: String,
+    val chromsizesUrl: String,
+    val repeatsUrl: String?,
+    val cytobandsUrl: String?,
+    val gapsUrl: String,
+    val centromeresUrl: String?,
+    val cpgIslandsUrl: String?,
+    val mart: Mart?
 )
