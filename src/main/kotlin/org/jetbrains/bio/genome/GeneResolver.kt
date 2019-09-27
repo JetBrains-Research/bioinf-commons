@@ -13,7 +13,7 @@ import org.apache.log4j.Logger
  */
 object GeneResolver {
     /** A mapping of UPPERCASE "gene names" to genes for a specific organism.  */
-    private val GENES_MAPS_CACHE
+    private val TRANSCRIPTS_MAPS_CACHE
             = Maps.newConcurrentMap<Pair<Genome, GeneAliasType>, ListMultimap<String, Transcript>>()
 
     private val LOG = Logger.getLogger(GeneResolver::class.java)
@@ -76,21 +76,21 @@ object GeneResolver {
     }
 
     private fun matching(genome: Genome, alias: String, aliasType: GeneAliasType): Sequence<Transcript> {
-        val genesMap = genesMapFor(genome, aliasType)
+        val genesMap = transcriptsMapFor(genome, aliasType)
         return genesMap[alias.toUpperCase()].asSequence()
     }
 
-    private fun genesMapFor(genome: Genome, aliasType: GeneAliasType): ListMultimap<String, Transcript> {
-        return GENES_MAPS_CACHE.computeIfAbsent(genome to aliasType) {
-            val genesMap = ImmutableListMultimap.builder<String, Transcript>()
-            for (gene in genome.transcripts) {
-                val name = gene.names[aliasType] ?: ""
+    private fun transcriptsMapFor(genome: Genome, aliasType: GeneAliasType): ListMultimap<String, Transcript> {
+        return TRANSCRIPTS_MAPS_CACHE.computeIfAbsent(genome to aliasType) {
+            val transcriptsMap = ImmutableListMultimap.builder<String, Transcript>()
+            for (transcript in genome.transcripts) {
+                val name = transcript.names[aliasType] ?: ""
                 if (name.isNotEmpty()) {
-                    genesMap.put(name.toUpperCase(), gene)
+                    transcriptsMap.put(name.toUpperCase(), transcript)
                 }
             }
 
-            genesMap.build()
+            transcriptsMap.build()
         }
     }
 }
