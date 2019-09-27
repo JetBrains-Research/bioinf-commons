@@ -14,7 +14,7 @@ import org.jetbrains.bio.viktor.F64Array
  * @since 06/09/13
  */
 abstract class MLAbstractMixture(protected val numComponents: Int, weights: F64Array) : ClassificationModel {
-    protected val logWeights: F64Array = weights.log()
+    val logWeights: F64Array = weights.log()
 
     val weights: F64Array get() = logWeights.exp()
 

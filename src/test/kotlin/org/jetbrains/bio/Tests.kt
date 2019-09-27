@@ -1,5 +1,7 @@
 package org.jetbrains.bio
 
+import kotlin.math.abs
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -48,5 +50,26 @@ object Tests {
         regex.matches(output),
         "Regex ${regex.pattern} doesn't match content:\n<$output>"
     )
+
+    fun assertDeepEquals(expected: Array<*>, actual: Array<*>) {
+        assertTrue(expected.contentDeepEquals(actual), "Array contents differ")
+    }
+
+    fun assertEquals(expected: Double, actual: Double, precision: Double, message: String?) {
+        assertTrue(
+            abs(expected - actual) < precision,
+            message ?: "Expected $expected and actual $actual values differ by more than $precision."
+        )
+    }
+
+    fun assertEquals(expected: DoubleArray, actual: DoubleArray, precision: Double) {
+        assertEquals(expected.size, actual.size, "Array sizes differ")
+        expected.indices.forEach {
+            assertEquals(
+                expected[it], actual[it], precision,
+                "Arrays differ at position $it: expected ${expected[it]}, actual ${actual[it]}."
+            )
+        }
+    }
 
 }

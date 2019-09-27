@@ -162,22 +162,29 @@ interface Fitter<out Model : ClassificationModel> {
      * @param maxIter an upper bound on fitting iterations (if applicable).
      * @return guessed classification model.
      */
-    fun guess(preprocessed: Preprocessed<DataFrame>,
-              title: String, threshold: Double, maxIter: Int, attempt: Int): Model
+    fun guess(
+            preprocessed: Preprocessed<DataFrame>,
+              title: String, threshold: Double, maxIter: Int, attempt: Int
+    ): Model
 
-    fun guess(preprocessed: List<Preprocessed<DataFrame>>,
-              title: String, threshold: Double, maxIter: Int, attempt: Int): Model =
-            guess(preprocessed.first(), title, threshold, maxIter, attempt)
+    fun guess(
+            preprocessed: List<Preprocessed<DataFrame>>,
+              title: String, threshold: Double, maxIter: Int, attempt: Int
+    ): Model = guess(preprocessed.first(), title, threshold, maxIter, attempt)
 
-    fun fit(preprocessed: Preprocessed<DataFrame>,
+    fun fit(
+            preprocessed: Preprocessed<DataFrame>,
             title: String = TITLE, threshold: Double = THRESHOLD,
             maxIter: Int = MAX_ITERATIONS,
-            attempt: Int = 0): Model = fit(listOf(preprocessed), title, threshold, maxIter, attempt)
+            attempt: Int = 0
+    ): Model = fit(listOf(preprocessed), title, threshold, maxIter, attempt)
 
-    fun fit(preprocessed: List<Preprocessed<DataFrame>>,
+    fun fit(
+            preprocessed: List<Preprocessed<DataFrame>>,
             title: String = TITLE, threshold: Double = THRESHOLD,
             maxIter: Int = MAX_ITERATIONS,
-            attempt: Int = 0): Model {
+            attempt: Int = 0
+    ): Model {
         require(threshold > 0) { "threshold $threshold must be >0" }
         require(maxIter > 0) { "maximum number of iterations $maxIter must be >0" }
 
@@ -199,8 +206,10 @@ interface Fitter<out Model : ClassificationModel> {
             require(multiStarts > 1) { "number of starts $multiStarts must be >1" }
         }
 
-        override fun fit(preprocessed: Preprocessed<DataFrame>, title: String,
-                         threshold: Double, maxIter: Int, attempt: Int): Model {
+        override fun fit(
+                preprocessed: Preprocessed<DataFrame>, title: String,
+                         threshold: Double, maxIter: Int, attempt: Int
+        ): Model {
             require(attempt == 0) {
                 "cyclic multistart is not allowed"
             }
@@ -218,8 +227,10 @@ interface Fitter<out Model : ClassificationModel> {
             return msModel
         }
 
-        override fun fit(preprocessed: List<Preprocessed<DataFrame>>, title: String,
-                         threshold: Double, maxIter: Int, attempt: Int): Model {
+        override fun fit(
+                preprocessed: List<Preprocessed<DataFrame>>, title: String,
+                         threshold: Double, maxIter: Int, attempt: Int
+        ): Model {
             require(attempt == 0) {
                 "cyclic multistart is not allowed"
             }

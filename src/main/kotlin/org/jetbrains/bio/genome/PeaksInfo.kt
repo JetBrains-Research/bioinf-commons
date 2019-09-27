@@ -26,11 +26,13 @@ object PeaksInfo {
 
     private fun Long.formatLongNumber() = String.format("%,d", this).replace(',', ' ')
 
-    fun compute(genomeQuery: GenomeQuery,
-                peaksStream: Stream<Location>,
-                src: URI?,
-                paths: List<Path>,
-                fragment: Fragment = AutoFragment): Map<String, String> {
+    fun compute(
+            genomeQuery: GenomeQuery,
+            peaksStream: Stream<Location>,
+            src: URI?,
+            paths: List<Path>,
+            fragment: Fragment = AutoFragment
+    ): Map<String, String> {
         val peaks = peaksStream.collect(Collectors.toList())
         val peaksLengths = peaks.map { it.length().toDouble() }.toDoubleArray()
         val peaksCount = peaksLengths.count()

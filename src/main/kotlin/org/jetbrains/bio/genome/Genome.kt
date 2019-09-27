@@ -284,6 +284,7 @@ class Genome private constructor(
                 genesGTFPath: Path? = null,
                 genesDescriptionsPath: Path? = null
         ) = getOrAdd(build, true) {
+            val chromSizesDir = chromSizesPath.parent
             Genome(
                 build,
                 annotationsConfig = annotationsConfig,
@@ -294,7 +295,7 @@ class Genome private constructor(
                 cytobandsPath = cytobandsPath,
                 repeatsPath = repeatsPath,
                 gapsPath = gapsPath,
-                twoBitPath = twoBitPath,
+                twoBitPath = twoBitPath ?: (chromSizesDir / "$build.2bit").let { if (it.exists) it else null },
                 genesGTFPath = genesGTFPath,
                 genesDescriptionsPath = genesDescriptionsPath
 

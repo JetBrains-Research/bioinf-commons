@@ -75,7 +75,7 @@ object GSONUtil {
                 val fqnElement = element.asJsonObject.remove(fqnField)
                 if (fqnElement == null) {
                     deserializationError("Class name (%s) field is missing." +
-                                         " Please, recalculate the model.", fqnField)
+                            " Please, recalculate the model.", fqnField)
                 }
                 val fqn = fqnElement!!.asString
 
@@ -99,17 +99,21 @@ object GSONUtil {
     }
 
     /**
-     * Same as [classAwareAdapter], but also saves the contents of a static field named "VERSION" and later
+     * Same as [classAwareAdapter], but also saves the contents of a static int field named "VERSION" and later
      * checks it against the actual contents of this field when loading.
      * Helps to work around the changes in the class field layout;
      * a version change is more self-explanatory than a random field reading failure.
      */
-    @JvmStatic fun <T : Any> classAndVersionAdapter(gson: Gson, factory: TypeAdapterFactory,
-                                                    fqnField: String, versionField: String): TypeAdapter<T> {
+    @JvmStatic fun <T : Any> classAndVersionAdapter(
+            gson: Gson,
+            factory: TypeAdapterFactory,
+            fqnField: String,
+            versionField: String
+    ): TypeAdapter<T> {
         return object : TypeAdapter<T>() {
             override fun write(out: JsonWriter, value: T) {
                 val modelFQN = value.javaClass.name
-                val modelVersion = getSerializationFormatVersion(value.javaClass)
+                val modelVersion = getSerializationFormatVersion(value.javaClass).toInt()
 
                 val delegate = gson.getDelegateAdapter(factory, TypeToken.get(value.javaClass))
 
@@ -127,9 +131,11 @@ object GSONUtil {
                 val element = Streams.parse(`in`)
                 val modelFQNElement = element.asJsonObject.remove(fqnField)
                 val modelFormatVersElement = element.asJsonObject.remove(versionField)
-                if (modelFQNElement == null || modelFormatVersElement == null) {
-                    deserializationError("Model class name (%s) or version field (%s) is missing."
-                                         + " Please, recalculate the model.", fqnField, versionField)
+                if (modelFQNElement == null) {
+                    deserializationError("Class name ($fqnField) is missing.")
+                }
+                if (modelFormatVersElement == null) {
+                    deserializationError("Version field ($versionField) is missing.")
                 }
                 val fqn = modelFQNElement!!.asString
                 val vers = modelFormatVersElement!!.asString
@@ -138,15 +144,15 @@ object GSONUtil {
                 try {
                     aClass = Class.forName(fqn) as Class<T>
                 } catch (e: ClassNotFoundException) {
-                    deserializationError("Cannot load model class %s", fqn, cause = e)
+                    deserializationError("Cannot load class %s", fqn, cause = e)
                     return null
                 }
 
 
                 val recentVersion = getSerializationFormatVersion(aClass)
                 if (recentVersion != vers) {
-                    deserializationError("Format has changed, '%s' expects '%s' version, but was '%s'",
-                                         fqn, recentVersion, vers)
+                    deserializationError("Format has changed, '%s' expects '%s' version, but got '%s'",
+                        fqn, recentVersion, vers)
                 }
 
                 val adapter = gson.getDelegateAdapter(factory, TypeToken.get(aClass))
@@ -161,8 +167,8 @@ object GSONUtil {
                     return (aClass.getDeclaredField("VERSION").get(null)).toString()
                 } catch (e: Exception) {
                     deserializationError("Cannot get serialization format version." +
-                                         " Probably VERSION field is missing in %s. Exception message: %s",
-                                         aClass.name, e.message, cause = e)
+                            " Probably VERSION field is missing in %s. Exception message: %s",
+                        aClass.name, e.message, cause = e)
                     return "" // this statement can never be reached
                 }
             }

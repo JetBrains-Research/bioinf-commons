@@ -27,7 +27,7 @@ class ClassificationModelTest {
                      "  \"value\": 1,\n" +
                      "  \"name\": \"bboo\",\n" +
                      "  \"model.class.fqn\": \"org.jetbrains.bio.statistics.Boo\",\n" +
-                     "  \"model.class.format\": \"222\"\n}",
+                     "  \"model.class.format\": 222\n}",
                 path.read())
     }
 
@@ -48,8 +48,7 @@ class ClassificationModelTest {
             path.bufferedWriter().use { gson.toJson(obj, it) }
 
             thrown.expect(JsonParseException::class.java)
-            thrown.expectMessage("Deserialization error: Model class name (model.class.fqn) or version" +
-                                 " field (model.class.format) is missing. Please, recalculate the model.")
+            thrown.expectMessage("Deserialization error: Class name (model.class.fqn) is missing.")
             ClassificationModel.load<Boo>(path)
         }
     }
@@ -60,7 +59,7 @@ class ClassificationModelTest {
         assertEquals("{\n  \"value\": NaN,\n  " +
                      "\"name\": \"NaN-boo\",\n  " +
                      "\"model.class.fqn\": \"org.jetbrains.bio.statistics.NanBoo\",\n  " +
-                     "\"model.class.format\": \"0\"\n}",
+                     "\"model.class.format\": 0\n}",
                 path.read())
 
         assertEquals(nanBoo, ClassificationModel.load<NanBoo>(path))
@@ -76,7 +75,7 @@ class ClassificationModelTest {
 
             thrown.expect(JsonParseException::class.java)
             thrown.expectMessage("Deserialization error: Format has changed, " +
-                                 "'org.jetbrains.bio.statistics.Boo' expects '123' version, but was '222'")
+                                 "'org.jetbrains.bio.statistics.Boo' expects '123' version, but got '222'")
             ClassificationModel.load<Boo>(path)
         }
     }
@@ -92,7 +91,7 @@ class ClassificationModelTest {
 
             thrown.expect(JsonParseException::class.java)
             thrown.expectMessage("Deserialization error: Format has changed, " +
-                                 "'org.jetbrains.bio.statistics.Boo' expects '666' version, but was '222'")
+                                 "'org.jetbrains.bio.statistics.Boo' expects '666' version, but got '222'")
 
             ClassificationModel.load<Boo>(path)
         }

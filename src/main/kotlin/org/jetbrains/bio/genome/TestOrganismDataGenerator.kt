@@ -1,9 +1,12 @@
 package org.jetbrains.bio.genome
 
 import com.google.common.math.IntMath
+import gnu.trove.list.array.TFloatArrayList
 import org.apache.commons.csv.CSVFormat
 import org.apache.log4j.Logger
 import org.jetbrains.bio.Configuration
+import org.jetbrains.bio.big.BigWigFile
+import org.jetbrains.bio.big.FixedStepSection
 import org.jetbrains.bio.genome.sequence.Nucleotide
 import org.jetbrains.bio.genome.sequence.TwoBitWriter
 import org.jetbrains.bio.io.FastaRecord
@@ -26,7 +29,8 @@ object TestOrganismDataGenerator {
             "chr2" to IntMath.pow(10, 6),
             "chr3" to IntMath.pow(10, 6),
             "chrX" to IntMath.pow(10, 6),
-            "chrM" to IntMath.pow(10, 6))
+            "chrM" to IntMath.pow(10, 6)
+    )
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -58,6 +62,7 @@ object TestOrganismDataGenerator {
         generateCytobands(genome)
         generateRepeats(genome)
         generateCGI(genome)
+        generateMapability(genome)
         LOG.info("Done")
     }
 
@@ -277,5 +282,29 @@ object TestOrganismDataGenerator {
                 |586	chr1	135124	135563	CpG: 30	439	30	295	13.7	67.2	0.64
             """.trimMargin().trim())
         }
+    }
+
+    /**
+     * Mapability is a wiggle track with 0 for non-mapable nucleotides and 1 for mapable ones.
+     *
+     * It's generated in the same folder as "chrom.sizes" with a filename "mapability.bigWig".
+     *
+     * We only generate mapability for chrX.
+     * This is done to test that the genome mean substitution for no-data chromosome works correctly.
+     */
+    private fun generateMapability(genome: Genome) {
+        LOG.info("Generating mapability bigWig")
+        val path = genome.chromSizesPath.parent / "mapability.bigWig"
+        val gq = genome.toQuery()
+        val chrX = gq["chrX"]!!
+        val random = ThreadLocalRandom.current()
+        val section = FixedStepSection(
+            chrX.name,
+            start = 0,
+            values = TFloatArrayList(
+                (0 until chrX.length).map { if (random.nextInt(5) == 4) 0.0f else 1.0f }.toFloatArray()
+            )
+        )
+        BigWigFile.write(listOf(section), gq.get().map { it.name to it.length }, path)
     }
 }
