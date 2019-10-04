@@ -17,6 +17,8 @@ import org.jetbrains.bio.viktor.KahanSum
 import org.jetbrains.bio.viktor.asF64Array
 import java.util.*
 import java.util.stream.DoubleStream
+import kotlin.math.abs
+import kotlin.math.ln
 
 /**
  * Implementation of a Negative Binomial distribution.
@@ -169,9 +171,6 @@ class NegativeBinomialDistribution(rng: RandomGenerator,
          * Creates Negative binomial distribution from MLE of parameters.
          *
          * @param values  sample to estimate parameters from.
-         * @param maxIter maximum number of iterations of Newton-Raphson method
-         * when estimating number of failures.
-         * @param epsilon convergence threshold.
          * @return Negative binomial distribution.
          */
         fun of(values: IntArray): NegativeBinomialDistribution {
@@ -186,7 +185,7 @@ class NegativeBinomialDistribution(rng: RandomGenerator,
                     mean,
                     estimateFailuresUsingMoments(mean, sd * sd))
 
-            return NegativeBinomialDistribution.usingMean(mean, failures)
+            return usingMean(mean, failures)
         }
 
         /** Gamma fit based on
@@ -210,6 +209,20 @@ class NegativeBinomialDistribution(rng: RandomGenerator,
                 a = aNext
             }
             return a
+        }
+
+        private fun diGammaInPlace(eta: F64Array): F64Array {
+            for (i in 0 until eta.size) {
+                eta[i] = Gamma.digamma(eta[i])
+            }
+            return eta
+        }
+
+        private fun triGammaInPlace(eta: F64Array): F64Array {
+            for (i in 0 until eta.size) {
+                eta[i] = Gamma.trigamma(eta[i])
+            }
+            return eta
         }
 
         /**
@@ -264,12 +277,48 @@ class NegativeBinomialDistribution(rng: RandomGenerator,
                 val newMean = lambdaExpectationSum.result() / sum
                 val newMeanLog = logLambdaExpectationSum.result() / sum
                 val newA = fitGamma(newMeanLog, newMean, a)
-                if (newA.isNaN() || Math.abs(a - newA) < a * 1E-6) {
+                if (newA.isNaN() || abs(a - newA) < a * 1E-6) {
                     return a
                 }
                 a = newA
             }
 
+            return a
+        }
+
+        fun fitNumberOfFailures(values: F64Array,
+                                  weights: F64Array,
+                                  mean: F64Array,
+                                  failures: Double): Double {
+
+            if (failures.isInfinite() || mean.equals(0)) {
+                /* this is already Poisson or singular distribution, can't be optimized */
+                return failures
+            }
+            var a = weights.sum()/(weights*(values/mean - 1.0)*(values/mean - 1.0)).sum() // shape
+            //var a = 1.0
+            for (i in 0..99) {
+                a = abs(a)
+                val fDeriv = (weights * (diGammaInPlace(values + a) -
+                        Gamma.digamma(a) -
+                        (mean + a).apply { logInPlace() } -
+                        (values + a) / (mean + a) + ln(a) + 1.0))
+                        .sum()
+                val fSecDeriv = (weights *
+                        (triGammaInPlace(values + a) -
+                            Gamma.trigamma(a) +
+                            ((values + a)/((mean + a).apply { timesAssign(mean + a)})) +
+                            (1.0 / a)) -
+                        weights * 2.0 / (mean + a))
+                        .sum()
+
+                val aNext = a - fDeriv/fSecDeriv
+                if (Math.abs(a - aNext) < 1E-4) {
+                    println(aNext)
+                    return aNext
+                }
+                a = aNext
+            }
             return a
         }
 

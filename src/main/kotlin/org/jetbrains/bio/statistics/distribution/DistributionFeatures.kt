@@ -62,6 +62,13 @@ object Sampling {
         }
     }
 
+    fun sampleNegBinomial(mean: Double, failures: Double): Int {
+        require(mean >= 0 && failures > 0) {"mean and failures must be > 0"}
+        if (mean == 0.0) return 0
+        val rate = sampleGamma(failures, failures / mean)
+        return samplePoisson(rate)
+    }
+
     @JvmStatic
     fun sampleUniform(a: Int = 0, b: Int = Int.MAX_VALUE): Int {
         return RANDOM_DATA_GENERATOR.nextInt(a, b)

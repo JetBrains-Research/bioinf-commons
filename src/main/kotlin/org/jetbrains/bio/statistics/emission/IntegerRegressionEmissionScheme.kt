@@ -190,7 +190,7 @@ abstract class IntegerRegressionEmissionScheme(
      *
      * Extracts the labelled covariates from the supplied dataframe and prepends the intercept column.
      */
-    private fun generateDesignMatrix(df: DataFrame) =
+    protected fun generateDesignMatrix(df: DataFrame) =
             WLSRegression.designMatrix(Array(covariateLabels.size) { df.sliceAsDouble(covariateLabels[it]) })
 
     /**
