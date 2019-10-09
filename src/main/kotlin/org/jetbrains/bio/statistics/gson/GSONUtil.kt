@@ -108,7 +108,8 @@ object GSONUtil {
             gson: Gson,
             factory: TypeAdapterFactory,
             fqnField: String,
-            versionField: String
+            versionField: String,
+            fallbackClassFQN: String? = null
     ): TypeAdapter<T> {
         return object : TypeAdapter<T>() {
             override fun write(out: JsonWriter, value: T) {
@@ -131,13 +132,13 @@ object GSONUtil {
                 val element = Streams.parse(`in`)
                 val modelFQNElement = element.asJsonObject.remove(fqnField)
                 val modelFormatVersElement = element.asJsonObject.remove(versionField)
-                if (modelFQNElement == null) {
+                if (modelFQNElement == null && fallbackClassFQN == null) {
                     deserializationError("Class name ($fqnField) is missing.")
                 }
                 if (modelFormatVersElement == null) {
                     deserializationError("Version field ($versionField) is missing.")
                 }
-                val fqn = modelFQNElement!!.asString
+                val fqn = modelFQNElement?.asString ?: fallbackClassFQN!!
                 val vers = modelFormatVersElement!!.asString
 
                 val aClass: Class<T>
