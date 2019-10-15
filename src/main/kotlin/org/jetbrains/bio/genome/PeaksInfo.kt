@@ -43,15 +43,14 @@ object PeaksInfo {
             result["Track source"] = src.presentablePath()
             result["Source size"] = "${src.size}${if (!src.isAccessible()) " <not accessible>" else ""}"
         }
-        result["Peaks number"] = peaksCount.toLong().formatLongNumber()
-        result["Peaks length"] = peaksLenSum.toLong().formatLongNumber()
-        result["Genome ${genomeQuery.description} coverage"] = String.format("%.2f%%", coverage)
-        result["Length min"] = (if (peaksLengths.isEmpty()) 0L else StatUtils.min(peaksLengths).toLong()).formatLongNumber()
-        result["Length mean"] = (if (peaksLengths.isEmpty()) 0L else StatUtils.mean(peaksLengths).toLong()).formatLongNumber()
-        result["Length max"] = (if (peaksLengths.isEmpty()) 0L else StatUtils.max(peaksLengths).toLong()).formatLongNumber()
-        result["Length 5%"] = (if (peaksLengths.isEmpty()) 0L else StatUtils.percentile(peaksLengths, 5.0).toLong()).formatLongNumber()
-        result["Length 50%"] = (if (peaksLengths.isEmpty()) 0L else StatUtils.percentile(peaksLengths, 50.0).toLong()).formatLongNumber()
-        result["Length 95%"] = (if (peaksLengths.isEmpty()) 0L else StatUtils.percentile(peaksLengths, 95.0).toLong()).formatLongNumber()
+        result["Number of peaks "] = peaksCount.toLong().formatLongNumber()
+        result["Length of peaks"] = peaksLenSum.toLong().formatLongNumber()
+        result["Genome coverage"] = String.format("%.2f%%", coverage)
+        result["Min length"] = (if (peaksLengths.isEmpty()) 0L else StatUtils.min(peaksLengths).toLong()).formatLongNumber()
+        result["Max length"] = (if (peaksLengths.isEmpty()) 0L else StatUtils.mean(peaksLengths).toLong()).formatLongNumber()
+        result["Avg length"] = (if (peaksLengths.isEmpty()) 0L else peaksLengths.average().toLong()).formatLongNumber()
+        result["Median length"] =
+                (if (peaksLengths.isEmpty()) 0L else StatUtils.percentile(peaksLengths, 50.0).toLong()).formatLongNumber()
 
         // Don't recompute tags coverage if it is not processed locally
         if (paths.isNotEmpty()) {
