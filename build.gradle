@@ -144,4 +144,5 @@ task wrapper(type: Wrapper, overwrite: true) {
 shadowJar {
     baseName = 'bioinf-commons-shadow'
     classifier = ''
+    zip64 true
 }
