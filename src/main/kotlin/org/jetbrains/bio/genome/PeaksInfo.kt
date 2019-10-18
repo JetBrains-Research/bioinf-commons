@@ -43,12 +43,12 @@ object PeaksInfo {
             result["Track source"] = src.presentablePath()
             result["Source size"] = "${src.size}${if (!src.isAccessible()) " <not accessible>" else ""}"
         }
-        result["Number of peaks "] = peaksCount.toLong().formatLongNumber()
-        result["Length of peaks"] = peaksLenSum.toLong().formatLongNumber()
+        result["Peak count"] = peaksCount.toLong().formatLongNumber()
+        result["Total peak length"] = peaksLenSum.toLong().formatLongNumber()
         result["Genome coverage"] = String.format("%.2f%%", coverage)
         result["Min length"] = (if (peaksLengths.isEmpty()) 0L else StatUtils.min(peaksLengths).toLong()).formatLongNumber()
-        result["Max length"] = (if (peaksLengths.isEmpty()) 0L else StatUtils.mean(peaksLengths).toLong()).formatLongNumber()
-        result["Avg length"] = (if (peaksLengths.isEmpty()) 0L else peaksLengths.average().toLong()).formatLongNumber()
+        result["Max length"] = (if (peaksLengths.isEmpty()) 0L else StatUtils.max(peaksLengths).toLong()).formatLongNumber()
+        result["Mean length"] = (if (peaksLengths.isEmpty()) 0L else peaksLengths.average().toLong()).formatLongNumber()
         result["Median length"] =
                 (if (peaksLengths.isEmpty()) 0L else StatUtils.percentile(peaksLengths, 50.0).toLong()).formatLongNumber()
 
