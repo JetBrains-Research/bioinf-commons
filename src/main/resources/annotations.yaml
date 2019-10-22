@@ -5,7 +5,7 @@ genomes:
   mm9:
     species: Mus musculus
     ucsc_alias: mm9
-    names: NCBIM37
+    aliases: NCBIM37
     description: 'Jul. 2007, genes Ensembl 67 (May 2012)'
     biomart:
       url: http://may2012.archive.ensembl.org/biomart/martservice
@@ -26,7 +26,7 @@ genomes:
   mm10:
     species: Mus musculus
     ucsc_alias: mm10
-    names: GRCm38
+    aliases: GRCm38
     description: 'Dec. 2011, genes Ensembl 97 (March 2019)'
     biomart:
       url: http://mar2016.archive.ensembl.org/biomart/martservice
@@ -48,7 +48,7 @@ genomes:
   hg18:
     species: Homo sapiens
     ucsc_alias: hg18
-    names: NCBI36
+    aliases: NCBI36
     description: "Mar. 2006"
     biomart:
       url: http://may2009.archive.ensembl.org/biomart/martservice
@@ -68,7 +68,7 @@ genomes:
   hg19:
     species: Homo sapiens
     ucsc_alias: hg19
-    names: GRCh37
+    aliases: GRCh37
     description: 'Feb. 2009, genes Ensembl 87 (Dec 2016)'
     biomart:
       url: http://feb2014.archive.ensembl.org/biomart/martservice
@@ -88,9 +88,7 @@ genomes:
   hs37-1kg:
     species: Homo sapiens
     ucsc_alias: hg19
-    names:
-      - hs37-1kg
-      - b37
+    aliases: b37
     description: 'Mar 2011, GRCh37.p4 w/o alt contigs + rCRS MT genome, genes Ensembl 87 (Dec 2016)'
     biomart:
       url: http://feb2014.archive.ensembl.org/biomart/martservice
@@ -115,9 +113,7 @@ genomes:
   hs37d5:
     species: Homo sapiens
     ucsc_alias: hg19
-    names:
-      - hs37d5
-      - b37_decoy
+    aliases: b37_decoy
     description: 'Mar 2011, GRCh37.p4 w/o alt contigs + rCRS MT, EBV, decoy genomes, genes Ensembl 87 (Dec 2016)'
     biomart:
       url: http://feb2014.archive.ensembl.org/biomart/martservice
@@ -141,7 +137,7 @@ genomes:
   hg38:
     species: Homo sapiens
     ucsc_alias: hg38
-    names: GRCh38
+    aliases: GRCh38
     description: 'Dec. 2013, genes Ensembl 96 (Mar 2019)'
     biomart:
       url: http://apr2019.archive.ensembl.org/biomart/martservice
@@ -162,7 +158,7 @@ genomes:
   dm3:
     species: Drosophila melanogaster
     ucsc_alias: dm3
-    names: BDGP5
+    aliases: BDGP5
     description: 'Apr. 2006, genes Ensembl 78'
     biomart:
       url: http://dec2014.archive.ensembl.org/biomart/martservice
@@ -182,7 +178,7 @@ genomes:
   dm6:
     species: Drosophila melanogaster
     ucsc_alias: dm6
-    names: BDGP6
+    aliases: BDGP6
     description: 'Aug. 2014, genes Ensembl 97 (May 2014)'
     biomart:
       url: http://oct2016.archive.ensembl.org/biomart/martservice
@@ -202,7 +198,7 @@ genomes:
   danRer7:
     species: Zebrafish (Danio rerio)
     ucsc_alias: danRer7
-    names: Zv9
+    aliases: Zv9
     description: 'Jul. 2010, genes Ensembl 79'
     biomart:
       url: http://mar2015.archive.ensembl.org/biomart/martservice
@@ -221,7 +217,7 @@ genomes:
   danRer10:
     species: Zebrafish (Danio rerio)
     ucsc_alias: danRer10
-    names: GRCz10
+    aliases: GRCz10
     description: 'Sep. 2014, genes Ensembl 91'
     biomart:
       url: http://dec2017.archive.ensembl.org/biomart/martservice
@@ -240,7 +236,7 @@ genomes:
   danRer11:
     species: Zebrafish (Danio rerio)
     ucsc_alias: danRer11
-    names: GRCz11
+    aliases: GRCz11
     description: 'May 2017, genes Ensembl 97 (Apr. 2018)'
     biomart:
       # XXX: mirror not mentioned anywhere but works, apr2019 is release date for vers 96
@@ -261,7 +257,7 @@ genomes:
   rn5:
     species: Rattus norvegicus
     ucsc_alias: rn5
-    names: RGSC 5.0
+    aliases: RGSC 5.0
     description: 'Mar. 2012, genes Ensembl 79'
     biomart:
       url: http://mar2015.archive.ensembl.org/biomart/martservice
@@ -280,7 +276,7 @@ genomes:
   rn6:
     species: Rattus norvegicus
     ucsc_alias: rn6
-    names: RGSC 6.0
+    aliases: RGSC 6.0
     description: 'Jul. 2014, genes Ensembl 97 (Jan 2017)'
     biomart:
       # XXX: mirror not mentioned anywhere but works, apr2019 is release date for vers 96
@@ -344,7 +340,7 @@ genomes:
   ce6:
     species: Caenorhabditis elegans
     ucsc_alias: ce6
-    names: WS190
+    aliases: WS190
     description: 'May. 2008, genes Ensembl 54'
     biomart:
       url: http://may2009.archive.ensembl.org/biomart/martservice
@@ -363,7 +359,7 @@ genomes:
   ce10:
     species: Caenorhabditis elegans
     ucsc_alias: ce10
-    names: WS220
+    aliases: WS220
     description: 'Oct. 2010, genes Ensembl 66'
     biomart:
       # for 66 release should be feb2012.archive.ensembl.org, but it doesn't exists, let's
@@ -397,7 +393,7 @@ genomes:
   ce11:
     species: Caenorhabditis elegans
     ucsc_alias: ce11
-    names: WBcel235
+    aliases: WBcel235
     description: 'Feb. 2013, genes Ensembl 97 (Jan 2019)'
     biomart:
       # XXX: mirror not mentioned anywhere but works, apr2019 is release date for vers 96

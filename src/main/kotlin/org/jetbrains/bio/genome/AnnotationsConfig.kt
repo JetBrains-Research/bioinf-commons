@@ -147,11 +147,15 @@ object AnnotationsConfig {
                 emptyMap()
             }
 
-            val names = when (val names = genomeAttrs["names"]) {
-                is String -> listOf(names)
-                is List<*> -> names.map { it.toString() }
-                else -> listOf(build) // fallback for errors
-            }
+            /* names = build + ucsc_alias + aliases, with duplicates removed */
+            val names = arrayListOf(build)
+            val ucscAlias = genomeAttrs["ucsc_alias"] as? String
+            ucscAlias?.let { if (build != it) names.add(it) }
+            names.addAll(when (val aliases = genomeAttrs["aliases"]) {
+                is String -> listOf(aliases)
+                is List<*> -> aliases.map { it.toString() }
+                else -> emptyList()
+            })
 
             val biomart = genomeAttrs["biomart"]
             val mart = if (biomart != null) {
@@ -165,7 +169,7 @@ object AnnotationsConfig {
             try {
                 return GenomeAnnotationsConfig(
                     genomeAttrs["species"] as String,
-                    genomeAttrs["ucsc_alias"] as? String,
+                    ucscAlias,
                     names,
                     genomeAttrs["description"] as String,
                     genomeAttrs["gtf"] as String,
