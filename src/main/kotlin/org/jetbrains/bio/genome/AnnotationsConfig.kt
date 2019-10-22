@@ -203,7 +203,8 @@ object AnnotationsConfig {
 
 /**
  * @param species Species name
- * @param builds Genome builds in UCSC, NCBI and GRC formats
+ * @param ucscAlias UCSC name for the build
+ * @param names Build names (release name and other aliases, not including the UCSC alias)
  * @param description About Genome build
  * @param gtfUrl GTF genes annotations url
  * @param chrAltName2CanonicalMapping Mapping of alternative chr names to canonical names from *.chrom.sizes. E.g. MT -> chrM for GTF parsing with UCSC genomes
