@@ -18,7 +18,7 @@ class GenomeTest {
 
     @Test
     fun presentableName() {
-        assertEquals("Test Organism: to1 [JBRt1, UCSC alias: to1; test]", Genome["to1"].presentableName())
+        assertEquals("Test Organism: to1 [test]", Genome["to1"].presentableName())
     }
 
     @Test

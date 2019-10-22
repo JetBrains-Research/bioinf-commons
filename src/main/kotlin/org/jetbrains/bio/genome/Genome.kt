@@ -183,8 +183,14 @@ class Genome private constructor(
 
     fun presentableName(): String {
         val additional = StringBuffer()
-        annotationsConfig?.names?.joinToString()?.let { additional.append(it) }
+
+        // the first element of `names` is always equal to `build`, and `ucsc_alias` will be mentioned separately
+        annotationsConfig?.names?.drop(1)
+                ?.filter { it != annotationsConfig.ucscAlias}
+                ?.joinToString()?.let { additional.append(it) }
+
         annotationsConfig?.ucscAlias?.let {
+            if (it == build) return@let
             if (additional.isNotEmpty()) {
                 additional.append(", ")
             }
@@ -232,7 +238,7 @@ class Genome private constructor(
 
                     val annCfg: GenomeAnnotationsConfig = when {
                         to -> GenomeAnnotationsConfig(
-                            "Test Organism", "to1", listOf("JBRt1"),
+                            "Test Organism", "to1", listOf("to1"),
                             "test", "<n/a>", emptyMap(), false,
                             "<n/a>", "<n/a>", "<n/a>", "<n/a>", "<n/a>",
                             null, "<n/a>", null
