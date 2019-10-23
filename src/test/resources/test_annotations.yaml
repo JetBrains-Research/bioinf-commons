@@ -3,7 +3,8 @@ version: 1
 genomes:
   mm9:
     species: Mus musculus
-    alias: NCBIM37
+    ucsc_alias: mm9
+    aliases: NCBIM37
     description: "mm9 descr"
     biomart:
       url: http://may2012.archive.ensembl.org/biomart/martservice
@@ -23,7 +24,8 @@ genomes:
 
   hg19:
     species: Homo sapiens
-    alias: GRCh37
+    ucsc_alias: hg19
+    aliases: GRCh37
     description: "hg19 descr"
     biomart:
       url: http://feb2014.archive.ensembl.org/biomart/martservice
@@ -42,7 +44,8 @@ genomes:
 
   hg38:
     species: Homo sapiens
-    alias: GRCh38
+    ucsc_alias: hg38
+    aliases: GRCh38
     description: "hg38 descr"
     biomart:
       url: http://mar2016.archive.ensembl.org/biomart/martservice
@@ -63,7 +66,8 @@ genomes:
   # http://www.ensembl.org/Drosophila_melanogaster/
   dm3:
     species: Drosophila melanogaster
-    alias: BDGP5
+    ucsc_alias: dm3
+    aliases: BDGP5
     description: "dm3 descr"
     biomart:
       url: http://dec2014.archive.ensembl.org/biomart/martservice
@@ -82,7 +86,8 @@ genomes:
 
   ce6:
     species: Caenorhabditis elegans
-    alias: WS190
+    ucsc_alias: ce6
+    aliases: WS190
     description: "ce6 descr"
     biomart:
       url: http://may2009.archive.ensembl.org/biomart/martservice

@@ -35,7 +35,7 @@ import java.nio.file.Path
  */
 
 class Genome private constructor(
-        /** Build in UCSC nomenclature, e.g. `"mm9"`. */
+        /** Unique build identifier, e.g. `"mm9"`. */
         val build: String,
 
         /** Annotations download urls and genome settings descriptor **/
@@ -76,7 +76,7 @@ class Genome private constructor(
                             sUrl.endsWith(".2bit") -> sUrl.downloadTo(output.path)
 
                             else -> {
-                                val suffix = listOf(".fa", ".fa.gz", ".fasta", ".fasta.gz").firstOrNull() { sUrl.endsWith(it) }
+                                val suffix = listOf(".fa", ".fa.gz", ".fasta", ".fasta.gz").firstOrNull { sUrl.endsWith(it) }
                                 requireNotNull(suffix) { "Unsupported sequence type: $sUrl" }
 
                                 val faPath = "${output.path}$suffix".toPath()
@@ -183,10 +183,19 @@ class Genome private constructor(
 
     fun presentableName(): String {
         val additional = StringBuffer()
-        annotationsConfig?.alias?.let {
-            if (it.isNotEmpty()) {
-                additional.append(it)
+
+        // we omit `build` and `ucsc_alias` from `names` since they are mentioned separately
+        annotationsConfig?.names
+                ?.filter { it != build && it != annotationsConfig.ucscAlias }
+                ?.joinToString()
+                ?.let { additional.append(it) }
+
+        annotationsConfig?.ucscAlias?.let {
+            if (it == build) return@let
+            if (additional.isNotEmpty()) {
+                additional.append(", ")
             }
+            additional.append("UCSC alias: $it")
         }
         annotationsConfig?.description?.let {
             if (it.isNotEmpty()) {
@@ -230,9 +239,11 @@ class Genome private constructor(
 
                     val annCfg: GenomeAnnotationsConfig = when {
                         to -> GenomeAnnotationsConfig(
-                            "Test Organism", null, "test", "<n/a>", emptyMap(), false,
+                            "Test Organism", "to1", listOf("to1"),
+                            "test", "<n/a>", emptyMap(), false,
                             "<n/a>", "<n/a>", "<n/a>", "<n/a>", "<n/a>",
-                            null, "<n/a>", null)
+                            null, "<n/a>", null
+                        )
 
                         else -> {
                             if (!AnnotationsConfig.initialized) {

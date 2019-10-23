@@ -136,9 +136,8 @@ object AnnotationsConfig {
 
         operator fun get(build: String): GenomeAnnotationsConfig {
             val genomeAttrs = genomes[build]
-            if (genomeAttrs == null) {
-                checkNotNull(genomeAttrs) { "Annotations not defined for $build" }
-            }
+
+            checkNotNull(genomeAttrs) { "Annotations not defined for $build" }
 
             val chrAltName2CanonicalMapping = if ("chr_alt_name_to_canonical" in genomeAttrs) {
                 (genomeAttrs["chr_alt_name_to_canonical"] as List<Map<String, String>>).map {
@@ -147,6 +146,17 @@ object AnnotationsConfig {
             } else {
                 emptyMap()
             }
+
+            /* names = build + ucsc_alias + aliases, with duplicates removed later */
+            val names = arrayListOf(build)
+            val ucscAlias = genomeAttrs["ucsc_alias"] as? String
+            ucscAlias?.let { names.add(it) }
+            names.addAll(when (val aliases = genomeAttrs["aliases"]) {
+                is String -> listOf(aliases)
+                is List<*> -> aliases.map { it.toString() }
+                else -> emptyList()
+            })
+
             val biomart = genomeAttrs["biomart"]
             val mart = if (biomart != null) {
                 val biomartMap = biomart as Map<String, String>
@@ -159,7 +169,8 @@ object AnnotationsConfig {
             try {
                 return GenomeAnnotationsConfig(
                     genomeAttrs["species"] as String,
-                    genomeAttrs["alias"] as String?,
+                    ucscAlias,
+                    names.distinct(),
                     genomeAttrs["description"] as String,
                     genomeAttrs["gtf"] as String,
                     chrAltName2CanonicalMapping,
@@ -196,7 +207,8 @@ object AnnotationsConfig {
 
 /**
  * @param species Species name
- * @param alias Genome build alternative name
+ * @param ucscAlias UCSC name for the build
+ * @param names All known build names (release name and other aliases, including the UCSC alias) as ordered set
  * @param description About Genome build
  * @param gtfUrl GTF genes annotations url
  * @param chrAltName2CanonicalMapping Mapping of alternative chr names to canonical names from *.chrom.sizes. E.g. MT -> chrM for GTF parsing with UCSC genomes
@@ -211,18 +223,19 @@ object AnnotationsConfig {
  * @param cpgIslandsUrl CpG islands file url.
  */
 data class GenomeAnnotationsConfig(
-    val species: String,
-    val alias: String?,
-    val description: String?,
-    val gtfUrl: String,
-    val chrAltName2CanonicalMapping: Map<String, String>,
-    val ucscAnnLegacyFormat: Boolean,
-    val sequenceUrl: String,
-    val chromsizesUrl: String,
-    val repeatsUrl: String?,
-    val cytobandsUrl: String?,
-    val gapsUrl: String,
-    val centromeresUrl: String?,
-    val cpgIslandsUrl: String?,
-    val mart: Mart?
+        val species: String,
+        val ucscAlias: String?,
+        val names: List<String>,
+        val description: String?,
+        val gtfUrl: String,
+        val chrAltName2CanonicalMapping: Map<String, String>,
+        val ucscAnnLegacyFormat: Boolean,
+        val sequenceUrl: String,
+        val chromsizesUrl: String,
+        val repeatsUrl: String?,
+        val cytobandsUrl: String?,
+        val gapsUrl: String,
+        val centromeresUrl: String?,
+        val cpgIslandsUrl: String?,
+        val mart: Mart?
 )
