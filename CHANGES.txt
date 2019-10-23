@@ -3,6 +3,17 @@ bioinf-commons changelog
 
 Here you can see the full list of changes between each release.
 
+Version 0.0.7
+-------------
+
+Released on October 23, 2019
+
+ - Added support for fitting regression mixtures / HMMs
+ - Added a mapability bigWig file to test data generation
+ - Changed the annotation configuration YAML structure: replaced "alias" field with "ucsc_alias" and "aliases",
+ which together with the build identifier form the "names" property.
+
+
 Version 0.0.6
 -------------
 
