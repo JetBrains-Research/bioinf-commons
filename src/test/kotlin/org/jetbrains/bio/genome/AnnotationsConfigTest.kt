@@ -40,7 +40,8 @@ class AnnotationsConfigTest {
             assertEquals(5, mapping!!.entries.size)
             assertEquals(listOf("ce6", "dm3", "hg19", "hg38", "mm9"), mapping.keys.sorted())
             assertEquals("Drosophila melanogaster", mapping["dm3"]!!.species)
-            assertEquals(listOf("mm9", "NCBIM37"), mapping["mm9"]!!.names)
+            assertEquals(setOf("mm9", "NCBIM37"), mapping["mm9"]!!.names)
+            assertEquals("NCBIM37", mapping["mm9"]!!.names.last())
             assertEquals("mm9", mapping["mm9"]!!.ucscAlias)
             assertEquals(
                 Mart(
