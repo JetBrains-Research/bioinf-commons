@@ -147,7 +147,7 @@ object AnnotationsConfig {
                 emptyMap()
             }
 
-            /* names = build + ucsc_alias + aliases, with duplicates removed */
+            /* names = build + ucsc_alias + aliases, with duplicates removed later */
             val names = arrayListOf(build)
             val ucscAlias = genomeAttrs["ucsc_alias"] as? String
             ucscAlias?.let { names.add(it) }
@@ -170,7 +170,7 @@ object AnnotationsConfig {
                 return GenomeAnnotationsConfig(
                     genomeAttrs["species"] as String,
                     ucscAlias,
-                    names.toSet(),
+                    names.distinct(),
                     genomeAttrs["description"] as String,
                     genomeAttrs["gtf"] as String,
                     chrAltName2CanonicalMapping,
@@ -225,7 +225,7 @@ object AnnotationsConfig {
 data class GenomeAnnotationsConfig(
         val species: String,
         val ucscAlias: String?,
-        val names: Set<String>,
+        val names: List<String>,
         val description: String?,
         val gtfUrl: String,
         val chrAltName2CanonicalMapping: Map<String, String>,

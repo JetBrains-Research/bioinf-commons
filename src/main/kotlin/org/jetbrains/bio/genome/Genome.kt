@@ -76,7 +76,7 @@ class Genome private constructor(
                             sUrl.endsWith(".2bit") -> sUrl.downloadTo(output.path)
 
                             else -> {
-                                val suffix = listOf(".fa", ".fa.gz", ".fasta", ".fasta.gz").firstOrNull() { sUrl.endsWith(it) }
+                                val suffix = listOf(".fa", ".fa.gz", ".fasta", ".fasta.gz").firstOrNull { sUrl.endsWith(it) }
                                 requireNotNull(suffix) { "Unsupported sequence type: $sUrl" }
 
                                 val faPath = "${output.path}$suffix".toPath()
@@ -239,7 +239,7 @@ class Genome private constructor(
 
                     val annCfg: GenomeAnnotationsConfig = when {
                         to -> GenomeAnnotationsConfig(
-                            "Test Organism", "to1", setOf("to1"),
+                            "Test Organism", "to1", listOf("to1"),
                             "test", "<n/a>", emptyMap(), false,
                             "<n/a>", "<n/a>", "<n/a>", "<n/a>", "<n/a>",
                             null, "<n/a>", null
