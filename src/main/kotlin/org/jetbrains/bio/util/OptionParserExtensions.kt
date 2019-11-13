@@ -147,6 +147,18 @@ abstract class PathConverter : ValueConverter<Path> {
             }
         }
 
+        fun existsDir(): PathConverter = object : PathConverter() {
+            @Throws(ValueConversionException::class)
+            override fun check(path: Path) {
+                if (path.notExists) {
+                    throw ValueConversionException("Path $path does not exists")
+                }
+                if (!path.isDirectory) {
+                    throw ValueConversionException("Path $path is not a directory")
+                }
+            }
+        }
+
         fun noCheck(ext: String? = null): PathConverter = object : PathConverter() {
             @Throws(ValueConversionException::class)
             override fun check(path: Path) {
