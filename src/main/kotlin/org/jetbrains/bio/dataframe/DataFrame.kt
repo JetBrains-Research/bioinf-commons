@@ -364,7 +364,7 @@ class DataFrame @JvmOverloads constructor(
         }
 
         @JvmStatic fun rowBind(dfs: Array<DataFrame>): DataFrame {
-            require(dfs.isNotEmpty()) { "expected at least one data frame" }
+            require(dfs.isNotEmpty()) { "expected at least one dataframe" }
             return dfs.reduce { a, b -> rowBind(a, b) }
         }
     }
