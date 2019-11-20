@@ -104,7 +104,7 @@ abstract class MLConstrainedHMM(
             }
 
             emissionScheme.update(df, d, weights)
-            weights[_I] = 0.0
+            weights.V[_I] = 0.0
         }
     }
 

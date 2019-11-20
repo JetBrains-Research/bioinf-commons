@@ -20,8 +20,17 @@ object MixtureInternals {
     @JvmStatic
     fun evaluate(logJointProbabilities: F64Array,
                  logGammas: F64Array) {
-        logJointProbabilities.T.copyTo(logGammas)
+        logJointProbabilities.matrixTransposeTo(logGammas)
         logGammas.along(1).forEach(F64Array::logRescale)
+    }
+
+    @JvmStatic
+    fun evaluateTransposed(
+            logJointProbabilities: F64Array,
+            logTransposedGammas: F64Array
+    ) {
+        logJointProbabilities.copyTo(logTransposedGammas)
+        logTransposedGammas.along(0).forEach(F64Array::logRescale)
     }
 
     @JvmStatic
@@ -38,5 +47,14 @@ object MixtureInternals {
             }
             acc
         }.sum()
+    }
+}
+
+internal fun F64Array.matrixTransposeTo(other: F64Array) {
+    check(nDim == 2) { "not a matrix" }
+    check(other.nDim == 2) { "not a matrix" }
+    check(shape[0] == other.shape[1] && shape[1] == other.shape[0]) { "matrices not conforming" }
+    for (i in 0 until shape[1]) {
+        other.V[i] = V[_I, i]
     }
 }

@@ -167,7 +167,7 @@ abstract class MLAbstractHMM(protected val numStates: Int,
             logTransitionProbabilities.V[i].logRescale()
         }
 
-        logPriorProbabilities[_I] = logGammas.V[_I, 0]
+        logPriorProbabilities.V[_I] = logGammas.V[_I, 0]
         logPriorProbabilities.logRescale()
 
         logGammas.expInPlace()
@@ -181,7 +181,7 @@ abstract class MLAbstractHMM(protected val numStates: Int,
         val logXiSums = F64Array.full(numStates, numStates, init = Double.NEGATIVE_INFINITY)
 
         for (context in contexts) {
-            logXiSums.logAddExp(context.logXiSums, logXiSums)
+            logXiSums.logAddExpAssign(context.logXiSums)
         }
 
         for (i in 0 until numStates) {
@@ -236,7 +236,7 @@ abstract class MLAbstractHMM(protected val numStates: Int,
 
         for (t in rowsNumber - 2 downTo 0) {
             workBuffer.V[_I] = logForwardProbabilities.V[t] +
-                    logTransitionProbabilities.T.V[state]
+                    logTransitionProbabilities.V[_I, state]
             workBuffer.logRescale()
             state = CategoricalDistribution(workBuffer.exp()).sample()
             states[t] = state

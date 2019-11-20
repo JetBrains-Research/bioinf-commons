@@ -67,7 +67,7 @@ abstract class HMMIterationContext(numStates: Int,
                 }
 
                 logXit.logRescale()
-                localLogXiSums.logAddExp(logXit, localLogXiSums)
+                localLogXiSums.logAddExpAssign(logXit)
             }
 
             localLogXiSums
@@ -76,7 +76,7 @@ abstract class HMMIterationContext(numStates: Int,
         val initial = negativeInfinity.copy()
         s.reduce(initial) { left, right ->
             val res = left.copy()
-            res.logAddExp(right, res)
+            res.logAddExpAssign(right)
             res
         }.copyTo(logXiSums)
 
