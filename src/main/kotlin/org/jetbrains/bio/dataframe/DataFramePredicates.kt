@@ -52,6 +52,12 @@ inline fun byBool(label: String) = RowPredicateFactory { df ->
     IntPredicate { row -> data[row] }
 }
 
+@Suppress("nothing_to_inline")
+inline fun byNotBool(label: String) = RowPredicateFactory { df ->
+    val data = df.sliceAsBool(label)
+    IntPredicate { row -> !data[row] }
+}
+
 inline fun <T> byObj(label: String, crossinline p: (T) -> Boolean) = RowPredicateFactory { df ->
     val data = df.sliceAsObj<T>(label)
     IntPredicate { row -> p(data[row]) }
