@@ -35,7 +35,7 @@ fun OptionParser.parse(
                         maxOf(80, try {
                             TerminalBuilder.terminal().width
                         } catch (e: Exception) {
-                            System.err.println("Warning: Cannot defined terminal width: ${e.message}")
+                            System.err.println("Warning: Cannot define terminal width: ${e.message}")
                             0
                         }),
                         2
@@ -54,8 +54,8 @@ fun OptionParser.parse(
                 System.err.println("")
                 System.err.println("")
             }
-            System.err.print("Arguments: ")
-            System.err.println(Arrays.toString(args))
+            System.err.print("Arguments:\n    ")
+            System.err.println(args.joinToString("\n    "))
             printHelpOn(System.err)
             val suppressExit = System.getProperty(JOPTSIMPLE_SUPPRESS_EXIT)
             if (suppressExit == null || !suppressExit.toBoolean()) {
