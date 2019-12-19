@@ -1,5 +1,6 @@
-License [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://opensource.org/licenses/MIT)
-Tests [![tests](http://teamcity.jetbrains.com/app/rest/builds/buildType:(id:Biolabs_BioinfCommons)/statusIcon.svg)](http://teamcity.jetbrains.com/viewType.html?buildTypeId=Biolabs_BioinfCommons&guest=1)
+[![JetBrains Research](https://jb.gg/badges/research.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://opensource.org/licenses/MIT)
+[![tests](http://teamcity.jetbrains.com/app/rest/builds/buildType:(id:Biolabs_BioinfCommons)/statusIcon.svg)](http://teamcity.jetbrains.com/viewType.html?buildTypeId=Biolabs_BioinfCommons&guest=1)
 
 Bioinf-commons
 ==============
