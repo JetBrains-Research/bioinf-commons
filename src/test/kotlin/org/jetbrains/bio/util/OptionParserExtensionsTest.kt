@@ -60,13 +60,13 @@ class OptionParserExtensionsTest {
             with(OptionParser()) {
                 accepts("foo", "some option")
 
-                parse(arrayOf("-h"), description = "My description") { _ ->
+                parse(arrayOf("--foo", "-h"), description = "My description") { _ ->
                 }
             }
         }
 
         assertIn("My description", stdErr)
-        assertIn("Arguments: [-h]", stdErr)
+        assertIn("Arguments:\n    --foo\n    -h", stdErr)
 
         assertEquals("", stdOut)
     }
