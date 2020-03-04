@@ -6,7 +6,7 @@ Here you can see the full list of changes between each release.
 Version 0.0.8
 -------------
 
-Released on Jan XX, 2020
+Released on Mar 3, 2020
 
  - Removed non-generic code
 

@@ -24,7 +24,7 @@ repositories {
 }
 
 dependencies {
-    compile 'org.jetbrains.bio:bioinf-commons:0.0.7'
+    compile 'org.jetbrains.bio:bioinf-commons:0.0.8'
 }
 ```
 
