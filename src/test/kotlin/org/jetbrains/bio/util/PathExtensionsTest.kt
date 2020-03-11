@@ -2,7 +2,6 @@
 
 package org.jetbrains.bio.util
 
-import org.apache.log4j.Logger
 import org.jetbrains.bio.io.BedParserTest
 import org.junit.Test
 import java.io.File
@@ -446,7 +445,7 @@ class CheckOrRecalculateTest {
     private inline fun execConcurrently(crossinline task: (Int) -> Unit) {
         val availableProcessors = Runtime.getRuntime().availableProcessors()
         if (availableProcessors == 1) {
-            Logger.getRootLogger().warn("Cannot do honest test if no parallelism. Only on processor is available")
+            Logs.getRootLogger().warn("Cannot do honest test if no parallelism. Only on processor is available")
         }
 
         val executor = Executors.newFixedThreadPool(2)

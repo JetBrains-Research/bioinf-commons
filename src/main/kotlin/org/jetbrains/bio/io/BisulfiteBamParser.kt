@@ -9,7 +9,6 @@ import htsjdk.samtools.SAMRecord
 import htsjdk.samtools.SamReader
 import htsjdk.samtools.SamReaderFactory
 import kotlinx.support.jdk7.use
-import org.apache.log4j.Logger
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Strand
@@ -22,6 +21,7 @@ import org.jetbrains.bio.util.Progress
 import org.jetbrains.bio.util.awaitAll
 import org.jetbrains.bio.util.name
 import org.jetbrains.bio.util.parallelismLevel
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Callable
@@ -207,7 +207,7 @@ private abstract class SamPiler<T : PilerColumn>(
     }
 
     companion object {
-        private val LOG = Logger.getLogger(SamPiler::class.java)
+        private val LOG = LoggerFactory.getLogger(SamPiler::class.java)
     }
 }
 

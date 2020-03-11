@@ -1,7 +1,7 @@
 package org.jetbrains.bio.util
 
 import com.google.common.annotations.VisibleForTesting
-import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.*
 import java.util.concurrent.atomic.AtomicLong
@@ -98,7 +98,7 @@ abstract class Progress protected constructor(
 
     companion object {
         @VisibleForTesting
-        internal val LOG = Logger.getLogger(Progress::class.java)
+        internal val LOG = LoggerFactory.getLogger(Progress::class.java)
 
         operator fun invoke(block: Builder.() -> Unit) = Builder().apply(block)
 

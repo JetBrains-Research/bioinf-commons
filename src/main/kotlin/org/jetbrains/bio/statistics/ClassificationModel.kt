@@ -4,17 +4,14 @@ import com.google.common.primitives.Shorts
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParseException
 import org.apache.commons.math3.distribution.AbstractIntegerDistribution
-import org.apache.log4j.Logger
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.statistics.distribution.Sampling
 import org.jetbrains.bio.statistics.gson.F64ArrayTypeAdapter
 import org.jetbrains.bio.statistics.gson.GSONUtil
 import org.jetbrains.bio.statistics.gson.NotDirectlyDeserializable
-import org.jetbrains.bio.util.MultitaskProgress
-import org.jetbrains.bio.util.bufferedReader
-import org.jetbrains.bio.util.bufferedWriter
-import org.jetbrains.bio.util.createDirectories
+import org.jetbrains.bio.util.*
 import org.jetbrains.bio.viktor.F64Array
+import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.nio.file.Path
 import java.util.function.IntToDoubleFunction
@@ -95,8 +92,8 @@ interface ClassificationModel {
             path.bufferedWriter().use { gson.toJson(this, it) }
         } catch (e: StackOverflowError) {
             // Don't log exception, error message will be lost (removed from output) due to stacktrace size
-            Logger.getRootLogger()
-                    .error("Serialization StackOverflowError. Model ${javaClass.name}, path = ${path.toAbsolutePath()}")
+            Logs.getRootLogger().error(
+                    "Serialization StackOverflowError. Model ${javaClass.name}, path = ${path.toAbsolutePath()}")
             throw e
         }
     }
@@ -250,7 +247,7 @@ interface Fitter<out Model : ClassificationModel> {
     }
 
     companion object {
-        private val LOG = Logger.getLogger(ClassificationModel::class.java)
+        private val LOG = LoggerFactory.getLogger(ClassificationModel::class.java)
         const val TITLE = "unknown"
         const val THRESHOLD = 0.1
         const val MAX_ITERATIONS = 100

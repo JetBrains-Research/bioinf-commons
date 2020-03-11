@@ -1,7 +1,7 @@
 package org.jetbrains.bio
 
-import org.apache.log4j.Logger
 import org.jetbrains.bio.util.*
+import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
@@ -134,7 +134,7 @@ object Configuration {
         }
     }
 
-    private val LOG = Logger.getLogger(Configuration::class.java)
+    private val LOG = LoggerFactory.getLogger(Configuration::class.java)
 }
 
 private fun Properties.getPath(name: String): Path {

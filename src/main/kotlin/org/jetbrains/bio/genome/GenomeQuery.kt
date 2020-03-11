@@ -1,7 +1,7 @@
 package org.jetbrains.bio.genome
 
 import com.google.common.annotations.VisibleForTesting
-import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 import java.util.*
 
 /**
@@ -67,7 +67,7 @@ class GenomeQuery (val genome: Genome, vararg names: String) {
 
     companion object {
         @VisibleForTesting
-        internal val LOG = Logger.getLogger(GenomeQuery::class.java)
+        internal val LOG = LoggerFactory.getLogger(GenomeQuery::class.java)
 
         /**
          * Parses [String] as genome with possible custom chromosomes set.

@@ -2,8 +2,8 @@ package org.jetbrains.bio.genome
 
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVPrinter
-import org.apache.log4j.Logger
 import org.jetbrains.bio.util.bufferedWriter
+import org.slf4j.LoggerFactory
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.nio.file.Path
@@ -251,7 +251,7 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
     }
 
     companion object {
-        private val LOG = Logger.getLogger(GtfReader::class.java)
+        private val LOG = LoggerFactory.getLogger(GtfReader::class.java)
         fun determineUTR3End5(cdsBounds: Location, sortedExonRanges: List<Range>, transcriptId: String): Int {
             val strand = cdsBounds.strand
             val cdsEnd3 = cdsBounds.get3Bound(0)

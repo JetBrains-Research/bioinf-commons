@@ -6,7 +6,7 @@ import com.google.common.base.MoreObjects
 import com.google.common.primitives.*
 import gnu.trove.list.array.*
 import gnu.trove.set.hash.*
-import org.apache.log4j.Logger
+import org.jetbrains.bio.util.Logs
 import java.util.*
 
 // XXX this is done because kotlin.Byte (and other primitives)
@@ -281,7 +281,7 @@ class IntColumn(label: String, data: IntArray) :
 
     override fun resize(newSize: Int): Column<IntArray> {
         if (newSize < 0) {
-            Logger.getRootLogger().error("Current size: $size, new size = $newSize")
+            Logs.getRootLogger().error("Current size: $size, new size = $newSize")
         }
         return wrap(Arrays.copyOf(data, newSize))
     }

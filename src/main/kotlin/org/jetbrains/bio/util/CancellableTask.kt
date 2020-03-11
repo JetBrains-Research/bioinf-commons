@@ -2,7 +2,7 @@ package org.jetbrains.bio.util
 
 import com.google.common.annotations.VisibleForTesting
 import com.google.common.base.MoreObjects
-import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -101,7 +101,7 @@ class CancellableTask<T>(private val callable: Callable<T>) {
     override fun toString() = MoreObjects.toStringHelper(this).addValue(id).toString()
 
     companion object {
-        private val LOG = Logger.getLogger(CancellableTask::class.java)
+        private val LOG = LoggerFactory.getLogger(CancellableTask::class.java)
 
         private val EXECUTOR = Executors.newWorkStealingPool(parallelismLevel())
 

@@ -11,8 +11,8 @@ import org.apache.http.config.SocketConfig
 import org.apache.http.conn.ConnectTimeoutException
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.impl.client.LaxRedirectStrategy
-import org.apache.log4j.Logger
 import org.jetbrains.bio.util.*
+import org.slf4j.LoggerFactory
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.SocketTimeoutException
@@ -20,7 +20,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
-private val LOG = Logger.getLogger(UCSC::class.java)
+private val LOG = LoggerFactory.getLogger(UCSC::class.java)
 
 private fun HttpClient.tryGet(url: String): HttpEntity? {
     val response = execute(HttpGet(url))

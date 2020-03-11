@@ -1,11 +1,11 @@
 package org.jetbrains.bio.util
 
 import com.google.common.annotations.VisibleForTesting
-import org.apache.log4j.Logger
 import org.jetbrains.bio.util.MultitaskProgress.addTask
 import org.jetbrains.bio.util.MultitaskProgress.finishTask
 import org.jetbrains.bio.util.MultitaskProgress.periodNanos
 import org.jetbrains.bio.util.MultitaskProgress.reportTask
+import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.LongAdder
  */
 object MultitaskProgress {
     @VisibleForTesting
-    internal val LOG = Logger.getLogger(MultitaskProgress::class.java)
+    internal val LOG = LoggerFactory.getLogger(MultitaskProgress::class.java)
 
     // Hack to show progress in UI
     var progressBar: ProgressBar? = null

@@ -3,7 +3,6 @@ package org.jetbrains.bio.genome
 import com.google.common.math.IntMath
 import gnu.trove.list.array.TFloatArrayList
 import org.apache.commons.csv.CSVFormat
-import org.apache.log4j.Logger
 import org.jetbrains.bio.Configuration
 import org.jetbrains.bio.big.BigWigFile
 import org.jetbrains.bio.big.FixedStepSection
@@ -15,6 +14,7 @@ import org.jetbrains.bio.util.bufferedWriter
 import org.jetbrains.bio.util.createDirectories
 import org.jetbrains.bio.util.div
 import org.jetbrains.bio.util.withTempFile
+import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.stream.Collectors
@@ -22,7 +22,7 @@ import java.util.stream.Collectors
 /** A generator for the fake "to1" genome build. */
 @Suppress("unused")
 object TestOrganismDataGenerator {
-    private val LOG = Logger.getLogger(TestOrganismDataGenerator::class.java)
+    private val LOG = LoggerFactory.getLogger(TestOrganismDataGenerator::class.java)
 
     private val CHROMOSOMES_SIZES = mapOf(
             "chr1" to IntMath.pow(10, 7),

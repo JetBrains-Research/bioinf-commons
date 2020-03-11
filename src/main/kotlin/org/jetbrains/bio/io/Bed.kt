@@ -4,7 +4,6 @@ import com.google.common.base.Splitter
 import com.google.common.collect.UnmodifiableIterator
 import com.google.common.io.Closeables
 import kotlinx.support.jdk7.use
-import org.apache.log4j.Logger
 import org.jetbrains.bio.big.BedEntry
 import org.jetbrains.bio.big.ExtendedBedEntry
 import org.jetbrains.bio.genome.Chromosome
@@ -17,6 +16,7 @@ import org.jetbrains.bio.io.BedParser.Companion.Stringency
 import org.jetbrains.bio.io.BedParser.Companion.Stringency.LENIENT
 import org.jetbrains.bio.io.BedParser.Companion.Stringency.STRICT
 import org.jetbrains.bio.util.*
+import org.slf4j.LoggerFactory
 import java.awt.Color
 import java.io.*
 import java.net.URI
@@ -399,7 +399,7 @@ class BedParser(
     }
 
     companion object {
-        private val LOG = Logger.getLogger(BedParser::class.java)
+        private val LOG = LoggerFactory.getLogger(BedParser::class.java)
 
         /**
          * [STRICT] parser throws a [BedFormatException] on lines it can't parse.

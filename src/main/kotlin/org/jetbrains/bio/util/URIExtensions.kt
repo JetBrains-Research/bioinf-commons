@@ -4,7 +4,7 @@ import com.google.common.io.Files
 import com.google.common.io.Resources
 import htsjdk.samtools.seekablestream.SeekableStreamFactory
 import htsjdk.tribble.util.RemoteURLHelper
-import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
@@ -18,7 +18,7 @@ import java.util.regex.Pattern
 /**
  * @author Roman.Chernyatchik
  */
-private val LOG = Logger.getLogger("org.jetbrains.bio.util.URIExtensions")
+private val LOG = LoggerFactory.getLogger("org.jetbrains.bio.util.URIExtensions")
 
 fun URI.isFile() = this.scheme == null || this.scheme == "file"
 

@@ -1,16 +1,16 @@
 package org.jetbrains.bio.util
 
 import com.google.common.base.Stopwatch
-import org.apache.log4j.Level
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.event.Level
 import java.util.concurrent.CancellationException
 
 /**
  *  Measures the running time of a given possibly impure [block].
  */
-inline fun <R> Logger.time(level: Level = Level.DEBUG,
-                           message: String = "",
-                           block: () -> R): R {
+fun <R> Logger.time(level: Level = Level.DEBUG,
+                    message: String = "",
+                    block: () -> R): R {
     log(level, "$message...")
     val stopwatch = Stopwatch.createStarted()
 
@@ -22,10 +22,19 @@ inline fun <R> Logger.time(level: Level = Level.DEBUG,
         throw e
     } catch (e: Exception) {
         stopwatch.stop()
-        log(level, "$message: [FAILED] after $stopwatch", e)
+        error("$message: [FAILED] after $stopwatch", e)
         throw e
     }
     stopwatch.stop()
     log(level, "$message: done in $stopwatch")
     return res
+}
+
+fun Logger.log(level: Level, msg: String) {
+    when (level) {
+        Level.INFO -> info(msg)
+        Level.DEBUG -> debug(msg)
+        Level.ERROR -> error(msg)
+        else -> throw IllegalArgumentException("Unknown log level $level")
+    }
 }

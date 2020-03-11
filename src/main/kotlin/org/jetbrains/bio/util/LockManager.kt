@@ -1,8 +1,8 @@
 package org.jetbrains.bio.util
 
 import com.google.common.cache.CacheBuilder
-import org.apache.log4j.Logger
 import org.jetbrains.bio.util.LockManager.synchronized
+import org.slf4j.LoggerFactory
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
@@ -16,7 +16,7 @@ import java.util.concurrent.locks.ReentrantLock
  * @author Roman Chernyatchik
  */
 object LockManager {
-    private val LOG = Logger.getLogger(LockManager::class.java)
+    private val LOG = LoggerFactory.getLogger(LockManager::class.java)
 
     private val lockMap = CacheBuilder.newBuilder()
             .expireAfterAccess(1, TimeUnit.DAYS)

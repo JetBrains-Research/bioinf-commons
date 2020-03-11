@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
-import org.apache.log4j.Logger
 import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.GenomeQuery.Companion.parseGenomeQueryId
 import org.jetbrains.bio.util.*
+import org.slf4j.LoggerFactory
 import java.io.Reader
 import java.io.StringWriter
 import java.io.Writer
@@ -19,7 +19,7 @@ import java.util.*
 class DataConfig {
 
     companion object {
-        val LOG = Logger.getLogger(DataConfig::class.java)
+        val LOG = LoggerFactory.getLogger(DataConfig::class.java)
 
         const val TECHNICAL_REPLICATE_PATTERN = "r\\d+"
 

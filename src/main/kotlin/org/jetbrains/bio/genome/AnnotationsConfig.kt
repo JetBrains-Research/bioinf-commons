@@ -3,8 +3,8 @@ package org.jetbrains.bio.genome
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
-import org.apache.log4j.Logger
 import org.jetbrains.bio.util.*
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.text.SimpleDateFormat
@@ -15,7 +15,7 @@ import java.util.*
  */
 object AnnotationsConfig {
     const val VERSION: Int = 4
-    private val LOG = Logger.getLogger(AnnotationsConfig::class.java)
+    private val LOG = LoggerFactory.getLogger(AnnotationsConfig::class.java)
 
     @Volatile private var pathAndYamlConfig: Pair<Path, Map<String, GenomeAnnotationsConfig>>? = null
 

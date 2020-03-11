@@ -1,7 +1,5 @@
 package org.jetbrains.bio.genome
 
-import org.apache.log4j.SimpleLayout
-import org.apache.log4j.WriterAppender
 import org.jetbrains.bio.util.*
 import org.junit.Test
 import java.io.ByteArrayOutputStream
@@ -90,21 +88,20 @@ class GenomeTest {
     @Test
     fun testChromSizes_LoggedError() {
         withTempFile("foo", ".galaxy.dat") { path ->
-            val logContent = ByteArrayOutputStream()
+            val logStream = ByteArrayOutputStream()
 
             //XXX: Add log appender to catch warning about suspicious genome name
-            val appender = WriterAppender(SimpleLayout(), logContent).apply { name = "test appender" }
-            Genome.LOG.addAppender(appender)
-            
+            addAppender(logStream, "AppenderGenomeTest")
+
             try {
                 val genome = Genome[path]
                 val build = path.fileName.toString().substringBefore(".")
                 assertEquals(genome.build, build)
                 assertTrue("Unexpected chrom sizes file name: ${path.fileName}, " +
                         "expected <build>.chrom.sizes. Detected build: $build" in
-                        logContent.toString())
+                        logStream.toString())
             } finally {
-                MultitaskProgress.LOG.removeAppender(appender)
+                Logs.getRootLogger().detachAppender("AppenderGenomeTest")
             }
         }
     }

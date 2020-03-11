@@ -3,7 +3,7 @@ package org.jetbrains.bio.genome
 import com.google.common.collect.ImmutableListMultimap
 import com.google.common.collect.ListMultimap
 import com.google.common.collect.Maps
-import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * You've got names? We've got genes!
@@ -16,7 +16,7 @@ object GeneResolver {
     private val TRANSCRIPTS_MAPS_CACHE
             = Maps.newConcurrentMap<Pair<Genome, GeneAliasType>, ListMultimap<String, Transcript>>()
 
-    private val LOG = Logger.getLogger(GeneResolver::class.java)
+    private val LOG = LoggerFactory.getLogger(GeneResolver::class.java)
 
     fun getAnyGene(genome: Genome, anyAlias: String): Gene? {
         val geneIds = matching(genome, anyAlias).asSequence()

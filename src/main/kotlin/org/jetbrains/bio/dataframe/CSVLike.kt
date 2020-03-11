@@ -1,15 +1,15 @@
 package org.jetbrains.bio.dataframe
 
 import org.apache.commons.csv.CSVFormat
-import org.apache.log4j.Logger
 import org.jetbrains.bio.util.Progress
 import org.jetbrains.bio.util.bufferedReader
 import org.jetbrains.bio.util.bufferedWriter
 import org.jetbrains.bio.util.size
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
 class CSVLike(val format: CSVFormat) : DataFrameMapper() {
-    private val LOG = Logger.getLogger(CSVLike::class.java)
+    private val LOG = LoggerFactory.getLogger(CSVLike::class.java)
 
     /**
      * Tries to guess data frame spec for a given [path].

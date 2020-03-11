@@ -3,8 +3,9 @@ package org.jetbrains.bio.statistics
 import gnu.trove.list.array.TDoubleArrayList
 import org.apache.commons.math3.exception.NotANumberException
 import org.apache.commons.math3.util.Precision
-import org.apache.log4j.Level
-import org.apache.log4j.Logger
+import org.jetbrains.bio.util.log
+import org.slf4j.LoggerFactory
+import org.slf4j.event.Level
 
 /**
  * A common class for model monitors.
@@ -16,7 +17,7 @@ abstract class ConvergenceMonitor(protected val title: String,
                                   protected val threshold: Double,
                                   protected val maxIter: Int,
                                   private val level: Level) {
-    private val LOG = Logger.getLogger(ConvergenceMonitor::class.java)
+    private val LOG = LoggerFactory.getLogger(ConvergenceMonitor::class.java)
 
     init {
         require(maxIter > 1) { "maximum number of iterations must be greater than one" }

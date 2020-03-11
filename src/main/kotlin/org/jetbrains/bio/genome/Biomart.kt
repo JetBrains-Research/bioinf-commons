@@ -6,7 +6,7 @@ import org.apache.http.client.HttpResponseException
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.utils.URIBuilder
 import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.InputStream
 
@@ -114,7 +114,7 @@ data class Mart(
     }
 
     companion object {
-        private val LOG = Logger.getLogger(Mart::class.java)
+        private val LOG = LoggerFactory.getLogger(Mart::class.java)
 
         /**
          * Sends an HTTP GET request to the Biomart server.

@@ -4,7 +4,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
 import org.apache.commons.compress.utils.IOUtils
-import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -13,7 +13,7 @@ import java.nio.file.Path
 
 object Tar {
 
-    private val LOG = Logger.getLogger(Tar::class.java)
+    private val LOG = LoggerFactory.getLogger(Tar::class.java)
 
     fun compress(path: Path, vararg files: File) {
         getTarArchiveOutputStream(path).use { out ->

@@ -2,7 +2,6 @@ package org.jetbrains.bio.util
 
 import htsjdk.samtools.seekablestream.SeekableStream
 import htsjdk.samtools.seekablestream.SeekableStreamFactory
-import org.apache.log4j.Logger.getLogger
 import org.jetbrains.bio.BetterSeekableBufferedStream
 import org.jetbrains.bio.EndianAwareDataSeekableStream
 import org.jetbrains.bio.EndianSynchronizedBufferFactory
@@ -14,6 +13,7 @@ import org.jetbrains.bio.tdf.TdfFile
 import org.jetbrains.bio.util.IOUsageCounter.debugMode
 import org.jetbrains.bio.util.IOUsageCounter.internalCntBytesRead
 import org.jetbrains.bio.util.IOUsageCounter.internalCntOpenedStreams
+import org.slf4j.LoggerFactory
 import java.net.URI
 import java.nio.ByteOrder
 
@@ -116,7 +116,7 @@ fun BigFile.Companion.readURIParallelAccess(
 )
 
 object BigUtil {
-    private val LOG = getLogger(BigUtil::class.java)
+    private val LOG = LoggerFactory.getLogger(BigUtil::class.java)
 
     private const val INTERNAL_RMF_KEY = "epigenome.internal.big.rmf"
     private const val INTERNAL_BIG_PREFETCH_KEY = "epigenome.internal.big.prefetch"

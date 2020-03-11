@@ -6,7 +6,6 @@ import gnu.trove.impl.Constants
 import gnu.trove.map.TObjectIntMap
 import gnu.trove.map.hash.TObjectIntHashMap
 import org.apache.commons.csv.CSVFormat
-import org.apache.log4j.Logger
 import org.jetbrains.bio.Configuration
 import org.jetbrains.bio.genome.*
 import org.jetbrains.bio.io.CachingIterator
@@ -20,6 +19,7 @@ import org.jgrapht.event.VertexTraversalEvent
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph
 import org.jgrapht.graph.UnmodifiableDirectedGraph
 import org.jgrapht.traverse.DepthFirstIterator
+import org.slf4j.LoggerFactory
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.Reader
@@ -199,7 +199,7 @@ private inline fun <K, V> ListMultimap<K, V>.single(key: K): V = this[key].singl
  * for format description.
  */
 object GafFile {
-    private val LOG = Logger.getLogger(GafFile::class.java)
+    private val LOG = LoggerFactory.getLogger(GafFile::class.java)
 
     // See
     // for field descriptions.

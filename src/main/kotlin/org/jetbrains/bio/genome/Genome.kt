@@ -6,12 +6,12 @@ import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import org.apache.commons.csv.CSVFormat
-import org.apache.log4j.Logger
 import org.jetbrains.bio.Configuration
 import org.jetbrains.bio.genome.sequence.TwoBitReader
 import org.jetbrains.bio.genome.sequence.TwoBitSequence
 import org.jetbrains.bio.genome.sequence.TwoBitWriter
 import org.jetbrains.bio.util.*
+import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.UncheckedIOException
 import java.lang.ref.WeakReference
@@ -223,7 +223,7 @@ class Genome private constructor(
         const val TEST_ORGANISM_BUILD = "to1"
 
         @VisibleForTesting
-        internal val LOG = Logger.getLogger(Genome::class.java)
+        internal val LOG = LoggerFactory.getLogger(Genome::class.java)
 
         /** Use cache to avoid extra chrom.sizes loading. */
         private val CACHE = Maps.newConcurrentMap<String, Genome>()
@@ -567,7 +567,7 @@ enum class Strand(val char: Char) {
 
 
     companion object {
-        internal val LOG = Logger.getLogger(Strand::class.java)
+        internal val LOG = LoggerFactory.getLogger(Strand::class.java)
     }
 
 }

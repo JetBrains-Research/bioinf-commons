@@ -4,8 +4,8 @@ import com.google.common.collect.ImmutableList
 import com.google.common.hash.Hashing
 import com.google.common.primitives.Longs
 import kotlinx.support.jdk7.use
-import org.apache.log4j.Level
-import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
+import org.slf4j.event.Level
 import java.io.BufferedWriter
 import java.io.File
 import java.io.InputStream
@@ -20,7 +20,7 @@ import java.text.DecimalFormatSymbols
 import java.util.*
 import java.util.zip.*
 
-private val LOG = Logger.getLogger("org.jetbrains.bio.util.PathExtensions")
+private val LOG = LoggerFactory.getLogger("org.jetbrains.bio.util.PathExtensions")
 
 fun Array<String>.toPath(): Path {
     check(isNotEmpty())

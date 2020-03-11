@@ -1,14 +1,20 @@
 package org.jetbrains.bio.util
 
-import org.apache.log4j.SimpleLayout
-import org.apache.log4j.WriterAppender
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.LoggerContext
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.Appender
+import ch.qos.logback.core.OutputStreamAppender
 import org.jetbrains.bio.util.ProgressPart.Companion.fromBoundedProgressString
 import org.jetbrains.bio.util.ProgressPart.Companion.fromUnboundedProgressString
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -128,11 +134,13 @@ data class ProgressPart(val percentCompleted: Double,
 }
 
 abstract class ProgressTest {
-    private lateinit var logContent: ByteArrayOutputStream
+    private val APPENDER_NAME = "AppenderProgressTest"
+
+    private lateinit var logStream: ByteArrayOutputStream
 
     /** A list of log output lines. */
-    protected val strings: List<String>
-        get() = logContent.toString().trim().split('\n')
+    protected val logStrings: List<String>
+        get() = logStream.toString().trim().split('\n')
                 .filter { it.isNotBlank() }
 
     /** A list of reports from progress. */
@@ -140,22 +148,20 @@ abstract class ProgressTest {
 
     @Before
     fun setUp() {
-        logContent = ByteArrayOutputStream()
-        val appender = WriterAppender(SimpleLayout(), logContent)
-        appender.name = "appender for ProgressTest"
-        Progress.LOG.addAppender(appender)
+        logStream = ByteArrayOutputStream()
+        addAppender(logStream, APPENDER_NAME)
     }
 
     @After
     fun tearDown() {
-        Progress.LOG.removeAppender("appender for ProgressTest")
+        Logs.getRootLogger().detachAppender(APPENDER_NAME)
     }
 }
 
 class SequentialProgressTest : ProgressTest() {
 
     override val parts: List<ProgressPart>
-        get() = strings.map {
+        get() = logStrings.map {
             fromBoundedProgressString(it)
         }
 
@@ -183,8 +189,8 @@ class SequentialProgressTest : ProgressTest() {
 
         val expPartsRange = 10..12
         val expPartsRangeStr = "[${expPartsRange.start}..${expPartsRange.endInclusive}]"
-        assertTrue(strings.size in expPartsRange,
-                "Timer progress lines count is expected to be $expPartsRangeStr, but was ${strings.size}")
+        assertTrue(logStrings.size in expPartsRange,
+                "Timer progress lines count is expected to be $expPartsRangeStr, but was ${logStrings.size}")
         assertEquals(1.0, parts[0].percentCompleted)
         assertEquals(0, parts[0].elapsedSeconds)
         assertEquals(1, parts[0].itemsDone)
@@ -197,16 +203,16 @@ class SequentialProgressTest : ProgressTest() {
                 "Elapsed times expected to be $expElapsedRangeStr sec, " +
                         "but was $elapsedSecs")
         assertEquals(100, parts.last().itemsDone)
-        assertTrue("[done]" in strings.last())
+        assertTrue("[done]" in logStrings.last())
     }
 
     @Test
     fun testEmpty() {
         val progress = Progress { period = 1 to TimeUnit.SECONDS }.bounded(0)
         progress.done()
-        assertEquals(1, strings.size)
-        assertTrue("[done]" in strings.first())
-        assertTrue("INFO - Progress: 100%, Elapsed time: " in strings.first())
+        assertEquals(1, logStrings.size)
+        assertTrue("[done]" in logStrings.first())
+        assertTrue("Progress: 100%" in logStrings.first())
     }
 
 
@@ -234,9 +240,9 @@ class SequentialProgressTest : ProgressTest() {
 
         val expPartsRange = 10..12
         val expPartsRangeStr = "[${expPartsRange.start}..${expPartsRange.endInclusive}]"
-        assertTrue(strings.size in expPartsRange,
+        assertTrue(logStrings.size in expPartsRange,
                 "Timer progress lines count is expected to be $expPartsRangeStr," +
-                        " but was ${strings.size}")
+                        " but was ${logStrings.size}")
         assertEquals(1.0, parts[0].percentCompleted)
         // can be <1s, e.g. 258ms.
         // assertEquals(0, parts.get(0).elapsed);
@@ -249,7 +255,7 @@ class SequentialProgressTest : ProgressTest() {
         val expElapsedRangeStr = "[${expElapsedRange.start}..${expElapsedRange.endInclusive}]"
         assertTrue(elapsedSecs in expElapsedRange,
                 "Elapsed times expected to be $expElapsedRangeStr sec, but was $elapsedSecs")
-        assertTrue("[done]" in strings.last())
+        assertTrue("[done]" in logStrings.last())
     }
 }
 
@@ -258,7 +264,7 @@ class ParallelProgressTest : ProgressTest() {
     var rule = RetryRule(3)
 
     override val parts: List<ProgressPart>
-        get() = strings.map {
+        get() = logStrings.map {
             ProgressPart.fromUnboundedProgressString(it)
         }
 
@@ -296,7 +302,7 @@ class ParallelProgressTest : ProgressTest() {
         val allSeconds = parts.size
         assertEquals(allSeconds, uniqueSeconds + 1,
                 "shouldn't report progress more often than once in second, except [done]")
-        assertTrue("[done]" in strings[strings.size - 1])
+        assertTrue("[done]" in logStrings[logStrings.size - 1])
         assertEquals(adder.sum(), parts[parts.size - 1].itemsDone.toLong(),
                 "should report all progress")
     }
@@ -336,7 +342,7 @@ class ParallelProgressTest : ProgressTest() {
         assertEquals(parts.size, uniqueSeconds + 1,
                 "shouldn't report progress more often than once in second, except [done].\n" +
                         "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}")
-        assertTrue("[done]" in strings[strings.size - 1])
+        assertTrue("[done]" in logStrings[logStrings.size - 1])
         assertEquals(adder.sum(), parts.last().itemsDone.toLong(),
                 "should report all progress")
     }
@@ -352,19 +358,18 @@ class ParallelProgressTest : ProgressTest() {
 }
 
 class MultiTaskProgressTest {
-    private lateinit var logContent: ByteArrayOutputStream
+    private lateinit var logStream: ByteArrayOutputStream
+    private val APPENDER_NAME = "AppenderMultiTaskProgressTest"
 
     @Before
     fun setUp() {
-        logContent = ByteArrayOutputStream()
-        val appender = WriterAppender(SimpleLayout(), logContent)
-        appender.name = "appender for ProgressTest"
-        MultitaskProgress.LOG.addAppender(appender)
+        logStream = ByteArrayOutputStream()
+        addAppender(logStream, APPENDER_NAME)
     }
 
     @After
     fun tearDown() {
-        MultitaskProgress.LOG.removeAppender("appender for ProgressTest")
+        Logs.getRootLogger().detachAppender(APPENDER_NAME)
     }
 
     @Test
@@ -381,10 +386,30 @@ class MultiTaskProgressTest {
             Thread.sleep(100)
         }
         MultitaskProgress.finishTask("task_${tasks - 1}")
-        val log = logContent.toString()
+        val log = logStream.toString()
         assertTrue("Running 9 tasks: 0.00% (0/459)" in log)
         assertTrue("Running 2 tasks: 61.95% (280/452)" in log)
         assertTrue("100.00% (360/360)" in log)
     }
 }
 
+internal fun addAppender(appenderStream: OutputStream, appenderName: String): Appender<ILoggingEvent> {
+    val loggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
+
+    val logEncoder = PatternLayoutEncoder().apply {
+        context = loggerContext
+        pattern = "%-5level - %msg%n"
+    }
+    logEncoder.start()
+
+    val appender = OutputStreamAppender<ILoggingEvent>().apply {
+        context = loggerContext
+        encoder = logEncoder
+        outputStream = appenderStream
+        name = appenderName
+    }
+    appender.start()
+
+    loggerContext.getLogger(Logger.ROOT_LOGGER_NAME).addAppender(appender)
+    return appender
+}

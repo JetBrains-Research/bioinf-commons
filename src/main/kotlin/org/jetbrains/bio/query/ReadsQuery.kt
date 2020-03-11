@@ -1,10 +1,10 @@
 package org.jetbrains.bio.query
 
-import org.apache.log4j.Logger
 import org.jetbrains.bio.Configuration
 import org.jetbrains.bio.coverage.*
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.util.*
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
 /**
@@ -104,7 +104,7 @@ class ReadsQuery(
     private val fileId = idStem + (if (fragment is FixedFragment) "_raw" else "")
 
     companion object {
-        val LOG: Logger = Logger.getLogger(ReadsQuery::class.java)
+        val LOG = LoggerFactory.getLogger(ReadsQuery::class.java)
 
         private const val MIN_DEPTH_THRESHOLD_PERCENT = 0.1
     }

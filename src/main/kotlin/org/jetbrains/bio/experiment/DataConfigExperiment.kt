@@ -1,8 +1,8 @@
 package org.jetbrains.bio.experiment
 
-import org.apache.log4j.Logger
 import org.jetbrains.bio.dataset.DataConfig
 import org.jetbrains.bio.util.*
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
 abstract class DataConfigExperiment(folder: String, val configuration: DataConfig) :
@@ -34,7 +34,7 @@ abstract class DataConfigExperiment(folder: String, val configuration: DataConfi
     }
 
     companion object {
-        private val LOG = Logger.getLogger(DataConfigExperiment::class.java)
+        private val LOG = LoggerFactory.getLogger(DataConfigExperiment::class.java)
 
         fun loadDataConfig(input: String, quiet: Boolean = false): DataConfig {
             if (quiet) {

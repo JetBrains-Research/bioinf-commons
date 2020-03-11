@@ -10,11 +10,11 @@ import org.apache.commons.math3.special.Beta
 import org.apache.commons.math3.special.Gamma
 import org.apache.commons.math3.util.CombinatoricsUtils
 import org.apache.commons.math3.util.Precision
-import org.apache.log4j.Logger
 import org.jetbrains.bio.statistics.standardDeviation
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.KahanSum
 import org.jetbrains.bio.viktor.asF64Array
+import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.stream.DoubleStream
 import kotlin.math.abs
@@ -148,7 +148,7 @@ class NegativeBinomialDistribution(rng: RandomGenerator,
     }
 
     companion object {
-        private val LOG = Logger.getLogger(NegativeBinomialDistribution::class.java)
+        private val LOG = LoggerFactory.getLogger(NegativeBinomialDistribution::class.java)
 
         fun usingMean(mean: Double, failures: Double): NegativeBinomialDistribution {
             return NegativeBinomialDistribution(Well19937c(), mean, failures)

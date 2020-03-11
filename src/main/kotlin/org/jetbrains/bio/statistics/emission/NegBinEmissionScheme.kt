@@ -1,12 +1,12 @@
 package org.jetbrains.bio.statistics.emission
 
 import org.apache.commons.math3.special.Gamma
-import org.apache.log4j.Logger
 import org.jetbrains.bio.statistics.MoreMath
 import org.jetbrains.bio.statistics.distribution.NegativeBinomialDistribution
 import org.jetbrains.bio.statistics.distribution.Sampling
 import org.jetbrains.bio.statistics.gson.NotDirectlyDeserializable
 import org.jetbrains.bio.viktor.F64Array
+import org.slf4j.LoggerFactory
 import java.util.function.IntSupplier
 
 class NegBinEmissionScheme(mean: Double, failures: Double) :
@@ -67,6 +67,6 @@ class NegBinEmissionScheme(mean: Double, failures: Double) :
     }
 
     companion object {
-        private val LOG = Logger.getLogger(NegBinEmissionScheme::class.java)
+        private val LOG = LoggerFactory.getLogger(NegBinEmissionScheme::class.java)
     }
 }

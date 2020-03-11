@@ -1,6 +1,6 @@
 package org.jetbrains.bio.util
 
-import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -29,7 +29,7 @@ enum class OutputType {
 }
 
 private object Exec {
-    private val LOG = Logger.getLogger(Exec::class.java)
+    private val LOG = LoggerFactory.getLogger(Exec::class.java)
 
     internal fun exec(executable: String,
                       vararg args: Any,
@@ -91,7 +91,7 @@ inline fun <T> withResource(proxy: Class<*>, name: String,
     if (checkNotNull) {
         checkNotNull(resource) { "Resource '$name' not found for class: $proxy" }
     } else {
-        Logger.getRootLogger().warn("Resource '$name' not found for class: $proxy")
+        Logs.getRootLogger().warn("Resource '$name' not found for class: $proxy")
     }
 
     return withTempDirectory(proxy.simpleName) { dir ->

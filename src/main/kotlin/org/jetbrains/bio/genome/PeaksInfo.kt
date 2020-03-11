@@ -1,7 +1,6 @@
 package org.jetbrains.bio.genome
 
 import org.apache.commons.math3.stat.StatUtils
-import org.apache.log4j.Logger
 import org.jetbrains.bio.coverage.AutoFragment
 import org.jetbrains.bio.coverage.Coverage
 import org.jetbrains.bio.coverage.Fragment
@@ -9,6 +8,7 @@ import org.jetbrains.bio.query.ReadsQuery
 import org.jetbrains.bio.util.isAccessible
 import org.jetbrains.bio.util.presentablePath
 import org.jetbrains.bio.util.size
+import org.slf4j.LoggerFactory
 import java.net.URI
 import java.nio.file.Path
 import java.util.*
@@ -22,7 +22,7 @@ import java.util.stream.Stream
 
 object PeaksInfo {
 
-    private val LOG = Logger.getLogger(PeaksInfo::class.java)
+    private val LOG = LoggerFactory.getLogger(PeaksInfo::class.java)
 
     private fun Long.formatLongNumber() = String.format("%,d", this).replace(',', ' ')
 

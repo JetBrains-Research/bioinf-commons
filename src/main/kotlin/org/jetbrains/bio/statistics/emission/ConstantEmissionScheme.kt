@@ -1,7 +1,7 @@
 package org.jetbrains.bio.statistics.emission
 
-import org.apache.log4j.Logger
 import org.jetbrains.bio.viktor.F64Array
+import org.slf4j.LoggerFactory
 import java.util.function.IntSupplier
 
 class ConstantIntegerEmissionScheme(private val emission: Int) : IntegerEmissionScheme {
@@ -19,6 +19,6 @@ class ConstantIntegerEmissionScheme(private val emission: Int) : IntegerEmission
     }
 
     companion object {
-        private val LOG = Logger.getLogger(ConstantIntegerEmissionScheme::class.java)
+        private val LOG = LoggerFactory.getLogger(ConstantIntegerEmissionScheme::class.java)
     }
 }

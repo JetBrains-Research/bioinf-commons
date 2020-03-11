@@ -1,11 +1,11 @@
 package org.jetbrains.bio.experiment
 
-import org.apache.log4j.Logger
 import org.jetbrains.bio.Configuration
 import org.jetbrains.bio.util.createDirectories
 import org.jetbrains.bio.util.div
 import org.jetbrains.bio.util.resolve
 import org.jetbrains.bio.util.time
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
 abstract class Experiment @JvmOverloads constructor(
@@ -45,6 +45,6 @@ abstract class Experiment @JvmOverloads constructor(
     }
 
     companion object {
-        private val LOG = Logger.getLogger(Experiment::class.java)
+        private val LOG = LoggerFactory.getLogger(Experiment::class.java)
     }
 }

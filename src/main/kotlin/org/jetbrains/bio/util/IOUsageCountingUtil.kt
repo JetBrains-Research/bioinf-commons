@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 object IOUsageCounter {
     // Used for debug
-    // internal val LOG = Logger.getLogger(IOUsageCounter::class.java)
+    // internal val LOG = LoggerFactory.getLogger(IOUsageCounter::class.java)
 
     @Volatile
     var debugMode: Boolean = false

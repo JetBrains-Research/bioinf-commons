@@ -6,11 +6,11 @@ import com.google.common.collect.Maps
 import com.google.common.collect.Multimaps
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import org.apache.log4j.Level
-import org.apache.log4j.Logger
 import org.jetbrains.bio.genome.containers.minus
 import org.jetbrains.bio.genome.sequence.BinaryLut
 import org.jetbrains.bio.util.*
+import org.slf4j.LoggerFactory
+import org.slf4j.event.Level
 import java.nio.file.Path
 import java.util.*
 
@@ -202,7 +202,7 @@ fun groupTranscripts(transcripts: Iterable<Transcript>): List<Gene> {
 
 object Transcripts {
     private const val FORMAT_VERSION = 1
-    private val LOG = Logger.getLogger(Transcripts::class.java)
+    private val LOG = LoggerFactory.getLogger(Transcripts::class.java)
     private val TRANSCRIPTS_CACHE = cache<Transcript>()
     private val BOUND5_INDEX_CACHE = CacheBuilder.newBuilder()
                 .softValues()
