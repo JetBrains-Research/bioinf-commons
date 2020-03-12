@@ -400,7 +400,7 @@ fun Path.inputStream(vararg options: OpenOption) =
 fun InputStream.streamFor(path: String) = path.let {
     val lcPath = it.toLowerCase()
     val parentStream = when {
-        IOUsageCounter.debugMode && this !is IOUsageCountingInputStream -> IOUsageCountingInputStream(this)
+        IOMonitor.debugMode && this !is IOMonitorInputStream -> IOMonitorInputStream(this)
         else -> this
     }
     when {

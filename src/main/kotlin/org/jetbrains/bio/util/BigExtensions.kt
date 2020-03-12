@@ -10,9 +10,9 @@ import org.jetbrains.bio.big.BigBedFile
 import org.jetbrains.bio.big.BigFile
 import org.jetbrains.bio.big.BigWigFile
 import org.jetbrains.bio.tdf.TdfFile
-import org.jetbrains.bio.util.IOUsageCounter.debugMode
-import org.jetbrains.bio.util.IOUsageCounter.internalCntBytesRead
-import org.jetbrains.bio.util.IOUsageCounter.internalCntOpenedStreams
+import org.jetbrains.bio.util.IOMonitor.debugMode
+import org.jetbrains.bio.util.IOMonitor.internalCntBytesRead
+import org.jetbrains.bio.util.IOMonitor.internalCntOpenedStreams
 import org.slf4j.LoggerFactory
 import java.net.URI
 import java.nio.ByteOrder
@@ -172,7 +172,7 @@ class IOUsageCountingSeekableStream(val input: SeekableStream) : SeekableStream(
     @Volatile var closed = false
     
     init {
-        IOUsageCounter.openStreamOrReader()
+        IOMonitor.openStreamOrReader()
     }
 
     override fun length() = input.length()

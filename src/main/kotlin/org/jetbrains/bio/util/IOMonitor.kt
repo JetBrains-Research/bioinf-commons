@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package org.jetbrains.bio.util
 
 import java.io.InputStream
@@ -10,9 +12,9 @@ import java.util.concurrent.atomic.AtomicLong
  * @date 2018-10-24
  */
 
-object IOUsageCounter {
+object IOMonitor {
     // Used for debug
-    // internal val LOG = LoggerFactory.getLogger(IOUsageCounter::class.java)
+    // internal val LOG = LoggerFactory.getLogger(IOMonitor::class.java)
 
     @Volatile
     var debugMode: Boolean = false
@@ -40,11 +42,12 @@ object IOUsageCounter {
     }
 }
 
-class IOUsageCountingReader(val input: Reader) : Reader() {
-    @Volatile var closed = false
+class IOMonitorReader(val input: Reader) : Reader() {
+    @Volatile
+    var closed = false
 
     init {
-        IOUsageCounter.openStreamOrReader()
+        IOMonitor.openStreamOrReader()
     }
 
     override fun close() {
@@ -55,22 +58,23 @@ class IOUsageCountingReader(val input: Reader) : Reader() {
             input.close()
             closed = true
         }
-        IOUsageCounter.internalCntOpenedStreams.getAndDecrement()
+        IOMonitor.internalCntOpenedStreams.getAndDecrement()
     }
 
     override fun read(cbuf: CharArray?, off: Int, len: Int): Int {
         val n = input.read(cbuf, off, len)
 
-        IOUsageCounter.internalCntBytesRead.addAndGet(maxOf(0, n).toLong())
+        IOMonitor.internalCntBytesRead.addAndGet(maxOf(0, n).toLong())
         return n
     }
 }
 
-class IOUsageCountingInputStream(val input: InputStream) : InputStream() {
-    @Volatile var closed = false
+class IOMonitorInputStream(val input: InputStream) : InputStream() {
+    @Volatile
+    var closed = false
 
     init {
-        IOUsageCounter.openStreamOrReader()
+        IOMonitor.openStreamOrReader()
     }
 
     override fun close() {
@@ -81,13 +85,13 @@ class IOUsageCountingInputStream(val input: InputStream) : InputStream() {
             input.close()
             closed = true
         }
-        IOUsageCounter.internalCntOpenedStreams.getAndDecrement()
+        IOMonitor.internalCntOpenedStreams.getAndDecrement()
     }
 
     override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
         val n = input.read(buffer, offset, length)
 
-        IOUsageCounter.internalCntBytesRead.addAndGet(maxOf(0, n).toLong())
+        IOMonitor.internalCntBytesRead.addAndGet(maxOf(0, n).toLong())
 
         return n
     }
@@ -96,7 +100,7 @@ class IOUsageCountingInputStream(val input: InputStream) : InputStream() {
         val value = input.read()
 
         if (value != -1) {
-            IOUsageCounter.internalCntBytesRead.addAndGet(1)
+            IOMonitor.internalCntBytesRead.addAndGet(1)
         }
 
         return value
