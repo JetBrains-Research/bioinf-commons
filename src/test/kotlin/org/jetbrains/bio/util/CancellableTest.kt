@@ -10,7 +10,7 @@ import kotlin.test.assertNull
 /**
  * @author Oleg Shpynov
  */
-class CancellableTaskTest {
+class CancellableTest {
     private val intCallable = Callable<Int> {
         for (i in 0..9) {
             CancellableState.current().checkCanceled()
