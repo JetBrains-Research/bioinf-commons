@@ -8,9 +8,47 @@ import org.jetbrains.bio.genome.containers.genomeMap
 import java.util.concurrent.ThreadLocalRandom
 
 
-private fun hasIntersection(regionsMap: GenomeMap<MutableList<Range>>, range: ChromosomeRange): Boolean {
-    val list = regionsMap[range.chromosome]
-    val range = range.toRange()
+/**
+ * Fast reimplementation of `bedtools shuffle`.
+ * Uniformly shuffles regions in such way that they starts are in background. Resulting region will be not intersecting.
+ * Such behaviour allows fast implementations. Also it is consistent with `bedtools shuffle`.
+ * @param genomeQuery genome to use
+ * @param regions regions to shuffle. Only length of regions are used.
+ * @param background background regions, if null shuffle from whole genome.
+ * @param maximalReTries number of attempts to generate regions satisfying all conditions.
+ */
+
+fun shuffleChromosomeRanges(genomeQuery: GenomeQuery,
+                            regions: List<ChromosomeRange>,
+                            background: List<ChromosomeRange>? = null,
+                            maximalReTries: Int = 100): List<ChromosomeRange> {
+    val lengths = regions.map { it.length() }.toIntArray()
+
+    val backgroundRegions = background ?: genomeQuery.get().map {
+        ChromosomeRange(0, it.length, it)
+    }
+
+    val prefixSum = LongArray(backgroundRegions.size)
+
+    var s = 0L
+
+    for (i in backgroundRegions.indices) {
+        s += backgroundRegions[i].length()
+        prefixSum[i] = s
+    }
+
+    for (i in 1..maximalReTries) {
+        val result = tryShuffle(genomeQuery, backgroundRegions, lengths, prefixSum, maximalReTries)
+        if (result != null) {
+            return result
+        }
+    }
+    throw RuntimeException("Too many shuffle attempts")
+}
+
+private fun hasIntersection(regionsMap: GenomeMap<MutableList<Range>>, chromosomeRange: ChromosomeRange): Boolean {
+    val list = regionsMap[chromosomeRange.chromosome]
+    val range = chromosomeRange.toRange()
     for (r in list) {
         if (r intersects range) {
             return true
@@ -70,43 +108,4 @@ private fun tryShuffle(genomeQuery: GenomeQuery,
     }
 
     return result
-}
-
-
-/**
- * Fast reimplementation of `bedtools shuffle`.
- * Uniformly shuffles regions in such way that they starts are in background. Resulting region will be not intersecting.
- * Such behaviour allows fast implementations. Also it is consistent with `bedtools shuffle`.
- * @param genomeQuery genome to use
- * @param regions regions to shuffle. Only length of regions are used.
- * @param background background regions, if null shuffle from whole genome.
- * @param maximalReTries number of attempts to generate regions satisfying all conditions.
- */
-
-fun shuffleChromosomeRanges(genomeQuery: GenomeQuery,
-                            regions: List<ChromosomeRange>,
-                            background: List<ChromosomeRange>? = null,
-                            maximalReTries: Int = 100): List<ChromosomeRange> {
-    val lengths = regions.map { it.length() }.toIntArray()
-
-    val backgroundRegions = background ?: genomeQuery.get().map {
-        ChromosomeRange(0, it.length, it)
-    }
-
-    val prefixSum = LongArray(backgroundRegions.size)
-
-    var s = 0L
-
-    for (i in backgroundRegions.indices) {
-        s += backgroundRegions[i].length()
-        prefixSum[i] = s
-    }
-
-    for (i in 1..maximalReTries) {
-        val result = tryShuffle(genomeQuery, backgroundRegions, lengths, prefixSum, maximalReTries)
-        if (result != null) {
-            return result
-        }
-    }
-    throw RuntimeException("Too many shuffle attempts")
 }

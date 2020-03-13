@@ -1,6 +1,5 @@
 package org.jetbrains.bio.experiment
 
-import org.jetbrains.bio.Configuration
 import org.jetbrains.bio.util.createDirectories
 import org.jetbrains.bio.util.div
 import org.jetbrains.bio.util.resolve
@@ -8,6 +7,13 @@ import org.jetbrains.bio.util.time
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
+/**
+ * Experiment is a named computation procedure with description and fixed location.
+ * Main entry point is [run] method.
+ * Any experiment class should implements method [doCalculations], which is being executed.
+ *
+ * @author Oleg Shpynov
+ */
 abstract class Experiment @JvmOverloads constructor(
         /** Folder, the data produced by this experiment should be stored. */
         open val experimentFolder: String,
@@ -24,7 +30,7 @@ abstract class Experiment @JvmOverloads constructor(
     val experimentPath: Path get() = Configuration.experimentsPath / experimentFolder
 
     /**
-     * Main entry point of each experiment, called from the [.run] method.
+     * Main entry point of each experiment, called from the [run] method.
      */
     @Throws(Exception::class)
     protected abstract fun doCalculations()

@@ -81,7 +81,7 @@ class ByteColumn(label: String, data: ByteArray) :
     override fun reorder(indices: IntArray): Column<ByteArray> {
         require(data.size == indices.size)
         val clone = data.clone()
-        for (i in 0..size - 1) {
+        for (i in 0 until size) {
             clone[i] = data[indices[i]]
         }
 
@@ -101,14 +101,14 @@ class ByteColumn(label: String, data: ByteArray) :
     override fun equals(other: Any?) = when {
         this === other -> true
         other !is ByteColumn -> false
-        else -> label == other.label && Arrays.equals(data, other.data)
+        else -> label == other.label && data.contentEquals(other.data)
     }
 
-    override fun hashCode() = Arrays.deepHashCode(arrayOf(label, data))
+    override fun hashCode() = arrayOf(label, data).contentDeepHashCode()
 
     override fun toString() = MoreObjects.toStringHelper(this)
             .add("label", label)
-            .add("data", Arrays.toString(data))
+            .add("data", data.contentToString())
             .toString()
 }
 
@@ -174,7 +174,7 @@ class ShortColumn(label: String, data: ShortArray) :
     override fun reorder(indices: IntArray): Column<ShortArray> {
         require(data.size == indices.size)
         val clone = data.clone()
-        for (i in 0..size - 1) {
+        for (i in 0 until size) {
             clone[i] = data[indices[i]]
         }
 
@@ -201,14 +201,14 @@ class ShortColumn(label: String, data: ShortArray) :
     override fun equals(other: Any?) = when {
         this === other -> true
         other !is ShortColumn -> false
-        else -> label == other.label && Arrays.equals(data, other.data)
+        else -> label == other.label && data.contentEquals(other.data)
     }
 
-    override fun hashCode() = Arrays.deepHashCode(arrayOf(label, data))
+    override fun hashCode() = arrayOf(label, data).contentDeepHashCode()
 
     override fun toString() = MoreObjects.toStringHelper(this)
             .add("label", label)
-            .add("data", Arrays.toString(data))
+            .add("data", data.contentToString())
             .toString()
 }
 
@@ -272,7 +272,7 @@ class IntColumn(label: String, data: IntArray) :
     override fun reorder(indices: IntArray): Column<IntArray> {
         check(data.size == indices.size)
         val clone = data.clone()
-        for (i in 0..size - 1) {
+        for (i in 0 until size) {
             clone[i] = data[indices[i]]
         }
 
@@ -283,7 +283,7 @@ class IntColumn(label: String, data: IntArray) :
         if (newSize < 0) {
             Logs.getRootLogger().error("Current size: $size, new size = $newSize")
         }
-        return wrap(Arrays.copyOf(data, newSize))
+        return wrap(data.copyOf(newSize))
     }
 
     override fun intersect(c: Column<*>): ObjIntPredicate<IntArray> {
@@ -304,14 +304,14 @@ class IntColumn(label: String, data: IntArray) :
     override fun equals(other: Any?) = when {
         this === other -> true
         other !is IntColumn -> false
-        else -> label == other.label && Arrays.equals(data, other.data)
+        else -> label == other.label && data.contentEquals(other.data)
     }
 
-    override fun hashCode() = Arrays.deepHashCode(arrayOf(label, data))
+    override fun hashCode() = arrayOf(label, data).contentDeepHashCode()
 
     override fun toString() = MoreObjects.toStringHelper(this)
             .add("label", label)
-            .add("data", Arrays.toString(data))
+            .add("data", data.contentToString())
             .toString()
 }
 
@@ -383,7 +383,7 @@ class LongColumn(label: String, data: LongArray) :
     override fun reorder(indices: IntArray): Column<LongArray> {
         require(data.size == indices.size)
         val clone = data.clone()
-        for (i in 0..size - 1) {
+        for (i in 0 until size) {
             clone[i] = data[indices[i]]
         }
 
@@ -403,14 +403,14 @@ class LongColumn(label: String, data: LongArray) :
     override fun equals(other: Any?) = when {
         this === other -> true
         other !is LongColumn -> false
-        else -> label == other.label && Arrays.equals(data, other.data)
+        else -> label == other.label && data.contentEquals(other.data)
     }
 
-    override fun hashCode() = Arrays.deepHashCode(arrayOf(label, data))
+    override fun hashCode() = arrayOf(label, data).contentDeepHashCode()
 
     override fun toString() = MoreObjects.toStringHelper(this)
             .add("label", label)
-            .add("data", Arrays.toString(data))
+            .add("data", data.contentToString())
             .toString()
 }
 
@@ -476,14 +476,14 @@ class DoubleColumn(label: String, data: DoubleArray) :
     override fun reorder(indices: IntArray): Column<DoubleArray> {
         require(data.size == indices.size)
         val clone = data.clone()
-        for (i in 0..size - 1) {
+        for (i in 0 until size) {
             clone[i] = data[indices[i]]
         }
 
         return wrap(clone)
     }
 
-    override fun resize(newSize: Int) = wrap(Arrays.copyOf(data, newSize))
+    override fun resize(newSize: Int) = wrap(data.copyOf(newSize))
 
     override fun intersect(c: Column<*>): ObjIntPredicate<DoubleArray> {
         val other = c as DoubleColumn
@@ -503,14 +503,14 @@ class DoubleColumn(label: String, data: DoubleArray) :
     override fun equals(other: Any?) = when {
         this === other -> true
         other !is DoubleColumn -> false
-        else -> label == other.label && Arrays.equals(data, other.data)
+        else -> label == other.label && data.contentEquals(other.data)
     }
 
-    override fun hashCode() = Arrays.deepHashCode(arrayOf(label, data))
+    override fun hashCode() = arrayOf(label, data).contentDeepHashCode()
 
     override fun toString() = MoreObjects.toStringHelper(this)
             .add("label", label)
-            .add("data", Arrays.toString(data))
+            .add("data", data.contentToString())
             .toString()
 }
 
@@ -576,14 +576,14 @@ class FloatColumn(label: String, data: FloatArray) :
     override fun reorder(indices: IntArray): Column<FloatArray> {
         require(data.size == indices.size)
         val clone = data.clone()
-        for (i in 0..size - 1) {
+        for (i in 0 until size) {
             clone[i] = data[indices[i]]
         }
 
         return wrap(clone)
     }
 
-    override fun resize(newSize: Int): Column<FloatArray> = wrap(Arrays.copyOf(data, newSize))
+    override fun resize(newSize: Int): Column<FloatArray> = wrap(data.copyOf(newSize))
 
     override fun intersect(c: Column<*>): ObjIntPredicate<FloatArray> {
         val other = c as FloatColumn
@@ -603,14 +603,14 @@ class FloatColumn(label: String, data: FloatArray) :
     override fun equals(other: Any?) = when {
         this === other -> true
         other !is FloatColumn -> false
-        else -> label == other.label && Arrays.equals(data, other.data)
+        else -> label == other.label && data.contentEquals(other.data)
     }
 
-    override fun hashCode() = Arrays.deepHashCode(arrayOf(label, data))
+    override fun hashCode() = arrayOf(label, data).contentDeepHashCode()
 
     override fun toString() = MoreObjects.toStringHelper(this)
             .add("label", label)
-            .add("data", Arrays.toString(data))
+            .add("data", data.contentToString())
             .toString()
 }
 
@@ -657,7 +657,7 @@ class BooleanColumn(label: String, data: BitterSet) :
 
         val filtered = BitterSet(numRows)
         var offset = 0
-        for (i in 0..size - 1) {
+        for (i in 0 until size) {
             if (mask.get(i)) {
                 filtered.set(offset++, data.get(i))
             }
@@ -671,13 +671,13 @@ class BooleanColumn(label: String, data: BitterSet) :
 
         var offset = 0
         // fill first values
-        for (row in 0..size - 1) {
+        for (row in 0 until size) {
             if (data[row] == firstValue) {
                 indices[offset++] = row
             }
         }
         // fill second values
-        for (row in 0..size - 1) {
+        for (row in 0 until size) {
             if (data[row] != firstValue) {
                 indices[offset++] = row
             }

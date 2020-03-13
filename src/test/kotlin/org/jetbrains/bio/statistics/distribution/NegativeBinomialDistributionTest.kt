@@ -3,8 +3,8 @@ package org.jetbrains.bio.statistics.distribution
 import gnu.trove.list.array.TIntArrayList
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase.assertEquals
-import org.jetbrains.bio.util.Retry
-import org.jetbrains.bio.util.RetryRule
+import org.jetbrains.bio.Retry
+import org.jetbrains.bio.RetryRule
 import org.jetbrains.bio.viktor.F64Array
 import org.junit.Before
 import org.junit.Rule

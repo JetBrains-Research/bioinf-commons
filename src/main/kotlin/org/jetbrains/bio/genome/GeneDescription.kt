@@ -12,14 +12,22 @@ import java.nio.file.Path
 import java.util.*
 
 
+/**
+ * Fetches gene description from Mart database.
+ * See [Biomart]
+ */
 object GeneDescription {
     private val CACHE: Cache<Genome, Map<String, String>> = CacheBuilder.newBuilder()
             .softValues()
             .initialCapacity(1)
             .build<Genome, Map<String, String>>()
 
+    fun getDescription(transcript: Transcript): String? {
+        val genome: Genome = transcript.chromosome.genome
+        return getMap(genome)[transcript.ensemblGeneId]
+    }
 
-    fun getMap(genome: Genome): Map<String, String> {
+    private fun getMap(genome: Genome): Map<String, String> {
         return CACHE.get(genome) {
             val descriptionPath = genome.genesDescriptionsPath
             descriptionPath.checkOrRecalculate("Genes") { output ->
@@ -42,7 +50,7 @@ object GeneDescription {
     }
 
 
-    fun downloadAnnotation(genome: Genome): Map<String, String> {
+    private fun downloadAnnotation(genome: Genome): Map<String, String> {
 
         val genesDescriptionMap = TreeMap<String, String>()
         val attributes = listOf("ensembl_gene_id", "description")
@@ -68,11 +76,6 @@ object GeneDescription {
             }
         }
         return genesDescriptionMap
-    }
-
-    fun getDescription(transcript: Transcript): String? {
-        val genome: Genome = transcript.chromosome.genome
-        return getMap(genome)[transcript.ensemblGeneId]
     }
 
 }

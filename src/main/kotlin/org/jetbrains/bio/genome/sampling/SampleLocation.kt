@@ -5,8 +5,8 @@ import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.Strand
+import org.jetbrains.bio.genome.format.BedFormat
 import org.jetbrains.bio.genome.sequence.Nucleotide
-import org.jetbrains.bio.io.BedFormat
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLong
 class SamplingError(message: String) : Exception(message)
 
 private val RANDOM = XSRandom()
-private val SAMPLE_ATTEMPTS_THRESHOLD = 1000
+private const val SAMPLE_ATTEMPTS_THRESHOLD = 1000
 
 /**
  * Shuffles bed regions positions inside chromosomes. All bed regions stays in same chromosome where they were
@@ -95,14 +95,17 @@ fun sampleLocations(chromosome: Chromosome,
 }
 
 /**
- * See {@see http://en.wikipedia.org/wiki/Xorshift}
+ * Fast Random generator based on Xorshift.
+ * See http://en.wikipedia.org/wiki/Xorshift
+ *
  * This implementation is about 30% faster than the generator from java.util.random.
  * It's output passes the Dieharder test suite with no fail and only two announced weaknesses.
- * Original code: {@see http://demesos.blogspot.ru/2011/09/replacing-java-random-generator.html}
+ *
+ * Original code: http://demesos.blogspot.ru/2011/09/replacing-java-random-generator.html
 
  * @author Oleg Shpynov
  */
-class XSRandom(private var seed_: Long = XSRandom.seedUniquifier() xor System.nanoTime()) : Random() {
+class XSRandom(private var seed_: Long = seedUniquifier() xor System.nanoTime()) : Random() {
 
     override fun next(nbits: Int): Int {
         var x = seed_

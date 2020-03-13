@@ -17,8 +17,6 @@ abstract class ConvergenceMonitor(protected val title: String,
                                   protected val threshold: Double,
                                   protected val maxIter: Int,
                                   private val level: Level) {
-    private val LOG = LoggerFactory.getLogger(ConvergenceMonitor::class.java)
-
     init {
         require(maxIter > 1) { "maximum number of iterations must be greater than one" }
         require(threshold >= 0) { "threshold must be >= 0" }
@@ -27,6 +25,10 @@ abstract class ConvergenceMonitor(protected val title: String,
     fun finish(model: ClassificationModel) = log(model)
 
     protected fun log(obj: Any) = LOG.log(level, "{$title} $obj")
+
+    companion object {
+        private val LOG = LoggerFactory.getLogger(ConvergenceMonitor::class.java)
+    }
 }
 
 

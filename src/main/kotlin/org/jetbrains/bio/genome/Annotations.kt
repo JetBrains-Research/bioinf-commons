@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package org.jetbrains.bio.genome
 
 import com.google.common.base.Joiner
@@ -58,7 +60,7 @@ object Repeats {
             if (config.ucscAnnLegacyFormat) {
                 // Builds with per-chromosome repeat annotations.
                 val prefix = config.repeatsUrl!!.substringBeforeLast("/")
-                val template = "%s_${config.repeatsUrl!!.substringAfterLast("/")}"
+                val template = "%s_${config.repeatsUrl.substringAfterLast("/")}"
                 UCSC.downloadBatchTo(output.path, genome, "$prefix/", template)
             } else {
                 config.repeatsUrl!!.downloadTo(output.path)
@@ -98,6 +100,9 @@ object Repeats {
     }
 }
 
+/**
+ * Chromosome Cytoband element.
+ */
 data class CytoBand(val name: String,
                     val gieStain: String,
                     override val location: Location) :
@@ -109,7 +114,7 @@ data class CytoBand(val name: String,
 }
 
 /**
- * Chromosomes, bands and all that.
+ * A registry for CytoBand chromosome structure.
  */
 object CytoBands {
     private val CACHE = cache<CytoBand>()
@@ -283,6 +288,9 @@ data class CpGIsland(
     override fun compareTo(other: CpGIsland) = location.compareTo(other.location)
 }
 
+/**
+ * Registry with information about CpG islands.
+ */
 object CpGIslands {
     private val CACHE = cache<CpGIsland>()
 

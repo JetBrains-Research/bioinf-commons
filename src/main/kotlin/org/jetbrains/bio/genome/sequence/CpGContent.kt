@@ -3,16 +3,16 @@ package org.jetbrains.bio.genome.sequence
 import com.google.common.annotations.VisibleForTesting
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.Location
+import kotlin.math.max
 
 /**
- * @author Oleg Shpynov
- * @since 29/07/16
- */
-/**
- * Article: Genome-wide maps of chromatin state in pluripotent and lineage-committed cells.
+ * Computes CpG content (High, Intermediate or Low) for given [Location].
+ *
+ * Based on the paper: Genome-wide maps of chromatin state in pluripotent and lineage-committed cells.
  * http://www.ncbi.nlm.nih.gov/pubmed/17603471
  *
- * HCPs contain a  500-bp interval within -0.5 kb to +2 kb with a (G+C)-fraction >=0.55 and a CpG observed to expected ratio (O/E) >=0.6.
+ * HCPs contain a  500-bp interval within -0.5 kb to +2 kb with
+ * a (G+C)-fraction >=0.55 and a CpG observed to expected ratio (O/E) >=0.6.
  * LCPs contain no 500-bp interval with CpG O/E >=0.4.
 
  * @author Oleg Shpynov
@@ -24,7 +24,7 @@ enum class CpGContent {
     internal data class Counters(var cg: Int, var cpg: Int)
 
     companion object {
-        val MIN_LENGTH = 500
+        const val MIN_LENGTH = 500
 
         fun classify(location: Location): CpGContent {
             return classify(location.sequence.asNucleotideSequence(), MIN_LENGTH)
@@ -41,7 +41,8 @@ enum class CpGContent {
             // We are going to update these values incrementally
             var maxOE = java.lang.Double.MIN_VALUE
             var cgcpg: Counters? = null
-            // We use shift at first so that we start with previous byte, location.startOffset = 0 is quite impossible
+            // We use shift at first so that we start with previous byte,
+            // location.startOffset = 0 is quite impossible
             for (i in l - 1 until sequence.length) {
                 if (cgcpg == null) {
                     cgcpg = Counters(computeCG(buffer), computeCpG(buffer))
@@ -57,11 +58,11 @@ enum class CpGContent {
                 val observedToExpectedCpG = observedToExpected(cgcpg.cg, cgcpg.cpg)
                 val cgFraction = cgFraction(l, cgcpg.cg)
                 if (cgFraction >= 0.55 && observedToExpectedCpG >= 0.6) {
-                    return CpGContent.HCP
+                    return HCP
                 }
-                maxOE = Math.max(maxOE, observedToExpectedCpG)
+                maxOE = max(maxOE, observedToExpectedCpG)
             }
-            return if (maxOE < 0.4) CpGContent.LCP else CpGContent.ICP
+            return if (maxOE < 0.4) LCP else ICP
         }
 
         private fun cgFraction(length: Int, cg: Int): Double {

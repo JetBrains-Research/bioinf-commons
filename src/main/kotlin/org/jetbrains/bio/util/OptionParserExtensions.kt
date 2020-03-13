@@ -1,12 +1,13 @@
 package org.jetbrains.bio.util
 
 import joptsimple.*
-import org.jetbrains.bio.coverage.Fragment
-import org.jetbrains.bio.io.BedFormat
+import org.jetbrains.bio.genome.coverage.Fragment
+import org.jetbrains.bio.genome.format.BedFormat
 import org.jline.terminal.TerminalBuilder
 import java.io.StringWriter
 import java.nio.file.Path
 import java.util.*
+import kotlin.system.exitProcess
 
 /**
  * NOTE:
@@ -59,7 +60,7 @@ fun OptionParser.parse(
             printHelpOn(System.err)
             val suppressExit = System.getProperty(JOPTSIMPLE_SUPPRESS_EXIT)
             if (suppressExit == null || !suppressExit.toBoolean()) {
-                System.exit(0)
+                exitProcess(0)
             }
         }
 
@@ -99,6 +100,17 @@ fun OptionParser.parse(
         } else {
             e.printStackTrace()
             fail(e.cause?.message ?: e.message!!, args)
+        }
+    }
+}
+
+const val JOPTSIMPLE_SUPPRESS_EXIT = "joptsimple.suppressExit"
+fun checkOrFail(condition: Boolean, block: () -> String) {
+    if (!condition) {
+        System.err.println("ERROR: ${block()}")
+        val suppressExit = System.getProperty(JOPTSIMPLE_SUPPRESS_EXIT)
+        if (suppressExit?.toBoolean() != true) {
+            exitProcess(1)
         }
     }
 }

@@ -11,21 +11,16 @@ import java.io.IOException
 import java.io.InputStream
 
 /**
- * Incomplete but useful Biomart API bindings.
- *
- * See http://biomart.org if you don't know what it is.
- *
- * @author Sergei Lebedev
- */
-
-/**
  * Mart is dataset group.
+ *
+ * Incomplete but useful Biomart API bindings.
+ * See http://biomart.org if you don't know what it is.
  *
  * At least in the Biomart terms. For instance, there's a mart for all
  * Ensembl data, named `"ensembl"`. Here we couple mart with a dataset,
  * because we don't need cross-organism queries at the moment.
  */
-data class Mart(
+data class Biomart(
         val dataset: String,
         val url: String,
         val name: String = "ENSEMBL_MART_ENSEMBL"
@@ -114,7 +109,7 @@ data class Mart(
     }
 
     companion object {
-        private val LOG = LoggerFactory.getLogger(Mart::class.java)
+        private val LOG = LoggerFactory.getLogger(Biomart::class.java)
 
         /**
          * Sends an HTTP GET request to the Biomart server.

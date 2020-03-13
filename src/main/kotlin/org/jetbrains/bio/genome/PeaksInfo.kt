@@ -1,10 +1,10 @@
 package org.jetbrains.bio.genome
 
 import org.apache.commons.math3.stat.StatUtils
-import org.jetbrains.bio.coverage.AutoFragment
-import org.jetbrains.bio.coverage.Coverage
-import org.jetbrains.bio.coverage.Fragment
-import org.jetbrains.bio.query.ReadsQuery
+import org.jetbrains.bio.genome.coverage.AutoFragment
+import org.jetbrains.bio.genome.coverage.Coverage
+import org.jetbrains.bio.genome.coverage.Fragment
+import org.jetbrains.bio.genome.query.ReadsQuery
 import org.jetbrains.bio.util.isAccessible
 import org.jetbrains.bio.util.presentablePath
 import org.jetbrains.bio.util.size

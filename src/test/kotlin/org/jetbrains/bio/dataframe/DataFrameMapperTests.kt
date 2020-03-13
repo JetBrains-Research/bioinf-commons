@@ -27,8 +27,6 @@ private val testDataFrame: DataFrame
 }
 
 class CsvMapperTest {
-    // TODO: csv
-
     @Test fun testGuess() {
         val blob = arrayOf("# Integer;\tShort;\tByte;\tLong;\tBoolean;\tString;\torg.jetbrains.bio.dataframe.TestEnum",
                            "i\ts\tb\tl\tf\tstr\te",
@@ -38,7 +36,7 @@ class CsvMapperTest {
                            "4\t4\t4\t4\t1\tstr4\tVAL4",
                            "2\t2\t2\t2\t0\tstr2\tVAL2").joinToString("\n")
 
-        withTempFile("df", ".csv") { path ->
+        withTempFile("df", ".tsv") { path ->
             path.write(blob)
 
             val spec = DataFrameMappers.TSV.guess(path)
@@ -54,7 +52,7 @@ class CsvMapperTest {
     }
 
     @Test fun testSaveLoad() {
-        val suffixes = arrayOf(".csv.gz", ".csv")
+        val suffixes = arrayOf(".tsv.gz", ".tsv")
         for (suffix in suffixes) {
             withTempFile("df", suffix) { path ->
                 val df = testDataFrame
@@ -68,16 +66,16 @@ class CsvMapperTest {
 
     @Test fun testSaveHeader() {
         val df = testDataFrame
-        withTempFile("df", ".csv") { path ->
+        withTempFile("df", ".tsv") { path ->
             DataFrameMappers.TSV.save(path, df)
 
             val blob = listOf("# Integer;\tShort;\tByte;\tLong;\tBoolean;\tString;\torg.jetbrains.bio.dataframe.TestEnum",
-                              "i\ts\tb\tl\tf\tstr\te",
-                              "5\t5\t5\t5\t0\tstr5\tVAL5",
-                              "1\t1\t1\t1\t0\tstr1\tVAL1",
-                              "3\t3\t3\t3\t1\tstr3\tVAL3",
-                              "4\t4\t4\t4\t1\tstr4\tVAL4",
-                              "2\t2\t2\t2\t0\tstr2\tVAL2")
+                    "i\ts\tb\tl\tf\tstr\te",
+                    "5\t5\t5\t5\t0\tstr5\tVAL5",
+                    "1\t1\t1\t1\t0\tstr1\tVAL1",
+                    "3\t3\t3\t3\t1\tstr3\tVAL3",
+                    "4\t4\t4\t4\t1\tstr4\tVAL4",
+                    "2\t2\t2\t2\t0\tstr2\tVAL2")
             assertEquals(blob, path.toFile().readLines())
         }
     }
@@ -89,7 +87,7 @@ class CsvMapperTest {
                            "4\t4\t4\t4\t1\tstr4",
                            "2\t2\t2\t2\t0\tstr2").joinToString("\n")
 
-        withTempFile("df", ".csv") { path ->
+        withTempFile("df", ".tsv") { path ->
             path.write(blob)
 
             val spec = DataFrameSpec().ints("i").shorts("s").bytes("b").longs("l").bools("f").strings("str")
@@ -99,7 +97,7 @@ class CsvMapperTest {
     }
 
     @Test fun testLoadNonNumericQuoting() {
-        // backward compatibility with previous CSV format: quote non-numeric
+        // backward compatibility with previous TSV format: quote non-numeric
         val blob = arrayOf("\"i\"\t\"s\"\t\"b\"\t\"l\"\t\"f\"\t\"str\"",
                            "5\t5\t5\t5\t0\t\"str5\"",
                            "1\t1\t1\t1\t0\t\"str1\"",
@@ -107,7 +105,7 @@ class CsvMapperTest {
                            "4\t4\t4\t4\t1\t\"str4\"",
                            "2\t2\t2\t2\t0\t\"str2\"").joinToString("\n")
 
-        withTempFile("df", ".csv") { path ->
+        withTempFile("df", ".tsv") { path ->
             path.write(blob)
 
             val spec = DataFrameSpec().ints("i").shorts("s").bytes("b").longs("l").bools("f").strings("str")

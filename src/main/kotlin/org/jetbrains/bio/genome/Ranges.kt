@@ -9,6 +9,9 @@ import com.google.gson.stream.JsonWriter
 import java.math.RoundingMode
 import java.util.stream.IntStream
 import java.util.stream.Stream
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * A semi-closed interval.
@@ -36,24 +39,24 @@ data class Range(
 
     infix fun intersection(other: Range): Range {
         return if (this intersects other) {
-            Range(Math.max(startOffset, other.startOffset),
-                    Math.min(endOffset, other.endOffset))
+            Range(max(startOffset, other.startOffset),
+                    min(endOffset, other.endOffset))
         } else {
             EMPTY
         }
     }
 
     infix fun union(other: Range): Range {
-        return Range(Math.min(startOffset, other.startOffset),
-                Math.max(endOffset, other.endOffset))
+        return Range(min(startOffset, other.startOffset),
+                max(endOffset, other.endOffset))
     }
 
     infix fun distanceTo(other: Range): Int {
         return if (intersects(other))
             0
         else
-            Math.min(Math.abs(startOffset - other.endOffset),
-                    Math.abs(endOffset - other.startOffset))
+            min(abs(startOffset - other.endOffset),
+                    abs(endOffset - other.startOffset))
     }
 
     fun on(chromosome: Chromosome) = ChromosomeRange(startOffset, endOffset, chromosome)
@@ -76,7 +79,7 @@ data class Range(
         val n = IntMath.divide(length(), width, RoundingMode.CEILING)
         return IntStream.range(0, n).mapToObj { i ->
             Range(startOffset + i * width,
-                    Math.min(endOffset, startOffset + (i + 1) * width))
+                    min(endOffset, startOffset + (i + 1) * width))
         }
     }
 
@@ -272,21 +275,21 @@ data class Location(val startOffset: Int, val endOffset: Int,
 }
 
 enum class RelativePosition {
-    FIVE_PRIME() {
+    FIVE_PRIME {
         override fun of(location: Location, relativeStartOffset: Int, relativeEndOffset: Int): Location {
             return bracket(location, location.get5Bound(relativeStartOffset),
                     location.get5Bound(relativeEndOffset - 1))
         }
     },
 
-    THREE_PRIME() {
+    THREE_PRIME {
         override fun of(location: Location, relativeStartOffset: Int, relativeEndOffset: Int): Location {
             return bracket(location, location.get3Bound(relativeStartOffset),
                     location.get3Bound(relativeEndOffset - 1))
         }
     },
 
-    ALL() {
+    ALL {
         override fun of(location: Location, relativeStartOffset: Int, relativeEndOffset: Int): Location {
             return if (relativeStartOffset == 0 && relativeEndOffset == 0) {
                 location  // Don't allocate new location in this case
@@ -310,10 +313,10 @@ enum class RelativePosition {
      */
     protected fun bracket(location: Location, newStartOffset: Int, newEndOffset: Int): Location {
         return with(location) {
-            val boundedStartOffset = Math.min(Math.max(0, Math.min(newStartOffset, newEndOffset)),
+            val boundedStartOffset = min(max(0, min(newStartOffset, newEndOffset)),
                     chromosome.length)
             // XXX do we even need to use boundedStartOffset here?
-            val boundedEndOffset = Math.min(Ints.max(boundedStartOffset, newStartOffset, newEndOffset) + 1,
+            val boundedEndOffset = min(Ints.max(boundedStartOffset, newStartOffset, newEndOffset) + 1,
                     chromosome.length)
             Location(boundedStartOffset, boundedEndOffset, chromosome, strand)
         }

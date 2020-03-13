@@ -31,8 +31,8 @@ enum class Nucleotide constructor(
             }
         }
 
-        internal val ANY_NUCLEOTIDE_BYTE: Byte = 0b101
-        val N = 'n'
+        internal const val ANY_NUCLEOTIDE_BYTE: Byte = 0b101
+        const val N = 'n'
 
         internal fun getByte(c: Char) = when (c) {
             'T', 't' -> 0

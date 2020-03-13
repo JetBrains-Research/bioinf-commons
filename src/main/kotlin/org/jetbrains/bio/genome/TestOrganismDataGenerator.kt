@@ -3,13 +3,13 @@ package org.jetbrains.bio.genome
 import com.google.common.math.IntMath
 import gnu.trove.list.array.TFloatArrayList
 import org.apache.commons.csv.CSVFormat
-import org.jetbrains.bio.Configuration
 import org.jetbrains.bio.big.BigWigFile
 import org.jetbrains.bio.big.FixedStepSection
+import org.jetbrains.bio.experiment.Configuration
+import org.jetbrains.bio.genome.format.FastaRecord
+import org.jetbrains.bio.genome.format.TwoBitWriter
+import org.jetbrains.bio.genome.format.write
 import org.jetbrains.bio.genome.sequence.Nucleotide
-import org.jetbrains.bio.genome.sequence.TwoBitWriter
-import org.jetbrains.bio.io.FastaRecord
-import org.jetbrains.bio.io.write
 import org.jetbrains.bio.util.bufferedWriter
 import org.jetbrains.bio.util.createDirectories
 import org.jetbrains.bio.util.div
@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.stream.Collectors
+import kotlin.math.min
 
 /** A generator for the fake "to1" genome build. */
 @Suppress("unused")
@@ -84,7 +85,7 @@ object TestOrganismDataGenerator {
                         .collect(Collectors.joining())
                         .toCharArray()
 
-                val numGaps = Math.min(r.nextInt(maxGaps + 1), 3)
+                val numGaps = min(r.nextInt(maxGaps + 1), 3)
                 for (i in 0 until numGaps) {
                     // We could do better here by generating non-overlapping
                     // ranges, but it's not worth the effort.
@@ -126,7 +127,7 @@ object TestOrganismDataGenerator {
                 while (length - currentEnd > 6e4) {
                     val geneSymbol = "simgene.$name.$geneNumber".toUpperCase()
                     val currentStart = currentEnd + 10000 + r.nextInt(40000)
-                    val currentLength = 100 + Math.min(length - currentStart - 10000, 10000)
+                    val currentLength = 100 + min(length - currentStart - 10000, 10000)
                     val strand = if (r.nextBoolean()) Strand.PLUS else Strand.MINUS
                     val transcript = generateTranscript(geneNumber, geneSymbol, chromosome, strand,
                             currentStart, currentLength)

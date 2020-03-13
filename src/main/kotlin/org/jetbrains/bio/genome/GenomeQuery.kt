@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory
 import java.util.*
 
 /**
- * Genome query for all chromosomes.
+ * [GenomeQuery] represents arbitrary set of chromosomes available for [Genome].
  */
 class GenomeQuery (val genome: Genome, vararg names: String) {
     /** A subset of chromosomes to be considered or null for all chromosomes. */
@@ -27,6 +27,7 @@ class GenomeQuery (val genome: Genome, vararg names: String) {
     }
 
     fun get(): List<Chromosome> = chromosomes
+
     fun accepts(chromosome: Chromosome) = restriction == null || chromosome.name in restriction
 
     val id: String
@@ -87,4 +88,5 @@ class GenomeQuery (val genome: Genome, vararg names: String) {
     }
 }
 
+/* Default genome query with full set of chromosomes */
 fun Genome.toQuery() = GenomeQuery(this)

@@ -2,7 +2,7 @@
 
 package org.jetbrains.bio.util
 
-import org.jetbrains.bio.io.BedParserTest
+import org.jetbrains.bio.genome.format.BedParserTest
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files

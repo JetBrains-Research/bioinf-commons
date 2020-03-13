@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package org.jetbrains.bio.dataframe
 
 import java.util.function.IntPredicate

@@ -20,8 +20,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
-private val LOG = LoggerFactory.getLogger(UCSC::class.java)
-
 private fun HttpClient.tryGet(url: String): HttpEntity? {
     val response = execute(HttpGet(url))
     val statusLine = response.statusLine
@@ -45,7 +43,7 @@ fun String.downloadTo(outputPath: Path,
     outputPath.parent.createDirectories()
 
     try {
-        LOG.info("Download [${this}] to $outputPath")
+        UCSC.LOG.info("Download [${this}] to $outputPath")
         val timeoutMs = timeout * 1000
         if (this.startsWith("ftp://")) {
             downloadFtp(outputPath)
@@ -100,10 +98,8 @@ private fun String.downloadHttp(timeoutMs: Int, maxRetries: Int, outputPath: Pat
     for (trial in 1..maxRetries) {
         try {
             val entity = httpClient.tryGet(this)
-            if (entity != null) {
-                entity.content.use {
-                    it.copy(outputPath, StandardCopyOption.REPLACE_EXISTING)
-                }
+            entity?.content?.use {
+                it.copy(outputPath, StandardCopyOption.REPLACE_EXISTING)
             }
 
             return true   // VICTORY!
@@ -113,7 +109,7 @@ private fun String.downloadHttp(timeoutMs: Int, maxRetries: Int, outputPath: Pat
                 throw e
             }
 
-            LOG.warn("Connection timeout, retry ($trial/$maxRetries) ...")
+            UCSC.LOG.warn("Connection timeout, retry ($trial/$maxRetries) ...")
             try {
                 Thread.sleep(timeoutMs.toLong())
             } catch (ignore: InterruptedException) {
@@ -131,6 +127,8 @@ private fun String.downloadHttp(timeoutMs: Int, maxRetries: Int, outputPath: Pat
  * @author Sergei Lebedev
  */
 object UCSC {
+    internal val LOG = LoggerFactory.getLogger(UCSC::class.java)
+
     /**
      * Downloads multiple gzipped files from UCSC into a single local file.
      *

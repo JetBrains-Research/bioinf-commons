@@ -21,6 +21,13 @@ fun <T> genomeMap(
         init: (Chromosome) -> T
 ) = GenomeMap(genomeQuery, parallel, init)
 
+/**
+ * Creates a new genome stranded map from a given [init] function.
+ *
+ * If [parallel] is `false`, initialization is performed
+ * sequentially otherwise for each chromosome [init] is
+ * called in a separate thread.
+ */
 fun <T> genomeStrandMap(
         genomeQuery: GenomeQuery,
         parallel: Boolean = false,
@@ -95,7 +102,9 @@ class GenomeMap<T> internal constructor(
  * @author Roman Chernyatchik
  */
 interface GenomeStrandMapLike<T> : Iterable<T> {
+
     val genomeQuery: GenomeQuery
+
     operator fun get(chromosome: Chromosome, strand: Strand): T
 
     override fun iterator(): Iterator<T> = genomeQuery.get().flatMap {  chromosome ->

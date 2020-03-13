@@ -11,13 +11,50 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 /**
+ * Generic genome information.
+ *
+ * @param species Species name
+ * @param ucscAlias UCSC name for the build
+ * @param names All known build names (release name and other aliases, including the UCSC alias) as ordered set
+ * @param description About Genome build
+ * @param gtfUrl GTF genes annotations url
+ * @param chrAltName2CanonicalMapping Mapping of alternative chr names to canonical names from *.chrom.sizes. E.g. MT -> chrM for GTF parsing with UCSC genomes
+ * @param ucscAnnLegacyFormat Legacy format provides separate file for each chromosome
+ * @param sequenceUrl 2bit file url
+ * @param chromsizesUrl Chromosomes size file url
+ * @param repeatsUrl Repeats file url
+ * @param cytobandsUrl CytoBands file url
+ * @param gapsUrl Gaps file url
+ * @param centromeresUrl Centromeres file url. The latest human annotations defines
+ *  centromeres info in this file instead of gaps
+ * @param cpgIslandsUrl CpG islands file url.
+ *
  * @author Roman.Chernyatchik
  */
-object AnnotationsConfig {
-    const val VERSION: Int = 4
-    private val LOG = LoggerFactory.getLogger(AnnotationsConfig::class.java)
+data class GenomeAnnotationsConfig(
+        val species: String,
+        val ucscAlias: String?,
+        val names: List<String>,
+        val description: String?,
+        val gtfUrl: String,
+        val chrAltName2CanonicalMapping: Map<String, String>,
+        val ucscAnnLegacyFormat: Boolean,
+        val sequenceUrl: String,
+        val chromsizesUrl: String,
+        val repeatsUrl: String?,
+        val cytobandsUrl: String?,
+        val gapsUrl: String,
+        val centromeresUrl: String?,
+        val cpgIslandsUrl: String?,
+        val mart: Biomart?
+)
 
-    @Volatile private var pathAndYamlConfig: Pair<Path, Map<String, GenomeAnnotationsConfig>>? = null
+object AnnotationsConfigLoader {
+    const val VERSION: Int = 4
+    private val LOG = LoggerFactory.getLogger(AnnotationsConfigLoader::class.java)
+
+    @Volatile
+    private var pathAndYamlConfig: Pair<Path, Map<String, GenomeAnnotationsConfig>>? = null
 
     /**
      * Parse YAML file and load configuration. If YAML file doesn't exist if would be created with
@@ -43,7 +80,7 @@ object AnnotationsConfig {
         get() = pathAndYamlConfig != null
 
     /**
-     * Ensure annotations config loaded, use [AnnotationsConfig.init]
+     * Ensure annotations config loaded, use [AnnotationsConfigLoader.init]
      */
     val yamlConfig: Path
         get() {
@@ -53,7 +90,7 @@ object AnnotationsConfig {
             return pathAndYamlConfig!!.first
         }
     /**
-     * Ensure annotations config loaded, use [AnnotationsConfig.init]
+     * Ensure annotations config loaded, use [AnnotationsConfigLoader.init]
      */
     val builds: Set<String>
         get() {
@@ -64,7 +101,7 @@ object AnnotationsConfig {
         }
 
     /**
-     * Ensure annotations config loaded, use [AnnotationsConfig.init]
+     * Ensure annotations config loaded, use [AnnotationsConfigLoader.init]
      */
     operator fun get(build: String): GenomeAnnotationsConfig {
         if (pathAndYamlConfig == null) {
@@ -110,7 +147,7 @@ object AnnotationsConfig {
         }
         // create if not exist or was outdated
         yamlConfig.checkOrRecalculate { output ->
-            val text = AnnotationsConfig::class.java
+            val text = AnnotationsConfigLoader::class.java
                     .getResourceAsStream("/annotations.yaml")
                     .bufferedReader(Charsets.UTF_8)
                     .readText()
@@ -162,7 +199,7 @@ object AnnotationsConfig {
                 val biomartMap = biomart as Map<String, String>
                 val url = biomartMap["url"] as String
                 val dataset = biomartMap["dataset"] as String
-                Mart(dataset, url)
+                Biomart(dataset, url)
             } else {
                 null
             }
@@ -204,38 +241,3 @@ object AnnotationsConfig {
         }
     }
 }
-
-/**
- * @param species Species name
- * @param ucscAlias UCSC name for the build
- * @param names All known build names (release name and other aliases, including the UCSC alias) as ordered set
- * @param description About Genome build
- * @param gtfUrl GTF genes annotations url
- * @param chrAltName2CanonicalMapping Mapping of alternative chr names to canonical names from *.chrom.sizes. E.g. MT -> chrM for GTF parsing with UCSC genomes
- * @param ucscAnnLegacyFormat Legacy format provides separate file for each chromosome
- * @param sequenceUrl 2bit file url
- * @param chromsizesUrl Chromosomes size file url
- * @param repeatsUrl Repeats file url
- * @param cytobandsUrl CytoBands file url
- * @param gapsUrl Gaps file url
- * @param centromeresUrl Centromeres file url. The latest human annotations defines
- *  centromeres info in this file instead of gaps
- * @param cpgIslandsUrl CpG islands file url.
- */
-data class GenomeAnnotationsConfig(
-        val species: String,
-        val ucscAlias: String?,
-        val names: List<String>,
-        val description: String?,
-        val gtfUrl: String,
-        val chrAltName2CanonicalMapping: Map<String, String>,
-        val ucscAnnLegacyFormat: Boolean,
-        val sequenceUrl: String,
-        val chromsizesUrl: String,
-        val repeatsUrl: String?,
-        val cytobandsUrl: String?,
-        val gapsUrl: String,
-        val centromeresUrl: String?,
-        val cpgIslandsUrl: String?,
-        val mart: Mart?
-)

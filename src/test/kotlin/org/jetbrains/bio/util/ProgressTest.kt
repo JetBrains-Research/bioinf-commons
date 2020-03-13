@@ -6,6 +6,8 @@ import ch.qos.logback.classic.encoder.PatternLayoutEncoder
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.Appender
 import ch.qos.logback.core.OutputStreamAppender
+import org.jetbrains.bio.Retry
+import org.jetbrains.bio.RetryRule
 import org.jetbrains.bio.util.ProgressPart.Companion.fromBoundedProgressString
 import org.jetbrains.bio.util.ProgressPart.Companion.fromUnboundedProgressString
 import org.junit.After

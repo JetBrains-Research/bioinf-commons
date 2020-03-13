@@ -10,6 +10,7 @@ import java.nio.file.Path
 import java.util.*
 import java.util.stream.Stream
 
+@Suppress("unused")
 class DataFrame @JvmOverloads constructor(
         val rowsNumber: Int = 0,
         internal val columns: List<Column<*>> = emptyList()) {
@@ -179,9 +180,9 @@ class DataFrame @JvmOverloads constructor(
         val idx = getLabelIndexUnsafe(label)
         require(idx >= 0) {
             listOf("Unknown label '$label'.",
-                   "Make sure that you are using interned string as a label!",
-                   "Reference equality is used for lookup.",
-                   "Known labels ${Arrays.toString(labels)}").joinToString(" ")
+                    "Make sure that you are using interned string as a label!",
+                    "Reference equality is used for lookup.",
+                    "Known labels ${labels.contentToString()}").joinToString(" ")
         }
 
         return idx
@@ -207,8 +208,8 @@ class DataFrame @JvmOverloads constructor(
         operator fun get(rowsRange: IntProgression) = this@DataFrame.apply {
             val mask = BitterSet(rowsNumber)
             if (rowsRange is IntRange) {
-                val startRow = rowsRange.start
-                val endRow = rowsRange.endInclusive + 1
+                val startRow = rowsRange.first
+                val endRow = rowsRange.last + 1
                 checkPositionIndexes(startRow, endRow, rowsNumber)
                 mask.set(startRow, endRow)
             } else {
@@ -346,10 +347,10 @@ class DataFrame @JvmOverloads constructor(
          */
         @JvmStatic fun rowBind(df1: DataFrame, df2: DataFrame): DataFrame {
             val labels = df1.labels
-            if (!Arrays.equals(labels, df2.labels)) {
+            if (!labels.contentEquals(df2.labels)) {
                 val chunks = arrayOf("columns do not match: ",
-                                     Arrays.toString(labels), " ",
-                                     Arrays.toString(df2.labels))
+                        labels.contentToString(), " ",
+                        df2.labels.contentToString())
                 throw IllegalArgumentException(chunks.joinToString("\n"))
             }
 

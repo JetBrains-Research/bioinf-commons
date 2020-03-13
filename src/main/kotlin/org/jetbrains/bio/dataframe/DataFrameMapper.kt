@@ -54,18 +54,20 @@ fun DataFrame.dumpHead(rowsCount: Int): String {
 
 object DataFrameMappers {
     val TSV = CSVLike(CSVFormat.TDF.withQuoteMode(QuoteMode.MINIMAL).withCommentMarker('#')!!)
-//    val CSV = CSVLike(CSVFormat.DEFAULT.withQuoteMode(QuoteMode.MINIMAL).withCommentMarker('#')!!)
-    val NPZ =     object : DataFrameMapper() {
-            override fun guess(path: Path) = NpzFile.read(path).use { reader ->
-                val meta = reader.introspect()
-                val names = meta.map { it.name }
-                val types = meta.map { Primitives.wrap(it.type).simpleName }
-                DataFrameSpec.fromNamesAndTypes(names, types, path)
-            }
 
-            override fun load(path: Path, spec: DataFrameSpec): DataFrame {
-                return NpzFile.read(path).use { reader ->
-                    val columns = spec.columns.map { column ->
+    val CSV = CSVLike(CSVFormat.DEFAULT.withQuoteMode(QuoteMode.MINIMAL).withCommentMarker('#')!!)
+
+    val NPZ = object : DataFrameMapper() {
+        override fun guess(path: Path) = NpzFile.read(path).use { reader ->
+            val meta = reader.introspect()
+            val names = meta.map { it.name }
+            val types = meta.map { Primitives.wrap(it.type).simpleName }
+            DataFrameSpec.fromNamesAndTypes(names, types, path)
+        }
+
+        override fun load(path: Path, spec: DataFrameSpec): DataFrame {
+            return NpzFile.read(path).use { reader ->
+                val columns = spec.columns.map { column ->
                         val values = reader[column.label]
                         when (column) {
                             is ByteColumn -> column.wrap(values.asByteArray())
@@ -111,10 +113,7 @@ object DataFrameMappers {
     /** Determines the appropriate mapper from file extension. */
     fun forPath(path: Path) = when (path.extension.toLowerCase()) {
         "npz" -> NPZ
-//        "csv" -> CSV
+        "csv" -> CSV
         else -> TSV
     }
 }
-
-//@Throws(IOException::class)
-//fun DataFrame.Companion.load(path: Path) = DataFrameMappers.forPath(path).load(path)

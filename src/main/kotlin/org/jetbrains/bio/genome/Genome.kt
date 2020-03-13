@@ -6,10 +6,10 @@ import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import org.apache.commons.csv.CSVFormat
-import org.jetbrains.bio.Configuration
-import org.jetbrains.bio.genome.sequence.TwoBitReader
-import org.jetbrains.bio.genome.sequence.TwoBitSequence
-import org.jetbrains.bio.genome.sequence.TwoBitWriter
+import org.jetbrains.bio.experiment.Configuration
+import org.jetbrains.bio.genome.format.TwoBitReader
+import org.jetbrains.bio.genome.format.TwoBitSequence
+import org.jetbrains.bio.genome.format.TwoBitWriter
 import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -246,11 +246,11 @@ class Genome private constructor(
                         )
 
                         else -> {
-                            if (!AnnotationsConfig.initialized) {
+                            if (!AnnotationsConfigLoader.initialized) {
                                 // Init with default settings only if not initialized by user before us
-                                AnnotationsConfig.init(Configuration.genomesPath / "annotations.yaml")
+                                AnnotationsConfigLoader.init(Configuration.genomesPath / "annotations.yaml")
                             }
-                            AnnotationsConfig[build]
+                            AnnotationsConfigLoader[build]
                         }
                     }
                     val genesDescriptionsPath: Path? = if (to) null else dataPath / "description.tsv"

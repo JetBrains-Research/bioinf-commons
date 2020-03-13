@@ -3,20 +3,12 @@ package org.jetbrains.bio.genome.containers
 import com.google.common.collect.Lists
 import kotlinx.support.jdk7.use
 import org.jetbrains.bio.genome.*
-import org.jetbrains.bio.io.BedFormat
-import org.jetbrains.bio.io.toBedEntry
-import org.jetbrains.bio.io.unpackRegularFields
+import org.jetbrains.bio.genome.format.BedFormat
+import org.jetbrains.bio.genome.format.toBedEntry
+import org.jetbrains.bio.genome.format.unpackRegularFields
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
-
-private fun <T> GenomeStrandMap<T>.merge(
-        other: GenomeStrandMap<T>, op: (T, T) -> T): GenomeStrandMap<T> {
-    require(genomeQuery == other.genomeQuery)
-    return genomeStrandMap(genomeQuery) { chromosome, strand ->
-        op(get(chromosome, strand), other[chromosome, strand])
-    }
-}
 
 /**
  * A location-based friend of [RangesMergingList].
@@ -184,3 +176,11 @@ fun locationList(genomeQuery: GenomeQuery, vararg locations: Location): Location
 
 fun locationList(genomeQuery: GenomeQuery, locations: Iterable<Location>): LocationsMergingList =
         LocationsMergingList.create(genomeQuery, locations)
+
+private fun <T> GenomeStrandMap<T>.merge(
+        other: GenomeStrandMap<T>, op: (T, T) -> T): GenomeStrandMap<T> {
+    require(genomeQuery == other.genomeQuery)
+    return genomeStrandMap(genomeQuery) { chromosome, strand ->
+        op(get(chromosome, strand), other[chromosome, strand])
+    }
+}

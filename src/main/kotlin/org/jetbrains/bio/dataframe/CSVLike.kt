@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
 class CSVLike(val format: CSVFormat) : DataFrameMapper() {
-    private val LOG = LoggerFactory.getLogger(CSVLike::class.java)
 
     /**
      * Tries to guess data frame spec for a given [path].
@@ -92,5 +91,9 @@ class CSVLike(val format: CSVFormat) : DataFrameMapper() {
                 csvPrinter.println()
             }
         }
+    }
+
+    companion object {
+        private val LOG = LoggerFactory.getLogger(CSVLike::class.java)
     }
 }

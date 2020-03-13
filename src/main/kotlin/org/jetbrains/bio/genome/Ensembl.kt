@@ -208,7 +208,7 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
         for (chunk in rest.split(";")) {
             val trimmed = chunk.trimStart()
 
-            for (i in 0 until attrTypes.size) {
+            for (i in attrTypes.indices) {
                 val key = attrTypes[i].key
 
                 // if attr not set & is our key
@@ -252,6 +252,7 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
 
     companion object {
         private val LOG = LoggerFactory.getLogger(GtfReader::class.java)
+
         fun determineUTR3End5(cdsBounds: Location, sortedExonRanges: List<Range>, transcriptId: String): Int {
             val strand = cdsBounds.strand
             val cdsEnd3 = cdsBounds.get3Bound(0)

@@ -30,11 +30,11 @@ interface NucleotideSequence {
         checkPositionIndexes(from, to, length)
         val acc = CharArray(to - from)
         if (strand.isPlus()) {
-            for (offset in 0..acc.size - 1) {
+            for (offset in acc.indices) {
                 acc[offset] = charAt(from + offset)
             }
         } else {
-            for (offset in 0..acc.size - 1) {
+            for (offset in acc.indices) {
                 acc[acc.size - 1 - offset] = charAt(from + offset, strand)
             }
         }

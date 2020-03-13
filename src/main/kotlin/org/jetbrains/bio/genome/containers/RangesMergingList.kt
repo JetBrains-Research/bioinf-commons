@@ -11,6 +11,8 @@ import org.jetbrains.bio.util.bufferedWriter
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * A container for possibly overlapping ranges.
@@ -37,13 +39,13 @@ class RangesMergingList internal constructor(
     infix fun and(other: RangesMergingList): RangesMergingList {
         val acc = ArrayList<Range>()
         for ((startOffset, endOffset) in other) {
-            var i = Math.max(0, lookup(startOffset))
+            var i = max(0, lookup(startOffset))
             while (i < size &&  // vvv inlined Range#intersects.
                    endOffset > startOffsets[i]) {
                 if (endOffsets[i] > startOffset) {
                     val intersection = Range(
-                            Math.max(startOffsets[i], startOffset),
-                            Math.min(endOffsets[i], endOffset))
+                            max(startOffsets[i], startOffset),
+                            min(endOffsets[i], endOffset))
                     acc.add(intersection)
                 }
 
@@ -70,7 +72,7 @@ class RangesMergingList internal constructor(
         val acc = ArrayList<Range>()
 
         for ((startOffset, endOffset) in this) {
-            var i = Math.max(0, other.lookup(startOffset))
+            var i = max(0, other.lookup(startOffset))
             while (i < other.size && other.startOffsets[i] < endOffset) {
                 if (other.endOffsets[i] > startOffset) {
                     // doesn't intersect
@@ -96,7 +98,7 @@ class RangesMergingList internal constructor(
     }
 
     fun intersect(range: Range): List<Range> {
-        var i = Math.max(0, lookup(range.startOffset))
+        var i = max(0, lookup(range.startOffset))
         val result = arrayListOf<Range>()
         while (i < size) {
             // Iterate over nearby ranges.
@@ -104,10 +106,10 @@ class RangesMergingList internal constructor(
                 break
             }
 
-            val start = Math.max(range.startOffset, startOffsets[i])
-            val end = Math.min(range.endOffset, endOffsets[i])
+            val start = max(range.startOffset, startOffsets[i])
+            val end = min(range.endOffset, endOffsets[i])
             if (start < end) {
-                result.add(Range(start, Math.max(0, end)))
+                result.add(Range(start, max(0, end)))
             }
             i++
         }
@@ -217,7 +219,7 @@ fun Iterable<Range>.toRangeList(): RangesMergingList {
             startOffsets.add(start)
         }
 
-        end = Math.max(end, range.endOffset)
+        end = max(end, range.endOffset)
     }
 
     if (!startOffsets.isEmpty) {

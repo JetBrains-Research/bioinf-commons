@@ -1,6 +1,7 @@
 package org.jetbrains.bio.dataframe
 
 import java.util.*
+import kotlin.math.min
 
 /**
  * A sibling of [BitSet] which is aware of the universe cardinality.
@@ -72,11 +73,11 @@ class BitterSet(private val universe: Int) : BitSet() {
             if (left == -1) {
                 break
             }
-            var right = Math.min(nextClearBit(left + 1), size())
+            var right = min(nextClearBit(left + 1), size())
             while (gap > 0 && right < size()) {
                 val nextSet = nextSetBit(right + 1)
                 if (nextSet != -1 && nextSet - right <= gap) {
-                    right = Math.min(nextClearBit(nextSet + 1), size())
+                    right = min(nextClearBit(nextSet + 1), size())
                 } else {
                     break
                 }

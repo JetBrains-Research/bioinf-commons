@@ -44,7 +44,7 @@ abstract class ObjColumn<T: Any> protected constructor(
 
     override fun reorder(indices: IntArray): Column<Array<T>> {
         val clone = data.clone()
-        for (i in 0..size - 1) {
+        for (i in 0 until size) {
             clone[i] = data[indices[i]]
         }
 
