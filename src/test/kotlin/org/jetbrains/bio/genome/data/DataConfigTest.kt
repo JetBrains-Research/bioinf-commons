@@ -126,7 +126,7 @@ tracks:
             val dc = DataConfig.load(config.reader(), "test")
             assertEquals(1, dc.tracksMap.size)
             assertEquals(1, dc.tracksMap.keys.size)
-            assertEquals(DataConfig.Key(METHYLATION.id, Cell("t")), dc.tracksMap.keys.first())
+            assertEquals(DataConfig.Key(METHYLATION.toString(), Cell("t")), dc.tracksMap.keys.first())
         }
     }
 
@@ -156,7 +156,7 @@ tracks:
             val dc = DataConfig.load(config.reader(), "test")
             assertEquals(1, dc.tracksMap.size)
             assertEquals(1, dc.tracksMap.keys.size)
-            assertEquals(DataConfig.Key(TRANSCRIPTION.id, Cell("t")), dc.tracksMap.keys.first())
+            assertEquals(DataConfig.Key(TRANSCRIPTION.toString(), Cell("t")), dc.tracksMap.keys.first())
         }
     }
 
@@ -198,8 +198,6 @@ tracks:
 
 
     companion object {
-        private val METHYLATION = DataType("methylation")
-        private val TRANSCRIPTION = DataType("transcription")
 
         fun withConfig(block: (DataConfig) -> Unit) {
             withTempFile("test1", ".bed") { p11 ->

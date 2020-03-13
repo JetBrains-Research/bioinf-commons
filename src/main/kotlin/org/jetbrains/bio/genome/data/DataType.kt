@@ -1,20 +1,35 @@
+@file:Suppress("unused")
+
 package org.jetbrains.bio.genome.data
 
-import com.google.common.collect.Maps
 
+data class DataType(private val id: String) {
 
-@Suppress("DataClassPrivateConstructor") // Constructor is used in [invoke] call
-data class DataType private constructor(val id: String) {
+    init {
+        synchronized(REGISTERED) {
+            check(id !in REGISTERED) { "DataType of the type $id already registered" }
+            REGISTERED[id] = this
+        }
+    }
 
     override fun toString() = id
 
     companion object {
-        private val CACHE = Maps.newConcurrentMap<String, DataType>()
+        private val REGISTERED = hashMapOf<String, DataType>()
 
-        operator fun invoke(id: String): DataType =
-                CACHE.computeIfAbsent(id.toLowerCase()) {
-                    DataType(id)
-                }
+        fun fromString(id: String): DataType {
+            if (id in REGISTERED) {
+                return REGISTERED[id]!!
+            }
+            return CHIP_SEQ
+        }
     }
 }
 
+// Preconfigured types
+val METHYLATION = DataType("methylation")
+val CHIP_SEQ = DataType("chip-seq")
+val TRANSCRIPTION = DataType("transcription")
+val MIRNA = DataType("mirna")
+
+fun String.toDataType() = DataType.fromString(this)

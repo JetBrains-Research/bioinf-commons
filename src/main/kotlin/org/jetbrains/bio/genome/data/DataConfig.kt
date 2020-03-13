@@ -170,11 +170,12 @@ aux:
     fun auxDataTypes() = aux.keys.distinct()
 
     fun getCellIds(dataType: DataType): Collection<Cell> =
-            tracksMap.keys.filter { it.dataType == dataType.id }.map(Key::cellId).distinct()
+            tracksMap.keys.filter { it.dataType.toDataType() == dataType }.map(Key::cellId).distinct()
 
     data class Key(val dataType: String, val cellId: Cell)
 
-    operator fun <T> get(dataType: String, key: ReplicateDataKey<T>): T = key.parse(aux[dataType]?.get(key.name))
+    operator fun <T> get(dataType: String, key: ReplicateDataKey<T>): T =
+            key.parse(aux[dataType]?.get(key.name))
 
 }
 
