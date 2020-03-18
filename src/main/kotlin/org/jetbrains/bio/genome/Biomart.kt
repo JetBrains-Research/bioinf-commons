@@ -114,8 +114,7 @@ data class Biomart(
         /**
          * Sends an HTTP GET request to the Biomart server.
          *
-         * @param host which server to use.
-         * @param path URI prefix to use.
+         * @param url URL path to use.
          * @param params a mapping of GET params.
          * @param block called with HTTP response content.
          */
