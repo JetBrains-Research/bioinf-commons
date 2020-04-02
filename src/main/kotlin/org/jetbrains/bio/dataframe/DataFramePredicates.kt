@@ -71,6 +71,8 @@ inline fun predicate(crossinline rowPredicate: DataFrame.(Int) -> Boolean) = Row
 
 fun all(pf: RowPredicateFactory, vararg rest: RowPredicateFactory): RowPredicateFactory {
     val pfs = arrayOf(pf) + rest
+    // here we use predicate optimization which helps to calc it much faster in trivial cases
+    // (see benchmarks in commit history), please do not 'simplify' the code below
     return when (pfs.size) {
         1 -> pfs.single()
         2 -> RowPredicateFactory { df ->
