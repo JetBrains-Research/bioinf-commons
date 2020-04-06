@@ -37,14 +37,7 @@ interface ClassificationModel {
      * @param threshold convergence threshold.
      * @param maxIter an upper bound on EM iterations.
      */
-    fun fit(preprocessed: Preprocessed<DataFrame>, title: String,
-            threshold: Double, maxIter: Int)
-
-    fun fit(preprocessed: Preprocessed<DataFrame>,
-            threshold: Double = Fitter.THRESHOLD,
-            maxIter: Int = Fitter.MAX_ITERATIONS) {
-        fit(preprocessed, Fitter.TITLE, threshold, maxIter)
-    }
+    fun fit(preprocessed: Preprocessed<DataFrame>, title: String, threshold: Double, maxIter: Int)
 
     fun fit(preprocessed: List<Preprocessed<DataFrame>>, title: String, threshold: Double, maxIter: Int) =
             fit(preprocessed.first(), title, threshold, maxIter)
@@ -143,9 +136,7 @@ interface ClassificationModel {
 }
 
 /**
- * A fitter encapsulates the initialization logic for the classification
- * model. By convention the default fitter is accessible via
- * `Model.fitter` static method.
+ * A fitter encapsulates the initialization logic for the classification model.
  *
  * @author Sergei Lebedev
  * @since 17/06/14
@@ -157,16 +148,18 @@ interface Fitter<out Model : ClassificationModel> {
      * @param preprocessed sample.
      * @param threshold convergence threshold (if applicable).
      * @param maxIter an upper bound on fitting iterations (if applicable).
+     * @param attempt multistart attempt number (if applicable).
+     * Should be used in guess to create different initial parameters.
      * @return guessed classification model.
      */
     fun guess(
             preprocessed: Preprocessed<DataFrame>,
-              title: String, threshold: Double, maxIter: Int, attempt: Int
+            title: String, threshold: Double, maxIter: Int, attempt: Int
     ): Model
 
     fun guess(
             preprocessed: List<Preprocessed<DataFrame>>,
-              title: String, threshold: Double, maxIter: Int, attempt: Int
+            title: String, threshold: Double, maxIter: Int, attempt: Int
     ): Model = guess(preprocessed.first(), title, threshold, maxIter, attempt)
 
     fun fit(
@@ -205,7 +198,7 @@ interface Fitter<out Model : ClassificationModel> {
 
         override fun fit(
                 preprocessed: Preprocessed<DataFrame>, title: String,
-                         threshold: Double, maxIter: Int, attempt: Int
+                threshold: Double, maxIter: Int, attempt: Int
         ): Model {
             require(attempt == 0) {
                 "cyclic multistart is not allowed"
@@ -226,7 +219,7 @@ interface Fitter<out Model : ClassificationModel> {
 
         override fun fit(
                 preprocessed: List<Preprocessed<DataFrame>>, title: String,
-                         threshold: Double, maxIter: Int, attempt: Int
+                threshold: Double, maxIter: Int, attempt: Int
         ): Model {
             require(attempt == 0) {
                 "cyclic multistart is not allowed"
