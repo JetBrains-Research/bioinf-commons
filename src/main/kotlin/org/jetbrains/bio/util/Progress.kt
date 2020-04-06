@@ -46,7 +46,10 @@ abstract class Progress protected constructor(
         else -> LOG.info("$title: $message")
     }
 
-    abstract fun report(update: Long = 1)
+    /**
+     * @return true if reported
+     */
+    abstract fun report(update: Long = 1): Boolean
 
     /**
      * Marks progress as done. No further updates would be accumulated.
@@ -177,10 +180,10 @@ private class Bounded(
     @Volatile
     private var progressPercent: Long = -1
 
-    override fun report(update: Long) {
+    override fun report(update: Long): Boolean {
         if (update == 0L) {
             // nothing to do
-            return
+            return false
         }
 
         check(!isDone) {
@@ -190,7 +193,7 @@ private class Bounded(
 
         val duration = getDuration()
         if (duration == -1L) {
-            return
+            return false
         }
 
         val processed = accumulator.get()
@@ -199,13 +202,16 @@ private class Bounded(
             progressPercent = processedPercent
             if (processed < totalItems) {
                 tell(format(duration, processed))
+                return true
             } else {
                 check(processed == totalItems) {
                     "$title progress overflow, expected $totalItems, got $processed"
                 }
                 done()
+                return true
             }
         }
+        return false
     }
 
     override fun format(duration: Long, processed: Long): String {
@@ -237,17 +243,18 @@ private class Unbounded(
 
     override fun processedItems() = accumulator.get()
 
-    override fun report(update: Long) {
+    override fun report(update: Long): Boolean {
         check(!isDone) { "$title progress is done" }
         accumulator.accumulate(update)
 
         val duration = getDuration()
         if (duration == -1L) {
-            return
+            return false
         }
 
         val processed = accumulator.get()
         tell(format(duration, processed))
+        return true
     }
 
     override fun format(duration: Long, processed: Long): String {

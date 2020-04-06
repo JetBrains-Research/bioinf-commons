@@ -164,15 +164,13 @@ interface Fitter<out Model : ClassificationModel> {
 
     fun fit(
             preprocessed: Preprocessed<DataFrame>,
-            title: String = TITLE, threshold: Double = THRESHOLD,
-            maxIter: Int = MAX_ITERATIONS,
+            title: String, threshold: Double, maxIter: Int,
             attempt: Int = 0
     ): Model = fit(listOf(preprocessed), title, threshold, maxIter, attempt)
 
     fun fit(
             preprocessed: List<Preprocessed<DataFrame>>,
-            title: String = TITLE, threshold: Double = THRESHOLD,
-            maxIter: Int = MAX_ITERATIONS,
+            title: String, threshold: Double, maxIter: Int,
             attempt: Int = 0
     ): Model {
         require(threshold > 0) { "threshold $threshold must be >0" }

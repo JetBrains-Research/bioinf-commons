@@ -99,28 +99,30 @@ object MultitaskProgress {
     /**
      * Finish tracking a task. The unused iterations reserved by the task are subtracted from the total pool.
      * Tries to print progress by calling [reportIfNecessary].
+     * @return true if reported
      */
     @JvmStatic
-    fun finishTask(taskID: Any) {
+    fun finishTask(taskID: Any): Boolean {
         synchronized(taskID) {
             if (!totalItemsByTasks.containsKey(taskID)) {
-                return
+                return false
             }
             totalItems.addAndGet(processedItemsByTasks[taskID]!!.toLong() - totalItemsByTasks[taskID]!!)
             totalItemsByTasks.remove(taskID)
             processedItemsByTasks.remove(taskID)
         }
-        reportIfNecessary(true)
+        return reportIfNecessary(true)
     }
 
     /**
      * Report that a task completed an iteration. If this exceeds the allotted number of iterations,
      * the number is doubled. Tries to print progress by calling [reportIfNecessary].
+     * @return true if reported
      */
     @JvmStatic
-    fun reportTask(taskID: Any, items: Long = 1L) {
+    fun reportTask(taskID: Any, items: Long = 1L): Boolean {
         if (!totalItemsByTasks.containsKey(taskID)) {
-            return
+            return false
         }
         val processedItemsForTask = processedItemsByTasks[taskID]!!
         val totalItemsForTask = totalItemsByTasks[taskID]!!
@@ -135,7 +137,7 @@ object MultitaskProgress {
                 }
             }
         }
-        reportIfNecessary(false)
+        return reportIfNecessary(false)
     }
 
     /**
@@ -144,12 +146,12 @@ object MultitaskProgress {
      * OR there were no reports since the last reset
      * 2. the progress value (percentage rounded to the integer) differs from the last reported one
      * OR there were no reports since the last reset and the progress value is not zero
-     *
+     * @return true if reported
      */
-    private fun reportIfNecessary(finishEvent: Boolean) {
+    private fun reportIfNecessary(finishEvent: Boolean): Boolean {
         val duration = Progress.getDuration(startTime, lastDuration, periodNanos, finishEvent)
         if (duration == -1L && !finishEvent) {
-            return
+            return false
         }
 
         synchronized(this) { //synchronized(LOCK) {
@@ -173,9 +175,11 @@ object MultitaskProgress {
                     }
 
                     tell(progressPart + throughputPart)
+                    return true
                 }
             }
         }
+        return false
     }
 }
 
