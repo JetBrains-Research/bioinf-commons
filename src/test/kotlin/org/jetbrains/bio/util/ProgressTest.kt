@@ -267,7 +267,7 @@ class ParallelProgressTest : ProgressTest() {
 
     override val parts: List<ProgressPart>
         get() = logStrings.map {
-            ProgressPart.fromUnboundedProgressString(it)
+            fromUnboundedProgressString(it)
         }
 
     @Test
