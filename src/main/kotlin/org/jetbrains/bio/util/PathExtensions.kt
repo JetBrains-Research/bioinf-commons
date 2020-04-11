@@ -105,16 +105,21 @@ data class FileSize (
         val bytes: Long) : Comparable<FileSize> {
 
     init {
-        require(bytes >= 0) { "size must be >=0 ($bytes)" }
+        require(bytes == -1L || bytes >= 0) { "size must be >=0 or -1, but was: $bytes" }
     }
 
     override fun compareTo(other: FileSize) = Longs.compare(bytes, other.bytes)
 
-    fun isEmpty() = bytes == 0L
+    fun isAccessible() = bytes != -1L
 
+    fun isEmpty() = bytes == 0L
     fun isNotEmpty() = !isEmpty()
 
     override fun toString(): String {
+        if (bytes == -1L) {
+            return "<not accessible>"
+        }
+
         if (bytes == 0L) {
             return "0 b"
         }
@@ -146,14 +151,14 @@ data class FileSize (
  *
  * Use [FileSize.bytes] to get the result of [Files.size].
  */
-val Path.size: FileSize get() = FileSize(Files.size(this))
+val Path.size: FileSize get() = FileSize(if (isAccessible()) Files.size(this) else -1)
 
 /**
  * Returns file size suitable for pretty-printing.
  *
  * Use [FileSize.bytes] to get the result of [Files.size].
  */
-val URI.size: FileSize get() = FileSize(length())
+val URI.size: FileSize get() = FileSize(if (isAccessible()) length() else -1)
 
 /** Returns a new path with the [name] changed. */
 fun Path.withName(newName: String): Path {
