@@ -6,12 +6,10 @@ import org.jetbrains.bio.genome.coverage.Coverage
 import org.jetbrains.bio.genome.coverage.Fragment
 import org.jetbrains.bio.genome.query.ReadsQuery
 import org.jetbrains.bio.util.isAccessible
-import org.jetbrains.bio.util.presentablePath
 import org.jetbrains.bio.util.size
 import org.slf4j.LoggerFactory
 import java.net.URI
 import java.nio.file.Path
-import java.util.*
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
@@ -21,10 +19,16 @@ import java.util.stream.Stream
  */
 
 object PeaksInfo {
+    val CT_PEAK_COUNT = TrackAboutLongColumnType("Peak count")
+    val CT_TOTAL_PEAK_LEN = TrackAboutLongColumnType("Total peak length")
+    val CT_GENOME_COVERAGE = TrackAboutPercentageColumnType("Genome coverage")
+    val CT_MIN_LEN = TrackAboutLongColumnType("Min length")
+    val CT_MAX_LEN = TrackAboutLongColumnType("Max length")
+    val CT_MEAN_LEN = TrackAboutLongColumnType("Mean length")
+    val CT_MEDIAN_LEN = TrackAboutLongColumnType("Median length")
+    val CT_FRIP = TrackAboutDoubleColumnType("FRIP")
 
     private val LOG = LoggerFactory.getLogger(PeaksInfo::class.java)
-
-    private fun Long.formatLongNumber() = String.format("%,d", this).replace(',', ' ')
 
     fun compute(
             genomeQuery: GenomeQuery,
@@ -32,25 +36,25 @@ object PeaksInfo {
             src: URI?,
             paths: List<Path>,
             fragment: Fragment = AutoFragment
-    ): Map<String, String> {
+    ): List<TrackAboutMetricValue<*>> {
         val peaks = peaksStream.collect(Collectors.toList())
         val peaksLengths = peaks.map { it.length().toDouble() }.toDoubleArray()
         val peaksCount = peaksLengths.count()
         val peaksLenSum = peaksLengths.sum()
         val coverage = peaksLenSum / genomeQuery.get().map { it.length.toLong() }.sum()
-        val result = LinkedHashMap<String, String>()
+
+        val result = arrayListOf<TrackAboutMetricValue<*>>()
         if (src != null) {
-            result["Track source"] = src.presentablePath()
-            result["Source size"] = "${src.size}${if (!src.isAccessible()) " <not accessible>" else ""}"
+            result.add(TrackAboutColumnTypes.CT_TRACK_SOURCE to src)
+            result.add(TrackAboutColumnTypes.CT_SOURCE_SIZE to src.size)
         }
-        result["Peak count"] = peaksCount.toLong().formatLongNumber()
-        result["Total peak length"] = peaksLenSum.toLong().formatLongNumber()
-        result["Genome coverage"] = String.format("%.2f%%", coverage)
-        result["Min length"] = (if (peaksLengths.isEmpty()) 0L else StatUtils.min(peaksLengths).toLong()).formatLongNumber()
-        result["Max length"] = (if (peaksLengths.isEmpty()) 0L else StatUtils.max(peaksLengths).toLong()).formatLongNumber()
-        result["Mean length"] = (if (peaksLengths.isEmpty()) 0L else peaksLengths.average().toLong()).formatLongNumber()
-        result["Median length"] =
-                (if (peaksLengths.isEmpty()) 0L else StatUtils.percentile(peaksLengths, 50.0).toLong()).formatLongNumber()
+        result.add(CT_PEAK_COUNT to peaksCount)
+        result.add(CT_TOTAL_PEAK_LEN to peaksLenSum.toLong())
+        result.add(CT_GENOME_COVERAGE to coverage)
+        result.add(CT_MIN_LEN to if (peaksLengths.isEmpty()) 0L else StatUtils.min(peaksLengths).toLong())
+        result.add(CT_MAX_LEN to if (peaksLengths.isEmpty()) 0L else StatUtils.max(peaksLengths).toLong())
+        result.add(CT_MEAN_LEN to if (peaksLengths.isEmpty()) 0L else peaksLengths.average().toLong())
+        result.add(CT_MEDIAN_LEN to if (peaksLengths.isEmpty()) 0L else StatUtils.percentile(peaksLengths, 50.0).toLong())
 
         // Don't recompute tags coverage if it is not processed locally
         if (paths.isNotEmpty()) {
@@ -58,7 +62,7 @@ object PeaksInfo {
             if (readQueries.all { it.npzPath().isAccessible() }) {
                 val coverages = readQueries.map { it.get() }
                 val frip = frip(genomeQuery, peaks, coverages)
-                result["FRIP"] = frip.toString()
+                result.add(CT_FRIP to frip)
             }
         }
         return result
