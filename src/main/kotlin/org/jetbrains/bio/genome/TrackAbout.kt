@@ -30,6 +30,10 @@ class TrackAboutStringColumnType(
 ) : TrackAboutColumnType<String> {
     override fun valueClass() = String::class.java
 
+    override fun comparator() = Comparator<String> { o1, o2 ->
+        o1.compareTo(o2)
+    }
+
     infix fun to(path: Path?) = TrackAboutMetricValue(this, path?.toString() ?: "n/a")
     infix fun to(uri: URI) = TrackAboutMetricValue(this, uri.presentablePath())
 }
@@ -47,6 +51,10 @@ class TrackAboutLongColumnType(
         else -> value.toString()
     }
 
+    override fun comparator() = Comparator<Long> { o1, o2 ->
+        o1.compareTo(o2)
+    }
+
     infix fun to(value: Int) = TrackAboutMetricValue(this, value.toLong())
 }
 
@@ -54,6 +62,10 @@ open class TrackAboutDoubleColumnType(
     override val name: String
 ) : TrackAboutColumnType<Double> {
     override fun valueClass() = Double::class.java
+
+    override fun comparator() = Comparator<Double> { o1, o2 ->
+        o1.compareTo(o2)
+    }
 
     override fun render(value: Any?) = value.toString()
 }
@@ -72,6 +84,10 @@ class TrackAboutPercentageColumnType(
 class TrackAboutFileSizeColumnType(
     override val name: String
 ) : TrackAboutColumnType<FileSize> {
+
+    override fun comparator() = Comparator<FileSize> { o1, o2 ->
+        o1.bytes.compareTo(o2.bytes)
+    }
 
     override fun valueClass() = FileSize::class.java
 }
