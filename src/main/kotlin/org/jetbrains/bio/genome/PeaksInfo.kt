@@ -19,8 +19,8 @@ import java.util.stream.Stream
  */
 
 object PeaksInfo {
-    val CT_PEAK_COUNT = TrackAboutLongColumnType("Peak count")
-    val CT_TOTAL_PEAK_LEN = TrackAboutLongColumnType("Total peak length")
+    val CT_COUNT = TrackAboutLongColumnType("Count") // peaks or regions count
+    val CT_TOTAL_LEN = TrackAboutLongColumnType("Total length") // peaks or regions aggregated length
     val CT_GENOME_COVERAGE = TrackAboutPercentageColumnType("Genome coverage")
     val CT_MIN_LEN = TrackAboutLongColumnType("Min length")
     val CT_MAX_LEN = TrackAboutLongColumnType("Max length")
@@ -45,11 +45,11 @@ object PeaksInfo {
 
         val result = arrayListOf<TrackAboutMetricValue<*>>()
         if (src != null) {
-            result.add(TrackAboutColumnTypes.CT_TRACK_SOURCE to src)
-            result.add(TrackAboutColumnTypes.CT_SOURCE_SIZE to src.size)
+            result.add(TrackAboutColumnTypes.CT_SOURCE to src)
+            result.add(TrackAboutColumnTypes.CT_FILE_SIZE to src.size)
         }
-        result.add(CT_PEAK_COUNT to peaksCount)
-        result.add(CT_TOTAL_PEAK_LEN to peaksLenSum.toLong())
+        result.add(CT_COUNT to peaksCount)
+        result.add(CT_TOTAL_LEN to peaksLenSum.toLong())
         result.add(CT_GENOME_COVERAGE to coverage)
         result.add(CT_MIN_LEN to if (peaksLengths.isEmpty()) 0L else StatUtils.min(peaksLengths).toLong())
         result.add(CT_MAX_LEN to if (peaksLengths.isEmpty()) 0L else StatUtils.max(peaksLengths).toLong())
