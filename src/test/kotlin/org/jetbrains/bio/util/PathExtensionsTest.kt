@@ -194,6 +194,7 @@ class PathExtensionsTest {
 class FileSizeTest {
     @Test
     fun formatting() {
+        assertEquals("<not accessible>", FileSize(-1).toString())
         assertEquals("0 b", FileSize(0L).toString())
         assertEquals("10 b", FileSize(10L).toString())
         assertEquals("100 b", FileSize(100L).toString())
