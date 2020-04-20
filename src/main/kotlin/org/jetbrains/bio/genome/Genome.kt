@@ -59,7 +59,14 @@ class Genome private constructor(
         gapsPath: Path?,
         private val twoBitPath: Path?,
         private val genesGTFPath: Path?,
-        genesDescriptionsPath: Path?
+        genesDescriptionsPath: Path?,
+        /**
+         * Additional optional chromosome mapping for [chromosomeNamesMap], e.g. when genome is configured
+         * from *.chrom.sizes file and not loaded from annotations.yaml.
+         * E.g. it helps open locations created by UCSC hg19 genome in GRCh37 based genomes, where 'chrM' should be
+         * converted to 'MT'
+         */
+        val chrAltName2CanonicalMapping: Map<String, String>
 ) {
     val chromSizesPath by lazy { ensureNotNull(chromSizesPath, "Chromosomes Sizes") }
     val gapsPath by lazy { ensureNotNull(gapsPath, "Gaps") }
@@ -166,11 +173,11 @@ class Genome private constructor(
             map[name] = chr
             map[name.toLowerCase()] = chr
         }
-        val chrAltName2CanonicalMapping = annotationsConfig?.chrAltName2CanonicalMapping ?: emptyMap()
-        chrAltName2CanonicalMapping.forEach {(altName,canonicalName) ->
+        chrAltName2CanonicalMapping.forEach { (altName,canonicalName) ->
             val chr = map[canonicalName]
             requireNotNull(chr) {
-                "Unknown chromosome '$canonicalName' in genome[$build, chrom.sizes: $chromSizesPath]"
+                "Unknown chromosome '$canonicalName' in genome[$build, chrom.sizes: $chromSizesPath], avaialbe chromosomes:" +
+                        "${chromosomes.map { it.name }}"
             }
             map[altName] = chr
         }
@@ -273,7 +280,8 @@ class Genome private constructor(
                         gapsPath = dataPath / Gaps.FILE_NAME,
                         twoBitPath = dataPath / "$build.2bit",
                         genesGTFPath = genesGTFPath,
-                        genesDescriptionsPath = genesDescriptionsPath
+                        genesDescriptionsPath = genesDescriptionsPath,
+                        chrAltName2CanonicalMapping = annCfg.chrAltName2CanonicalMapping
                     )
                 }
 
@@ -283,19 +291,25 @@ class Genome private constructor(
          * See [Genome] constructor
          */
         operator fun get(
-                chromSizesPath: Path,
-                build: String = buildNameFrom(chromSizesPath),
-                annotationsConfig: GenomeAnnotationsConfig? = null,
-                dataPath: Path? = null,
-                cpgIslandsPath: Path? = null,
-                cytobandsPath: Path? = null,
-                repeatsPath: Path? = null,
-                gapsPath: Path? = null,
-                twoBitPath: Path? = null,
-                genesGTFPath: Path? = null,
-                genesDescriptionsPath: Path? = null
+            chromSizesPath: Path,
+            build: String = buildNameFrom(chromSizesPath),
+            annotationsConfig: GenomeAnnotationsConfig? = null,
+            dataPath: Path? = null,
+            cpgIslandsPath: Path? = null,
+            cytobandsPath: Path? = null,
+            repeatsPath: Path? = null,
+            gapsPath: Path? = null,
+            twoBitPath: Path? = null,
+            genesGTFPath: Path? = null,
+            genesDescriptionsPath: Path? = null,
+            chrAltName2CanonicalMapping: Map<String, String>? = null
         ) = getOrAdd(build, true) {
             val chromSizesDir = chromSizesPath.parent
+
+            val chrMapping = HashMap<String, String>()
+            annotationsConfig?.chrAltName2CanonicalMapping?.let { chrMapping.putAll(it) }
+            chrAltName2CanonicalMapping?.let { chrMapping.putAll(it) }
+
             Genome(
                 build,
                 annotationsConfig = annotationsConfig,
@@ -308,8 +322,8 @@ class Genome private constructor(
                 gapsPath = gapsPath,
                 twoBitPath = twoBitPath ?: (chromSizesDir / "$build.2bit").let { if (it.exists) it else null },
                 genesGTFPath = genesGTFPath,
-                genesDescriptionsPath = genesDescriptionsPath
-
+                genesDescriptionsPath = genesDescriptionsPath,
+                chrAltName2CanonicalMapping = chrMapping
             )
         }
 
@@ -331,7 +345,8 @@ class Genome private constructor(
             gapsPath = null,
             twoBitPath = null,
             genesGTFPath = null,
-            genesDescriptionsPath = null
+            genesDescriptionsPath = null,
+            chrAltName2CanonicalMapping = emptyMap()
         ) }
 
         private fun getOrAdd(build: String, customized: Boolean, genomeProvider: () -> Genome): Genome =
@@ -371,7 +386,7 @@ class Genome private constructor(
                     cachedGenome
                 }
 
-        private fun buildNameFrom(chromSizesPath: Path): String {
+        fun buildNameFrom(chromSizesPath: Path): String {
             val fileName = chromSizesPath.fileName.toString()
 
             if (!fileName.endsWith(".chrom.sizes")) {
@@ -428,7 +443,7 @@ class Genome private constructor(
 data class Chromosome private constructor(
         /** Reference to the owner genome. */
         val genome: Genome,
-        /** Unique chromosome name usually prefixed by `"chr"`, e.g. `"chr19"`. */
+        /** Unique chromosome, could "19" or "MT" or be prefixed by `"chr"` (UCSC format), e.g. `"chr19", "chrM"`. */
         val name: String,
         /** Length defined in chrom.sizes file. */
         val length: Int) {

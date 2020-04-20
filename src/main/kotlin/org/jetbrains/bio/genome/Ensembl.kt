@@ -16,7 +16,7 @@ import kotlin.math.min
 object Ensembl {
 
     fun convertGTF(genome: Genome, inputStream: BufferedReader, outputPath: Path) {
-        val mapping = genome.annotationsConfig?.chrAltName2CanonicalMapping ?: emptyMap()
+        val mapping = genome.chromosomeNamesMap
         val writer = outputPath.bufferedWriter()
         for (line in inputStream.lines()) {
             if (line.startsWith("#")) {
@@ -25,7 +25,7 @@ object Ensembl {
             } else {
                 val parts = line.split("\t").toMutableList()
                 val name = parts[0]
-                parts[0] = mapping[name] ?: when {
+                parts[0] = mapping[name]?.name ?: when {
                     name.startsWith("chr") -> name
                     else -> "chr$name"
                 }
