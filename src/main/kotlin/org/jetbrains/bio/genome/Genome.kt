@@ -386,13 +386,15 @@ class Genome private constructor(
                     cachedGenome
                 }
 
-        fun buildNameFrom(chromSizesPath: Path): String {
+        private fun buildNameFrom(chromSizesPath: Path): String {
             val fileName = chromSizesPath.fileName.toString()
 
             if (!fileName.endsWith(".chrom.sizes")) {
                 val build = fileName.substringBefore(".")
-                LOG.warn("Unexpected chrom sizes file name: $fileName, expected <build>.chrom.sizes. " +
-                        "Detected build: $build")
+                LOG.warn(
+                    "Unexpected chrom sizes file name: $fileName, expected <build>.chrom.sizes. " +
+                            "Detected build: $build"
+                )
                 return build
             }
             val build = fileName.substringBeforeLast(".chrom.sizes")
