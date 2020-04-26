@@ -9,20 +9,20 @@ Bioinformatics library in [Kotlin](https://kotlinlang.org) by [JetBrains Researc
 Contents
 --------
 
- `org.jetbrains.bio.dataframe` - Pandas like dataframe
-   `org.jetbrains.bio.experiment` - Named computation - experiment and resources configuration
-   `org.jetbrains.bio.genome` - APIs for working with Genome, Sequence, Genes, Ontologies etc.
-     * `containers` - Genome location sets API
-     * `coverage` - Genome coverage API, paired/single end, fragment size estimation
-     * `data` - Describe any kind of dataset resources including replicates
-     * `format` - Bam (including Bisulfite sequencing), Bed, Fasta, Fastq, 2bit formats support
-     * `methylome` - API to work with methylomes - filtration, statistics, aggregations etc.
-     * `query` - Named functions - queries with caching capabilities
-     * `sampling` - API for genomic sampling - sequencies, locations, etc.
-     * `sequence` - Genome sequence API
-     Also: Biomart, Ensembl, UCSC support, Genomes and Genes annotations
-   `org.jetbrains.bio.statistics` - Statistics utilities including distributions mixtures, hmms and hypothesis testing
-   `org.jetbrains.bio.util` - Cancellable computations, progress reporters, logging utilities, and other utils
+* `org.jetbrains.bio.dataframe` - Pandas like dataframe
+* `org.jetbrains.bio.experiment` - Named computation - experiment and resources configuration
+* `org.jetbrains.bio.genome` - APIs for working with Genome, Sequence, Genes, Ontologies etc.
+    * `containers` - Genome location sets API
+    * `coverage` - Genome coverage API, paired/single end, fragment size estimation
+    * `data` - Describe any kind of dataset resources including replicates
+    * `format` - Bam (including Bisulfite sequencing), Bed, Fasta, Fastq, 2bit formats support
+    * `methylome` - API to work with methylomes - filtration, statistics, aggregations etc.
+    * `query` - Named functions - queries with caching capabilities
+    * `sampling` - API for genomic sampling - sequencies, locations, etc.
+    * `sequence` - Genome sequence API<br/>
+    Also: Biomart, Ensembl, UCSC support, Genomes and Genes annotations
+* `org.jetbrains.bio.statistics` - Statistics utilities including distributions mixtures, hmms and hypothesis testing
+* `org.jetbrains.bio.util` - Cancellable computations, progress reporters, logging utilities, and other utils
 
 Installation
 ------------
