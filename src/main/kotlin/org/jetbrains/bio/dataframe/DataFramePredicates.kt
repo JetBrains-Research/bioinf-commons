@@ -69,6 +69,8 @@ inline fun byString(label: String, crossinline p: (String) -> Boolean) = byObj(l
 
 inline fun predicate(crossinline rowPredicate: DataFrame.(Int) -> Boolean) = RowPredicateFactory { df -> IntPredicate { row -> df.rowPredicate(row) } }
 
+fun truePredicate() = RowPredicateFactory { _ -> IntPredicate { _ -> true } }
+
 fun all(pf: RowPredicateFactory, vararg rest: RowPredicateFactory): RowPredicateFactory {
     val pfs = arrayOf(pf) + rest
     // here we use predicate optimization which helps to calc it much faster in trivial cases
