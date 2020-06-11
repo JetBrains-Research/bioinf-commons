@@ -12,6 +12,9 @@ import org.jetbrains.bio.viktor.F64Array
 interface NullHypothesis<State> {
     val nullStates: Set<State>
 
+    /**
+     * @return log sum of null states probabilities
+     */
     fun apply(logMemberships: Map<State, F64Array>): F64Array {
         return nullStates.map { logMemberships[it]!! }.reduceRight(F64Array::logAddExp)
     }
