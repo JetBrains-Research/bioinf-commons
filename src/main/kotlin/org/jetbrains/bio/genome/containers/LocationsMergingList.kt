@@ -2,6 +2,7 @@ package org.jetbrains.bio.genome.containers
 
 import com.google.common.collect.Lists
 import kotlinx.support.jdk7.use
+import org.jetbrains.bio.big.BedEntry
 import org.jetbrains.bio.genome.*
 import org.jetbrains.bio.genome.format.BedFormat
 import org.jetbrains.bio.genome.format.toBedEntry
@@ -81,7 +82,7 @@ class LocationsMergingList private constructor(
         }
     }
 
-    private fun asLocationSequence(): Sequence<Location> = asSequence().flatMap { it.asSequence() }
+    fun asLocationSequence(): Sequence<Location> = asSequence().flatMap { it.asSequence() }
 
     fun locationIterator(): Iterator<Location> = asLocationSequence().iterator()
 
@@ -133,14 +134,21 @@ class LocationsMergingList private constructor(
         }
 
         @Throws(IOException::class)
-        fun load(genomeQuery: GenomeQuery, path: Path, format: BedFormat = BedFormat.auto(path)): LocationsMergingList {
-            val builder = builder(genomeQuery)
-            format.parse(path) {
-                it.forEach {
-                    val chromosome = genomeQuery[it.chrom]
+        fun load(
+            gq: GenomeQuery,
+            path: Path,
+            format: BedFormat = BedFormat.auto(path),
+            entry2LocationFun: (Chromosome, BedEntry, BedFormat) -> Location = { chr, e, fmt ->
+                val ex = e.unpackRegularFields(fmt)
+                Location(ex.start, ex.end, chr, ex.strand.toStrand())
+            }
+        ): LocationsMergingList {
+            val builder = builder(gq)
+            format.parse(path) { parser ->
+                parser.forEach { entry ->
+                    val chromosome = gq[entry.chrom]
                     if (chromosome != null) {
-                        val e = it.unpackRegularFields(format)
-                        builder.add(Location(e.start, e.end, chromosome, e.strand.toStrand()))
+                        builder.add(entry2LocationFun(chromosome, entry, format))
                     }
                 }
             }

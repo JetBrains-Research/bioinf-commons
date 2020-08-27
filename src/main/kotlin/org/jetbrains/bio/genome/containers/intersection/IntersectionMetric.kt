@@ -1,4 +1,4 @@
-package org.jetbrains.bio.genome.containers.overlap
+package org.jetbrains.bio.genome.containers.intersection
 
 import joptsimple.OptionParser
 import joptsimple.util.RegexMatcher
