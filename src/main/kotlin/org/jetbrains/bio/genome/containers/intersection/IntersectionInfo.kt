@@ -1,14 +1,13 @@
 package org.jetbrains.bio.genome.containers.intersection
 
+import gnu.trove.list.array.TIntArrayList
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.QuoteMode
-import org.jetbrains.bio.dataframe.Column
-import org.jetbrains.bio.dataframe.DataFrame
-import org.jetbrains.bio.dataframe.DoubleColumn
-import org.jetbrains.bio.dataframe.StringColumn
 import org.jetbrains.bio.util.bufferedReader
 import org.jetbrains.bio.util.bufferedWriter
 import org.jetbrains.bio.viktor.F64Array
+import java.io.StringWriter
+import java.io.Writer
 import java.nio.file.Path
 
 /**
@@ -16,36 +15,53 @@ import java.nio.file.Path
  * @date 2018-11-06
  */
 data class IntersectionInfo(
-        val data: F64Array,
-        val mergedLociNumber: IntArray,
-        val rowNames: List<String>,
-        val colNames: List<String>) {
+    val data: F64Array,
+    val rowsMergedLociNumber: IntArray,
+    val colsMergedLociNumber: IntArray,
+    val rowNames: List<String>,
+    val colNames: List<String>
+) {
 
-
-    fun saveToCSV(path: Path) {
+    fun saveToCSV(writer: Writer) {
         val (nrows, ncols) = data.shape
 
         CSVFormat.DEFAULT
-                .withQuoteMode(QuoteMode.MINIMAL)
-                .withCommentMarker('#')!!
-                .print(path.bufferedWriter()).use { p ->
+            .withQuoteMode(QuoteMode.MINIMAL)
+            .withCommentMarker('#')!!
+            .print(writer).use { p ->
+                // header
+                p.print("a_names")
+                p.print("a_merged_loci_count")
+                p.printRecord(colNames)
 
-                    // header
-                    p.print("")
-                    p.print("#")
-                    p.printRecord(colNames)
-
-                    // data
-                    for (i in 0 until nrows) {
-                        p.print(rowNames[i])
-                        p.print(mergedLociNumber[i])
-                        for (cIdx in 0 until ncols) {
-                            p.print(data[i, cIdx])
-                        }
-                        p.println()
-                    }
+                // cols sizes
+                p.print("b_merged_loci_count")
+                p.print(".")
+                for (i in 0 until ncols) {
+                   p.print(colsMergedLociNumber[i])
                 }
+                p.println()
+
+                // data
+                for (i in 0 until nrows) {
+                    p.print(rowNames[i])
+                    p.print(rowsMergedLociNumber[i])
+                    for (cIdx in 0 until ncols) {
+                        p.print(data[i, cIdx])
+                    }
+                    p.println()
+                }
+            }
     }
+
+    fun saveToCSV(path: Path) {
+        saveToCSV(path.bufferedWriter())
+    }
+
+    override fun toString() = StringWriter()
+        .also { saveToCSV(it) }
+        .toString()
+        .replace("\r", "")
 
     companion object {
         /**
@@ -53,59 +69,60 @@ data class IntersectionInfo(
          */
         @Suppress("unused")
         fun loadFromCSV(path: Path) = CSVFormat.DEFAULT
-                .withQuoteMode(QuoteMode.MINIMAL)
-                .withCommentMarker('#')!!
-                .parse(path.bufferedReader()).use {
-                    var colNames: List<String>? = null
+            .withQuoteMode(QuoteMode.MINIMAL)
+            .withCommentMarker('#')!!
+            .parse(path.bufferedReader()).use { parser ->
+                var colNames: List<String>? = null
+                var colsMergedLociNumber: IntArray? = null
+                val rowsMergedLociNumber = TIntArrayList()
 
-                    val data = ArrayList<DoubleArray>()
-                    val rowNames = ArrayList<String>()
-                    it.forEachIndexed { i, csvRecord ->
-                        if (i == 0) {
-                            colNames = csvRecord!!.toList().subList(1, csvRecord.size())
-                        } else {
+                val data = ArrayList<DoubleArray>()
+                val rowNames = ArrayList<String>()
+                parser.forEachIndexed { recIdx, csvRecord ->
+                    when (recIdx) {
+                        0 -> {
+                            colNames = csvRecord!!.toList().subList(2, csvRecord.size())
+                        }
+                        1 -> {
+                            requireNotNull(colNames)
+                            colsMergedLociNumber = IntArray(colNames!!.size) {i ->
+                                csvRecord.get(i+2).toInt()
+                            }
+                        }
+                        else -> {
                             val records = csvRecord.toList()
-                            val values = DoubleArray(colNames!!.size)
+                            val rowValues = DoubleArray(colNames!!.size)
                             records.forEachIndexed { i, value ->
-                                if (i == 0) {
-                                    rowNames.add(value)
-                                } else {
-                                    values[i - 1] = value.toDouble()
+                                when (i) {
+                                    0 -> rowNames.add(value)
+                                    1 -> rowsMergedLociNumber.add(value.toInt())
+                                    else -> rowValues[i - 2] = (value.toDouble())
                                 }
                             }
-                            data.add(values)
+                            data.add(rowValues)
                         }
                     }
-
-                    val cols = ArrayList<Column<*>>()
-                    cols.add(StringColumn("rows", rowNames.toTypedArray()))
-                    rowNames.zip(data).forEach { (colName, values) ->
-                        cols.add(DoubleColumn(colName, values))
-                    }
-
-                    val mergedLociNumber: IntArray
-                    val df = DataFrame(rowNames.size, cols).let { df ->
-                        mergedLociNumber = when {
-                            "#" in df.labels -> df.sliceAsInt("#")
-                            else -> IntArray(rowNames.size) { 100 }    // legacy format w/o '#' column
-                        }
-                        df.omit("#")
-
-                    }
-
-                    val loadedRowNames = df.sliceAsObj<String>("rows").toList()
-                    val loadedColNames = df.labels.toList().subList(1, df.columnsNumber)
-                    val dataRowsN = loadedRowNames.size
-                    val dataColsN = loadedColNames.size
-
-                    val dataColumns = loadedColNames.map { col ->
-                        df.sliceAsDouble(col)
-                    }
-                    val dataTable = F64Array(dataRowsN, dataColsN) { i, j ->
-                        dataColumns[i][j]
-                    }
-                    IntersectionInfo(dataTable, mergedLociNumber, loadedRowNames, loadedColNames)
                 }
+
+                if (colNames == null) {
+                    IntersectionInfo(
+                        F64Array(0, 0),
+                        IntArray(0), IntArray(0),
+                        emptyList(), emptyList()
+                    )
+                } else {
+                    requireNotNull(colNames)
+                    requireNotNull(colsMergedLociNumber)
+
+                    IntersectionInfo(
+                        F64Array(rowNames.size, colNames!!.size) { i, j ->
+                            data[i][j]
+                        },
+                        rowsMergedLociNumber.toArray(), colsMergedLociNumber!!,
+                        rowNames, colNames!!
+                    )
+                }
+            }
     }
 
 
@@ -114,7 +131,8 @@ data class IntersectionInfo(
         if (other !is IntersectionInfo) return false
 
         if (data != other.data) return false
-        if (!mergedLociNumber.contentEquals(other.mergedLociNumber)) return false
+        if (!rowsMergedLociNumber.contentEquals(other.rowsMergedLociNumber)) return false
+        if (!colsMergedLociNumber.contentEquals(other.colsMergedLociNumber)) return false
         if (rowNames != other.rowNames) return false
         if (colNames != other.colNames) return false
 
@@ -123,7 +141,8 @@ data class IntersectionInfo(
 
     override fun hashCode(): Int {
         var result = data.hashCode()
-        result = 31 * result + mergedLociNumber.contentHashCode()
+        result = 31 * result + rowsMergedLociNumber.contentHashCode()
+        result = 31 * result + colsMergedLociNumber.contentHashCode()
         result = 31 * result + rowNames.hashCode()
         result = 31 * result + colNames.hashCode()
         return result
