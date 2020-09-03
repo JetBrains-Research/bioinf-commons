@@ -71,12 +71,13 @@ class RangesMergingList internal constructor(
     infix fun overlap(other: RangesMergingList): RangesMergingList {
         val acc = ArrayList<Range>()
 
-        for ((startOffset, endOffset) in this) {
+        for (range in this) {
+            val (startOffset, endOffset) = range
             var i = max(0, other.lookup(startOffset))
             while (i < other.size && other.startOffsets[i] < endOffset) {
                 if (other.endOffsets[i] > startOffset) {
                     // doesn't intersect
-                    acc.add(Range(startOffset, endOffset))
+                    acc.add(range)
                     break
                 }
                 i++

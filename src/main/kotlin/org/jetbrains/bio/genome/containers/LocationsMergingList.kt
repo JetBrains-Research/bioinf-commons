@@ -7,7 +7,9 @@ import org.jetbrains.bio.genome.*
 import org.jetbrains.bio.genome.format.BedFormat
 import org.jetbrains.bio.genome.format.toBedEntry
 import org.jetbrains.bio.genome.format.unpackRegularFields
+import org.jetbrains.bio.util.bufferedReader
 import java.io.IOException
+import java.io.Reader
 import java.nio.file.Path
 import java.util.*
 
@@ -125,7 +127,7 @@ class LocationsMergingList private constructor(
         fun builder(genomeQuery: GenomeQuery) = Builder(genomeQuery)
 
         fun create(genomeQuery: GenomeQuery, locations: Iterable<Location>) =
-                create(genomeQuery, locations.iterator())
+            create(genomeQuery, locations.iterator())
 
         fun create(genomeQuery: GenomeQuery, locations: Iterator<Location>): LocationsMergingList {
             val builder = Builder(genomeQuery)
@@ -138,13 +140,26 @@ class LocationsMergingList private constructor(
             gq: GenomeQuery,
             path: Path,
             format: BedFormat = BedFormat.auto(path),
-            entry2LocationFun: (Chromosome, BedEntry, BedFormat) -> Location = { chr, e, fmt ->
-                val ex = e.unpackRegularFields(fmt)
-                Location(ex.start, ex.end, chr, ex.strand.toStrand())
-            }
+            entry2LocationFun: (Chromosome, BedEntry, BedFormat) -> Location = EXTBED_2_LOC_FUN
+        ) = load(
+            gq, path.bufferedReader(), "${path.toAbsolutePath()}", format, entry2LocationFun
+        )
+
+        private val EXTBED_2_LOC_FUN: (Chromosome, BedEntry, BedFormat) -> Location = { chr, e, fmt ->
+            val ex = e.unpackRegularFields(fmt)
+            Location(ex.start, ex.end, chr, ex.strand.toStrand())
+        }
+
+        @Throws(IOException::class)
+        fun load(
+            gq: GenomeQuery,
+            reader: Reader,
+            src: String,
+            format: BedFormat,
+            entry2LocationFun: (Chromosome, BedEntry, BedFormat) -> Location = EXTBED_2_LOC_FUN
         ): LocationsMergingList {
             val builder = builder(gq)
-            format.parse(path) { parser ->
+            format.parse(reader, src) { parser ->
                 parser.forEach { entry ->
                     val chromosome = gq[entry.chrom]
                     if (chromosome != null) {
