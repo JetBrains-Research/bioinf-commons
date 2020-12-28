@@ -117,6 +117,8 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
                 }
             }
 
+            // TODO additional tid -> aliases mapping
+
             transcripts.add(Transcript(tInfo.transcriptId, tInfo.geneId, tInfo.geneName,
                                        transcript, cdsBounds?.toRange(), utr3End5,
                                        sortedExonRanges))
@@ -159,6 +161,12 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
         val end = Integer.parseInt(parts[4])
         val strand = parts[6].toStrand()
         val attributes = parseAttributes(parts[8])
+
+        // XXX: maybe also good to include in our annotations
+        // Validated genes - HAVANA:
+        //      transcript_source "havana"
+        // Predicted genes:
+        //      transcript_source "ensembl"
 
         val transcriptId = attributes[GtfAttrTypes.TRANSCRIPT_ID.ordinal]!!
 

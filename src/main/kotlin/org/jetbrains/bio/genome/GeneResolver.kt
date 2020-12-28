@@ -82,6 +82,9 @@ object GeneResolver {
 
     private fun transcriptsMapFor(genome: Genome, aliasType: GeneAliasType): ListMultimap<String, Transcript> {
         return TRANSCRIPTS_MAPS_CACHE.computeIfAbsent(genome to aliasType) {
+            // TODO additional tid -> aliases mapping
+            // TODO: genome.transcriptsSynonyms
+
             val transcriptsMap = ImmutableListMultimap.builder<String, Transcript>()
             for (transcript in genome.transcripts) {
                 val name = transcript.names[aliasType] ?: ""
