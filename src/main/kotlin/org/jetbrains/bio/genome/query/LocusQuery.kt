@@ -106,6 +106,7 @@ val TRANSCRIPT_LOCUS_QUERIES = mapOf(
         "exons" to ExonsQuery())
 
 class CDSQuery : TranscriptLocusQuery("cds") {
+    // All exons intersecting CDS
     override fun apply(input: Transcript) = input.cds
 }
 

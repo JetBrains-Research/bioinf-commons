@@ -39,6 +39,17 @@ enum class GeneAliasType(val description: String) {
     GENE_SYMBOL("Gene Symbol"),
     ENSEMBL_ID("Ensembl Transcript ID"),   // unique.
     ENSEMBL_GENE_ID("Ensembl Gene ID");
+
+    // TODO: load gene Synonyms and prev names?
+    // hgnc <- read.delim(url("
+    // http://www.genenames.org/cgi-bin/hgnc_downloads.cgi?title=HGNC+output+data&hgnc_dbtag=on&col=gd_app_sym&col=gd_aliases&status=Approved&status=Entry+Withdrawn&status_opt=3&where=&order_by=gd_app_sym_sort&format=text&limit=&submit=submit&.cgifields=&.cgifields=chr&.cgifields=status&.cgifields=hgnc_dbtag"))
+   //  https://www.genenames.org/cgi-bin/download/custom?col=gd_hgnc_id&col=gd_app_sym&col=gd_app_name&col=gd_status&col=gd_prev_sym&col=gd_aliases&col=gd_pub_acc_ids&col=gd_pub_refseq_ids&col=md_ensembl_id&status=Approved&status=Entry%20Withdrawn&hgnc_dbtag=on&order_by=gd_app_sym_sort&format=text&submit=submit  //  //
+    // use tsv data from
+    // https://www.genenames.org/cgi-bin/download/custom?col=gd_app_sym&col=gd_app_name&col=gd_prev_sym&col=gd_aliases&col=gd_pub_acc_ids&col=gd_pub_refseq_ids&col=md_ensembl_id&status=Approved&status=Entry%20Withdrawn&hgnc_dbtag=on&order_by=gd_app_sym_sort&format=text&submit=submit//  //
+    // see https://www.genenames.org/download/custom/
+   // biomart:
+    // https://biomart.genenames.org/martform/#!/default/HGNC?datasets=hgnc_gene_mart&attributes=hgnc_gene__approved_symbol_1010%2Chgnc_gene__approved_name_1010%2Chgnc_gene__ensembl_gene__ensembl_gene_id_104%2Chgnc_gene__hgnc_alias_symbol__alias_symbol_108%2Chgnc_gene__hgnc_previous_symbol__previous_symbol_1012%2Chgnc_gene__hgnc_alias_name__alias_name_107%2Chgnc_gene__hgnc_previous_name__previous_name_1011ranscriptranscriptranscript
+    // https://biomart.genenames.org/martform
 }
 
 /**
@@ -107,6 +118,9 @@ class Transcript(
 
     val isCoding: Boolean get() = cdsRange != null
 
+    /**
+     * In ensembl genes gtf - same behaviour, CDS is just exons parts
+     */
     val cds: List<Location> get() = when {
         !isCoding -> emptyList()
         else -> collectExonsIntersecting(cdsRange!!).map { it.on(chromosome, strand) }
