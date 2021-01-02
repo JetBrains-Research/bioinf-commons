@@ -15,13 +15,13 @@ import java.util.concurrent.ThreadLocalRandom
  * @param genomeQuery genome to use
  * @param regions regions to shuffle. Only length of regions are used.
  * @param background background regions, if null shuffle from whole genome.
- * @param maximalReTries number of attempts to generate regions satisfying all conditions.
+ * @param maxRetries number of attempts to generate regions satisfying all conditions.
  */
 
 fun shuffleChromosomeRanges(genomeQuery: GenomeQuery,
                             regions: List<ChromosomeRange>,
                             background: List<ChromosomeRange>? = null,
-                            maximalReTries: Int = 100): List<ChromosomeRange> {
+                            maxRetries: Int = 100): List<ChromosomeRange> {
     val lengths = regions.map { it.length() }.toIntArray()
 
     val backgroundRegions = background ?: genomeQuery.get().map {
@@ -37,8 +37,8 @@ fun shuffleChromosomeRanges(genomeQuery: GenomeQuery,
         prefixSum[i] = s
     }
 
-    for (i in 1..maximalReTries) {
-        val result = tryShuffle(genomeQuery, backgroundRegions, lengths, prefixSum, maximalReTries)
+    for (i in 1..maxRetries) {
+        val result = tryShuffle(genomeQuery, backgroundRegions, lengths, prefixSum, maxRetries)
         if (result != null) {
             return result
         }

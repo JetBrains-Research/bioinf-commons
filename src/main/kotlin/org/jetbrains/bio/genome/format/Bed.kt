@@ -108,8 +108,14 @@ data class BedFormat(
         val MACS2 = from("bed6+3")
         val RGB = from("bed9")
 
-        fun from(fmtStr: String, delimiter: Char = '\t') =
-                BedFormat(parseFormatString(fmtStr), delimiter = delimiter)
+        /**
+         * @param fmtStr: E.g. `bed9` or `bed6+3`
+         * @param delimiter: Fields separator
+         */
+        fun from(
+            fmtStr: String,
+            delimiter: Char = '\t'
+        ) = BedFormat(parseFormatString(fmtStr), delimiter = delimiter)
 
         fun fromString(s: String): BedFormat {
             if (s.first() == '(' && s.last() == ')') {
@@ -125,6 +131,9 @@ data class BedFormat(
             error("Unsupported string: $s")
         }
 
+        /**
+         * @param fmtStr: E.g. bed9 or bed6+3
+         */
         fun parseFormatString(fmtStr: String): Byte {
             var s = fmtStr.toLowerCase()
             check(s.startsWith("bed")) {
