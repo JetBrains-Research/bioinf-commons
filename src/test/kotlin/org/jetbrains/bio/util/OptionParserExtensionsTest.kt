@@ -435,16 +435,16 @@ class OptionParserExtensionsTest {
     }
 
     @Test
-    fun bedtoolsValidFile_BedFieldsUnknownStrand() {
+    fun bedtoolsValidFile_BedFieldsLessThanRequired() {
         withTempFile("optParser", suffix = "suffix.txt") { file ->
-            file.write("chr1\t2\t3\tfoo\t0.24\t0.33")
+            file.write("chr1\t2\t3")
             require(file.exists)
 
             val (stdOut, stdErr) = Logs.captureLoggingOutput {
                 with(OptionParser()) {
                     acceptsAll(listOf("path"))
                             .withRequiredArg()
-                            .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
+                            .withValuesConvertedBy(PathConverter.bedtoolsValidFile(minBedSpecFields = 4))
                             .required()
                     parse(arrayOf("--path", file.toString())) { options ->
                         assertNull(options.valueOf("path"))
@@ -452,7 +452,7 @@ class OptionParserExtensionsTest {
                 }
             }
 
-            assertIn("ERROR: Bedtools will fail to recognize the strand column, your format is [bed4+]", stdErr)
+            assertIn("ERROR: Expected at least first 4 BED fields, but format is [bed3+]", stdErr)
             assertEquals("", stdOut)
         }
     }

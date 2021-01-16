@@ -192,7 +192,7 @@ abstract class PathConverter : ValueConverter<Path> {
             }
         }
 
-        fun bedtoolsValidFile(ext: String? = null): PathConverter = object : PathConverter() {
+        fun bedtoolsValidFile(ext: String? = null, minBedSpecFields: Int=3): PathConverter = object : PathConverter() {
             @Throws(ValueConversionException::class)
             override fun check(path: Path) {
                 if (path.notExists) {
@@ -206,17 +206,9 @@ abstract class PathConverter : ValueConverter<Path> {
                 if (bedFormat.delimiter != '\t') {
                     throw ValueConversionException("Expected TAB separated file, but separator is [${bedFormat.delimiter}]")
                 }
-                if (bedFormat.fieldsNumber < 3) {
-                    throw ValueConversionException("Expected at least first 3 BED fields, but format is [${bedFormat.fmtStr}]")
-                }
-                // we also check for a special case where BED has 6+ fields, but the 6th one isn't the strand
-                if (bedFormat.fieldsNumber < 6) {
-                    val entry = bedFormat.parse(path) { it.firstOrNull() }
-                    if (entry != null && entry.rest.split(bedFormat.delimiter).size >= 3) {
-                        throw ValueConversionException(
-                            "Bedtools will fail to recognize the strand column, your format is [${bedFormat.fmtStr}]"
-                        )
-                    }
+
+                if (bedFormat.fieldsNumber < minBedSpecFields) {
+                    throw ValueConversionException("Expected at least first $minBedSpecFields BED fields, but format is [${bedFormat.fmtStr}]")
                 }
             }
         }

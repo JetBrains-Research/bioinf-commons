@@ -86,7 +86,7 @@ object EnrichmentInRegions {
                 "Loci of interest (loi) file path in TAB separated BED, BED3 or BED4 format"
             )
                 .withRequiredArg()
-                .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
+                .withValuesConvertedBy(PathConverter.bedtoolsValidFile(minBedSpecFields = 3))
                 .required()
 
             acceptsAll(
