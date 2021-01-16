@@ -47,7 +47,7 @@ object BioinfToolsCLA {
         }
     }
 
-    private fun version() =
+    fun version() =
         "${System.getProperty("bioinf.commons.tool.build.version", "@VERSION@.@build@")} " +
                 "built on ${System.getProperty("bioinf.commons.tool.build.date", "@DATE@")}"
 

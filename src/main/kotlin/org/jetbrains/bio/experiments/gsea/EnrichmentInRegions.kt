@@ -154,7 +154,7 @@ object EnrichmentInRegions {
             val tool = BioinfToolsCLA.Tools.LOCI_ENRICHMENT_IN_REGIONS
             parse(args, description = "Given LOI enrichment in regions files") { options ->
                 BioinfToolsCLA.configureLogging("quiet" in options, "debug" in options)
-                LOG.info("Tool [${tool.command}]: ${tool.description}")
+                LOG.info("Tool [${tool.command}]: ${tool.description} (vers: ${BioinfToolsCLA.version()})")
 
                 val chromSizesPath = options.valueOf("chrom.sizes") as Path
                 LOG.info("CHROM.SIZES: $chromSizesPath")
