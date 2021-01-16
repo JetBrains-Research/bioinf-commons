@@ -29,24 +29,36 @@ object EnrichmentInRegions {
         maxRetries: Int,
         hypAlt: PermutationAltHypothesis
     ) {
+        val reportPath = "${outputBasename}${metric.column}.tsv".toPath()
+        val detailedReportFolder = if (detailed) "${outputBasename}${metric.column}_stats".toPath() else null
+
         RegionShuffleStats(
             genome,
             loiPath, backGroundRegions,
             simulationsNumber, chunkSize,
             maxRetries
         ).calcStatistics(
-            collectFilesFromFolder(regionsFolderPath, genome),
-            if (detailed) "${outputBasename}${metric.column}_stats".toPath() else null,
+            collectFilesFrom(regionsFolderPath, genome),
+            detailedReportFolder,
             metric = metric, hypAlt = hypAlt
-        ).save("${outputBasename}${metric.column}.tsv".toPath())
+        ).save(reportPath)
+
+        LOG.info("Report saved to: $reportPath")
+        if (detailedReportFolder != null) {
+            LOG.info("Report details saved to: $detailedReportFolder")
+        }
     }
 
-    private fun collectFilesFromFolder(basePath: Path, genome: Genome): List<Pair<String, LocationsMergingList>> =
-        Files.list(basePath).map { path ->
-            val name = path.fileName.toString()
-            val locations = RegionShuffleStats.readLocations(path, genome)
-            name to locations
-        }.collect(Collectors.toList())
+    private fun collectFilesFrom(basePath: Path, genome: Genome): List<Pair<String, LocationsMergingList>> =
+        if (basePath.isDirectory) {
+            Files.list(basePath).map { path ->
+                val name = path.fileName.toString()
+                val locations = RegionShuffleStats.readLocations(path, genome)
+                name to locations
+            }.collect(Collectors.toList())
+        } else {
+           listOf(basePath.fileName.toString() to RegionShuffleStats.readLocations(basePath, genome))
+        }
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -86,7 +98,7 @@ object EnrichmentInRegions {
 
             acceptsAll(
                 listOf("r", "regions"),
-                "Folder with *.bed regions files"
+                "Regions *.bed file or folder with *.bed regions files"
             )
                 .withRequiredArg()
                 .withValuesConvertedBy(PathConverter.noCheck())

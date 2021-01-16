@@ -42,7 +42,7 @@ class RegionShuffleStats(
 ) {
 
     private fun sampleRegions(lociFilePath: Path, simulationsNumber: Int): List<LocationsMergingList> {
-        val progress = Progress {title="Sampling"}.bounded(simulationsNumber.toLong())
+        val progress = Progress {title="Loci Sampling"}.bounded(simulationsNumber.toLong())
 
         val loci = readRanges(lociFilePath)
         val background = backgroundRegions?.let { readRanges(it) }
@@ -85,13 +85,13 @@ class RegionShuffleStats(
         val sourceLoci = readLocations(srcRegionsPath, genome)
         val nChunks = ceil(simulationsNumber.toDouble() / chunkSize).toInt()
 
-        val progress = Progress {title="Simulation progress"}.bounded(nChunks.toLong() * regionLabelAndLociToTest.size.toLong())
+        val progress = Progress {title="Over/Under-representation check progress"}.bounded(nChunks.toLong() * regionLabelAndLociToTest.size.toLong())
         (0 until nChunks).forEach { chunkId ->
             val start = chunkId * chunkSize
             val end = minOf(simulationsNumber, (chunkId + 1) * chunkSize)
             val simulationsInChunk = end - start
 
-            LOG.info("Simulations: Chunk [$chunkId of $nChunks], simulations ${start.formatLongNumber()}..${end.formatLongNumber() } of ${simulationsNumber.formatLongNumber()}")
+            LOG.info("Simulations: Chunk [${chunkId+1} of $nChunks], simulations ${start.formatLongNumber()}..${end.formatLongNumber() } of ${simulationsNumber.formatLongNumber()}")
             val sampledRegions = sampleRegions(srcRegionsPath, simulationsInChunk)
 
             /*
