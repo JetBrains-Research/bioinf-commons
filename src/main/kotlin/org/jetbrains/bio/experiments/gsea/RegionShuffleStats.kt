@@ -131,7 +131,7 @@ class RegionShuffleStats(
                     if (v >= metricValueForSrc) {
                         countGreater++
                     }
-                    if (v <= countBelow) {
+                    if (v <= metricValueForSrc) {
                         countBelow++
                     }
                 }
