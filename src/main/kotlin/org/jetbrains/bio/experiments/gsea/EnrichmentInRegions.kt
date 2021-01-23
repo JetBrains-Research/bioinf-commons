@@ -27,7 +27,10 @@ object EnrichmentInRegions {
         metric: IntersectionMetric,
         detailed: Boolean,
         maxRetries: Int,
-        hypAlt: PermutationAltHypothesis
+        hypAlt: PermutationAltHypothesis,
+        aSetIsLoi: Boolean,
+        aSetFlankedBothSides: Int,
+        mergeOverlapped: Boolean
     ) {
         val reportPath = "${outputBasename}${metric.column}.tsv".toPath()
         val detailedReportFolder = if (detailed) "${outputBasename}${metric.column}_stats".toPath() else null
@@ -38,9 +41,10 @@ object EnrichmentInRegions {
             simulationsNumber, chunkSize,
             maxRetries
         ).calcStatistics(
-            collectFilesFrom(regionsFolderPath, genome),
+            collectFilesFrom(regionsFolderPath, genome, mergeOverlapped),
             detailedReportFolder,
-            metric = metric, hypAlt = hypAlt
+            metric = metric, hypAlt = hypAlt, aSetFlankedBothSides = aSetFlankedBothSides, aSetIsLoi = aSetIsLoi,
+            mergeOverlapped = mergeOverlapped
         ).save(reportPath)
 
         LOG.info("Report saved to: $reportPath")
@@ -49,16 +53,24 @@ object EnrichmentInRegions {
         }
     }
 
-    private fun collectFilesFrom(basePath: Path, genome: Genome): List<Pair<String, LocationsMergingList>> =
-        if (basePath.isDirectory) {
+    private fun collectFilesFrom(
+        basePath: Path,
+        genome: Genome,
+        mergeOverlapped: Boolean
+    ): List<Pair<String, LocationsMergingList>> {
+
+        return if (basePath.isDirectory) {
             Files.list(basePath).map { path ->
                 val name = path.fileName.toString()
-                val locations = RegionShuffleStats.readLocations(path, genome)
+                val locations = RegionShuffleStats.readLocations(path, genome, mergeOverlapped)
                 name to locations
             }.collect(Collectors.toList())
         } else {
-           listOf(basePath.fileName.toString() to RegionShuffleStats.readLocations(basePath, genome))
+            val name = basePath.fileName.toString()
+            val locations = RegionShuffleStats.readLocations(basePath, genome, mergeOverlapped)
+            listOf(name to locations)
         }
+    }
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -104,6 +116,9 @@ object EnrichmentInRegions {
                 .withValuesConvertedBy(PathConverter.noCheck())
                 .required()
 
+            // TODO: optional save sampledRegions
+            // TODO: optional load sampledRegions from ...
+
             // Output
             acceptsAll(
                 listOf("o", "basename"),
@@ -140,6 +155,16 @@ object EnrichmentInRegions {
 
             acceptMetricArg()
 
+            accepts(
+                "a-regions",
+                "Metric is applied to (a,b) where by default 'a' is loi/simulated loi set, 'b' is region to check set. This" +
+                        " option switches a and b definitions."
+            )
+            acceptsAll(listOf("a-flanked"), "Flank 'a' regions at both sides (non-negative dist in bp)")
+                .withRequiredArg()
+                .ofType(Int::class.java)
+                .defaultsTo(0)
+
             acceptsAll(listOf("parallelism"), "parallelism level")
                 .withRequiredArg()
                 .ofType(Int::class.java)
@@ -148,6 +173,12 @@ object EnrichmentInRegions {
                 "detailed",
                 "Generated detailed stats report with metric value for each shuffle"
             )
+
+            acceptsAll(
+                listOf("m", "merge"),
+                "Merge overlapped locations while loading files if applicable. Will speedup computations."
+            )
+
             // Logging level:
             acceptsAll(listOf("d", "debug"), "Print all the debug info")
 
@@ -207,11 +238,23 @@ object EnrichmentInRegions {
                 val detailedReport = options.has("detailed")
                 LOG.info("DETAILED_REPORT_FLAG: $detailedReport")
 
+                val aSetIsLoi = !options.has("a-regions")
+                LOG.info("METRIC(REGION, LOI/SIMULATED LOI): $aSetIsLoi")
+
+                val aSetFlankedBothSides = options.valueOf("a-flanked") as Int
+                LOG.info("A FLANKED: $aSetFlankedBothSides")
+
+                val mergeOverlapped = options.has("merge")
+                LOG.info("MERGE OVERLAPPED: $mergeOverlapped")
+
                 doCalculations(
                     srcLoci, backGroundRegions, regionsFolderPath, genome,
                     simulationsNumber,
                     if (chunkSize == 0) simulationsNumber else chunkSize,
-                    outputBaseName, metric, detailedReport, retries, hypAlt
+                    outputBaseName, metric, detailedReport, retries, hypAlt,
+                    aSetIsLoi = aSetIsLoi,
+                    aSetFlankedBothSides = aSetFlankedBothSides,
+                    mergeOverlapped = mergeOverlapped
                 )
             }
         }

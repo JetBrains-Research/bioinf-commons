@@ -10,7 +10,7 @@ enum class IntersectionMetric(
         val metricFun: (LocationsMergingList, LocationsMergingList) -> Long
 ) {
     OVERLAP("overlap_number", { a, b ->
-        a.apply(b, RangesMergingList::overlap).size.toLong()
+        a.apply(b) { ra, rb -> ra.overlap(rb) }.size.toLong()
     }),
 
     INTERSECTION_NUMBER("intersection_number", { a, b ->
@@ -27,7 +27,7 @@ enum class IntersectionMetric(
         }
 
         fun OptionParser.acceptMetricArg() {
-            accepts("metric", "Intersection metric type")
+            accepts("metric", "Intersection metric type for metric(a,b)")
                     .withRequiredArg()
                     .ofType(String::class.java)
                     .withValuesConvertedBy(RegexMatcher.regex(

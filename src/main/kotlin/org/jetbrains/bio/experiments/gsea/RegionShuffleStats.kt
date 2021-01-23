@@ -3,6 +3,7 @@ package org.jetbrains.bio.experiments.gsea
 import joptsimple.ValueConversionException
 import joptsimple.ValueConverter
 import org.apache.commons.math3.stat.StatUtils
+import org.apache.commons.math3.util.Precision
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.genome.*
 import org.jetbrains.bio.genome.containers.LocationsMergingList
@@ -77,12 +78,15 @@ class RegionShuffleStats(
         regionLabelAndLociToTest: List<Pair<String, LocationsMergingList>>,
         outputFolderPath: Path? = null,
         metric: IntersectionMetric = IntersectionMetric.OVERLAP,
-        hypAlt: PermutationAltHypothesis = PermutationAltHypothesis.GREATER
+        hypAlt: PermutationAltHypothesis = PermutationAltHypothesis.GREATER,
+        aSetIsLoi: Boolean = true,
+        aSetFlankedBothSides: Int = 0,
+        mergeOverlapped: Boolean = true
     ): DataFrame {
         outputFolderPath?.createDirectories()
 
         val label2Stats = regionLabelAndLociToTest.map { it.first to TestedRegionStats() }.toMap()
-        val sourceLoci = readLocations(srcRegionsPath, genome)
+        val sourceLoci = readLocations(srcRegionsPath, genome, mergeOverlapped)
         val nChunks = ceil(simulationsNumber.toDouble() / chunkSize).toInt()
 
         val progress = Progress {title="Over/Under-representation check progress"}.bounded(nChunks.toLong() * regionLabelAndLociToTest.size.toLong())
@@ -92,7 +96,7 @@ class RegionShuffleStats(
             val simulationsInChunk = end - start
 
             LOG.info("Simulations: Chunk [${chunkId+1} of $nChunks], simulations ${start.formatLongNumber()}..${end.formatLongNumber() } of ${simulationsNumber.formatLongNumber()}")
-            val sampledRegions = sampleRegions(srcRegionsPath, simulationsInChunk)
+            val sampledRegions: List<LocationsMergingList> = sampleRegions(srcRegionsPath, simulationsInChunk)
 
             /*
             // XXX: optional save sampledRegions
@@ -113,15 +117,15 @@ class RegionShuffleStats(
             for ((regionLabel, lociToTest) in regionLabelAndLociToTest) {
                 progress.report()
 
-                val metricValueForSrc = metric.calcMetric(sourceLoci, lociToTest)
+                val metricValueForSrc = calcMetric(sourceLoci, lociToTest, aSetIsLoi, metric, aSetFlankedBothSides)
 
                 val metricValueForSampled = sampledRegions.stream().parallel().mapToLong { sampledLoci ->
-                    metric.calcMetric(sampledLoci, lociToTest)
+                    calcMetric(sampledLoci, lociToTest, aSetIsLoi, metric, aSetFlankedBothSides)
                 }.toArray()
 
                 if (outputFolderPath != null) {
                     DataFrame().with("sample", metricValueForSampled)
-                        .save(outputFolderPath / "${regionLabel}_${metric.column}.chunk${chunkId+1}.tsv")
+                        .save(outputFolderPath / "${regionLabel}_${metric.column}.chunk${chunkId + 1}.tsv")
                 }
 
                 // calc 2 sided: p-value using definition:
@@ -186,33 +190,77 @@ class RegionShuffleStats(
                 .reorder("qValue")
     }
 
+    private fun calcMetric(
+        sampledLoci: LocationsMergingList,
+        lociToTest: LocationsMergingList,
+        aSetIsLoi: Boolean,
+        metric: IntersectionMetric,
+        aSetFlankedBothSides: Int
+    ): Long {
+        val a = if (aSetIsLoi) sampledLoci else lociToTest
+        val b = if (aSetIsLoi) lociToTest else sampledLoci
+
+        return if (metric == IntersectionMetric.OVERLAP) {
+            a.apply(b) { l1, l2 ->
+                l1.overlap(l2, aSetFlankedBothSides)
+            }.size.toLong()
+        } else {
+            require(aSetFlankedBothSides == 0) { "Flanking $aSetFlankedBothSides bp not supported for $metric" }
+            metric.calcMetric(a, b)
+        }
+    }
+
     companion object {
         private val LOG = LoggerFactory.getLogger(RegionShuffleStats::class.java)
 
-        fun readLocations(path: Path, genome: Genome) = genome.toQuery().let { gq ->
-            LocationsMergingList.create(
-                gq,
-                // parse location directly into LocationsMergingList
-                readLocations(path, BedFormat.auto(path), gq)
-            )
-
+        fun readLocations(path: Path, genome: Genome, mergeOverlapped: Boolean) = genome.toQuery().let { gq ->
+            val locations = readLocations(path, BedFormat.auto(path), gq)
+            val mergedLocations = LocationsMergingList.create(gq, locations)
+            if (!mergeOverlapped) {
+                require(locations.size == mergedLocations.size) {
+                    "Impl uses merged overlapped regions here. The operation wasn't allowed by user, and " +
+                            "merged results will be different, because read ${locations.size} locations" +
+                            " number != ${ mergedLocations.size} merged locations number."
+                }
+            } else {
+                if (locations.size != mergedLocations.size) {
+                    LOG.info("$path: ${locations.size} regions merged to ${mergedLocations.size}")
+                }
+            }
+            mergedLocations
         }
 
-        fun readLocations(path: Path, bedFormat: BedFormat, gq: GenomeQuery) =
-                bedFormat.parse(path) { bedParser ->
-                    bedParser.mapNotNull {
-                        val chr = gq[it.chrom]
-                        if (chr == null) {
-                            // skip all unmapped contigs, etc
-                            null
-                        } else {
-                            Location(it.start, it.end, chr)
-                        }
+        fun readLocations(path: Path, bedFormat: BedFormat, gq: GenomeQuery): List<Location> {
+            var recordsNumber = 0
+            val ignoredChrs = mutableListOf<String>()
+
+            val loci = bedFormat.parse(path) { bedParser ->
+                bedParser.mapNotNull {
+                    recordsNumber++
+
+                    val chr = gq[it.chrom]
+                    if (chr == null) {
+                        ignoredChrs.add(it.chrom)
+                        // skip all unmapped contigs, etc
+                        null
+                    } else {
+                        Location(it.start, it.end, chr)
                     }
                 }
-
+            }
+            if (loci.size != recordsNumber) {
+                val pnt = loci.size.asPercentOf(recordsNumber)
+                LOG.warn("$path: Loaded $pnt % (${loci.size} of $recordsNumber) locations. Ignored chromosomes: ${ignoredChrs.size}. For more details use debug option.")
+            }
+            if (ignoredChrs.isNotEmpty()) {
+                LOG.debug("$path: Ignored chromosomes: $ignoredChrs")
+            }
+            return loci
+        }
     }
 }
+
+fun Int.asPercentOf(total: Int, digitsAfterDot: Int = 2) = Precision.round(100.0 * this / total, digitsAfterDot)
 
 data class TestedRegionStats(
     var countSetsWithMetricsAboveThr: Int = 0,

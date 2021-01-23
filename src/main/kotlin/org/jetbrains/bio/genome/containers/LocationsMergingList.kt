@@ -29,24 +29,25 @@ class LocationsMergingList private constructor(
      * Performs element-wise union on locations in the two lists.
      */
     infix fun or(other: LocationsMergingList): LocationsMergingList =
-            apply(other, RangesMergingList::or)
+        apply(other, RangesMergingList::or)
 
     /**
      * Performs element-wise intersection on locations in the two lists.
      */
     infix fun and(other: LocationsMergingList): LocationsMergingList =
-            apply(other, RangesMergingList::and)
+        apply(other, RangesMergingList::and)
 
     fun apply(
-            other: LocationsMergingList,
-            op: (RangesMergingList, RangesMergingList) -> RangesMergingList
-    ) = LocationsMergingList(rangeLists.merge(other.rangeLists, op))
+        other: LocationsMergingList,
+        op: (RangesMergingList, RangesMergingList) -> RangesMergingList
+    ) = LocationsMergingList(rangeLists.apply(other.rangeLists, op))
 
     override operator fun get(chromosome: Chromosome, strand: Strand): List<Location> {
         val result = Lists.newArrayList<Location>()
         for ((startOffset, endOffset) in rangeLists[chromosome, strand]) {
-            result.add(Location(startOffset, endOffset,
-                    chromosome, strand))
+            result.add(
+                Location(startOffset, endOffset, chromosome, strand)
+            )
         }
         return result
     }
@@ -55,7 +56,7 @@ class LocationsMergingList private constructor(
      * XXX: this operation takes strand into account
      */
     operator fun contains(location: Location): Boolean =
-            location.toRange() in rangeLists[location.chromosome, location.strand]
+        location.toRange() in rangeLists[location.chromosome, location.strand]
 
 
     fun contains(offset: Int, chr: Chromosome, strand: Strand): Boolean = offset in rangeLists[chr, strand]
@@ -67,7 +68,7 @@ class LocationsMergingList private constructor(
     fun intersectionLength(location: Location): Int = intersect(location).map(Range::length).sum()
 
     fun intersectionLengthBothStrands(location: Location): Int =
-            intersectionLength(location) + intersectionLength(location.opposite())
+        intersectionLength(location) + intersectionLength(location.opposite())
 
     fun intersect(location: Location): List<Range> {
         val rangeList = rangeLists[location.chromosome, location.strand]
@@ -75,7 +76,7 @@ class LocationsMergingList private constructor(
     }
 
     fun intersectBothStrands(location: Location): List<Range> =
-            intersect(location) + intersect(location.opposite())
+        intersect(location) + intersect(location.opposite())
 
     @Throws(IOException::class)
     fun save(path: Path, format: BedFormat = BedFormat()) {
@@ -107,7 +108,7 @@ class LocationsMergingList private constructor(
 
     class Builder(private val genomeQuery: GenomeQuery) {
         private val ranges: GenomeStrandMap<ArrayList<Range>> =
-                genomeStrandMap(genomeQuery) { _, _ -> arrayListOf<Range>() }
+            genomeStrandMap(genomeQuery) { _, _ -> arrayListOf<Range>() }
 
         fun add(location: Location): Builder {
             ranges[location.chromosome, location.strand].add(location.toRange())
@@ -116,7 +117,7 @@ class LocationsMergingList private constructor(
 
         fun build(): LocationsMergingList {
             val rangeLists = genomeStrandMap(genomeQuery) { chromosome, strand ->
-                ranges[chromosome, strand].toRangeList()
+                ranges[chromosome, strand].toRangeMergingList()
             }
 
             return LocationsMergingList(rangeLists)
@@ -200,7 +201,7 @@ fun locationList(genomeQuery: GenomeQuery, vararg locations: Location): Location
 fun locationList(genomeQuery: GenomeQuery, locations: Iterable<Location>): LocationsMergingList =
         LocationsMergingList.create(genomeQuery, locations)
 
-private fun <T> GenomeStrandMap<T>.merge(
+private fun <T> GenomeStrandMap<T>.apply(
         other: GenomeStrandMap<T>, op: (T, T) -> T): GenomeStrandMap<T> {
     require(genomeQuery == other.genomeQuery)
     return genomeStrandMap(genomeQuery) { chromosome, strand ->
