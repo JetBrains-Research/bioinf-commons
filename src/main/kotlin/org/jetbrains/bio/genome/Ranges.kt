@@ -30,8 +30,8 @@ data class Range(
 
     fun length() = endOffset - startOffset
 
-    @Suppress("nothing_to_inline") inline fun isEmpty() = length() == 0
-    @Suppress("nothing_to_inline") inline fun isNotEmpty() = length() != 0
+    fun isEmpty() = length() == 0
+    fun isNotEmpty() = length() != 0
 
     infix fun intersects(other: Range): Boolean {
         return other.endOffset > startOffset && endOffset > other.startOffset

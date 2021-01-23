@@ -475,7 +475,7 @@ data class Chromosome private constructor(
                 sequenceRef = WeakReference(s)
             }
 
-            return s
+            return s!!
         }
 
     val range: Range get() = Range(0, length)
