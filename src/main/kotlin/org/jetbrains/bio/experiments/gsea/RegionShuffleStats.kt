@@ -59,6 +59,8 @@ class RegionShuffleStats(
             ).map { it.on(Strand.PLUS) }
 
             progress.report()
+
+            // XXX: shuffled regions not intersect by def of our shuffle procedure
             LocationsMergingList.create(genome.toQuery(), randLoci)
 
         }.collect(Collectors.toList())
@@ -83,12 +85,16 @@ class RegionShuffleStats(
         metric: RegionsMetric,
         hypAlt: PermutationAltHypothesis = PermutationAltHypothesis.GREATER,
         aSetIsLoi: Boolean = true,
-        mergeOverlapped: Boolean = true
+        mergeOverlapped: Boolean = true,
+        intersectionFilter: LocationsList<out RangesList>? = null
     ): DataFrame {
         outputFolderPath?.createDirectories()
 
         val label2Stats = regionLabelAndLociToTest.map { it.first to TestedRegionStats() }.toMap()
-        val sourceLoci = readLocations(srcRegionsPath, genome, mergeOverlapped)
+
+        // TODO: keep type of list i.e mergeOverlapped
+        val sourceLoci = readLocations(srcRegionsPath, genome, mergeOverlapped, intersectionFilter)
+
         val nChunks = ceil(simulationsNumber.toDouble() / chunkSize).toInt()
 
         val progress = Progress {title="Over/Under-representation check progress"}.bounded(nChunks.toLong() * regionLabelAndLociToTest.size.toLong())
@@ -98,7 +104,17 @@ class RegionShuffleStats(
             val simulationsInChunk = end - start
 
             LOG.info("Simulations: Chunk [${chunkId+1} of $nChunks], simulations ${start.formatLongNumber()}..${end.formatLongNumber() } of ${simulationsNumber.formatLongNumber()}")
-            val sampledRegions: List<LocationsMergingList> = sampleRegions(srcRegionsPath, simulationsInChunk)
+            val sampledRegions: List<LocationsList<out RangesList>> =
+                sampleRegions(srcRegionsPath, simulationsInChunk).let { result ->
+                    if (intersectionFilter == null) {
+                        result
+                    } else {
+                        result.map { ll ->
+                            val filtered = ll.intersectRanges(intersectionFilter)
+                            LocationsMergingList.create(filtered.genomeQuery, filtered.locationIterator())
+                        }
+                    }
+                }
 
             /*
             // XXX: optional save sampledRegions
@@ -207,16 +223,30 @@ class RegionShuffleStats(
     companion object {
         private val LOG = LoggerFactory.getLogger(RegionShuffleStats::class.java)
 
-        fun readLocations(path: Path, genome: Genome, mergeOverlapped: Boolean): LocationsList<out RangesList> = genome.toQuery().let { gq ->
+        fun readLocations(
+            path: Path, genome: Genome, mergeOverlapped: Boolean,
+            intersectionFilter: LocationsList<out RangesList>? = null
+        ): LocationsList<out RangesList> = genome.toQuery().let { gq ->
             val locations = readLocations(path, BedFormat.auto(path), gq)
             if (mergeOverlapped) {
                 val mergedLocations = LocationsMergingList.create(gq, locations)
                 if (locations.size != mergedLocations.size) {
                     LOG.info("$path: ${locations.size} regions merged to ${mergedLocations.size}")
                 }
-                mergedLocations
+                if (intersectionFilter == null) {
+                    mergedLocations
+                } else {
+                    val filtered = mergedLocations.intersectRanges(intersectionFilter)
+                    LocationsMergingList.create(filtered.genomeQuery, filtered.locationIterator())
+                }
             } else {
-                LocationsSortedList.create(gq, locations)
+                val result = LocationsSortedList.create(gq, locations)
+                if (intersectionFilter == null) {
+                    result
+                } else {
+                    val filtered = result.intersectRanges(intersectionFilter)
+                    LocationsSortedList.create(filtered.genomeQuery, filtered.locationIterator())
+                }
             }
         }
 

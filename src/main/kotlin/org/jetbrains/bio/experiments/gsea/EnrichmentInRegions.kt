@@ -3,10 +3,13 @@ package org.jetbrains.bio.experiments.gsea
 import joptsimple.OptionParser
 import org.jetbrains.bio.BioinfToolsCLA
 import org.jetbrains.bio.genome.Genome
+import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.containers.LocationsList
+import org.jetbrains.bio.genome.containers.LocationsSortedList
 import org.jetbrains.bio.genome.containers.RangesList
 import org.jetbrains.bio.genome.containers.intersection.OverlapMetric
 import org.jetbrains.bio.genome.containers.intersection.RegionsMetric
+import org.jetbrains.bio.genome.toQuery
 import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
 import java.nio.file.FileSystems
@@ -30,10 +33,20 @@ object EnrichmentInRegions {
         maxRetries: Int,
         hypAlt: PermutationAltHypothesis,
         aSetIsLoi: Boolean,
-        mergeOverlapped: Boolean
+        mergeOverlapped: Boolean,
+        intersectionFilterLocation: Location?
     ) {
         val reportPath = "${outputBasename}${metric.column}.tsv".toPath()
         val detailedReportFolder = if (detailed) "${outputBasename}${metric.column}_stats".toPath() else null
+
+        val intersectionFilter = if (intersectionFilterLocation != null) {
+                    LocationsSortedList.create(
+                        genome.toQuery(),
+                        listOf(intersectionFilterLocation)
+                    )
+                } else {
+                    null
+                }
 
         RegionShuffleStats(
             genome,
@@ -41,10 +54,11 @@ object EnrichmentInRegions {
             simulationsNumber, chunkSize,
             maxRetries
         ).calcStatistics(
-            collectFilesFrom(regionsFolderPath, genome, mergeOverlapped),
+            collectFilesFrom(regionsFolderPath, genome, mergeOverlapped, intersectionFilter),
             detailedReportFolder,
             metric = metric,
-            hypAlt = hypAlt, aSetIsLoi = aSetIsLoi, mergeOverlapped = mergeOverlapped
+            hypAlt = hypAlt, aSetIsLoi = aSetIsLoi, mergeOverlapped = mergeOverlapped,
+            intersectionFilter = intersectionFilter
         ).save(reportPath)
 
         LOG.info("Report saved to: $reportPath")
@@ -56,17 +70,18 @@ object EnrichmentInRegions {
     private fun collectFilesFrom(
         basePath: Path,
         genome: Genome,
-        mergeOverlapped: Boolean
+        mergeOverlapped: Boolean,
+        intersectionFilter: LocationsSortedList?
     ): List<Pair<String, LocationsList<out RangesList>>> {
         return if (basePath.isDirectory) {
             Files.list(basePath).map { path ->
                 val name = path.fileName.toString()
-                val locations = RegionShuffleStats.readLocations(path, genome, mergeOverlapped)
+                val locations = RegionShuffleStats.readLocations(path, genome, mergeOverlapped, intersectionFilter)
                 name to locations
             }.collect(Collectors.toList())
         } else {
             val name = basePath.fileName.toString()
-            val locations = RegionShuffleStats.readLocations(basePath, genome, mergeOverlapped)
+            val locations = RegionShuffleStats.readLocations(basePath, genome, mergeOverlapped, intersectionFilter)
             listOf(name to locations)
         }
     }
@@ -117,6 +132,14 @@ object EnrichmentInRegions {
 
             // TODO: optional save sampledRegions
             // TODO: optional load sampledRegions from ...
+
+            acceptsAll(
+                listOf("intersect"),
+                "Intersect loi, sampled loi and results with given range 'chromosome:start-end'" +
+                        " before overrepresented regions test. 'start' offset 0-based, 'end' offset exclusive, i.e" +
+                        " [start, end)"
+            )
+                .withRequiredArg()
 
             // Output
             acceptsAll(
@@ -243,6 +266,14 @@ object EnrichmentInRegions {
                 val metric = OverlapMetric(aSetFlankedBothSides);
                 LOG.info("METRIC: ${metric.column}")
 
+                val intersectionFilterLocation = (options.valueOf("intersect") as String?)?.let {
+                    parseLocation(
+                        it, genome, chromSizesPath
+                    )
+                }
+                LOG.info("INTERSECTION RANGE: ${intersectionFilterLocation ?: "N/A"}")
+
+
                 doCalculations(
                     srcLoci, backGroundRegions, regionsFolderPath, genome,
                     simulationsNumber,
@@ -250,11 +281,57 @@ object EnrichmentInRegions {
                     outputBaseName,
                     metric,
                     detailedReport, retries, hypAlt,
-                    aSetIsLoi = aSetIsLoi,
-                    mergeOverlapped = mergeOverlapped
+                    aSetIsLoi,
+                    mergeOverlapped,
+                    intersectionFilterLocation
                 )
             }
         }
+    }
+
+    private fun parseLocation(
+        intersectionFilterStr: String,
+        genome: Genome,
+        chromSizesPath: Path
+    ): Location {
+        var intersectionFilterStr1 = intersectionFilterStr
+        intersectionFilterStr1 = intersectionFilterStr1
+            // whitespaces:
+            .replace(" ", "")
+            .replace("\t", "")
+            .replace("\n", "")
+            .replace("\r", "")
+            // number format separators
+            .replace(".", "")
+            .replace(",", "")
+
+        val chunks = intersectionFilterStr1.split(':')
+        require(chunks.size == 2) {
+            "Intersection range should be in format: 'chromosome:start-end' but was: $intersectionFilterStr1"
+        }
+        val chrName = chunks[0]
+        val offsetChunks = chunks[1].split('-')
+        require(offsetChunks.size == 2) {
+            "Intersection range should be in format: 'chromosome:start-end' but was: $intersectionFilterStr1"
+        }
+        val startOffset = offsetChunks[0].toIntOrNull()
+        val endOffset = offsetChunks[1].toIntOrNull()
+        require(startOffset != null && endOffset != null) {
+            "Intersection range should be in format: 'chromosome:start-end' but was: $intersectionFilterStr1"
+        }
+        val gq = genome.toQuery()
+        val chromosome = gq[chrName]
+        requireNotNull(chromosome) {
+            "Cannot find chromosome '$chrName' in genome $genome ($chromSizesPath)"
+        }
+        require(startOffset in chromosome.range) {
+            "Start offset $startOffset is out of chromosome '${chrName}' ${chromosome.range} range"
+        }
+        require(endOffset in chromosome.range) {
+            "End offset $endOffset is out of chromosome '${chrName}' ${chromosome.range} range"
+        }
+        val intersectionFilter = Location(startOffset, endOffset, chromosome)
+        return intersectionFilter
     }
 }
 
