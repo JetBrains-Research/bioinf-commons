@@ -5,7 +5,6 @@ import joptsimple.OptionSet
 import joptsimple.util.RegexMatcher
 import org.jetbrains.bio.genome.containers.LocationsList
 import org.jetbrains.bio.genome.containers.RangesList
-import org.jetbrains.bio.genome.containers.RangesMergingList
 
 object IntersectionMetrics {
     val OVERLAP = OverlapMetric(0)
@@ -16,12 +15,6 @@ object IntersectionMetrics {
 
         override fun calcMetric(a: LocationsList<out RangesList>, b: LocationsList<out RangesList>) =
             a.calcAdditiveMetric(b) { ra, rb ->
-                require(ra is RangesMergingList) {
-                    "Only merged range list supported here, but was ${ra::class.java.simpleName}"
-                }
-                require(rb is RangesMergingList) {
-                    "Only merged range list supported here, but was ${rb::class.java.simpleName}"
-                }
                 ra.and(rb).size.toLong()
             }.toDouble()
     }
@@ -35,17 +28,10 @@ object IntersectionMetrics {
 
         override fun calcMetric(a: LocationsList<out RangesList>, b: LocationsList<out RangesList>): Double {
             val intersectionSize = a.calcAdditiveMetricDouble(b) { ra, rb ->
-                require(ra is RangesMergingList) {
-                    "Only merged range list supported here, but was ${ra::class.java.simpleName}"
-                }
-                require(rb is RangesMergingList) {
-                    "Only merged range list supported here, but was ${rb::class.java.simpleName}"
-                }
                 ra.and(rb).sumByDouble { it.length().toDouble() }
             }
-
-            val aSize = a.asLocationSequence().sumByDouble { it.length().toDouble() }
-            val bSize = b.asLocationSequence().sumByDouble { it.length().toDouble() }
+            val aSize = a.rangeLists.sumByDouble { it.sumByDouble { it.length().toDouble() } }
+            val bSize = b.rangeLists.sumByDouble { it.sumByDouble { it.length().toDouble() } }
             return intersectionSize / (aSize + bSize - intersectionSize)
         }
     }

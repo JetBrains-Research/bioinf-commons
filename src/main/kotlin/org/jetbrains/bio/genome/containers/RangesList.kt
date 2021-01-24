@@ -39,6 +39,17 @@ interface RangesList : Iterable<Range> {
     fun contains(startOffset: Int, endOffset: Int): Boolean
     operator fun contains(range: Range) = contains(range.startOffset, range.endOffset)
     operator fun contains(offset: Int) = contains(offset, offset + 1)
+
+    /**
+      * Intersect each list interval with requested [startOffset], [endOffset] range,
+      *  empty intervals not reported
+      */
+    fun intersect(startOffset: Int, endOffset: Int): List<Range>
+    /**
+      * Intersect each list interval with requested [range], empty intervals not reported
+      */
+    fun intersect(range: Range) = intersect(range.startOffset, range.endOffset)
+    infix fun and(other: RangesList): List<Range>
 }
 
 abstract class BaseRangesList(
@@ -65,6 +76,16 @@ abstract class BaseRangesList(
                 acc.add(Range(startOffset, endOffset))
             }
 
+        }
+
+        return acc
+    }
+
+    override infix fun and(other: RangesList): List<Range> {
+        val acc = ArrayList<Range>()
+
+        (0 until size).forEach { idx ->
+            acc.addAll(other.intersect(startOffsets[idx], endOffsets[idx]))
         }
 
         return acc

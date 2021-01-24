@@ -29,6 +29,12 @@ interface LocationsList<T : RangesList> : GenomeStrandMapLike<List<Location>> {
         op: (RangesList, RangesList) -> Iterable<Range>
     ): LocationsList<T>
 
+    /**
+     * Performs element-wise intersection on locations in the two lists.
+     */
+    infix fun and(other: LocationsMergingList): LocationsList<T> =
+        apply(other) { ra, rb -> ra.and(rb) }
+
     fun calcAdditiveMetric(
         other: LocationsList<out RangesList>,
         metric: (RangesList, RangesList) -> Long

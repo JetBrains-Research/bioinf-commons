@@ -78,21 +78,18 @@ class RangesMergingList internal constructor(
 
     fun intersectionLength(range: Range) = intersect(range).map(Range::length).sum()
 
-    /**
-     * Intersect each list interval with requested [range], empty intervals not reported
-     */
-    fun intersect(range: Range): List<Range> {
-        var i = max(0, lookup(range.startOffset))
+    override fun intersect(startOffset: Int, endOffset: Int): List<Range> {
+        var i = max(0, lookup(startOffset))
         val result = arrayListOf<Range>()
         val len = size;
         while (i < len) {
             // Iterate over nearby ranges.
-            if (startOffsets[i] >= range.endOffset) {
+            if (startOffsets[i] >= endOffset) {
                 break  // break if start offset became out of range
             }
 
-            val start = max(range.startOffset, startOffsets[i])
-            val end = min(range.endOffset, endOffsets[i])
+            val start = max(startOffset, startOffsets[i])
+            val end = min(endOffset, endOffsets[i])
             if (start < end) {
                 // add only valid ranges, invalid range could appear e.g.:
                 // list = [10, 30] [50, 100] , rage=[45, 60]

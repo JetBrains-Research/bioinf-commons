@@ -8,6 +8,8 @@ import org.jetbrains.bio.genome.Range
 /**
  * A container for possibly overlapping ranges. Which doesn't merge overlapping ranges.
  *
+ * // TODO: optional 'uniq' mode
+ *
  * @see [org.jetbrains.bio.genome.Range] for details.
  * @author Roman Chernyatchik
  */
@@ -32,7 +34,7 @@ class RangesSortedList internal constructor(
         val rangesNumber = size
         for (idx in 0 until rangesNumber) {
             if (startOffsets[idx] >= endOffset) {
-                // cannot contain here and further, start offsets are sorted
+                // cannot overlap here and further, start offsets are sorted
                 return false
             }
 
@@ -58,6 +60,29 @@ class RangesSortedList internal constructor(
 
         }
         return false
+    }
+
+    override fun intersect(startOffset: Int, endOffset: Int): List<Range> {
+        val rangesNumber = size
+
+        val result = arrayListOf<Range>()
+
+        for (idx in 0 until rangesNumber) {
+            if (startOffsets[idx] >= endOffset) {
+                // cannot intersect here and further, start offsets are sorted
+                break
+            }
+
+            if (endOffsets[idx] > startOffset) {
+                val start = kotlin.math.max(startOffset, startOffsets[idx])
+                val end = kotlin.math.min(endOffset, endOffsets[idx])
+                if(start < end) {
+                    result.add(Range(start, end))
+                }
+            }
+        }
+
+        return result;
     }
 }
 

@@ -27,14 +27,6 @@ class LocationsMergingList private constructor(
             (ra as RangesMergingList).or(rb as RangesMergingList)
         }
 
-    /**
-     * Performs element-wise intersection on locations in the two lists.
-     */
-    infix fun and(other: LocationsMergingList): LocationsMergingList =
-        apply(other) { ra, rb ->
-            (ra as RangesMergingList).and(rb as RangesMergingList)
-        }
-
     override fun apply(
         other: LocationsList<out RangesList>,
         op: (RangesList, RangesList) -> Iterable<Range>

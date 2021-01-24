@@ -137,7 +137,15 @@ class RangesSortedListTest {
         // multiple
         assertTrue(Range(5, 15) in rangeSortedList(Range(0, 100), Range(5, 8), Range(10, 20), Range(20, 30)))
         assertFalse(Range(5, 15) in rangeSortedList(Range(0, 10), Range(5, 8), Range(10, 20), Range(20, 30)))
-        assertTrue(Range(5, 15) in rangeSortedList(Range(0, 10), Range(2, 20), Range(5, 8), Range(10, 20), Range(20, 30)))
+        assertTrue(
+            Range(5, 15) in rangeSortedList(
+                Range(0, 10),
+                Range(2, 20),
+                Range(5, 8),
+                Range(10, 20),
+                Range(20, 30)
+            )
+        )
     }
 
     @Test
@@ -148,6 +156,134 @@ class RangesSortedListTest {
     @Test
     fun containsSingleExceedingRange() {
         assertFalse(Range(-100, 100) in rangeSortedList(Range(0, 10)))
+    }
+
+    @Test
+    fun intersect() {
+        assertEquals(listOf(Range(0, 100)), rangeSortedList(Range(0, 100)).intersect(Range(0, 100)))
+        assertEquals(listOf(Range(10, 90)), rangeSortedList(Range(0, 100)).intersect(Range(10, 90)))
+        assertEquals(listOf(Range(10, 90)), rangeSortedList(Range(10, 90)).intersect(Range(0, 100)))
+        assertEquals(
+            listOf(Range(20, 40), Range(50, 70)),
+            rangeSortedList(Range(0, 40), Range(50, 100)).intersect(Range(20, 70))
+        )
+
+        val rl2 = rangeSortedList(
+            Range(0, 40),
+            Range(2, 6),
+            Range(9, 15),
+            Range(10, 30),
+            Range(10, 50),
+            Range(20, 40),
+            Range(20, 50),
+            Range(30, 70),
+            Range(50, 100),
+            Range(60, 70),
+            Range(70, 80),
+            Range(90, 140)
+        )
+        assertEquals(
+            listOf(
+                Range(20, 40),
+                Range(20, 30),
+                Range(20, 50),
+                Range(20, 40),
+                Range(20, 50),
+                Range(30, 70),
+                Range(50, 70),
+                Range(60, 70),
+            ),
+            rl2.intersect(Range(20, 70))
+        )
+    }
+
+    @Test
+    fun andWithEmpty() {
+        val rl = rangeSortedList(Range(0, 10), Range(20, 30))
+        assertEquals(emptyList<Range>(), (rl and rangeSortedList()).toList())
+    }
+
+    @Test
+    fun andWithSelf() {
+        val rl = rangeSortedList(Range(0, 10), Range(20, 30))
+        assertEquals(rl.toList(), (rl and rl).toList())
+    }
+
+    @Test
+    fun and() {
+        val rl1 = rangeSortedList(Range(0, 10))
+        val rl2 = rangeSortedList(Range(5, 30))
+        assertEquals(rangeSortedList(Range(5, 10)).toList(), (rl1 and rl2).toList())
+
+        assertEquals(
+            rangeSortedList(Range(6, 8)).toList(), (
+                    rangeSortedList(Range(0, 2), Range(6, 8)) and rl2).toList()
+        )
+    }
+
+    @Test
+    fun andComplex1() {
+        val rl1 = rangeSortedList(
+                    Range(0, 40),
+                    Range(2, 6),
+                    Range(9, 15),
+                    Range(10, 30),
+                    Range(10, 50),
+                    Range(20, 40),
+                    Range(20, 50),
+                    Range(30, 70),
+                    Range(50, 100),
+                    Range(60, 70),
+                    Range(70, 80),
+                    Range(90, 140)
+                )
+        val rl2 = rangeSortedList(Range(0, 5), Range(0, 90), Range(10, 15))
+        // List with duplicated!
+        assertEquals(
+            listOf(
+                Range(0, 5),
+                Range(0, 40),
+                Range(10, 15),
+                Range(2, 5),
+                Range(2, 6),
+                Range(9, 15),
+                Range(10, 15),
+                Range(10, 30),
+                Range(10, 15),
+                Range(10, 50),
+                Range(10, 15),
+                Range(20, 40),
+                Range(20, 50),
+                Range(30, 70),
+                Range(50, 90),
+                Range(60, 70),
+                Range(70, 80)
+            ),
+            rl1.and(rl2)
+        )
+
+        assertEquals(
+            listOf(
+                Range(0, 5),
+                Range(0, 40),
+                Range(2, 5),
+                Range(2, 6),
+                Range(9, 15),
+                Range(10, 15),
+                Range(10, 15),
+                Range(10, 15),
+                Range(10, 15),
+                Range(10, 30),
+                Range(10, 50),
+                Range(20, 40),
+                Range(20, 50),
+                Range(30, 70),
+                Range(50, 90),
+                Range(60, 70),
+                Range(70, 80)
+            ),
+            rl1.and(rl2).toRangeSortedList().toList()
+        )
     }
 
     private fun checkOverlap(
