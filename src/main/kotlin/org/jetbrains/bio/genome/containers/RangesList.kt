@@ -11,7 +11,7 @@ import java.nio.file.Path
 interface RangesList : Iterable<Range> {
     val size: Int
 
-    fun overlap(startOffset: Int, endOffset: Int): Boolean
+    fun overlapRanges(startOffset: Int, endOffset: Int): Boolean
 
     /**
      * Leaves only ranges intersecting some range form other
@@ -28,28 +28,27 @@ interface RangesList : Iterable<Range> {
      * @param other Other list. Methods finds ranges from target list with intersects any range from [other] list
      * @param flankBothSides Flank each range from target (this) list with [flankBothSides] positions at start and end
      */
-    fun overlap(other: RangesList, flankBothSides: Int = 0): List<Range>
+    fun overlapRanges(other: RangesList, flankBothSides: Int = 0): List<Range>
 
     /**
      * If overlap ranges not needed use this function to do less GS
      */
-    fun overlapNumber(other: RangesList, flankBothSides: Int = 0): Int
+    fun overlapRangesNumber(other: RangesList, flankBothSides: Int = 0): Int
 
-    // TODO: rename includes?
-    fun contains(startOffset: Int, endOffset: Int): Boolean
-    operator fun contains(range: Range) = contains(range.startOffset, range.endOffset)
-    operator fun contains(offset: Int) = contains(offset, offset + 1)
+    fun includesRange(startOffset: Int, endOffset: Int): Boolean
+    fun includesRange(range: Range) = includesRange(range.startOffset, range.endOffset)
+    fun includesRange(offset: Int) = includesRange(offset, offset + 1)
 
     /**
       * Intersect each list interval with requested [startOffset], [endOffset] range,
       *  empty intervals not reported
       */
-    fun intersect(startOffset: Int, endOffset: Int): List<Range>
+    fun intersectRanges(startOffset: Int, endOffset: Int): List<Range>
     /**
       * Intersect each list interval with requested [range], empty intervals not reported
       */
-    fun intersect(range: Range) = intersect(range.startOffset, range.endOffset)
-    infix fun and(other: RangesList): List<Range>
+    fun intersectRanges(range: Range) = intersectRanges(range.startOffset, range.endOffset)
+    infix fun intersectRanges(other: RangesList): List<Range>
 }
 
 abstract class BaseRangesList(
@@ -61,7 +60,7 @@ abstract class BaseRangesList(
         require(startOffsets.size() == endOffsets.size())
     }
 
-    override fun overlap(other: RangesList, flankBothSides: Int): List<Range> {
+    override fun overlapRanges(other: RangesList, flankBothSides: Int): List<Range> {
         require(flankBothSides >= 0) { "Expected to be non-negative, but was $flankBothSides" }
 
         val acc = ArrayList<Range>()
@@ -72,7 +71,7 @@ abstract class BaseRangesList(
 
             val startOffsetFlnk = kotlin.math.max(0, startOffset - flankBothSides)
             val endOffsetFlnk = endOffset + flankBothSides
-            if (other.overlap(startOffsetFlnk, endOffsetFlnk)) {
+            if (other.overlapRanges(startOffsetFlnk, endOffsetFlnk)) {
                 acc.add(Range(startOffset, endOffset))
             }
 
@@ -81,17 +80,17 @@ abstract class BaseRangesList(
         return acc
     }
 
-    override infix fun and(other: RangesList): List<Range> {
+    override infix fun intersectRanges(other: RangesList): List<Range> {
         val acc = ArrayList<Range>()
 
         (0 until size).forEach { idx ->
-            acc.addAll(other.intersect(startOffsets[idx], endOffsets[idx]))
+            acc.addAll(other.intersectRanges(startOffsets[idx], endOffsets[idx]))
         }
 
         return acc
     }
 
-    override fun overlapNumber(other: RangesList, flankBothSides: Int): Int {
+    override fun overlapRangesNumber(other: RangesList, flankBothSides: Int): Int {
         require(flankBothSides >= 0) { "Expected to be non-negative, but was $flankBothSides" }
 
         var acc = 0
@@ -102,7 +101,7 @@ abstract class BaseRangesList(
 
             val startOffsetFlnk = kotlin.math.max(0, startOffset - flankBothSides)
             val endOffsetFlnk = endOffset + flankBothSides
-            if (other.overlap(startOffsetFlnk, endOffsetFlnk)) {
+            if (other.overlapRanges(startOffsetFlnk, endOffsetFlnk)) {
                 acc++
             }
 

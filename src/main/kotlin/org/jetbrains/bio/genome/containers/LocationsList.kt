@@ -32,8 +32,8 @@ interface LocationsList<T : RangesList> : GenomeStrandMapLike<List<Location>> {
     /**
      * Performs element-wise intersection on locations in the two lists.
      */
-    infix fun and(other: LocationsMergingList): LocationsList<T> =
-        apply(other) { ra, rb -> ra.and(rb) }
+    infix fun intersectRanges(other: LocationsMergingList): LocationsList<T> =
+        apply(other) { ra, rb -> ra.intersectRanges(rb) }
 
     fun calcAdditiveMetric(
         other: LocationsList<out RangesList>,
@@ -87,10 +87,10 @@ interface LocationsList<T : RangesList> : GenomeStrandMapLike<List<Location>> {
      * XXX: this operation takes strand into account
      */
     operator fun contains(location: Location): Boolean =
-        location.toRange() in rangeLists[location.chromosome, location.strand]
+        rangeLists[location.chromosome, location.strand].includesRange(location.toRange())
 
 
-    fun contains(offset: Int, chr: Chromosome, strand: Strand): Boolean = offset in rangeLists[chr, strand]
+    fun contains(offset: Int, chr: Chromosome, strand: Strand): Boolean = rangeLists[chr, strand].includesRange(offset)
 
     @Throws(IOException::class)
     fun save(path: Path, format: BedFormat = BedFormat()) {

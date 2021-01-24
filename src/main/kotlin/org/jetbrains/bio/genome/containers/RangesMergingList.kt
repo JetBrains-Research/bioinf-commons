@@ -29,36 +29,7 @@ class RangesMergingList internal constructor(
      */
     infix fun or(other: RangesMergingList) = Iterables.concat(this, other).toRangeMergingList()
 
-    /**
-     * Performs element-wise intersection on ranges in the two lists.
-     */
-    infix fun and(other: RangesMergingList): RangesMergingList {
-        val acc = ArrayList<Range>()
-
-        (0 until other.size).forEach { idx ->
-            val startOffset = other.startOffsets[idx]
-            val endOffset = other.endOffsets[idx]
-
-            var i = max(0, lookup(startOffset))
-            while (i < size &&  // vvv inlined Range#intersects.
-                endOffset > startOffsets[i]
-            ) {
-                if (endOffsets[i] > startOffset) {
-                    val intersection = Range(
-                        max(startOffsets[i], startOffset),
-                        min(endOffsets[i], endOffset)
-                    )
-                    acc.add(intersection)
-                }
-
-                i++
-            }
-        }
-
-        return acc.toRangeMergingList()
-    }
-
-    override fun overlap(startOffset: Int, endOffset: Int): Boolean {
+    override fun overlapRanges(startOffset: Int, endOffset: Int): Boolean {
         val rangesNumber = size
         var i = max(0, lookup(startOffset))
         // check if this 'idx' range intersects at least one other region:
@@ -71,14 +42,14 @@ class RangesMergingList internal constructor(
         return false
     }
 
-    override fun contains(startOffset: Int, endOffset: Int): Boolean {
+    override fun includesRange(startOffset: Int, endOffset: Int): Boolean {
         val i = lookup(startOffset)
         return i >= 0 && startOffset >= startOffsets[i] && endOffset <= endOffsets[i]
     }
 
-    fun intersectionLength(range: Range) = intersect(range).map(Range::length).sum()
+    fun intersectionLength(range: Range) = intersectRanges(range).map(Range::length).sum()
 
-    override fun intersect(startOffset: Int, endOffset: Int): List<Range> {
+    override fun intersectRanges(startOffset: Int, endOffset: Int): List<Range> {
         var i = max(0, lookup(startOffset))
         val result = arrayListOf<Range>()
         val len = size;

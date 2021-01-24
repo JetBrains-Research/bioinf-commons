@@ -15,7 +15,7 @@ object IntersectionMetrics {
 
         override fun calcMetric(a: LocationsList<out RangesList>, b: LocationsList<out RangesList>) =
             a.calcAdditiveMetric(b) { ra, rb ->
-                ra.and(rb).size.toLong()
+                ra.intersectRanges(rb).size.toLong()
             }.toDouble()
     }
 
@@ -28,7 +28,7 @@ object IntersectionMetrics {
 
         override fun calcMetric(a: LocationsList<out RangesList>, b: LocationsList<out RangesList>): Double {
             val intersectionSize = a.calcAdditiveMetricDouble(b) { ra, rb ->
-                ra.and(rb).sumByDouble { it.length().toDouble() }
+                ra.intersectRanges(rb).sumByDouble { it.length().toDouble() }
             }
             val aSize = a.rangeLists.sumByDouble { it.sumByDouble { it.length().toDouble() } }
             val bSize = b.rangeLists.sumByDouble { it.sumByDouble { it.length().toDouble() } }

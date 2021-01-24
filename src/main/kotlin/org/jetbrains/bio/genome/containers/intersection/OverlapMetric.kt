@@ -9,6 +9,6 @@ class OverlapMetric(val aSetFlankedBothSides: Int = 0) : RegionsMetric {
 
     override fun calcMetric(a: LocationsList<out RangesList>, b: LocationsList<out RangesList>) =
         a.calcAdditiveMetric(b) { ra, rb ->
-            ra.overlapNumber(rb, flankBothSides = aSetFlankedBothSides).toLong()
+            ra.overlapRangesNumber(rb, flankBothSides = aSetFlankedBothSides).toLong()
         }.toDouble()
 }

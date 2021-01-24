@@ -30,7 +30,7 @@ class RangesSortedList internal constructor(
      * OTHER 5                       |--|   : -
      * OTHER 6  |-|     |----|              : +
      */
-    override fun overlap(startOffset: Int, endOffset: Int): Boolean {
+    override fun overlapRanges(startOffset: Int, endOffset: Int): Boolean {
         val rangesNumber = size
         for (idx in 0 until rangesNumber) {
             if (startOffsets[idx] >= endOffset) {
@@ -46,7 +46,7 @@ class RangesSortedList internal constructor(
         return false
     }
 
-    override fun contains(startOffset: Int, endOffset: Int): Boolean {
+    override fun includesRange(startOffset: Int, endOffset: Int): Boolean {
         val rangesNumber = size
         for (idx in 0 until rangesNumber) {
             if (startOffset < startOffsets[idx]) {
@@ -62,7 +62,7 @@ class RangesSortedList internal constructor(
         return false
     }
 
-    override fun intersect(startOffset: Int, endOffset: Int): List<Range> {
+    override fun intersectRanges(startOffset: Int, endOffset: Int): List<Range> {
         val rangesNumber = size
 
         val result = arrayListOf<Range>()

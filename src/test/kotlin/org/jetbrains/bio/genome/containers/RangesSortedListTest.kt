@@ -9,16 +9,16 @@ import kotlin.test.assertTrue
 class RangesSortedListTest {
     @Test
     fun overlapRegion() {
-        assertFalse(rangeSortedList().overlap(7, 12));
+        assertFalse(rangeSortedList().overlapRanges(7, 12));
 
         val rl1 = rangeSortedList(Range(10, 30))
-        assertTrue(rl1.overlap(7, 12));
-        assertTrue(rl1.overlap(20, 40));
+        assertTrue(rl1.overlapRanges(7, 12));
+        assertTrue(rl1.overlapRanges(20, 40));
 
-        assertFalse(rl1.overlap(2, 7));
-        assertFalse(rl1.overlap(7, 10));
-        assertFalse(rl1.overlap(30, 40));
-        assertFalse(rl1.overlap(40, 50));
+        assertFalse(rl1.overlapRanges(2, 7));
+        assertFalse(rl1.overlapRanges(7, 10));
+        assertFalse(rl1.overlapRanges(30, 40));
+        assertFalse(rl1.overlapRanges(40, 50));
 
         val rl2 = rangeSortedList(
             Range(0, 40),
@@ -27,9 +27,9 @@ class RangesSortedListTest {
             Range(30, 70),
             Range(50, 100),
         )
-        assertTrue(rl2.overlap(20, 70));
-        assertTrue(rl2.overlap(0, 5));
-        assertTrue(rl2.overlap(99, 100));
+        assertTrue(rl2.overlapRanges(20, 70));
+        assertTrue(rl2.overlapRanges(0, 5));
+        assertTrue(rl2.overlapRanges(99, 100));
     }
 
     @Test
@@ -123,49 +123,49 @@ class RangesSortedListTest {
 
     @Test
     fun contains() {
-        assertFalse(Range(0, 12) in rangeSortedList())
+        assertFalse(rangeSortedList().includesRange(Range(0, 12)))
 
         // single
-        assertTrue(Range(0, 12) in rangeSortedList(Range(0, 12)))
-        assertFalse(Range(0, 20) in rangeSortedList(Range(0, 12)))
+        assertTrue(rangeSortedList(Range(0, 12)).includesRange(Range(0, 12)))
+        assertFalse(rangeSortedList(Range(0, 12)).includesRange(Range(0, 20)))
 
         // two
-        assertTrue(Range(5, 15) in rangeSortedList(Range(0, 10), Range(5, 20)))
-        assertFalse(Range(5, 15) in rangeSortedList(Range(0, 10), Range(10, 20)))
-        assertFalse(Range(5, 15) in rangeSortedList(Range(0, 10), Range(11, 20)))
+        assertTrue(rangeSortedList(Range(0, 10), Range(5, 20)).includesRange(Range(5, 15)))
+        assertFalse(rangeSortedList(Range(0, 10), Range(10, 20)).includesRange(Range(5, 15)))
+        assertFalse(rangeSortedList(Range(0, 10), Range(11, 20)).includesRange(Range(5, 15)))
 
         // multiple
-        assertTrue(Range(5, 15) in rangeSortedList(Range(0, 100), Range(5, 8), Range(10, 20), Range(20, 30)))
-        assertFalse(Range(5, 15) in rangeSortedList(Range(0, 10), Range(5, 8), Range(10, 20), Range(20, 30)))
+        assertTrue(rangeSortedList(Range(0, 100), Range(5, 8), Range(10, 20), Range(20, 30)).includesRange(Range(5, 15)))
+        assertFalse(rangeSortedList(Range(0, 10), Range(5, 8), Range(10, 20), Range(20, 30)).includesRange(Range(5, 15)))
         assertTrue(
-            Range(5, 15) in rangeSortedList(
+            rangeSortedList(
                 Range(0, 10),
                 Range(2, 20),
                 Range(5, 8),
                 Range(10, 20),
                 Range(20, 30)
-            )
+            ).includesRange(Range(5, 15))
         )
     }
 
     @Test
     fun containsSingleBigSegment() {
-        assertTrue(Range(10, 20) in rangeSortedList(Range(0, 100)))
+        assertTrue(rangeSortedList(Range(0, 100)).includesRange(Range(10, 20)))
     }
 
     @Test
     fun containsSingleExceedingRange() {
-        assertFalse(Range(-100, 100) in rangeSortedList(Range(0, 10)))
+        assertFalse(rangeSortedList(Range(0, 10)).includesRange(Range(-100, 100)))
     }
 
     @Test
     fun intersect() {
-        assertEquals(listOf(Range(0, 100)), rangeSortedList(Range(0, 100)).intersect(Range(0, 100)))
-        assertEquals(listOf(Range(10, 90)), rangeSortedList(Range(0, 100)).intersect(Range(10, 90)))
-        assertEquals(listOf(Range(10, 90)), rangeSortedList(Range(10, 90)).intersect(Range(0, 100)))
+        assertEquals(listOf(Range(0, 100)), rangeSortedList(Range(0, 100)).intersectRanges(Range(0, 100)))
+        assertEquals(listOf(Range(10, 90)), rangeSortedList(Range(0, 100)).intersectRanges(Range(10, 90)))
+        assertEquals(listOf(Range(10, 90)), rangeSortedList(Range(10, 90)).intersectRanges(Range(0, 100)))
         assertEquals(
             listOf(Range(20, 40), Range(50, 70)),
-            rangeSortedList(Range(0, 40), Range(50, 100)).intersect(Range(20, 70))
+            rangeSortedList(Range(0, 40), Range(50, 100)).intersectRanges(Range(20, 70))
         )
 
         val rl2 = rangeSortedList(
@@ -193,31 +193,31 @@ class RangesSortedListTest {
                 Range(50, 70),
                 Range(60, 70),
             ),
-            rl2.intersect(Range(20, 70))
+            rl2.intersectRanges(Range(20, 70))
         )
     }
 
     @Test
     fun andWithEmpty() {
         val rl = rangeSortedList(Range(0, 10), Range(20, 30))
-        assertEquals(emptyList<Range>(), (rl and rangeSortedList()).toList())
+        assertEquals(emptyList<Range>(), (rl intersectRanges rangeSortedList()).toList())
     }
 
     @Test
     fun andWithSelf() {
         val rl = rangeSortedList(Range(0, 10), Range(20, 30))
-        assertEquals(rl.toList(), (rl and rl).toList())
+        assertEquals(rl.toList(), (rl intersectRanges rl).toList())
     }
 
     @Test
     fun and() {
         val rl1 = rangeSortedList(Range(0, 10))
         val rl2 = rangeSortedList(Range(5, 30))
-        assertEquals(rangeSortedList(Range(5, 10)).toList(), (rl1 and rl2).toList())
+        assertEquals(rangeSortedList(Range(5, 10)).toList(), (rl1 intersectRanges rl2).toList())
 
         assertEquals(
             rangeSortedList(Range(6, 8)).toList(), (
-                    rangeSortedList(Range(0, 2), Range(6, 8)) and rl2).toList()
+                    rangeSortedList(Range(0, 2), Range(6, 8)) intersectRanges rl2).toList()
         )
     }
 
@@ -259,7 +259,7 @@ class RangesSortedListTest {
                 Range(60, 70),
                 Range(70, 80)
             ),
-            rl1.and(rl2)
+            rl1.intersectRanges(rl2)
         )
 
         assertEquals(
@@ -282,7 +282,7 @@ class RangesSortedListTest {
                 Range(60, 70),
                 Range(70, 80)
             ),
-            rl1.and(rl2).toRangeSortedList().toList()
+            rl1.intersectRanges(rl2).toRangeSortedList().toList()
         )
     }
 
@@ -292,7 +292,7 @@ class RangesSortedListTest {
         b: RangesSortedList,
         flankBothSides: Int = 0
     ) {
-        assertEquals(expected, (a.overlap(b, flankBothSides)).toList())
-        assertEquals(expected.size, a.overlapNumber(b, flankBothSides))
+        assertEquals(expected, (a.overlapRanges(b, flankBothSides)).toList())
+        assertEquals(expected.size, a.overlapRangesNumber(b, flankBothSides))
     }
 }

@@ -48,7 +48,7 @@ class LocationsMergingList private constructor(
 
     fun intersect(location: Location): List<Range> {
         val rangeList = rangeLists[location.chromosome, location.strand]
-        return rangeList.intersect(location.toRange())
+        return rangeList.intersectRanges(location.toRange())
     }
 
     fun intersectBothStrands(location: Location): List<Range> =

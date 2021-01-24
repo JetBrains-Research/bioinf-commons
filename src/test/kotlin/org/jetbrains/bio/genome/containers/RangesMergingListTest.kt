@@ -10,31 +10,31 @@ import kotlin.test.assertTrue
 class RangesMergingListTest {
     @Test
     fun empty() {
-        assertFalse(Range(0, 12) in rangeMergingList())
+        assertFalse(rangeMergingList().includesRange(Range(0, 12)))
         assertEquals(0, rangeMergingList().intersectionLength(Range(0, 12)))
     }
 
     @Test
     fun single() {
-        assertTrue(Range(0, 12) in rangeMergingList(Range(0, 12)))
-        assertFalse(Range(0, 20) in rangeMergingList(Range(0, 12)))
+        assertTrue(rangeMergingList(Range(0, 12)).includesRange(Range(0, 12)))
+        assertFalse(rangeMergingList(Range(0, 12)).includesRange(Range(0, 20)))
         assertEquals(12, rangeMergingList(Range(0, 12)).intersectionLength(Range(0, 12)))
     }
 
     @Test
     fun singleBigSegment() {
-        assertTrue(Range(10, 20) in rangeMergingList(Range(0, 100)))
+        assertTrue(rangeMergingList(Range(0, 100)).includesRange(Range(10, 20)))
     }
 
     @Test
     fun singleExceedingRange() {
-        assertFalse(Range(-100, 100) in rangeMergingList(Range(0, 10)))
+        assertFalse(rangeMergingList(Range(0, 10)).includesRange(Range(-100, 100)))
     }
 
     @Test
     fun intersectionLength() {
         val rl = rangeMergingList(Range(0, 10))
-        assertFalse(Range(5, 15) in rl)
+        assertFalse(rl.includesRange(Range(5, 15)))
         assertEquals(5, rl.intersectionLength(Range(5, 15)))
         assertEquals(10, rl.intersectionLength(Range(0, 15)))
         assertEquals(5, rl.intersectionLength(Range(5, 10)))
@@ -46,8 +46,8 @@ class RangesMergingListTest {
 
     @Test
     fun doubleIntersectionLength() {
-        assertTrue(Range(5, 15) in rangeMergingList(Range(0, 10), Range(10, 20)))
-        assertFalse(Range(5, 15) in rangeMergingList(Range(0, 10), Range(11, 20)))
+        assertTrue(rangeMergingList(Range(0, 10), Range(10, 20)).includesRange(Range(5, 15)))
+        assertFalse(rangeMergingList(Range(0, 10), Range(11, 20)).includesRange(Range(5, 15)))
         assertEquals(10, rangeMergingList(Range(0, 10), Range(10, 20)).intersectionLength(Range(5, 15)))
         assertEquals(5, rangeMergingList(Range(0, 10), Range(20, 30)).intersectionLength(Range(15, 25)))
         assertEquals(0, rangeMergingList(Range(0, 10), Range(10, 20)).intersectionLength(Range(-10, -5)))
@@ -63,7 +63,7 @@ class RangesMergingListTest {
 
     @Test
     fun nonSorted() {
-        assertTrue(Range(11, 12) in rangeMergingList(Range(10, 20), Range(0, 5)))
+        assertTrue(rangeMergingList(Range(10, 20), Range(0, 5)).includesRange(Range(11, 12)))
     }
 
     @Test
@@ -107,51 +107,51 @@ class RangesMergingListTest {
     @Test
     fun andWithEmpty() {
         val rl = rangeMergingList(Range(0, 10), Range(20, 30))
-        assertEquals(emptyList<Range>(), (rl and rangeMergingList()).toList())
+        assertEquals(emptyList<Range>(), (rl intersectRanges rangeMergingList()).toList())
     }
 
     @Test
     fun andWithSelf() {
         val rl = rangeMergingList(Range(0, 10), Range(20, 30))
-        assertEquals(rl.toList(), (rl and rl).toList())
+        assertEquals(rl.toList(), (rl intersectRanges rl).toList())
     }
 
     @Test
     fun and() {
         val rl1 = rangeMergingList(Range(0, 10))
         val rl2 = rangeMergingList(Range(5, 30))
-        assertEquals(rangeMergingList(Range(5, 10)).toList(), (rl1 and rl2).toList())
+        assertEquals(rangeMergingList(Range(5, 10)).toList(), (rl1 intersectRanges rl2).toList())
         assertEquals(
             rangeMergingList(Range(5, 10), Range(25, 30)).toList(),
-            ((rl1 or rangeMergingList(Range(25, 30))) and rl2).toList()
+            ((rl1 or rangeMergingList(Range(25, 30))) intersectRanges rl2).toList()
         )
         assertEquals(
             rangeMergingList(Range(5, 10), Range(25, 30)).toList(),
-            (rl2 and (rl1 or rangeMergingList(Range(25, 30)))).toList()
+            (rl2 intersectRanges (rl1 or rangeMergingList(Range(25, 30)))).toList()
         )
 
         assertEquals(
             rangeMergingList(Range(6, 8)).toList(), (
-                    rangeMergingList(Range(0, 2), Range(6, 8)) and rl2).toList()
+                    rangeMergingList(Range(0, 2), Range(6, 8)) intersectRanges rl2).toList()
         )
     }
 
     @Test
     fun overlapRegion() {
-        assertFalse(rangeMergingList().overlap(7, 12));
+        assertFalse(rangeMergingList().overlapRanges(7, 12));
 
         val rl1 = rangeMergingList(Range(10, 30))
-        assertTrue(rl1.overlap(7, 12));
-        assertTrue(rl1.overlap(20, 40));
+        assertTrue(rl1.overlapRanges(7, 12));
+        assertTrue(rl1.overlapRanges(20, 40));
 
-        assertFalse(rl1.overlap(2, 7));
-        assertFalse(rl1.overlap(7, 10));
-        assertFalse(rl1.overlap(30, 40));
-        assertFalse(rl1.overlap(40, 50));
+        assertFalse(rl1.overlapRanges(2, 7));
+        assertFalse(rl1.overlapRanges(7, 10));
+        assertFalse(rl1.overlapRanges(30, 40));
+        assertFalse(rl1.overlapRanges(40, 50));
 
         val rl2 = rangeMergingList(Range(0, 30))
-        assertTrue(rl2.overlap(0, 4));
-        assertTrue(rl2.overlap(29, 30));
+        assertTrue(rl2.overlapRanges(0, 4));
+        assertTrue(rl2.overlapRanges(29, 30));
     }
 
     @Test
@@ -183,8 +183,8 @@ class RangesMergingListTest {
         b: RangesMergingList,
         flankBothSides: Int = 0
     ) {
-        assertEquals(expected, (a.overlap(b, flankBothSides)).toList())
-        assertEquals(expected.size, a.overlapNumber(b, flankBothSides))
+        assertEquals(expected, (a.overlapRanges(b, flankBothSides)).toList())
+        assertEquals(expected.size, a.overlapRangesNumber(b, flankBothSides))
     }
 
 
@@ -206,12 +206,12 @@ class RangesMergingListTest {
 
     @Test
     fun intersect() {
-        assertEquals(listOf(Range(0, 100)), rangeMergingList(Range(0, 100)).intersect(Range(0, 100)))
-        assertEquals(listOf(Range(10, 90)), rangeMergingList(Range(0, 100)).intersect(Range(10, 90)))
-        assertEquals(listOf(Range(10, 90)), rangeMergingList(Range(10, 90)).intersect(Range(0, 100)))
+        assertEquals(listOf(Range(0, 100)), rangeMergingList(Range(0, 100)).intersectRanges(Range(0, 100)))
+        assertEquals(listOf(Range(10, 90)), rangeMergingList(Range(0, 100)).intersectRanges(Range(10, 90)))
+        assertEquals(listOf(Range(10, 90)), rangeMergingList(Range(10, 90)).intersectRanges(Range(0, 100)))
         assertEquals(
             listOf(Range(20, 40), Range(50, 70)),
-            rangeMergingList(Range(0, 40), Range(50, 100)).intersect(Range(20, 70))
+            rangeMergingList(Range(0, 40), Range(50, 100)).intersectRanges(Range(20, 70))
         )
     }
 
