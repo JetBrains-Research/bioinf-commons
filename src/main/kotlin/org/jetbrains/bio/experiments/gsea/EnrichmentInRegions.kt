@@ -3,9 +3,10 @@ package org.jetbrains.bio.experiments.gsea
 import joptsimple.OptionParser
 import org.jetbrains.bio.BioinfToolsCLA
 import org.jetbrains.bio.genome.Genome
-import org.jetbrains.bio.genome.containers.LocationsMergingList
-import org.jetbrains.bio.genome.containers.intersection.IntersectionMetric
-import org.jetbrains.bio.genome.containers.intersection.IntersectionMetric.Companion.acceptMetricArg
+import org.jetbrains.bio.genome.containers.LocationsList
+import org.jetbrains.bio.genome.containers.RangesList
+import org.jetbrains.bio.genome.containers.intersection.OverlapMetric
+import org.jetbrains.bio.genome.containers.intersection.RegionsMetric
 import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
 import java.nio.file.FileSystems
@@ -24,12 +25,11 @@ object EnrichmentInRegions {
         simulationsNumber: Int,
         chunkSize: Int,
         outputBasename: Path,
-        metric: IntersectionMetric,
+        metric: RegionsMetric,
         detailed: Boolean,
         maxRetries: Int,
         hypAlt: PermutationAltHypothesis,
         aSetIsLoi: Boolean,
-        aSetFlankedBothSides: Int,
         mergeOverlapped: Boolean
     ) {
         val reportPath = "${outputBasename}${metric.column}.tsv".toPath()
@@ -43,8 +43,8 @@ object EnrichmentInRegions {
         ).calcStatistics(
             collectFilesFrom(regionsFolderPath, genome, mergeOverlapped),
             detailedReportFolder,
-            metric = metric, hypAlt = hypAlt, aSetFlankedBothSides = aSetFlankedBothSides, aSetIsLoi = aSetIsLoi,
-            mergeOverlapped = mergeOverlapped
+            metric = metric,
+            hypAlt = hypAlt, aSetIsLoi = aSetIsLoi, mergeOverlapped = mergeOverlapped
         ).save(reportPath)
 
         LOG.info("Report saved to: $reportPath")
@@ -57,8 +57,7 @@ object EnrichmentInRegions {
         basePath: Path,
         genome: Genome,
         mergeOverlapped: Boolean
-    ): List<Pair<String, LocationsMergingList>> {
-
+    ): List<Pair<String, LocationsList<out RangesList>>> {
         return if (basePath.isDirectory) {
             Files.list(basePath).map { path ->
                 val name = path.fileName.toString()
@@ -153,8 +152,6 @@ object EnrichmentInRegions {
                 .ofType(Int::class.java)
                 .defaultsTo(1000)
 
-            acceptMetricArg()
-
             accepts(
                 "a-regions",
                 "Metric is applied to (a,b) where by default 'a' is loi/simulated loi set, 'b' is region to check set. This" +
@@ -215,10 +212,6 @@ object EnrichmentInRegions {
                 val outputBaseName = FileSystems.getDefault().getPath(baseName).normalize().toAbsolutePath()
                 LOG.info("OUTPUT_BASENAME: $outputBaseName")
 
-                val metricName = options.valueOf("metric") as String
-                LOG.info("METRIC: $metricName")
-                val metric = IntersectionMetric.parse(metricName)
-
                 val hypAlt = options.valueOf("h1") as PermutationAltHypothesis
                 LOG.info("Alt Hypothesis: $hypAlt")
 
@@ -247,13 +240,17 @@ object EnrichmentInRegions {
                 val mergeOverlapped = options.has("merge")
                 LOG.info("MERGE OVERLAPPED: $mergeOverlapped")
 
+                val metric = OverlapMetric(aSetFlankedBothSides);
+                LOG.info("METRIC: ${metric.column}")
+
                 doCalculations(
                     srcLoci, backGroundRegions, regionsFolderPath, genome,
                     simulationsNumber,
                     if (chunkSize == 0) simulationsNumber else chunkSize,
-                    outputBaseName, metric, detailedReport, retries, hypAlt,
+                    outputBaseName,
+                    metric,
+                    detailedReport, retries, hypAlt,
                     aSetIsLoi = aSetIsLoi,
-                    aSetFlankedBothSides = aSetFlankedBothSides,
                     mergeOverlapped = mergeOverlapped
                 )
             }

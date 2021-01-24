@@ -137,12 +137,31 @@ class RangesMergingListTest {
     }
 
     @Test
+    fun overlapRegion() {
+        assertFalse(rangeMergingList().overlap(7, 12));
+
+        val rl1 = rangeMergingList(Range(10, 30))
+        assertTrue(rl1.overlap(7, 12));
+        assertTrue(rl1.overlap(20, 40));
+
+        assertFalse(rl1.overlap(2, 7));
+        assertFalse(rl1.overlap(7, 10));
+        assertFalse(rl1.overlap(30, 40));
+        assertFalse(rl1.overlap(40, 50));
+
+        val rl2 = rangeMergingList(Range(0, 30))
+        assertTrue(rl2.overlap(0, 4));
+        assertTrue(rl2.overlap(29, 30));
+    }
+
+    @Test
     fun overlap() {
         val rl1 = rangeMergingList(Range(10, 30))
 
-        assertEquals(rl1.toList(), (rl1.overlap(rangeMergingList(Range(7, 12)))).toList())
-        assertEquals(rl1.toList(), (rl1.overlap(rangeMergingList(Range(2, 7), Range(20, 40)))).toList())
-        assertEquals(listOf(), (rl1.overlap(rangeMergingList(Range(2, 7)))).toList())
+        checkOverlap(listOf(), rl1, rangeMergingList())
+        checkOverlap(rl1.toList(), rl1, rangeMergingList(Range(7, 12)))
+        checkOverlap(rl1.toList(), rl1, rangeMergingList(Range(2, 7), Range(20, 40)))
+        checkOverlap(listOf(), rl1, rangeMergingList(Range(2, 7)))
     }
 
 
@@ -150,12 +169,22 @@ class RangesMergingListTest {
     fun overlapFlnk() {
         val rl1 = rangeMergingList(Range(10, 30), Range(50, 100))
 
-        assertEquals(listOf(Range(10, 30)), (rl1.overlap(rangeMergingList(Range(7, 12)), 10)).toList())
-        assertEquals(listOf(Range(10, 30)), (rl1.overlap(rangeMergingList(Range(35, 40)), 10)).toList())
-        assertEquals(rl1.toList(), (rl1.overlap(rangeMergingList(Range(35, 40)), 11)).toList())
-        assertEquals(listOf(Range(10, 30)), (rl1.overlap(rangeMergingList(Range(2, 7), Range(20, 40)), 2)).toList())
-        assertEquals(listOf(), (rl1.overlap(rangeMergingList(Range(2, 7)), 3)).toList())
-        assertEquals(listOf(Range(10, 30)), (rl1.overlap(rangeMergingList(Range(2, 7)), 4)).toList())
+        checkOverlap(listOf(Range(10, 30)), rl1, rangeMergingList(Range(7, 12)), 10)
+        checkOverlap(listOf(Range(10, 30)), rl1, rangeMergingList(Range(35, 40)), 10)
+        checkOverlap(rl1.toList(), rl1, rangeMergingList(Range(35, 40)), 11)
+        checkOverlap(listOf(Range(10, 30)), rl1, rangeMergingList(Range(2, 7), Range(20, 40)), 2)
+        checkOverlap(listOf(), rl1, rangeMergingList(Range(2, 7)), 3)
+        checkOverlap(listOf(Range(10, 30)), rl1, rangeMergingList(Range(2, 7)), 4)
+    }
+
+    private fun checkOverlap(
+        expected: List<Range>,
+        a: RangesMergingList,
+        b: RangesMergingList,
+        flankBothSides: Int = 0
+    ) {
+        assertEquals(expected, (a.overlap(b, flankBothSides)).toList())
+        assertEquals(expected.size, a.overlapNumber(b, flankBothSides))
     }
 
 

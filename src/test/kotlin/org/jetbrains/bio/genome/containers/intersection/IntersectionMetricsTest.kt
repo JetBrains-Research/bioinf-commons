@@ -2,7 +2,10 @@ package org.jetbrains.bio.genome.containers.intersection
 
 import org.apache.commons.math3.util.Precision
 import org.jetbrains.bio.genome.Genome
+import org.jetbrains.bio.genome.containers.LocationsList
 import org.jetbrains.bio.genome.containers.LocationsMergingList
+import org.jetbrains.bio.genome.containers.LocationsSortedList
+import org.jetbrains.bio.genome.containers.RangesList
 import org.jetbrains.bio.genome.format.BedFormat
 import org.jetbrains.bio.genome.toQuery
 import org.junit.Test
@@ -10,7 +13,7 @@ import java.io.StringReader
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class IntersectionMetricTest {
+class IntersectionMetricsTest {
     @Test
     fun overlapTest_NoIntersection() {
         doCheckOverlapAB(
@@ -63,7 +66,7 @@ class IntersectionMetricTest {
     }
 
     @Test
-    fun overlapTest_1bpMultiple() {
+    fun overlapTest_1bpMultiple_Merged() {
         doCheckOverlapAB(
             """
                 |chr1,5,10
@@ -74,12 +77,28 @@ class IntersectionMetricTest {
                 |chr1,9,12
                 |chr1,20,21
             """.trimMargin(),
-            2, 1.0
+            2, 1.0, "merged"
         )
     }
 
     @Test
-    fun overlapTest_Other() {
+    fun overlapTest_1bpMultiple_Sorted() {
+        doCheckOverlapAB(
+            """
+                |chr1,5,10
+                |chr1,6,11
+                |chr1,20,21
+            """.trimMargin(),
+            """
+                |chr1,9,12
+                |chr1,20,21
+            """.trimMargin(),
+            3, 1.0, "sorted"
+        )
+    }
+
+    @Test
+    fun overlapTest_Other_Merged() {
         doCheckOverlapAB(
             """
                 |chr1,5,15
@@ -95,7 +114,28 @@ class IntersectionMetricTest {
                 |chr1,20,26
                 |chr1,30,36
             """.trimMargin(),
-            3, 0.75
+            3, 0.75, "merged"
+        )
+    }
+
+    @Test
+    fun overlapTest_Other_Sorted() {
+        doCheckOverlapAB(
+            """
+                |chr1,5,15
+                |chr1,6,11
+                |chr1,18,21
+                |chr1,22,23
+                |chr1,23,24
+                |chr1,26,28
+            """.trimMargin(),
+            """
+                |chr1,6,7
+                |chr1,9,12
+                |chr1,20,26
+                |chr1,30,36
+            """.trimMargin(),
+            5, 0.8333, "sorted"
         )
     }
 
@@ -189,22 +229,43 @@ class IntersectionMetricTest {
         )
     }
 
-    private fun doCheckOverlapAB(aContent: String, bContent: String, overlapNum: Long, overlapFract: Double) {
+    private fun doCheckOverlapAB(aContent: String, bContent: String, overlapNum: Long, overlapFract: Double, mode: String="both") {
         val gq = Genome["to1"].toQuery()
         val bedFormat = BedFormat.from("bed3", ',')
-        val a = LocationsMergingList.load(gq, StringReader(aContent), "a.csv", bedFormat)
-        val b = LocationsMergingList.load(gq, StringReader(bContent), "b.csv", bedFormat)
-        assertEquals(overlapNum, IntersectionMetric.OVERLAP.calcMetric(a, b))
-        assertEquals(overlapFract, IntersectionDoubleMetric.OVERLAP_FRACTION.calcMetric(a, b))
+
+        require(mode in listOf("both", "sorted", "merged"))
+        if (mode == "both" || mode == "merged") {
+            val a = LocationsMergingList.load(gq, StringReader(aContent), "a.csv", bedFormat)
+            val b = LocationsMergingList.load(gq, StringReader(bContent), "b.csv", bedFormat)
+            assertEquals(overlapNum, IntersectionMetrics.OVERLAP.calcMetric(a, b).toLong())
+            assertEquals(overlapFract, IntersectionMetrics.OVERLAP_FRACTION.calcMetric(a, b))
+        }
+
+        if (mode == "both" || mode == "sorted") {
+            val a = LocationsSortedList.load(gq, StringReader(aContent), "a.csv", bedFormat)
+            val b = LocationsSortedList.load(gq, StringReader(bContent), "b.csv", bedFormat)
+            assertEquals(overlapNum, IntersectionMetrics.OVERLAP.calcMetric(a, b).toLong())
+            assertEquals(overlapFract, IntersectionMetrics.OVERLAP_FRACTION.calcMetric(a, b))
+        }
     }
 
     private fun doCheckJaccardAB(aContent: String, bContent: String, jaccardIndex: Double) {
         val gq = Genome["to1"].toQuery()
         val bedFormat = BedFormat.from("bed3", ',')
-        val a = LocationsMergingList.load(gq, StringReader(aContent), "a.csv", bedFormat)
-        val b = LocationsMergingList.load(gq, StringReader(bContent), "b.csv", bedFormat)
-        assertEquals(jaccardIndex, IntersectionDoubleMetric.JACCARD.calcMetric(a, b))
-        assertEquals(jaccardIndex, IntersectionDoubleMetric.JACCARD.calcMetric(b, a))
+
+        var a: LocationsList<out RangesList>
+        var b: LocationsList<out RangesList>
+
+        a = LocationsMergingList.load(gq, StringReader(aContent), "a.csv", bedFormat)
+        b = LocationsMergingList.load(gq, StringReader(bContent), "b.csv", bedFormat)
+        assertEquals(jaccardIndex, IntersectionMetrics.JACCARD.calcMetric(a, b))
+        assertEquals(jaccardIndex, IntersectionMetrics.JACCARD.calcMetric(b, a))
+
+        // XXX: not supported yet:
+        // a = LocationsSortedList.load(gq, StringReader(aContent), "a.csv", bedFormat)
+        // b = LocationsSortedList.load(gq, StringReader(bContent), "b.csv", bedFormat)
+        // assertEquals(jaccardIndex, IntersectionMetrics.JACCARD.calcMetric(a, b))
+        // assertEquals(jaccardIndex, IntersectionMetrics.JACCARD.calcMetric(b, a))
     }
 
     fun assertEquals(expected: Double, actual:Double, eps: Double = 0.0001) {

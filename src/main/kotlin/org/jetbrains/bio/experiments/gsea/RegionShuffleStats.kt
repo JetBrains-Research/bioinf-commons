@@ -6,8 +6,11 @@ import org.apache.commons.math3.stat.StatUtils
 import org.apache.commons.math3.util.Precision
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.genome.*
+import org.jetbrains.bio.genome.containers.LocationsList
 import org.jetbrains.bio.genome.containers.LocationsMergingList
-import org.jetbrains.bio.genome.containers.intersection.IntersectionMetric
+import org.jetbrains.bio.genome.containers.LocationsSortedList
+import org.jetbrains.bio.genome.containers.RangesList
+import org.jetbrains.bio.genome.containers.intersection.RegionsMetric
 import org.jetbrains.bio.genome.format.BedFormat
 import org.jetbrains.bio.genome.sampling.shuffleChromosomeRanges
 import org.jetbrains.bio.statistics.hypothesis.Multiple
@@ -75,12 +78,11 @@ class RegionShuffleStats(
      * @param metric Metric will be applied to  `(sampledLoci, lociToTest)`
      */
     fun calcStatistics(
-        regionLabelAndLociToTest: List<Pair<String, LocationsMergingList>>,
+        regionLabelAndLociToTest: List<Pair<String, LocationsList<out RangesList>>>,
         outputFolderPath: Path? = null,
-        metric: IntersectionMetric = IntersectionMetric.OVERLAP,
+        metric: RegionsMetric,
         hypAlt: PermutationAltHypothesis = PermutationAltHypothesis.GREATER,
         aSetIsLoi: Boolean = true,
-        aSetFlankedBothSides: Int = 0,
         mergeOverlapped: Boolean = true
     ): DataFrame {
         outputFolderPath?.createDirectories()
@@ -117,10 +119,9 @@ class RegionShuffleStats(
             for ((regionLabel, lociToTest) in regionLabelAndLociToTest) {
                 progress.report()
 
-                val metricValueForSrc = calcMetric(sourceLoci, lociToTest, aSetIsLoi, metric, aSetFlankedBothSides)
-
+                val metricValueForSrc = calcMetric(sourceLoci, lociToTest, aSetIsLoi, metric)
                 val metricValueForSampled = sampledRegions.stream().parallel().mapToLong { sampledLoci ->
-                    calcMetric(sampledLoci, lociToTest, aSetIsLoi, metric, aSetFlankedBothSides)
+                    calcMetric(sampledLoci, lociToTest, aSetIsLoi, metric)
                 }.toArray()
 
                 if (outputFolderPath != null) {
@@ -191,43 +192,32 @@ class RegionShuffleStats(
     }
 
     private fun calcMetric(
-        sampledLoci: LocationsMergingList,
-        lociToTest: LocationsMergingList,
+        sampledLoci: LocationsList<out RangesList>,
+        lociToTest: LocationsList<out RangesList>,
         aSetIsLoi: Boolean,
-        metric: IntersectionMetric,
-        aSetFlankedBothSides: Int
+        metric: RegionsMetric
     ): Long {
         val a = if (aSetIsLoi) sampledLoci else lociToTest
         val b = if (aSetIsLoi) lociToTest else sampledLoci
 
-        return if (metric == IntersectionMetric.OVERLAP) {
-            a.apply(b) { l1, l2 ->
-                l1.overlap(l2, aSetFlankedBothSides)
-            }.size.toLong()
-        } else {
-            require(aSetFlankedBothSides == 0) { "Flanking $aSetFlankedBothSides bp not supported for $metric" }
-            metric.calcMetric(a, b)
-        }
+        // XXX: at the moment only 'overlap' is used here, i.e. integer metric
+        return metric.calcMetric(a, b).toLong()
     }
 
     companion object {
         private val LOG = LoggerFactory.getLogger(RegionShuffleStats::class.java)
 
-        fun readLocations(path: Path, genome: Genome, mergeOverlapped: Boolean) = genome.toQuery().let { gq ->
+        fun readLocations(path: Path, genome: Genome, mergeOverlapped: Boolean): LocationsList<out RangesList> = genome.toQuery().let { gq ->
             val locations = readLocations(path, BedFormat.auto(path), gq)
-            val mergedLocations = LocationsMergingList.create(gq, locations)
-            if (!mergeOverlapped) {
-                require(locations.size == mergedLocations.size) {
-                    "Impl uses merged overlapped regions here. The operation wasn't allowed by user, and " +
-                            "merged results will be different, because read ${locations.size} locations" +
-                            " number != ${ mergedLocations.size} merged locations number."
-                }
-            } else {
+            if (mergeOverlapped) {
+                val mergedLocations = LocationsMergingList.create(gq, locations)
                 if (locations.size != mergedLocations.size) {
                     LOG.info("$path: ${locations.size} regions merged to ${mergedLocations.size}")
                 }
+                mergedLocations
+            } else {
+                LocationsSortedList.create(gq, locations)
             }
-            mergedLocations
         }
 
         fun readLocations(path: Path, bedFormat: BedFormat, gq: GenomeQuery): List<Location> {

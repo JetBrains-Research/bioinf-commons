@@ -1,14 +1,12 @@
 package org.jetbrains.bio.genome.containers
 
 import com.google.common.collect.Iterables
-import com.google.common.collect.UnmodifiableIterator
 import gnu.trove.list.TIntList
 import gnu.trove.list.array.TIntArrayList
 import org.apache.commons.csv.CSVFormat
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.bio.genome.Range
 import org.jetbrains.bio.util.bufferedReader
-import org.jetbrains.bio.util.bufferedWriter
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
@@ -16,19 +14,15 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * A container for possibly overlapping ranges.
+ * A container for possibly overlapping ranges which merges overlapping ranges.
  *
  * @see [org.jetbrains.bio.genome.Range] for details.
  * @author Sergei Lebedev
  */
 class RangesMergingList internal constructor(
-    private val startOffsets: TIntList,
-    private val endOffsets: TIntList
-) : Iterable<Range> {
-
-    init {
-        require(startOffsets.size() == endOffsets.size())
-    }
+    startOffsets: TIntList,
+    endOffsets: TIntList
+) : BaseRangesList(startOffsets, endOffsets) {
 
     /**
      * Performs element-wise union on ranges in the two lists.
@@ -64,55 +58,20 @@ class RangesMergingList internal constructor(
         return acc.toRangeMergingList()
     }
 
-    /**
-     * Leaves only ranges intersecting some range form other
-     *
-     * THIS            |----------|
-     * ****************************************
-     * OTHER 1      |----|    |----|        : +
-     * OTHER 2     |-----------------|      : +
-     * OTHER 3          |--|                : +
-     * OTHER 4  |--|                        : -
-     * OTHER 5                       |--|   : -
-     * OTHER 6  |-|     |----|              : +
-     *
-     * @param other Other list. Methods finds ranges from target list with intersects any range from [other] list
-     * @param flankBothSides Flank each range from target (this) list with [flankBothSides] positions at start and end
-     */
-    fun overlap(other: RangesMergingList, flankBothSides: Int = 0): RangesMergingList {
-        require(flankBothSides >= 0) { "Expected to be non-negative, but was $flankBothSides" }
-
-        val acc = ArrayList<Range>()
-
-        (0 until size).forEach { idx ->
-            val startOffset = startOffsets[idx]
-            val endOffset = endOffsets[idx]
-            val startOffsetFlnk = max(0, startOffset - flankBothSides)
-            val endOffsetFlnk = endOffset + flankBothSides
-
-            var i = max(0, other.lookup(startOffsetFlnk))
-            // check if this 'idx' range intersects at least one other region:
-            while (i < other.size && other.startOffsets[i] < endOffsetFlnk) {
-                if (other.endOffsets[i] > startOffsetFlnk) {
-                    acc.add(Range(startOffset, endOffset))
-                    break
-                } // else doesn't intersect
-                i++
-            }
+    override fun overlap(startOffset: Int, endOffset: Int): Boolean {
+        val rangesNumber = size
+        var i = max(0, lookup(startOffset))
+        // check if this 'idx' range intersects at least one other region:
+        while (i < rangesNumber && startOffsets[i] < endOffset) {
+            if (endOffsets[i] > startOffset) {
+                return true
+            } // else doesn't intersect
+            i++
         }
-
-        return acc.toRangeMergingList()
+        return false
     }
 
-    private fun overlap(idx: Int, other: RangesMergingList, flankBothSides: Int): Range? {
-
-        return null
-    }
-
-    operator fun contains(range: Range) = contains(range.startOffset, range.endOffset)
-    operator fun contains(offset: Int) = contains(offset, offset + 1)
-
-    fun contains(startOffset: Int, endOffset: Int): Boolean {
+    override fun contains(startOffset: Int, endOffset: Int): Boolean {
         val i = lookup(startOffset)
         return i >= 0 && startOffset >= startOffsets[i] && endOffset <= endOffsets[i]
     }
@@ -156,32 +115,6 @@ class RangesMergingList internal constructor(
 
     @TestOnly
     fun internalLookup(startOffset: Int) = lookup(startOffset)
-
-    /** The number of ranges in this list. */
-    val size: Int get() = startOffsets.size()
-
-
-    override fun toString() = "[ranges=${joinToString(", ")}]"
-    fun dump() = "${toString()}\nstarts=$startOffsets\nends=$endOffsets"
-
-    @Throws(IOException::class)
-    fun save(path: Path) = CSVFormat.TDF.print(path.bufferedWriter()).use {
-        (0 until size).forEach { i ->
-            it.printRecord(startOffsets[i], endOffsets[i])
-        }
-    }
-
-    override fun iterator() = object : UnmodifiableIterator<Range>() {
-        private var current = 0
-
-        override fun hasNext() = current < size
-
-        override fun next(): Range {
-            val range = Range(startOffsets[current], endOffsets[current])
-            current++
-            return range
-        }
-    }
 
     override fun equals(other: Any?) = when {
         this === other -> true

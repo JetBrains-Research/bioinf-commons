@@ -1,65 +1,49 @@
 package org.jetbrains.bio.genome.containers
 
-import com.google.common.collect.Lists
-import kotlinx.support.jdk7.use
 import org.jetbrains.bio.big.BedEntry
-import org.jetbrains.bio.genome.*
+import org.jetbrains.bio.genome.Chromosome
+import org.jetbrains.bio.genome.GenomeQuery
+import org.jetbrains.bio.genome.Location
+import org.jetbrains.bio.genome.Range
+import org.jetbrains.bio.genome.containers.LocationsList.Companion.EXTBED_2_LOC_FUN
 import org.jetbrains.bio.genome.format.BedFormat
-import org.jetbrains.bio.genome.format.toBedEntry
-import org.jetbrains.bio.genome.format.unpackRegularFields
 import org.jetbrains.bio.util.bufferedReader
 import java.io.IOException
 import java.io.Reader
 import java.nio.file.Path
-import java.util.*
 
 /**
  * A location-based friend of [RangesMergingList].
- *
- * @author Oleg Shpynov
- * @author Sergei Lebedev
  */
 class LocationsMergingList private constructor(
-        private val rangeLists: GenomeStrandMap<RangesMergingList>)
-    : GenomeStrandMapLike<List<Location>> {
-
-    override val genomeQuery: GenomeQuery get() = rangeLists.genomeQuery
+        override val rangeLists: GenomeStrandMap<RangesMergingList>)
+    : GenomeStrandMapLike<List<Location>>, LocationsList<RangesMergingList> {
 
     /**
      * Performs element-wise union on locations in the two lists.
      */
     infix fun or(other: LocationsMergingList): LocationsMergingList =
-        apply(other, RangesMergingList::or)
+        apply(other) { ra, rb ->
+            (ra as RangesMergingList).or(rb as RangesMergingList)
+        }
 
     /**
      * Performs element-wise intersection on locations in the two lists.
      */
     infix fun and(other: LocationsMergingList): LocationsMergingList =
-        apply(other, RangesMergingList::and)
-
-    fun apply(
-        other: LocationsMergingList,
-        op: (RangesMergingList, RangesMergingList) -> RangesMergingList
-    ) = LocationsMergingList(rangeLists.apply(other.rangeLists, op))
-
-    override operator fun get(chromosome: Chromosome, strand: Strand): List<Location> {
-        val result = Lists.newArrayList<Location>()
-        for ((startOffset, endOffset) in rangeLists[chromosome, strand]) {
-            result.add(
-                Location(startOffset, endOffset, chromosome, strand)
-            )
+        apply(other) { ra, rb ->
+            (ra as RangesMergingList).and(rb as RangesMergingList)
         }
-        return result
-    }
 
-    /**
-     * XXX: this operation takes strand into account
-     */
-    operator fun contains(location: Location): Boolean =
-        location.toRange() in rangeLists[location.chromosome, location.strand]
+    override fun apply(
+        other: LocationsList<out RangesList>,
+        op: (RangesList, RangesList) -> Iterable<Range>
+    ) = LocationsMergingList(genomeStrandMap(genomeQuery) { chromosome, strand ->
+        val a = rangeLists[chromosome, strand]
+        val b = other.rangeLists[chromosome, strand]
+        op(a, b).toRangeMergingList()
+    })
 
-
-    fun contains(offset: Int, chr: Chromosome, strand: Strand): Boolean = offset in rangeLists[chr, strand]
 
     fun intersects(location: Location): Boolean = intersect(location).isNotEmpty()
 
@@ -78,26 +62,6 @@ class LocationsMergingList private constructor(
     fun intersectBothStrands(location: Location): List<Range> =
         intersect(location) + intersect(location.opposite())
 
-    @Throws(IOException::class)
-    fun save(path: Path, format: BedFormat = BedFormat()) {
-        format.print(path).use { printer ->
-            locationIterator().forEach { printer.print(it.toBedEntry()) }
-        }
-    }
-
-    fun asLocationSequence(): Sequence<Location> = asSequence().flatMap { it.asSequence() }
-
-    fun locationIterator(): Iterator<Location> = asLocationSequence().iterator()
-
-    fun toList(): List<Location> = asLocationSequence().toList()
-
-    /** The number of locations in this list. */
-    val size: Int
-        get() = genomeQuery.get().sumBy {
-            (rangeLists[it, Strand.PLUS].size +
-                    rangeLists[it, Strand.MINUS].size)
-        }
-
     override fun toString() = "[${joinToString(", ")}]"
 
     fun filter(predicate: (Location) -> Boolean): LocationsMergingList {
@@ -106,22 +70,10 @@ class LocationsMergingList private constructor(
         return builder.build()
     }
 
-    class Builder(private val genomeQuery: GenomeQuery) {
-        private val ranges: GenomeStrandMap<ArrayList<Range>> =
-            genomeStrandMap(genomeQuery) { _, _ -> arrayListOf<Range>() }
-
-        fun add(location: Location): Builder {
-            ranges[location.chromosome, location.strand].add(location.toRange())
-            return this
-        }
-
-        fun build(): LocationsMergingList {
-            val rangeLists = genomeStrandMap(genomeQuery) { chromosome, strand ->
-                ranges[chromosome, strand].toRangeMergingList()
-            }
-
-            return LocationsMergingList(rangeLists)
-        }
+    class Builder(gq: GenomeQuery): LocationsListBuilder<LocationsMergingList>(gq) {
+        override fun build() = LocationsMergingList(genomeStrandMap(genomeQuery) { chromosome, strand ->
+            ranges[chromosome, strand].toRangeMergingList()
+        })
     }
 
     companion object {
@@ -130,11 +82,10 @@ class LocationsMergingList private constructor(
         fun create(genomeQuery: GenomeQuery, locations: Iterable<Location>) =
             create(genomeQuery, locations.iterator())
 
-        fun create(genomeQuery: GenomeQuery, locations: Iterator<Location>): LocationsMergingList {
-            val builder = Builder(genomeQuery)
-            locations.forEach { builder.add(it) }
-            return builder.build()
-        }
+        fun create(genomeQuery: GenomeQuery, locations: Iterator<Location>) =
+            Builder(genomeQuery).also { builder ->
+                locations.forEach { builder.add(it) }
+            }.build()
 
         @Throws(IOException::class)
         fun load(
@@ -146,11 +97,6 @@ class LocationsMergingList private constructor(
             gq, path.bufferedReader(), "${path.toAbsolutePath()}", format, entry2LocationFun
         )
 
-        private val EXTBED_2_LOC_FUN: (Chromosome, BedEntry, BedFormat) -> Location = { chr, e, fmt ->
-            val ex = e.unpackRegularFields(fmt)
-            Location(ex.start, ex.end, chr, ex.strand.toStrand())
-        }
-
         @Throws(IOException::class)
         fun load(
             gq: GenomeQuery,
@@ -158,18 +104,7 @@ class LocationsMergingList private constructor(
             src: String,
             format: BedFormat,
             entry2LocationFun: (Chromosome, BedEntry, BedFormat) -> Location = EXTBED_2_LOC_FUN
-        ): LocationsMergingList {
-            val builder = builder(gq)
-            format.parse(reader, src) { parser ->
-                parser.forEach { entry ->
-                    val chromosome = gq[entry.chrom]
-                    if (chromosome != null) {
-                        builder.add(entry2LocationFun(chromosome, entry, format))
-                    }
-                }
-            }
-            return builder.build()
-        }
+        ) = LocationsList.load(builder(gq), reader, src, format, entry2LocationFun)
     }
 }
 
