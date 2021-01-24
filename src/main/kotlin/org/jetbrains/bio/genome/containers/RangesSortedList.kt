@@ -32,8 +32,8 @@ class RangesSortedList internal constructor(
         val rangesNumber = size
         for (idx in 0 until rangesNumber) {
             if (startOffsets[idx] >= endOffset) {
-                // cannot overlap
-                continue
+                // cannot contain here and further, start offsets are sorted
+                return false
             }
 
             if (endOffsets[idx] > startOffset) {
@@ -48,8 +48,8 @@ class RangesSortedList internal constructor(
         val rangesNumber = size
         for (idx in 0 until rangesNumber) {
             if (startOffset < startOffsets[idx]) {
-                // cannot contain
-                continue
+                // cannot contain here and further, start offsets are sorted
+                return false
             }
 
             if (endOffset <= endOffsets[idx]) {
