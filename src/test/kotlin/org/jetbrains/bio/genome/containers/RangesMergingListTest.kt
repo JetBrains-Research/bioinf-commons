@@ -105,35 +105,43 @@ class RangesMergingListTest {
     }
 
     @Test
-    fun andWithEmpty() {
+    fun intersectRangesWithEmpty() {
         val rl = rangeMergingList(Range(0, 10), Range(20, 30))
-        assertEquals(emptyList<Range>(), (rl intersectRanges rangeMergingList()).toList())
+        doCheckIntersectRanges(emptyList<Range>(), rl, rangeMergingList())
     }
 
     @Test
-    fun andWithSelf() {
+    fun intersectRangesWithSelf() {
         val rl = rangeMergingList(Range(0, 10), Range(20, 30))
-        assertEquals(rl.toList(), (rl intersectRanges rl).toList())
+        doCheckIntersectRanges(rl.toList(), rl, rl)
     }
 
     @Test
-    fun and() {
+    fun intersectRanges() {
         val rl1 = rangeMergingList(Range(0, 10))
         val rl2 = rangeMergingList(Range(5, 30))
-        assertEquals(rangeMergingList(Range(5, 10)).toList(), (rl1 intersectRanges rl2).toList())
-        assertEquals(
+        doCheckIntersectRanges(rangeMergingList(Range(5, 10)).toList(), rl1, rl2)
+        doCheckIntersectRanges(
             rangeMergingList(Range(5, 10), Range(25, 30)).toList(),
-            ((rl1 or rangeMergingList(Range(25, 30))) intersectRanges rl2).toList()
+            rl1 or rangeMergingList(Range(25, 30)),
+            rl2
         )
-        assertEquals(
+        doCheckIntersectRanges(
             rangeMergingList(Range(5, 10), Range(25, 30)).toList(),
-            (rl2 intersectRanges (rl1 or rangeMergingList(Range(25, 30)))).toList()
+            rl2,
+            rl1 or rangeMergingList(Range(25, 30))
         )
 
-        assertEquals(
-            rangeMergingList(Range(6, 8)).toList(), (
-                    rangeMergingList(Range(0, 2), Range(6, 8)) intersectRanges rl2).toList()
-        )
+        doCheckIntersectRanges(rangeMergingList(Range(6, 8)).toList(), rangeMergingList(Range(0, 2), Range(6, 8)), rl2)
+    }
+
+    private fun doCheckIntersectRanges(
+        expected: List<Range>,
+        rl1: RangesMergingList,
+        rl2: RangesMergingList
+    ) {
+        assertEquals(expected, (rl1 intersectRanges rl2).toList())
+        assertEquals(expected.size, (rl1.intersectRangesNumber(rl2)))
     }
 
     @Test

@@ -97,7 +97,9 @@ class RegionShuffleStats(
 
         val nChunks = ceil(simulationsNumber.toDouble() / chunkSize).toInt()
 
-        val progress = Progress {title="Over/Under-representation check progress"}.bounded(nChunks.toLong() * regionLabelAndLociToTest.size.toLong())
+        val progress = Progress {title="Over/Under-representation check progress"}.bounded(
+            nChunks.toLong() * regionLabelAndLociToTest.size.toLong()
+        )
         (0 until nChunks).forEach { chunkId ->
             val start = chunkId * chunkSize
             val end = minOf(simulationsNumber, (chunkId + 1) * chunkSize)

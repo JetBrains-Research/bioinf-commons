@@ -7,7 +7,8 @@ import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.containers.LocationsList
 import org.jetbrains.bio.genome.containers.LocationsSortedList
 import org.jetbrains.bio.genome.containers.RangesList
-import org.jetbrains.bio.genome.containers.intersection.OverlapMetric
+import org.jetbrains.bio.genome.containers.intersection.IntersectionNumberMetric
+import org.jetbrains.bio.genome.containers.intersection.OverlapNumberMetric
 import org.jetbrains.bio.genome.containers.intersection.RegionsMetric
 import org.jetbrains.bio.genome.toQuery
 import org.jetbrains.bio.util.*
@@ -88,6 +89,7 @@ object EnrichmentInRegions {
 
     @JvmStatic
     fun main(args: Array<String>) {
+        val metrics = listOf("overlap", "intersection")
         with(OptionParser()) {
             // Chrom.size
             acceptsAll(
@@ -140,6 +142,13 @@ object EnrichmentInRegions {
                         " [start, end)"
             )
                 .withRequiredArg()
+
+            acceptsAll(
+                listOf("metric"),
+                "Metric is fun(a,b):Int. Supported values are: ${metrics.joinToString()}."
+            )
+                .withRequiredArg()
+                .defaultsTo(metrics[0])
 
             // Output
             acceptsAll(
@@ -263,7 +272,12 @@ object EnrichmentInRegions {
                 val mergeOverlapped = options.has("merge")
                 LOG.info("MERGE OVERLAPPED: $mergeOverlapped")
 
-                val metric = OverlapMetric(aSetFlankedBothSides);
+                val metricStr = options.valueOf("metric") as String
+                val metric = when (metricStr) {
+                    "overlap" -> OverlapNumberMetric(aSetFlankedBothSides);
+                    "intersection" -> IntersectionNumberMetric(aSetFlankedBothSides);
+                    else -> throw IllegalArgumentException("Unsupported metric '${metricStr}', use one of: ${metrics.joinToString()}")
+                }
                 LOG.info("METRIC: ${metric.column}")
 
                 val intersectionFilterLocation = (options.valueOf("intersect") as String?)?.let {

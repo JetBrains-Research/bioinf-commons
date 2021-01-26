@@ -7,17 +7,9 @@ import org.jetbrains.bio.genome.containers.LocationsList
 import org.jetbrains.bio.genome.containers.RangesList
 
 object IntersectionMetrics {
-    val OVERLAP = OverlapMetric(0)
+    val OVERLAP = OverlapNumberMetric()
 
-    val INTERSECTION_NUMBER = object : RegionsMetric {
-        // TODO: is it different from overlap?
-        override val column = "intersection_number"
-
-        override fun calcMetric(a: LocationsList<out RangesList>, b: LocationsList<out RangesList>) =
-            a.calcAdditiveMetric(b) { ra, rb ->
-                ra.intersectRanges(rb).size.toLong()
-            }.toDouble()
-    }
+    val INTERSECTION_NUMBER = IntersectionNumberMetric()
 
     /**
      * XXX We are using merging list, so overlap could be not correct if adjacent bin are merged in longer bins.

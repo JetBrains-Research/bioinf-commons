@@ -198,31 +198,28 @@ class RangesSortedListTest {
     }
 
     @Test
-    fun andWithEmpty() {
+    fun intersectRangesWithEmpty() {
         val rl = rangeSortedList(Range(0, 10), Range(20, 30))
-        assertEquals(emptyList<Range>(), (rl intersectRanges rangeSortedList()).toList())
+        doCheckIntersectedRanges(emptyList(), rl, rangeSortedList())
     }
 
     @Test
-    fun andWithSelf() {
+    fun intersectRangesWithSelf() {
         val rl = rangeSortedList(Range(0, 10), Range(20, 30))
-        assertEquals(rl.toList(), (rl intersectRanges rl).toList())
+        doCheckIntersectedRanges(rl.toList(), rl, rl)
     }
 
     @Test
-    fun and() {
+    fun intersectRanges() {
         val rl1 = rangeSortedList(Range(0, 10))
         val rl2 = rangeSortedList(Range(5, 30))
-        assertEquals(rangeSortedList(Range(5, 10)).toList(), (rl1 intersectRanges rl2).toList())
 
-        assertEquals(
-            rangeSortedList(Range(6, 8)).toList(), (
-                    rangeSortedList(Range(0, 2), Range(6, 8)) intersectRanges rl2).toList()
-        )
+        doCheckIntersectedRanges(rangeSortedList(Range(5, 10)).toList(), rl1, rl2)
+        doCheckIntersectedRanges(rangeSortedList(Range(6, 8)).toList(), rangeSortedList(Range(0, 2), Range(6, 8)), rl2)
     }
 
     @Test
-    fun andComplex1() {
+    fun intersectRangesComplex1() {
         val rl1 = rangeSortedList(
                     Range(0, 40),
                     Range(2, 6),
@@ -239,7 +236,7 @@ class RangesSortedListTest {
                 )
         val rl2 = rangeSortedList(Range(0, 5), Range(0, 90), Range(10, 15))
         // List with duplicated!
-        assertEquals(
+        doCheckIntersectedRanges(
             listOf(
                 Range(0, 5),
                 Range(0, 40),
@@ -258,31 +255,50 @@ class RangesSortedListTest {
                 Range(50, 90),
                 Range(60, 70),
                 Range(70, 80)
-            ),
-            rl1.intersectRanges(rl2)
+            ), rl1, rl2
         )
 
+
+        val expected = listOf(
+            Range(0, 5),
+            Range(0, 40),
+            Range(2, 5),
+            Range(2, 6),
+            Range(9, 15),
+            Range(10, 15),
+            Range(10, 15),
+            Range(10, 15),
+            Range(10, 15),
+            Range(10, 30),
+            Range(10, 50),
+            Range(20, 40),
+            Range(20, 50),
+            Range(30, 70),
+            Range(50, 90),
+            Range(60, 70),
+            Range(70, 80)
+        )
+        doCheckIntersectedRanges(expected, rl1, rl2, true)
+    }
+
+    private fun doCheckIntersectedRanges(
+        expected: List<Range>,
+        rl1: RangesSortedList,
+        rl2: RangesSortedList,
+        sortActual: Boolean = false
+    ) {
         assertEquals(
-            listOf(
-                Range(0, 5),
-                Range(0, 40),
-                Range(2, 5),
-                Range(2, 6),
-                Range(9, 15),
-                Range(10, 15),
-                Range(10, 15),
-                Range(10, 15),
-                Range(10, 15),
-                Range(10, 30),
-                Range(10, 50),
-                Range(20, 40),
-                Range(20, 50),
-                Range(30, 70),
-                Range(50, 90),
-                Range(60, 70),
-                Range(70, 80)
-            ),
-            rl1.intersectRanges(rl2).toRangeSortedList().toList()
+            expected,
+            rl1.intersectRanges(rl2).let {
+                if (sortActual) {
+                    it.toRangeSortedList().toList()
+                }  else {
+                    it
+                }
+            }
+        )
+        assertEquals(
+            expected.size, rl1.intersectRangesNumber(rl2)
         )
     }
 
