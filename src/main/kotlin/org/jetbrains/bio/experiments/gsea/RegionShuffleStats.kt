@@ -17,13 +17,19 @@ import org.jetbrains.bio.statistics.hypothesis.Multiple
 import org.jetbrains.bio.util.Progress
 import org.jetbrains.bio.util.createDirectories
 import org.jetbrains.bio.util.div
+import org.jetbrains.bio.util.parallelismLevel
 import org.jetbrains.bio.viktor.asF64Array
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
 import java.util.stream.IntStream
+import java.util.stream.Stream
 import kotlin.math.ceil
 import kotlin.math.min
+
+
+
 
 /**
  * TODO: keeps all sampling results in memory, although could work and stream and consume less memory
@@ -90,6 +96,8 @@ class RegionShuffleStats(
     ): DataFrame {
         outputFolderPath?.createDirectories()
 
+        LOG.info("Regions sets to test: ${regionLabelAndLociToTest.size}")
+
         val label2Stats = regionLabelAndLociToTest.map { it.first to TestedRegionStats() }.toMap()
 
         // TODO: keep type of list i.e mergeOverlapped
@@ -97,7 +105,7 @@ class RegionShuffleStats(
 
         val nChunks = ceil(simulationsNumber.toDouble() / chunkSize).toInt()
 
-        val progress = Progress {title="Over/Under-representation check progress"}.bounded(
+        val progress = Progress {title="Over/Under-representation check progress (all chunks)"}.bounded(
             nChunks.toLong() * regionLabelAndLociToTest.size.toLong()
         )
         (0 until nChunks).forEach { chunkId ->
@@ -138,8 +146,11 @@ class RegionShuffleStats(
                 progress.report()
 
                 val metricValueForSrc = calcMetric(sourceLoci, lociToTest, aSetIsLoi, metric)
-                val metricValueForSampled = sampledRegions.stream().parallel().mapToLong { sampledLoci ->
-                    calcMetric(sampledLoci, lociToTest, aSetIsLoi, metric)
+
+                val metricValueForSampled = chunked(sampledRegions.stream(), parallelismLevel()).parallel().flatMapToLong { chunk ->
+                    chunk.stream().mapToLong {
+                        calcMetric(it, lociToTest, aSetIsLoi, metric)
+                    }
                 }.toArray()
 
                 if (outputFolderPath != null) {
@@ -328,4 +339,12 @@ enum class PermutationAltHypothesis(private val presentableString: String) {
             override fun valuePattern() = null
         }
     }
+}
+
+fun <T> chunked(stream: Stream<T>, chunkSize: Int): Stream<List<T>> {
+    val index = AtomicInteger(0)
+    return stream.collect(Collectors.groupingBy { _: T -> index.getAndIncrement() / chunkSize })
+        .entries.stream()
+        .sorted(java.util.Map.Entry.comparingByKey())
+        .map(Map.Entry<Int, List<T>>::value)!!
 }

@@ -70,7 +70,7 @@ abstract class BaseRangesList(
 
         val acc = ArrayList<Range>()
 
-        (0 until size).forEach { idx ->
+        for (idx in 0 until size) {
             val startOffset = startOffsets[idx]
             val endOffset = endOffsets[idx]
 
@@ -79,7 +79,6 @@ abstract class BaseRangesList(
             if (other.overlapRanges(startOffsetFlnk, endOffsetFlnk)) {
                 acc.add(Range(startOffset, endOffset))
             }
-
         }
 
         return acc
@@ -88,7 +87,7 @@ abstract class BaseRangesList(
     override infix fun intersectRanges(other: RangesList): List<Range> {
         val acc = ArrayList<Range>()
 
-        (0 until size).forEach { idx ->
+        for (idx in 0 until size) {
             acc.addAll(other.intersectRanges(startOffsets[idx], endOffsets[idx]))
         }
 
@@ -100,7 +99,7 @@ abstract class BaseRangesList(
 
         var acc = 0
 
-        (0 until size).forEach { idx ->
+        for (idx in 0 until size) {
             val startOffset = startOffsets[idx]
             val endOffset = endOffsets[idx]
 
@@ -117,7 +116,7 @@ abstract class BaseRangesList(
 
         var acc = 0
 
-        (0 until size).forEach { idx ->
+        for (idx in 0 until size) {
             val startOffset = startOffsets[idx]
             val endOffset = endOffsets[idx]
 
@@ -126,7 +125,6 @@ abstract class BaseRangesList(
             if (other.overlapRanges(startOffsetFlnk, endOffsetFlnk)) {
                 acc++
             }
-
         }
 
         return acc
@@ -152,7 +150,7 @@ abstract class BaseRangesList(
 
     @Throws(IOException::class)
     fun save(path: Path) = CSVFormat.TDF.print(path.bufferedWriter()).use {
-        (0 until size).forEach { i ->
+        for (i in 0 until size) {
             it.printRecord(startOffsets[i], endOffsets[i])
         }
     }
