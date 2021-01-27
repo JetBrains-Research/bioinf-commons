@@ -16,7 +16,7 @@ import java.nio.file.Path
  */
 class LocationsSortedList private constructor(
     override val rangeLists: GenomeStrandMap<RangesSortedList>
-) : GenomeStrandMapLike<List<Location>>, LocationsList<RangesSortedList> {
+) : LocationsList<RangesSortedList>() {
 
     override fun apply(
         other: LocationsList<out RangesList>,

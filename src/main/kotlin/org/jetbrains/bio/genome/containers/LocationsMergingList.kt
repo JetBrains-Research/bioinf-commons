@@ -5,7 +5,6 @@ import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.Range
-import org.jetbrains.bio.genome.containers.LocationsList.Companion.EXTBED_2_LOC_FUN
 import org.jetbrains.bio.genome.format.BedFormat
 import org.jetbrains.bio.util.bufferedReader
 import java.io.IOException
@@ -17,7 +16,7 @@ import java.nio.file.Path
  */
 class LocationsMergingList private constructor(
         override val rangeLists: GenomeStrandMap<RangesMergingList>)
-    : GenomeStrandMapLike<List<Location>>, LocationsList<RangesMergingList> {
+    : LocationsList<RangesMergingList>() {
 
     /**
      * Performs element-wise union on locations in the two lists.

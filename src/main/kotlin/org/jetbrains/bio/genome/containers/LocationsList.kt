@@ -7,13 +7,14 @@ import org.jetbrains.bio.genome.*
 import org.jetbrains.bio.genome.format.BedFormat
 import org.jetbrains.bio.genome.format.toBedEntry
 import org.jetbrains.bio.genome.format.unpackRegularFields
+import org.jetbrains.bio.viktor.KahanSum
 import java.io.IOException
 import java.io.Reader
 import java.nio.file.Path
 import java.util.*
 
-interface LocationsList<T : RangesList> : GenomeStrandMapLike<List<Location>> {
-    val rangeLists: GenomeStrandMap<T>
+abstract class LocationsList<T : RangesList> : GenomeStrandMapLike<List<Location>> {
+    abstract val rangeLists: GenomeStrandMap<T>
 
     override val genomeQuery: GenomeQuery get() = rangeLists.genomeQuery
 
@@ -24,7 +25,7 @@ interface LocationsList<T : RangesList> : GenomeStrandMapLike<List<Location>> {
                     rangeLists[it, Strand.MINUS].size)
         }
 
-    fun apply(
+    abstract fun apply(
         other: LocationsList<out RangesList>,
         op: (RangesList, RangesList) -> Iterable<Range>
     ): LocationsList<T>
@@ -35,36 +36,49 @@ interface LocationsList<T : RangesList> : GenomeStrandMapLike<List<Location>> {
     infix fun intersectRanges(other: LocationsList<*>): LocationsList<*> =
         apply(other) { ra, rb -> ra.intersectRanges(rb) }
 
-    fun calcAdditiveMetric(
+    /**
+     * 'inline' is important here otherwise each method usage will
+     * create new instance of anonymous 'metric' class
+     */
+    inline fun calcAdditiveMetric(
         other: LocationsList<out RangesList>,
         metric: (RangesList, RangesList) -> Long
     ): Long {
         require(genomeQuery == other.genomeQuery)
 
-        return genomeQuery.get().asSequence().flatMap { chromosome ->
-            Strand.values().asSequence().map { strand ->
-                metric(
+        var acc = 0L
+        genomeQuery.get().forEach { chromosome ->
+            Strand.values().forEach { strand ->
+                acc += metric(
                     rangeLists[chromosome, strand],
                     other.rangeLists[chromosome, strand]
                 )
             }
-        }.sum()
+        }
+        return acc
     }
 
-    fun calcAdditiveMetricDouble(
+    /**
+     * 'inline' is important here otherwise each method usage will
+     * create new instance of anonymous 'metric' class
+     */
+    inline fun calcAdditiveMetricDouble(
         other: LocationsList<out RangesList>,
         metric: (RangesList, RangesList) -> Double
     ): Double {
         require(genomeQuery == other.genomeQuery)
 
-        return genomeQuery.get().asSequence().flatMap { chromosome ->
-            Strand.values().asSequence().map { strand ->
-                metric(
+        val acc = KahanSum()
+        genomeQuery.get().forEach { chromosome ->
+            Strand.values().forEach { strand ->
+                acc += metric(
                     rangeLists[chromosome, strand],
                     other.rangeLists[chromosome, strand]
                 )
             }
-        }.sum()
+        }
+
+        return acc.result()
     }
 
     fun asLocationSequence(): Sequence<Location> = asSequence().flatMap { it.asSequence() }

@@ -161,5 +161,9 @@ fun Iterable<Range>.toRangeMergingList(): RangesMergingList {
         endOffsets.add(end)
     }
 
+    // make compact:
+    startOffsets.trimToSize()
+    endOffsets.trimToSize()
+
     return RangesMergingList(startOffsets, endOffsets)
 }

@@ -91,8 +91,8 @@ fun Iterable<Range>.toRangeSortedList(): RangesSortedList {
     val copy = sorted()
 
     // store ranges as: start, end offsets
-    val startOffsets = TIntArrayList()
-    val endOffsets = TIntArrayList()
+    val startOffsets = TIntArrayList(copy.size)
+    val endOffsets = TIntArrayList(copy.size)
 
     for (range in copy) {
         startOffsets.add(range.startOffset)
