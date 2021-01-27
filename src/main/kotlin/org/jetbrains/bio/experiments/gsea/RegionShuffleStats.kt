@@ -184,7 +184,6 @@ class RegionShuffleStats(
         // Save results to DataFrame:
         val regionLabels = regionLabelAndLociToTest.map { it.first }
         val testLociNumber = regionLabelAndLociToTest.map { it.second.size }.toIntArray()
-        val sourceLociNumber = IntArray(regionLabels.size) { sourceLoci.size}
         val pValuesList = ArrayList<Double>()
         val srcMetricValues = ArrayList<Long>()
         val sampledSetsMetricMedian = ArrayList<Long>()
@@ -214,7 +213,8 @@ class RegionShuffleStats(
                 .with("sampled_median_${metric.column}", sampledSetsMetricMedian.toLongArray())
                 .with("sampled_mean_${metric.column}", sampledSetsMetricMean.toDoubleArray())
                 .with("sampled_var_${metric.column}", sampledSetsMetricVar.toDoubleArray())
-                .with("src_loci_number", sourceLociNumber)
+                .with("src_loci_number", IntArray(regionLabels.size) { sourceLoci.size })
+                .with("sampled_sets_number", IntArray(regionLabels.size) { simulationsNumber})
                 .with("pValue", pValues)
                 .with("qValue", qValues)
                 .reorder("qValue")
