@@ -1,10 +1,11 @@
 [![JetBrains Research](https://jb.gg/badges/research.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://opensource.org/licenses/MIT)
 [![tests](http://teamcity.jetbrains.com/app/rest/builds/buildType:(id:Biolabs_BioinfCommons)/statusIcon.svg)](http://teamcity.jetbrains.com/viewType.html?buildTypeId=Biolabs_BioinfCommons&guest=1)
+[![Download](https://api.bintray.com/packages/jetbrains-research/maven/bioinf-commons/images/download.svg?version=0.0.9)](https://bintray.com/jetbrains-research/maven/bioinf-commons/0.0.9/link)
 
 Bioinf-commons
 ==============
-Bioinformatics library in [Kotlin](https://kotlinlang.org) by [JetBrains Research](https://research.jetbrains.org/groups/biolabs). 
+Bioinformatics library in [Kotlin](https://kotlinlang.org).
 
 Contents
 --------
