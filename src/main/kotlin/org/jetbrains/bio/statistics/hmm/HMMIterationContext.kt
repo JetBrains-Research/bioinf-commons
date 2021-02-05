@@ -1,8 +1,8 @@
 package org.jetbrains.bio.statistics.hmm
 
 import org.jetbrains.bio.dataframe.DataFrame
-import org.jetbrains.bio.statistics.IterationContext
 import org.jetbrains.bio.statistics.chunked
+import org.jetbrains.bio.statistics.model.IterationContext
 import org.jetbrains.bio.viktor.F64Array
 import java.util.concurrent.ForkJoinTask
 

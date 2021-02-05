@@ -1,7 +1,7 @@
 package org.jetbrains.bio.statistics.mixture
 
 import org.jetbrains.bio.dataframe.DataFrame
-import org.jetbrains.bio.statistics.IterationContext
+import org.jetbrains.bio.statistics.model.IterationContext
 import org.jetbrains.bio.viktor.F64Array
 
 /**

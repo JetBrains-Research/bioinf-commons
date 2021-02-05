@@ -29,8 +29,18 @@ mainClassName = "org.jetbrains.bio.BioinfToolsCLA"
 
 sourceCompatibility = 1.8
 targetCompatibility = sourceCompatibility
-compileKotlin { kotlinOptions.jvmTarget = sourceCompatibility }
-compileTestKotlin { kotlinOptions.jvmTarget = sourceCompatibility }
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = sourceCompatibility
+        languageVersion = "1.4"
+    }
+}
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = sourceCompatibility
+        languageVersion = "1.4"
+    }
+}
 
 repositories {
     jcenter()

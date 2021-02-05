@@ -2,8 +2,12 @@ package org.jetbrains.bio.statistics.mixture
 
 import com.google.common.base.MoreObjects
 import org.jetbrains.bio.dataframe.DataFrame
-import org.jetbrains.bio.statistics.*
+import org.jetbrains.bio.statistics.Preprocessed
 import org.jetbrains.bio.statistics.distribution.CategoricalDistribution
+import org.jetbrains.bio.statistics.forking
+import org.jetbrains.bio.statistics.model.ClassificationModel
+import org.jetbrains.bio.statistics.model.MLMonitor
+import org.jetbrains.bio.statistics.model.SamplingChain
 import org.jetbrains.bio.util.MultitaskProgress
 import org.jetbrains.bio.viktor.F64Array
 

@@ -1,4 +1,4 @@
-package org.jetbrains.bio.statistics
+package org.jetbrains.bio.statistics.model
 
 import gnu.trove.list.array.TDoubleArrayList
 import org.apache.commons.math3.exception.NotANumberException

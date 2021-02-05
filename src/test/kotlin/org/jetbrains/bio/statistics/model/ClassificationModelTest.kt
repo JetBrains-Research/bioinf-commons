@@ -1,8 +1,9 @@
-package org.jetbrains.bio.statistics
+package org.jetbrains.bio.statistics.model
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParseException
 import org.jetbrains.bio.dataframe.DataFrame
+import org.jetbrains.bio.statistics.Preprocessed
 import org.jetbrains.bio.util.bufferedWriter
 import org.jetbrains.bio.util.read
 import org.jetbrains.bio.util.withTempFile
@@ -26,7 +27,7 @@ class ClassificationModelTest {
         assertEquals("{\n  \"b\": \"bbb\",\n" +
                      "  \"value\": 1,\n" +
                      "  \"name\": \"bboo\",\n" +
-                     "  \"model.class.fqn\": \"org.jetbrains.bio.statistics.Boo\",\n" +
+                     "  \"model.class.fqn\": \"org.jetbrains.bio.statistics.model.Boo\",\n" +
                      "  \"model.class.format\": 222\n}",
                 path.read())
     }
@@ -58,7 +59,7 @@ class ClassificationModelTest {
         nanBoo.save(path)
         assertEquals("{\n  \"value\": NaN,\n  " +
                      "\"name\": \"NaN-boo\",\n  " +
-                     "\"model.class.fqn\": \"org.jetbrains.bio.statistics.NanBoo\",\n  " +
+                     "\"model.class.fqn\": \"org.jetbrains.bio.statistics.model.NanBoo\",\n  " +
                      "\"model.class.format\": 0\n}",
                 path.read())
 
@@ -75,7 +76,7 @@ class ClassificationModelTest {
 
             thrown.expect(JsonParseException::class.java)
             thrown.expectMessage("Deserialization error: Format has changed, " +
-                                 "'org.jetbrains.bio.statistics.Boo' expects '123' version, but got '222'")
+                                 "'org.jetbrains.bio.statistics.model.Boo' expects '123' version, but got '222'")
             ClassificationModel.load<Boo>(path)
         }
     }
@@ -91,7 +92,7 @@ class ClassificationModelTest {
 
             thrown.expect(JsonParseException::class.java)
             thrown.expectMessage("Deserialization error: Format has changed, " +
-                                 "'org.jetbrains.bio.statistics.Boo' expects '666' version, but got '222'")
+                                 "'org.jetbrains.bio.statistics.model.Boo' expects '666' version, but got '222'")
 
             ClassificationModel.load<Boo>(path)
         }
