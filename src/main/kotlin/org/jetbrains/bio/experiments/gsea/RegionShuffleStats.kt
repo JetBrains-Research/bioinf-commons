@@ -1,8 +1,8 @@
 package org.jetbrains.bio.experiments.gsea
 
+import gnu.trove.map.hash.TIntIntHashMap
 import joptsimple.ValueConversionException
 import joptsimple.ValueConverter
-import org.apache.commons.math3.stat.StatUtils
 import org.apache.commons.math3.util.Precision
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.genome.*
@@ -18,22 +18,16 @@ import org.jetbrains.bio.util.Progress
 import org.jetbrains.bio.util.createDirectories
 import org.jetbrains.bio.util.div
 import org.jetbrains.bio.util.parallelismLevel
+import org.jetbrains.bio.viktor.KahanSum
 import org.jetbrains.bio.viktor.asF64Array
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
 import java.util.stream.IntStream
-import java.util.stream.Stream
 import kotlin.math.ceil
 import kotlin.math.min
-
-
-
-
-/**
- * TODO: keeps all sampling results in memory, although could work and stream and consume less memory
- */
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 /**
  * @param genome Genome
@@ -52,7 +46,7 @@ class RegionShuffleStats(
 ) {
 
     private fun sampleRegions(lociFilePath: Path, simulationsNumber: Int): List<LocationsMergingList> {
-        val progress = Progress {title="Loci Sampling"}.bounded(simulationsNumber.toLong())
+        val progress = Progress { title = "Loci Sampling" }.bounded(simulationsNumber.toLong())
 
         val loci = readRanges(lociFilePath)
         val background = backgroundRegions?.let { readRanges(it) }
@@ -76,9 +70,8 @@ class RegionShuffleStats(
     }
 
     fun readRanges(dmrFile: Path) =
-            readLocations(dmrFile, BedFormat.auto(dmrFile), genome.toQuery())
-                    .map { it.toChromosomeRange() }.toList()
-
+        readLocations(dmrFile, BedFormat.auto(dmrFile), genome.toQuery())
+            .map { it.toChromosomeRange() }.toList()
 
     /**
      * @param regionLabelAndLociToTest  Test sampled loci vs given regions lists (label and loci) using given metric
@@ -95,17 +88,15 @@ class RegionShuffleStats(
         intersectionFilter: LocationsList<out RangesList>? = null
     ): DataFrame {
         outputFolderPath?.createDirectories()
+        val dumpDetails = outputFolderPath != null
 
         LOG.info("Regions sets to test: ${regionLabelAndLociToTest.size}")
 
         val label2Stats = regionLabelAndLociToTest.map { it.first to TestedRegionStats() }.toMap()
-
-        // TODO: keep type of list i.e mergeOverlapped
         val sourceLoci = readLocations(srcRegionsPath, genome, mergeOverlapped, intersectionFilter)
-
         val nChunks = ceil(simulationsNumber.toDouble() / chunkSize).toInt()
 
-        val progress = Progress {title="Over/Under-representation check progress (all chunks)"}.bounded(
+        val progress = Progress { title = "Over/Under-representation check progress (all chunks)" }.bounded(
             nChunks.toLong() * regionLabelAndLociToTest.size.toLong()
         )
         (0 until nChunks).forEach { chunkId ->
@@ -113,21 +104,27 @@ class RegionShuffleStats(
             val end = minOf(simulationsNumber, (chunkId + 1) * chunkSize)
             val simulationsInChunk = end - start
 
-            LOG.info("Simulations: Chunk [${chunkId+1} of $nChunks], simulations ${start.formatLongNumber()}..${end.formatLongNumber() } of ${simulationsNumber.formatLongNumber()}")
-            val sampledRegions: List<LocationsList<out RangesList>> =
-                sampleRegions(srcRegionsPath, simulationsInChunk).let { result ->
-                    if (intersectionFilter == null) {
-                        result
-                    } else {
-                        result.map { ll ->
-                            val filtered = ll.intersectRanges(intersectionFilter)
-                            LocationsMergingList.create(filtered.genomeQuery, filtered.locationIterator())
-                        }
-                    }
-                }
+            LOG.info("Simulations: Chunk [${chunkId + 1} of $nChunks], simulations " +
+                    "${start.formatLongNumber()}..${end.formatLongNumber()} of ${simulationsNumber.formatLongNumber()}")
+
+            val sampledRegions: List<List<LocationsList<out RangesList>>> =
+                sampleRegions(simulationsInChunk, intersectionFilter, parallelismLevel())
+
+            // TODO: maybe roll back, issue was other.
+//            val sampledRegions: List<LocationsList<out RangesList>> =
+//                sampleRegions(srcRegionsPath, simulationsInChunk).let { result ->
+//                    if (intersectionFilter == null) {
+//                        result
+//                    } else {
+//                        result.map { ll ->
+//                            val filtered = ll.intersectRanges(intersectionFilter)
+//                            LocationsMergingList.create(filtered.genomeQuery, filtered.locationIterator())
+//                        }
+//                    }
+//                }
 
             /*
-            // XXX: optional save sampledRegions
+            // XXX: optional save sampledRegions (flatmap)
             val dumpSampledLoci = false
             if (dumpSampledLoci && outputFolderPath != null) {
                 val sampledDir = outputFolderPath / "sampled"
@@ -147,35 +144,23 @@ class RegionShuffleStats(
 
                 val metricValueForSrc = calcMetric(sourceLoci, lociToTest, aSetIsLoi, metric)
 
-                val metricValueForSampled = chunked(sampledRegions.stream(), parallelismLevel()).parallel().flatMapToLong { chunk ->
-                    chunk.stream().mapToLong {
-                        calcMetric(it, lociToTest, aSetIsLoi, metric)
-                    }
-                }.toArray()
+                val metricValueForSampled =
+                    calcMetricForSampled(sampledRegions, lociToTest, aSetIsLoi, metric, metricValueForSrc)
 
-                if (outputFolderPath != null) {
-                    DataFrame().with("sample", metricValueForSampled)
-                        .save(outputFolderPath / "${regionLabel}_${metric.column}.chunk${chunkId + 1}.tsv")
-                }
-
-                // calc 2 sided: p-value using definition:
-                var countGreater = 0 // count when random regions metric value is above given value
-                var countBelow = 0 // count when random regions metric value is above given value
-                for (v in metricValueForSampled) {
-                    if (v >= metricValueForSrc) {
-                        countGreater++
-                    }
-                    if (v <= metricValueForSrc) {
-                        countBelow++
-                    }
-                }
+//                val metricValueForSampled = chunked(sampledRegions.stream(), parallelismLevel()).parallel().flatMapToLong { chunk ->
+//                                    chunk.stream().mapToLong {
+//                                        calcMetric(it, lociToTest, aSetIsLoi, metric)
+//                                    }
+//                                }.toArray()
 
                 val stats = label2Stats[regionLabel]!!
-                stats.countSetsWithMetricsAboveThr = stats.countSetsWithMetricsAboveThr + countGreater
-                stats.countSetsWithMetricsBelowThr = stats.countSetsWithMetricsBelowThr + countBelow
+                metricValueForSampled.forEach { st ->
+                    stats.countSetsWithMetricsAboveThr += st.countSetsWithMetricsAboveThr
+                    stats.countSetsWithMetricsBelowThr += st.countSetsWithMetricsBelowThr
+                    stats.metricHist += st.metricHist
+                }
                 stats.simulationsNumber = stats.simulationsNumber + simulationsInChunk
                 stats.metricValueForSrc = metricValueForSrc
-                stats.metricValuesForSampledChunkSets.add(metricValueForSampled)
             }
         }
 
@@ -186,38 +171,98 @@ class RegionShuffleStats(
         val testLociNumber = regionLabelAndLociToTest.map { it.second.size }.toIntArray()
         val pValuesList = ArrayList<Double>()
         val srcMetricValues = ArrayList<Long>()
-        val sampledSetsMetricMedian = ArrayList<Long>()
+        val sampledSetsMetricMedian = ArrayList<Int>()
         val sampledSetsMetricVar = ArrayList<Double>()
         val sampledSetsMetricMean = ArrayList<Double>()
+
         regionLabels.forEach { regionLabel ->
             val stats = label2Stats[regionLabel]!!
             pValuesList.add(stats.pvalue(hypAlt))
             srcMetricValues.add(stats.metricValueForSrc)
 
-            val values = stats.metricValuesForSampledChunkSets.flatMap { chunk ->
-                chunk.map { it.toDouble() }
-            }.toDoubleArray()
-            values.sort()
+            // For large simulation & multiple regions number we cannot store in memory
+            // all metrics values - to many RAM required (e.g 7k x 10^6 simulations > 90 GB)
+            // instead we could calc them from hist or use 'online' version of std and mean and skip
+            // median and total hist.
+            val metricHist = stats.metricHist
 
-            sampledSetsMetricMedian.add(values[values.size / 2].toLong())
-            sampledSetsMetricMean.add(StatUtils.mean(values))
-            sampledSetsMetricVar.add(StatUtils.variance(values))
+            if (dumpDetails) {
+                val path = outputFolderPath!! / "${regionLabel}_${metric.column}.hist.tsv"
+                metricHist.save(path)
+            }
+            require(simulationsNumber == metricHist.countValues()) {
+                "Simulations number doesn't match expectations:"
+            }
+            val metricMean = metricHist.mean()
+            val metricSd = metricHist.stdev(simulationsNumber, metricMean)
+            val medianValue = metricHist.median(simulationsNumber)
+
+            sampledSetsMetricMedian.add(medianValue)
+            sampledSetsMetricMean.add(metricMean)
+            sampledSetsMetricVar.add(metricSd * metricSd)
         }
         val pValues = pValuesList.toDoubleArray()
         val qValues = Multiple.adjust(pValues.asF64Array()).toDoubleArray()
 
         return DataFrame()
-                .with("name", regionLabels.toTypedArray())
-                .with("test_loci_number", testLociNumber)
-                .with(metric.column, srcMetricValues.toLongArray())
-                .with("sampled_median_${metric.column}", sampledSetsMetricMedian.toLongArray())
-                .with("sampled_mean_${metric.column}", sampledSetsMetricMean.toDoubleArray())
-                .with("sampled_var_${metric.column}", sampledSetsMetricVar.toDoubleArray())
-                .with("src_loci_number", IntArray(regionLabels.size) { sourceLoci.size })
-                .with("sampled_sets_number", IntArray(regionLabels.size) { simulationsNumber})
-                .with("pValue", pValues)
-                .with("qValue", qValues)
-                .reorder("qValue")
+            .with("name", regionLabels.toTypedArray())
+            .with("test_loci_number", testLociNumber)
+            .with(metric.column, srcMetricValues.toLongArray())
+            .with("sampled_median_${metric.column}", sampledSetsMetricMedian.toIntArray())
+            .with("sampled_mean_${metric.column}", sampledSetsMetricMean.toDoubleArray())
+            .with("sampled_var_${metric.column}", sampledSetsMetricVar.toDoubleArray())
+            .with("src_loci_number", IntArray(regionLabels.size) { sourceLoci.size })
+            .with("sampled_sets_number", IntArray(regionLabels.size) { simulationsNumber })
+            .with("pValue", pValues)
+            .with("qValue", qValues)
+            .reorder("qValue")
+    }
+
+    private fun calcMetricForSampled(
+        sampledRegions: List<List<LocationsList<out RangesList>>>,
+        lociToTest: LocationsList<out RangesList>,
+        aSetIsLoi: Boolean,
+        metric: RegionsMetric,
+        metricValueForSrc: Long
+    ): List<PerThreadStats> = sampledRegions.parallelStream().map { chunk ->
+        var countGreater = 0 // count when random regions metric value is above given value
+        var countBelow = 0 // count when random regions metric value is above given value
+
+        val metricHist = IntHistogram()
+        chunk.forEachIndexed { i, ll ->
+            val v = calcMetric(ll, lociToTest, aSetIsLoi, metric)
+            require(v < Int.MAX_VALUE) {
+                "Long values not supported, please fire a ticket. Got: $v >= ${Int.MAX_VALUE}"
+            }
+            metricHist.increment(v.toInt())
+
+            // calc 2 sided: p-value using definition:
+            if (v >= metricValueForSrc) {
+                countGreater++
+            }
+            if (v <= metricValueForSrc) {
+                countBelow++
+            }
+        }
+        PerThreadStats(countGreater, countBelow, metricHist)
+    }.collect(Collectors.toList())
+
+    private fun sampleRegions(
+        simulationsNumber: Int,
+        intersectionFilter: LocationsList<out RangesList>?,
+        threadsNum: Int
+    ): List<List<LocationsMergingList>> {
+        val chunked = sampleRegions(srcRegionsPath, simulationsNumber).chunked(threadsNum)
+        if (intersectionFilter == null) {
+            return chunked
+        }
+
+        return chunked.map { chunk ->
+            chunk.map { ll ->
+                val filtered = ll.intersectRanges(intersectionFilter)
+                LocationsMergingList.create(filtered.genomeQuery, filtered.locationIterator())
+            }
+        }
     }
 
     private fun calcMetric(
@@ -295,12 +340,18 @@ class RegionShuffleStats(
 
 fun Int.asPercentOf(total: Int, digitsAfterDot: Int = 2) = Precision.round(100.0 * this / total, digitsAfterDot)
 
+data class PerThreadStats(
+    val countSetsWithMetricsAboveThr: Int,
+    val countSetsWithMetricsBelowThr: Int,
+    val metricHist: IntHistogram = IntHistogram()
+)
+
 data class TestedRegionStats(
     var countSetsWithMetricsAboveThr: Int = 0,
     var countSetsWithMetricsBelowThr: Int = 0,
     var simulationsNumber: Int = 0,
     var metricValueForSrc: Long = 0L,
-    val metricValuesForSampledChunkSets: MutableList<LongArray> =  mutableListOf()
+    val metricHist: IntHistogram = IntHistogram()
 ) {
     fun pvalue(hypAlt: PermutationAltHypothesis): Double {
         val pvalAbove = (countSetsWithMetricsAboveThr + 1).toDouble() / (simulationsNumber + 1)
@@ -328,7 +379,7 @@ enum class PermutationAltHypothesis(private val presentableString: String) {
             override fun convert(value: String): PermutationAltHypothesis {
                 for (h in values()) {
                     if (h.presentableString == value) {
-                       return h
+                        return h
                     }
                 }
                 throw ValueConversionException("Unsupported hypothesis: $value")
@@ -341,10 +392,104 @@ enum class PermutationAltHypothesis(private val presentableString: String) {
     }
 }
 
-fun <T> chunked(stream: Stream<T>, chunkSize: Int): Stream<List<T>> {
-    val index = AtomicInteger(0)
-    return stream.collect(Collectors.groupingBy { _: T -> index.getAndIncrement() / chunkSize })
-        .entries.stream()
-        .sorted(java.util.Map.Entry.comparingByKey())
-        .map(Map.Entry<Int, List<T>>::value)!!
+class IntHistogram {
+    val data: TIntIntHashMap = TIntIntHashMap()
+
+    fun increment(value: Int) {
+        data.adjustOrPutValue(value, 1, 1)
+    }
+
+    fun mean(valuesNumber: Int = countValues()): Double {
+        // sum(x_i) / n
+        val metricMeanAcc = KahanSum();
+        data.forEachEntry { metric, count ->
+            metricMeanAcc += (count * metric).toDouble()
+            true
+        }
+        return metricMeanAcc.result() / valuesNumber
+    }
+
+    fun countValues(): Int {
+        var totalCount = 0
+        data.forEachEntry { _, count ->
+            totalCount += count
+            true
+        }
+        return totalCount
+    }
+
+    operator fun plusAssign(other: IntHistogram) {
+        other.data.forEachEntry { metric, count ->
+            data.adjustOrPutValue(metric, count, count)
+            true
+        }
+    }
+
+    /**
+     * Returns '-1' if list is empty
+     */
+    fun median(valuesNumber: Int = countValues()): Int {
+        val medianIdx = valuesNumber / 2
+        var idx = 0
+
+        val keys = data.keys()
+        keys.sort()
+
+        for (metric in keys) {
+            val count = data[metric]
+            idx += count
+            if (idx > medianIdx) {
+                return metric
+            }
+        }
+        return -1
+    }
+
+    fun stdev(valuesNumber: Int = countValues(), mean: Double = mean(valuesNumber)): Double {
+        //listOf(1,3).stream().mapToInt { it }.average()
+        //XXX: https://math.stackexchange.com/questions/857566/how-to-get-the-standard-deviation-of-a-given-histogram-image
+        //XXX: online variance - https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance  and https://math.stackexchange.com/questions/198336/how-to-calculate-standard-deviation-with-streaming-inputs
+
+        if (valuesNumber == 0) {
+            return Double.NaN
+        } else if (valuesNumber == 1) {
+            return 0.0
+        }
+        //  sum((x_i - mean)^2) / (n - 1)
+        val metricVarAcc = KahanSum();
+        data.forEachEntry { metric, count ->
+            metricVarAcc += count * (metric - mean).pow(2)
+            true
+        }
+        return sqrt(metricVarAcc.result() / (valuesNumber - 1))
+    }
+
+    fun save(path: Path) {
+        val keys = data.keys()
+        keys.sort()
+        DataFrame()
+            .with("metric", keys)
+            .with("count", keys.map { data[it] }.toIntArray())
+            .save(path)
+    }
+
+    override fun toString() = data.toString()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is IntHistogram) return false
+
+        if (data != other.data) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int = data.hashCode()
+
+    companion object {
+        fun create(data: IntArray): IntHistogram {
+            val metricHist = IntHistogram()
+            data.forEach { metricHist.increment(it) }
+            return metricHist
+        }
+    }
 }
