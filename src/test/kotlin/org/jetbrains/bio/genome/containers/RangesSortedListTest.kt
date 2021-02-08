@@ -25,7 +25,7 @@ class RangesSortedListTest {
             Range(2, 6),
             Range(20, 40),
             Range(30, 70),
-            Range(50, 100),
+            Range(50, 100)
         )
         assertTrue(rl2.overlapRanges(20, 70));
         assertTrue(rl2.overlapRanges(0, 5));
@@ -61,7 +61,7 @@ class RangesSortedListTest {
                 Range(20, 50),
                 Range(30, 70),
                 Range(50, 100),
-                Range(60, 70),
+                Range(60, 70)
             ), rl2, rangeSortedList(Range(20, 70))
         )
     }
@@ -95,21 +95,21 @@ class RangesSortedListTest {
         checkOverlap(
             listOf(
                 Range(0, 40), Range(10, 30), Range(10, 50), Range(20, 40),
-                Range(20, 50), Range(30, 70), Range(50, 100), Range(60, 70),
+                Range(20, 50), Range(30, 70), Range(50, 100), Range(60, 70)
             ), rl2, rangeSortedList(Range(20, 70)), 5
         )
 
         checkOverlap(
             listOf(
                 Range(0, 40), Range(9, 15), Range(10, 30), Range(10, 50), Range(20, 40),
-                Range(20, 50), Range(30, 70), Range(50, 100), Range(60, 70),
+                Range(20, 50), Range(30, 70), Range(50, 100), Range(60, 70)
             ), rl2, rangeSortedList(Range(20, 70)), 6
         )
 
         checkOverlap(
             listOf(
                 Range(0, 40), Range(2, 6), Range(9, 15), Range(10, 30), Range(10, 50), Range(20, 40),
-                Range(20, 50), Range(30, 70), Range(50, 100), Range(60, 70),
+                Range(20, 50), Range(30, 70), Range(50, 100), Range(60, 70)
             ), rl2, rangeSortedList(Range(20, 70)), 15
         )
 
@@ -191,7 +191,7 @@ class RangesSortedListTest {
                 Range(20, 50),
                 Range(30, 70),
                 Range(50, 70),
-                Range(60, 70),
+                Range(60, 70)
             ),
             rl2.intersectRanges(Range(20, 70))
         )
