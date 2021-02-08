@@ -32,6 +32,7 @@ targetCompatibility = sourceCompatibility
 compileKotlin {
     kotlinOptions {
         jvmTarget = sourceCompatibility
+        languageVersion = "1.4"
     }
 }
 compileTestKotlin {
