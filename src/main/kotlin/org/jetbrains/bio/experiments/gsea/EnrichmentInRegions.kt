@@ -17,6 +17,7 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Collectors
+import java.util.stream.Stream
 
 object EnrichmentInRegions {
     private val LOG = LoggerFactory.getLogger(EnrichmentInRegions::class.java)
@@ -24,7 +25,7 @@ object EnrichmentInRegions {
     fun doCalculations(
         loiPath: Path,
         backGroundRegions: Path?,
-        regionsFolderPath: Path,
+        regionsPath: Path,
         genome: Genome,
         simulationsNumber: Int,
         chunkSize: Int,
@@ -35,19 +36,30 @@ object EnrichmentInRegions {
         hypAlt: PermutationAltHypothesis,
         aSetIsLoi: Boolean,
         mergeOverlapped: Boolean,
-        intersectionFilterLocation: Location?
+        intersectionFilterLocation: Location?,
+        regionsNameSuffix: String?
     ) {
         val reportPath = "${outputBasename}${metric.column}.tsv".toPath()
         val detailedReportFolder = if (detailed) "${outputBasename}${metric.column}_stats".toPath() else null
 
         val intersectionFilter = if (intersectionFilterLocation != null) {
-                    LocationsSortedList.create(
-                        genome.toQuery(),
-                        listOf(intersectionFilterLocation)
-                    )
-                } else {
-                    null
-                }
+            LocationsSortedList.create(
+                genome.toQuery(),
+                listOf(intersectionFilterLocation)
+            )
+        } else {
+            null
+        }
+
+        val regionsAndRanges: List<Pair<String, LocationsList<out RangesList>>> =
+            collectRegionsFrom(
+                if (regionsPath.isDirectory) Files.list(regionsPath) else Stream.of(regionsPath),
+                genome, mergeOverlapped, intersectionFilter, regionsNameSuffix
+            )
+
+        require(regionsAndRanges.isNotEmpty()) {
+            "No regions files passed file suffix filter."
+        }
 
         RegionShuffleStats(
             genome,
@@ -55,10 +67,12 @@ object EnrichmentInRegions {
             simulationsNumber, chunkSize,
             maxRetries
         ).calcStatistics(
-            collectFilesFrom(regionsFolderPath, genome, mergeOverlapped, intersectionFilter),
+            regionsAndRanges,
             detailedReportFolder,
             metric = metric,
-            hypAlt = hypAlt, aSetIsLoi = aSetIsLoi, mergeOverlapped = mergeOverlapped,
+            hypAlt = hypAlt,
+            aSetIsLoi = aSetIsLoi,
+            mergeOverlapped = mergeOverlapped,
             intersectionFilter = intersectionFilter
         ).save(reportPath)
 
@@ -68,24 +82,19 @@ object EnrichmentInRegions {
         }
     }
 
-    private fun collectFilesFrom(
-        basePath: Path,
+    private fun collectRegionsFrom(
+        filesStream: Stream<Path>,
         genome: Genome,
         mergeOverlapped: Boolean,
-        intersectionFilter: LocationsSortedList?
-    ): List<Pair<String, LocationsList<out RangesList>>> {
-        return if (basePath.isDirectory) {
-            Files.list(basePath).map { path ->
-                val name = path.fileName.toString()
-                val locations = RegionShuffleStats.readLocations(path, genome, mergeOverlapped, intersectionFilter)
-                name to locations
-            }.collect(Collectors.toList())
-        } else {
-            val name = basePath.fileName.toString()
-            val locations = RegionShuffleStats.readLocations(basePath, genome, mergeOverlapped, intersectionFilter)
-            listOf(name to locations)
-        }
-    }
+        intersectionFilter: LocationsSortedList?,
+        regionsNameSuffix: String?
+    ) = filesStream.filter {  path ->
+        regionsNameSuffix == null || path.name.endsWith(regionsNameSuffix)
+    }.map { path ->
+        val name = path.fileName.toString()
+        val locations = RegionShuffleStats.readLocations(path, genome, mergeOverlapped, intersectionFilter)
+        name to locations
+    }.collect(Collectors.toList())
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -131,6 +140,12 @@ object EnrichmentInRegions {
                 .withRequiredArg()
                 .withValuesConvertedBy(PathConverter.noCheck())
                 .required()
+
+            acceptsAll(
+                listOf("regions-filter"),
+                "Filter regions files ending with requested suffix string (not regexp)"
+            )
+                .withRequiredArg()
 
             // TODO: optional save sampledRegions
             // TODO: optional load sampledRegions from ...
@@ -239,6 +254,8 @@ object EnrichmentInRegions {
 
                 val regionsFolderPath = options.valueOf("regions") as Path
                 LOG.info("REGIONS_TO_TEST: $regionsFolderPath")
+                val regionsNameSuffix = options.valueOf("regions-filter") as String?
+                LOG.info("REGIONS_FNAME_SUFFIX: ${regionsNameSuffix ?: "N/A"}")
 
                 val baseName = options.valueOf("basename") as String
                 val outputBaseName = FileSystems.getDefault().getPath(baseName).normalize().toAbsolutePath()
@@ -297,7 +314,8 @@ object EnrichmentInRegions {
                     detailedReport, retries, hypAlt,
                     aSetIsLoi,
                     mergeOverlapped,
-                    intersectionFilterLocation
+                    intersectionFilterLocation,
+                    regionsNameSuffix
                 )
             }
         }
