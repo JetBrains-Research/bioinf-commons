@@ -35,26 +35,31 @@ import kotlin.math.sqrt
  * @param backgroundRegions Simulated regions will be taken from background
  * @param simulationsNumber Simulations number
  * @param maxRetries Max retries if cannot shuffle region from background
+ *
+ * Loci file path will be added to background
  */
 class RegionShuffleStats(
     private val genome: Genome,
-    private val srcRegionsPath: Path,
-    private val backgroundRegions: Path?,
     private val simulationsNumber: Int,
     private val chunkSize: Int,
     private val maxRetries: Int
 ) {
 
-    private fun sampleRegions(lociFilePath: Path, simulationsNumber: Int): List<LocationsMergingList> {
+    private fun sampleRegions(
+        srcLoci: List<Location>,
+        background: LocationsMergingList,
+        simulationsNumber: Int
+
+    ): List<LocationsMergingList> {
         val progress = Progress { title = "Loci Sampling" }.bounded(simulationsNumber.toLong())
 
-        val loci = readRanges(lociFilePath)
-        val background = backgroundRegions?.let { readRanges(it) }
+        val loci = srcLoci.map { it.toChromosomeRange() }
+        val bg = background.asLocationSequence().map { it.toChromosomeRange() }.toList()
         val sampled = IntStream.range(0, simulationsNumber).parallel().mapToObj { _ ->
             val randLoci = shuffleChromosomeRanges(
                 genome.toQuery(),
                 loci,
-                background,
+                bg,
                 maxRetries = maxRetries
             ).map { it.on(Strand.PLUS) }
 
@@ -69,31 +74,46 @@ class RegionShuffleStats(
         return sampled
     }
 
-    fun readRanges(dmrFile: Path) =
-        readLocations(dmrFile, BedFormat.auto(dmrFile), genome.toQuery())
-            .map { it.toChromosomeRange() }.toList()
-
     /**
+     * Strand is ignore in all files
+     *
      * @param regionLabelAndLociToTest  Test sampled loci vs given regions lists (label and loci) using given metric
      * @param outputFolderPath Results path
      * @param metric Metric will be applied to  `(sampledLoci, lociToTest)`
      */
     fun calcStatistics(
+        srcRegionsPath: Path,
+        backgroundRegions: Path?,
         regionLabelAndLociToTest: List<Pair<String, LocationsList<out RangesList>>>,
         outputFolderPath: Path? = null,
         metric: RegionsMetric,
         hypAlt: PermutationAltHypothesis = PermutationAltHypothesis.GREATER,
         aSetIsLoi: Boolean = true,
         mergeOverlapped: Boolean = true,
-        intersectionFilter: LocationsList<out RangesList>? = null
+        intersectionFilter: LocationsList<out RangesList>? = null,
+        genomeMaskedLociPath: Path? = null,
+        genomeAllowedLociPath: Path? = null
     ): DataFrame {
         outputFolderPath?.createDirectories()
         val dumpDetails = outputFolderPath != null
 
+        val gq = genome.toQuery()
+
+        val (sourceLoci, bgLociList) = loadSrcLociAndBg(
+            srcRegionsPath, backgroundRegions, genomeMaskedLociPath, genomeAllowedLociPath, gq
+        )
+        require(sourceLoci.isNotEmpty()) {
+            "Loci file is empty or all loci were masked."
+        }
+        val allowedSourceLociList = when {
+            mergeOverlapped -> LocationsMergingList.create(gq, sourceLoci)
+            else -> LocationsSortedList.create(gq, sourceLoci)
+        }
+
         LOG.info("Regions sets to test: ${regionLabelAndLociToTest.size}")
 
         val label2Stats = regionLabelAndLociToTest.map { it.first to TestedRegionStats() }.toMap()
-        val sourceLoci = readLocations(srcRegionsPath, genome, mergeOverlapped, intersectionFilter)
+
         val nChunks = ceil(simulationsNumber.toDouble() / chunkSize).toInt()
 
         val progress = Progress { title = "Over/Under-representation check progress (all chunks)" }.bounded(
@@ -108,7 +128,8 @@ class RegionShuffleStats(
                     "${start.formatLongNumber()}..${end.formatLongNumber()} of ${simulationsNumber.formatLongNumber()}")
 
             val sampledRegions: List<List<LocationsList<out RangesList>>> =
-                sampleRegions(simulationsInChunk, intersectionFilter, parallelismLevel())
+                sampleRegions(simulationsInChunk, intersectionFilter, sourceLoci, bgLociList, parallelismLevel())
+
 
             // TODO: maybe roll back, issue was other.
 //            val sampledRegions: List<LocationsList<out RangesList>> =
@@ -139,21 +160,21 @@ class RegionShuffleStats(
             }
             */
 
-            for ((regionLabel, lociToTest) in regionLabelAndLociToTest) {
+            for ((regionTypeLabel, regionLociToTest) in regionLabelAndLociToTest) {
                 progress.report()
 
-                val metricValueForSrc = calcMetric(sourceLoci, lociToTest, aSetIsLoi, metric)
+                val metricValueForSrc = calcMetric(allowedSourceLociList, regionLociToTest, aSetIsLoi, metric)
 
                 val metricValueForSampled =
-                    calcMetricForSampled(sampledRegions, lociToTest, aSetIsLoi, metric, metricValueForSrc)
+                    calcMetricForSampled(sampledRegions, regionLociToTest, aSetIsLoi, metric, metricValueForSrc)
 
 //                val metricValueForSampled = chunked(sampledRegions.stream(), parallelismLevel()).parallel().flatMapToLong { chunk ->
 //                                    chunk.stream().mapToLong {
-//                                        calcMetric(it, lociToTest, aSetIsLoi, metric)
+//                                        calcMetric(it, regionLociToTest, aSetIsLoi, metric)
 //                                    }
 //                                }.toArray()
 
-                val stats = label2Stats[regionLabel]!!
+                val stats = label2Stats[regionTypeLabel]!!
                 metricValueForSampled.forEach { st ->
                     stats.countSetsWithMetricsAboveThr += st.countSetsWithMetricsAboveThr
                     stats.countSetsWithMetricsBelowThr += st.countSetsWithMetricsBelowThr
@@ -215,7 +236,7 @@ class RegionShuffleStats(
             .with("sampled_sets_number", IntArray(regionLabels.size) { simulationsNumber })
             .with("pValue", pValues)
             .with("qValue", qValues)
-            .reorder("qValue")
+            .reorder("pValue")
     }
 
     private fun calcMetricForSampled(
@@ -250,9 +271,11 @@ class RegionShuffleStats(
     private fun sampleRegions(
         simulationsNumber: Int,
         intersectionFilter: LocationsList<out RangesList>?,
+        srcLoci: List<Location>,
+        background: LocationsMergingList,
         threadsNum: Int
     ): List<List<LocationsMergingList>> {
-        val chunked = sampleRegions(srcRegionsPath, simulationsNumber).chunked(threadsNum)
+        val chunked = sampleRegions(srcLoci, background, simulationsNumber).chunked(threadsNum)
         if (intersectionFilter == null) {
             return chunked
         }
@@ -265,6 +288,87 @@ class RegionShuffleStats(
         }
     }
 
+    private fun loadSrcLociAndBg(
+        srcRegionsPath: Path, backgroundRegionsPath: Path?,
+        genomeMaskedLociPath: Path?,
+        genomeAllowedLociPath: Path?,
+        gq: GenomeQuery
+    ): Pair<List<Location>, LocationsMergingList> {
+        val sourceLoci = readLocationsIgnoringStrand(srcRegionsPath, gq)
+        LOG.info("Source loci: ${sourceLoci.size} regions")
+
+        val bgLoci = if (backgroundRegionsPath != null) {
+            val bgLoci = LocationsMergingList.create(
+                gq,
+                readLocationsIgnoringStrand(backgroundRegionsPath, gq)
+            )
+            LOG.info("Background regions: ${bgLoci.size} regions")
+
+            sourceLoci.forEach {
+                require(bgLoci.includes(it)) {
+                    "Background $backgroundRegionsPath regions are required to include all loci of interest, but the " +
+                            "loci is missing in bg: ${it.toChromosomeRange()}"
+                }
+            }
+            // XXX: optionally we could merge LOI into BG, but let's ask user to do in explicitly
+            //    background regions are often re-used for different type of analysis, let's take them as is
+            bgLoci
+        } else {
+            // whole genome as bg
+            val bgLoci = LocationsMergingList.create(
+                gq, gq.get().map { Location(0, it.length, it) }
+            )
+            LOG.info("Using whole genome as background. Background regions: ${bgLoci.size} regions")
+
+            bgLoci
+        }
+
+
+        // complementary to masked list
+        val genomeMaskedComplementary = if (genomeMaskedLociPath != null) {
+            val maskedGenome = readLocationsIgnoringStrand(genomeMaskedLociPath, gq)
+            LOG.info("Genome masked loci: ${maskedGenome.size} regions")
+            val maskedGenomeLocations = LocationsMergingList.create(gq, maskedGenome)
+            LOG.info("Genome masked loci (merged): ${maskedGenomeLocations.size} regions")
+
+            // complementary regions
+            maskedGenomeLocations.apply { rl, chr, _ -> rl.complementaryRanges(chr.length) }
+        } else {
+            null
+        }
+
+        // allowed list
+        val genomeAllowed = if (genomeAllowedLociPath != null) {
+            val allowedGenome = genomeAllowedLociPath.let {
+                readLocationsIgnoringStrand(it, gq)
+            }
+            LOG.info("Genome allowed loci: ${allowedGenome.size} regions")
+            val allowedGenomeLocations = LocationsMergingList.create(gq, allowedGenome)
+            LOG.info("Genome allowed loci (merged): ${allowedGenomeLocations.size} regions")
+            allowedGenomeLocations
+        } else {
+            null
+        }
+
+        val allowedFilter = when {
+            genomeAllowed == null -> genomeMaskedComplementary
+            genomeMaskedComplementary == null -> genomeAllowed
+            else -> genomeAllowed.intersectRanges(genomeMaskedComplementary) as LocationsMergingList
+        }
+
+        val (allowedBgList, allowedSourceLoci) = if (allowedFilter == null) {
+            bgLoci to sourceLoci
+        } else {
+            val allowedBg = bgLoci.intersectRanges(allowedFilter) as LocationsMergingList
+            val allowedSourceLoci = sourceLoci.filter { allowedFilter.includes(it) }
+
+            LOG.info("Background regions (all restrictions applied): ${allowedBg.size} regions")
+            LOG.info("Source loci (all restrictions applied): ${allowedSourceLoci.size} regions")
+            allowedBg to allowedSourceLoci
+        }
+
+        return allowedSourceLoci to allowedBgList
+    }
     private fun calcMetric(
         sampledLoci: LocationsList<out RangesList>,
         lociToTest: LocationsList<out RangesList>,
@@ -281,34 +385,26 @@ class RegionShuffleStats(
     companion object {
         private val LOG = LoggerFactory.getLogger(RegionShuffleStats::class.java)
 
-        fun readLocations(
-            path: Path, genome: Genome, mergeOverlapped: Boolean,
-            intersectionFilter: LocationsList<out RangesList>? = null
+        fun readLocationsIgnoringStrand(
+            path: Path, genome: Genome, mergeOverlapped: Boolean
         ): LocationsList<out RangesList> = genome.toQuery().let { gq ->
-            val locations = readLocations(path, BedFormat.auto(path), gq)
+            val locations = readLocationsIgnoringStrand(path, gq)
             if (mergeOverlapped) {
                 val mergedLocations = LocationsMergingList.create(gq, locations)
                 if (locations.size != mergedLocations.size) {
                     LOG.info("$path: ${locations.size} regions merged to ${mergedLocations.size}")
                 }
-                if (intersectionFilter == null) {
-                    mergedLocations
-                } else {
-                    val filtered = mergedLocations.intersectRanges(intersectionFilter)
-                    LocationsMergingList.create(filtered.genomeQuery, filtered.locationIterator())
-                }
+                mergedLocations
             } else {
-                val result = LocationsSortedList.create(gq, locations)
-                if (intersectionFilter == null) {
-                    result
-                } else {
-                    val filtered = result.intersectRanges(intersectionFilter)
-                    LocationsSortedList.create(filtered.genomeQuery, filtered.locationIterator())
-                }
+                LocationsSortedList.create(gq, locations)
             }
         }
 
-        fun readLocations(path: Path, bedFormat: BedFormat, gq: GenomeQuery): List<Location> {
+        fun readLocationsIgnoringStrand(
+            path: Path,
+            gq: GenomeQuery,
+            bedFormat: BedFormat = BedFormat.auto(path)
+        ): List<Location> {
             var recordsNumber = 0
             val ignoredChrs = mutableListOf<String>()
 
@@ -328,7 +424,10 @@ class RegionShuffleStats(
             }
             if (loci.size != recordsNumber) {
                 val pnt = loci.size.asPercentOf(recordsNumber)
-                LOG.warn("$path: Loaded $pnt % (${loci.size} of $recordsNumber) locations. Ignored chromosomes: ${ignoredChrs.size}. For more details use debug option.")
+                LOG.warn(
+                    "$path: Loaded $pnt % (${loci.size} of $recordsNumber) locations." +
+                            " Ignored chromosomes: ${ignoredChrs.size}. For more details use debug option."
+                )
             }
             if (ignoredChrs.isNotEmpty()) {
                 LOG.debug("$path: Ignored chromosomes: $ignoredChrs")

@@ -1,10 +1,7 @@
 package org.jetbrains.bio.genome.containers
 
 import org.jetbrains.bio.big.BedEntry
-import org.jetbrains.bio.genome.Chromosome
-import org.jetbrains.bio.genome.GenomeQuery
-import org.jetbrains.bio.genome.Location
-import org.jetbrains.bio.genome.Range
+import org.jetbrains.bio.genome.*
 import org.jetbrains.bio.genome.format.BedFormat
 import org.jetbrains.bio.util.bufferedReader
 import java.io.IOException
@@ -35,6 +32,12 @@ class LocationsMergingList private constructor(
         op(a, b).toRangeMergingList()
     })
 
+    fun apply(
+            op: (RangesMergingList, Chromosome, Strand) -> RangesMergingList
+        ) = LocationsMergingList(genomeStrandMap(genomeQuery) { chromosome, strand ->
+            op(rangeLists[chromosome, strand], chromosome, strand)
+        })
+
 
     fun intersects(location: Location): Boolean = intersect(location).isNotEmpty()
 
@@ -49,6 +52,11 @@ class LocationsMergingList private constructor(
         val rangeList = rangeLists[location.chromosome, location.strand]
         return rangeList.intersectRanges(location.toRange())
     }
+
+    fun includes(location: Location): Boolean {
+         val rangeList = rangeLists[location.chromosome, location.strand]
+         return rangeList.includesRange(location.toRange())
+     }
 
     fun intersectBothStrands(location: Location): List<Range> =
         intersect(location) + intersect(location.opposite())

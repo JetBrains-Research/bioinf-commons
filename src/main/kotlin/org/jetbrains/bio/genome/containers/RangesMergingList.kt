@@ -73,6 +73,50 @@ class RangesMergingList internal constructor(
     }
 
     /**
+     * Constructs a list of complementary ranges.
+     *
+     *     |----------| |---------|  |---|  this
+     *  |--|          |-|         |--|      result
+     *
+     */
+    fun complementaryRanges(chrLen: Int): RangesMergingList {
+        val len = size;
+
+        val complStarts = TIntArrayList(len + 1)
+        val complEnds = TIntArrayList(len + 1)
+
+        if (len == 0) {
+            complStarts.add(0)
+            complEnds.add(chrLen)
+        } else {
+            var i = 0;
+            while (i < len) {
+                val start = startOffsets[i]
+                val end = endOffsets[i]
+
+                if (i == 0) {
+                    if (start > 0) {
+                        complStarts.add(0)
+                        complEnds.add(start)
+                    }
+                } else {
+                    complEnds.add(start)
+                }
+                complStarts.add(end)
+
+                i++
+            }
+
+            if (endOffsets[len - 1] != chrLen) {
+                complEnds.add(chrLen)
+            } else {
+                complStarts.removeAt(complStarts.size() - 1)
+            }
+        }
+        return RangesMergingList(complStarts, complEnds);
+    }
+
+    /**
      * Returns the index of the insertion point. So the [startOffsets] at the index is >= [startOffset] and
      * [startOffsets] at the index-1 is < [startOffset]. The index could be `-1`.
      */

@@ -62,7 +62,7 @@ private fun tryShuffle(genomeQuery: GenomeQuery,
                        lengths: IntArray,
                        prefixSum: LongArray,
                        maximalReTries: Int = 100): List<ChromosomeRange>? {
-    val regionMap = genomeMap<MutableList<Range>>(genomeQuery) {
+    val maskedGenomeMap = genomeMap<MutableList<Range>>(genomeQuery) {
         ArrayList()
     }
     val result = ArrayList<ChromosomeRange>(lengths.size)
@@ -91,7 +91,7 @@ private fun tryShuffle(genomeQuery: GenomeQuery,
             val startOffset = (l.startOffset + offset).toInt()
 
             val candidate = ChromosomeRange(startOffset, startOffset + lengths[i], l.chromosome)
-            if (candidate.endOffset <= candidate.chromosome.length && !hasIntersection(regionMap, candidate)) {
+            if (candidate.endOffset <= candidate.chromosome.length && !hasIntersection(maskedGenomeMap, candidate)) {
                 // success
                 nextRange = candidate
                 break
@@ -103,7 +103,7 @@ private fun tryShuffle(genomeQuery: GenomeQuery,
             // Cannot sample next range in given attempts number
             return null
         }
-        regionMap[nextRange.chromosome].add(nextRange.toRange())
+        maskedGenomeMap[nextRange.chromosome].add(nextRange.toRange())
         result.add(nextRange)
     }
 

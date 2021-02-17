@@ -5,6 +5,7 @@ import org.jetbrains.bio.BioinfToolsCLA
 import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.containers.LocationsList
+import org.jetbrains.bio.genome.containers.LocationsMergingList
 import org.jetbrains.bio.genome.containers.LocationsSortedList
 import org.jetbrains.bio.genome.containers.RangesList
 import org.jetbrains.bio.genome.containers.intersection.IntersectionNumberMetric
@@ -36,16 +37,18 @@ object EnrichmentInRegions {
         hypAlt: PermutationAltHypothesis,
         aSetIsLoi: Boolean,
         mergeOverlapped: Boolean,
-        intersectionFilterLocation: Location?,
-        regionsNameSuffix: String?
+        regionsToTestFilterLocation: Location?,
+        regionsNameSuffix: String?,
+        genomeMaskedLociPath: Path?,
+        genomeAllowedLociPath: Path?
     ) {
         val reportPath = "${outputBasename}${metric.column}.tsv".toPath()
         val detailedReportFolder = if (detailed) "${outputBasename}${metric.column}_stats".toPath() else null
 
-        val intersectionFilter = if (intersectionFilterLocation != null) {
+        val regionsToTestFilter = if (regionsToTestFilterLocation != null) {
             LocationsSortedList.create(
                 genome.toQuery(),
-                listOf(intersectionFilterLocation)
+                listOf(regionsToTestFilterLocation)
             )
         } else {
             null
@@ -54,7 +57,7 @@ object EnrichmentInRegions {
         val regionsAndRanges: List<Pair<String, LocationsList<out RangesList>>> =
             collectRegionsFrom(
                 if (regionsPath.isDirectory) Files.list(regionsPath) else Stream.of(regionsPath),
-                genome, mergeOverlapped, intersectionFilter, regionsNameSuffix
+                genome, mergeOverlapped, regionsToTestFilter, regionsNameSuffix
             )
 
         require(regionsAndRanges.isNotEmpty()) {
@@ -63,17 +66,19 @@ object EnrichmentInRegions {
 
         RegionShuffleStats(
             genome,
-            loiPath, backGroundRegions,
             simulationsNumber, chunkSize,
             maxRetries
         ).calcStatistics(
+            loiPath, backGroundRegions,
             regionsAndRanges,
             detailedReportFolder,
             metric = metric,
             hypAlt = hypAlt,
             aSetIsLoi = aSetIsLoi,
             mergeOverlapped = mergeOverlapped,
-            intersectionFilter = intersectionFilter
+            intersectionFilter = regionsToTestFilter,
+            genomeMaskedLociPath = genomeMaskedLociPath,
+            genomeAllowedLociPath = genomeAllowedLociPath
         ).save(reportPath)
 
         LOG.info("Report saved to: $reportPath")
@@ -92,8 +97,21 @@ object EnrichmentInRegions {
         regionsNameSuffix == null || path.name.endsWith(regionsNameSuffix)
     }.map { path ->
         val name = path.fileName.toString()
-        val locations = RegionShuffleStats.readLocations(path, genome, mergeOverlapped, intersectionFilter)
-        name to locations
+
+        val locationsList = RegionShuffleStats.readLocationsIgnoringStrand(path, genome, mergeOverlapped).let { ll ->
+            if (intersectionFilter == null) {
+                ll
+            } else {
+                val gq = ll.genomeQuery
+                val filteredIterator = ll.intersectRanges(intersectionFilter).locationIterator()
+                when {
+                    mergeOverlapped -> LocationsMergingList.create(gq, filteredIterator)
+                    else -> LocationsSortedList.create(gq, filteredIterator)
+                }
+            }
+        }
+
+        name to locationsList
     }.collect(Collectors.toList())
 
     @JvmStatic
@@ -120,7 +138,7 @@ object EnrichmentInRegions {
 
             acceptsAll(
                 listOf("l", "loi"),
-                "Loci of interest (loi) file path in TAB separated BED, BED3 or BED4 format"
+                "Loci of interest (loi) file path in TAB separated BED, BED3 or BED4 format. Strand is ignored."
             )
                 .withRequiredArg()
                 .withValuesConvertedBy(PathConverter.bedtoolsValidFile(minBedSpecFields = 3))
@@ -128,14 +146,31 @@ object EnrichmentInRegions {
 
             acceptsAll(
                 listOf("b", "background"),
-                "Covered methylome regions to use as random background"
+                "Covered methylome regions to use as random background. Strand is ignored. Must include loci of interest."
             )
                 .withRequiredArg()
                 .withValuesConvertedBy(PathConverter.noCheck())
 
             acceptsAll(
+                listOf("genome-masked"),
+                "Mask genome regions: loi intersecting masked regions are skipped, masked regions removed from background." +
+                        " File path in TAB separated BED with at least 3 fields. Strand is ignored."
+            )
+                .withRequiredArg()
+                .withValuesConvertedBy(PathConverter.bedtoolsValidFile(minBedSpecFields = 3))
+
+            acceptsAll(
+                listOf("genome-allowed"),
+                "Allow only certain genome regions: loi/background not-intersecting masked regions are skipped." +
+                        " File path in TAB separated BED with at least 3 fields. Strand is ignored."
+            )
+                .withRequiredArg()
+                .withValuesConvertedBy(PathConverter.bedtoolsValidFile(minBedSpecFields = 3))
+
+
+            acceptsAll(
                 listOf("r", "regions"),
-                "Regions *.bed file or folder with *.bed regions files"
+                "Regions *.bed file or folder with *.bed regions files. Strand is ignored."
             )
                 .withRequiredArg()
                 .withValuesConvertedBy(PathConverter.noCheck())
@@ -151,8 +186,8 @@ object EnrichmentInRegions {
             // TODO: optional load sampledRegions from ...
 
             acceptsAll(
-                listOf("intersect"),
-                "Intersect loi, sampled loi and results with given range 'chromosome:start-end'" +
+                listOf("regions-intersect"),
+                "Intersect regions with given range 'chromosome:start-end'" +
                         " before overrepresented regions test. 'start' offset 0-based, 'end' offset exclusive, i.e" +
                         " [start, end)"
             )
@@ -249,6 +284,11 @@ object EnrichmentInRegions {
                 val srcLoci = options.valueOf("loi") as Path
                 LOG.info("SOURCE_LOCI: $srcLoci")
 
+                val genomeMaskedLociPath = options.valueOf("genome-masked") as Path?
+                LOG.info("GENOME MASKED LOCI: $genomeMaskedLociPath")
+                val genomeAllowedLociPath = options.valueOf("genome-allowed") as Path?
+                LOG.info("GENOME ALLOWED LOCI: $genomeAllowedLociPath")
+
                 val backGroundRegions = options.valueOf("background") as Path?
                 LOG.info("BACKGROUND: $backGroundRegions")
 
@@ -297,12 +337,12 @@ object EnrichmentInRegions {
                 }
                 LOG.info("METRIC: ${metric.column}")
 
-                val intersectionFilterLocation = (options.valueOf("intersect") as String?)?.let {
+                val regionsToTestFilterLocation = (options.valueOf("regions-intersect") as String?)?.let {
                     parseLocation(
                         it, genome, chromSizesPath
                     )
                 }
-                LOG.info("INTERSECTION RANGE: ${intersectionFilterLocation ?: "N/A"}")
+                LOG.info("INTERSECT REGIONS WITH RANGE: ${regionsToTestFilterLocation ?: "N/A"}")
 
 
                 doCalculations(
@@ -314,8 +354,9 @@ object EnrichmentInRegions {
                     detailedReport, retries, hypAlt,
                     aSetIsLoi,
                     mergeOverlapped,
-                    intersectionFilterLocation,
-                    regionsNameSuffix
+                    regionsToTestFilterLocation,
+                    regionsNameSuffix,
+                    genomeMaskedLociPath, genomeAllowedLociPath
                 )
             }
         }

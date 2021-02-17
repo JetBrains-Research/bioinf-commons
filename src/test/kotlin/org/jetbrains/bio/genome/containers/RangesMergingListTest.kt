@@ -243,4 +243,40 @@ class RangesMergingListTest {
         assertEquals(2, data.internalLookup(30))
         assertEquals(3, data.internalLookup(100))
     }
+
+    @Test
+    fun complementaryRanges() {
+        checkComplement(
+            listOf(),
+            listOf(Range(0, 100))
+        )
+        checkComplement(
+            listOf(Range(4, 6)),
+            listOf(Range(0, 4), Range(6, 100))
+        )
+        checkComplement(
+            listOf(Range(3, 6), Range(14, 16), Range(40, 90)),
+            listOf(Range(0, 3),Range(6, 14), Range(16, 40), Range(90, 100))
+        )
+        checkComplement(
+            listOf(Range(1, 2), Range(4, 6), Range(10, 99)),
+            listOf(Range(0, 1),Range(2, 4), Range(6, 10), Range(99, 100))
+        )
+        checkComplement(
+            listOf(Range(0, 2), Range(4, 6), Range(10, 100)),
+            listOf(Range(2, 4), Range(6, 10))
+        )
+        checkComplement(
+            listOf(Range(0, 100)),
+            listOf()
+        )
+    }
+
+    private fun checkComplement(
+        data: List<Range>,
+        expected: List<Range>
+    ) {
+        val actual = data.toRangeMergingList().complementaryRanges(100).toList()
+        assertEquals(expected, actual)
+    }
 }
