@@ -20,13 +20,7 @@ import java.nio.file.Path
 /**
  * The genome.
  *
- * Currently supported builds are:
- *
- *   mm9, mm10
- *   hg18, hg19, hg38
- *
- * A [Genome] is completely defined by the UCSC build string, however,
- * please use [Genome] instead of the build string for all public methods.
+ * A [Genome] can be defined by [GenomeAnnotationsConfig] or manually.
  *
  * If your API is capable of processing a subset of chromosomes, consider
  * using [GenomeQuery] to indicate that.

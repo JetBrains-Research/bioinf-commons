@@ -3,23 +3,25 @@ package org.jetbrains.bio.genome
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
+import org.jetbrains.bio.genome.AnnotationsConfigLoader.saveYaml
 import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.zip.GZIPInputStream
+import kotlin.collections.LinkedHashMap
 
 /**
- * Generic genome information.
+ * Generic genome information. Used to define [Genome].
  *
  * @param species Species name
  * @param ucscAlias UCSC name for the build
  * @param names All known build names (release name and other aliases, including the UCSC alias) as ordered set
  * @param description About Genome build
  * @param gtfUrl GTF genes annotations url
- * @param chrAltName2CanonicalMapping Mapping of alternative chr names to canonical names from *.chrom.sizes. E.g. MT -> chrM for GTF parsing with UCSC genomes
+ * @param chrAltName2CanonicalMapping Mapping of alternative chr names to canonical names from *.chrom.sizes.
+ *  E.g. MT -> chrM for GTF parsing with UCSC genomes
  * @param ucscAnnLegacyFormat Legacy format provides separate file for each chromosome
  * @param sequenceUrl 2bit file url
  * @param chromsizesUrl Chromosomes size file url
@@ -33,103 +35,109 @@ import java.util.zip.GZIPInputStream
  * @author Roman.Chernyatchik
  */
 data class GenomeAnnotationsConfig(
-        val species: String,
-        val ucscAlias: String?,
-        val names: List<String>,
-        val description: String?,
-        val gtfUrl: String,
-        val chrAltName2CanonicalMapping: Map<String, String>,
-        val ucscAnnLegacyFormat: Boolean,
-        val sequenceUrl: String,
-        val chromsizesUrl: String,
-        val repeatsUrl: String?,
-        val cytobandsUrl: String?,
-        val gapsUrl: String,
-        val centromeresUrl: String?,
-        val cpgIslandsUrl: String?,
-        val mart: Biomart?
+    val species: String,
+    val ucscAlias: String?,
+    val names: List<String>,
+    val description: String,
+    val gtfUrl: String,
+    val chrAltName2CanonicalMapping: Map<String, String>,
+    val ucscAnnLegacyFormat: Boolean,
+    val sequenceUrl: String,
+    val chromsizesUrl: String,
+    val repeatsUrl: String?,
+    val cytobandsUrl: String?,
+    val gapsUrl: String,
+    val centromeresUrl: String?,
+    val cpgIslandsUrl: String?,
+    val mart: Biomart?
 )
 
 object AnnotationsConfigLoader {
     const val VERSION: Int = 4
     private val LOG = LoggerFactory.getLogger(AnnotationsConfigLoader::class.java)
 
-    @Volatile
-    private var pathAndYamlConfig: Pair<Path, Map<String, GenomeAnnotationsConfig>>? = null
+    private var pathAndConfig: Pair<Path, Map<String, GenomeAnnotationsConfig>>? = null
 
     /**
      * Parse YAML file and load configuration. If YAML file doesn't exist if would be created with
      * default bundled content using [bioinf-commons/src/main/resources/annotations.yaml]
      */
-    fun init(yamlConfig: Path) {
+    fun init(yamlPath: Path) {
         // 'Double checked synchronization' to configure pathAndYamlConfig singleton
-        if (pathAndYamlConfig == null) {
-            synchronized(this) {
-                // if 2-nd thread enters section after 1-st thread already left it: do not reassign the value
-                if (pathAndYamlConfig == null) {
-                    pathAndYamlConfig = yamlConfig to loadOrCreateBuild2ConfigMapping(yamlConfig)
-                }
+        if (pathAndConfig == null) {
+            // if 2-nd thread enters section after 1-st thread already left it: do not reassign the value
+            if (pathAndConfig == null) {
+                pathAndConfig = yamlPath to loadOrCreateAnnotationsConfig(yamlPath)
             }
         }
-        val path = pathAndYamlConfig!!.first
-        require(yamlConfig == path) {
-            "Already initialized with $path, couldn't be overridden with $yamlConfig."
+        val path = pathAndConfig!!.first
+        require(yamlPath == path) {
+            "Already initialized with $path, couldn't be overridden with $yamlPath."
         }
     }
 
     val initialized: Boolean
-        get() = pathAndYamlConfig != null
+        get() = pathAndConfig != null
 
     /**
      * Ensure annotations config loaded, use [AnnotationsConfigLoader.init]
      */
-    val yamlConfig: Path
+    val yamlPath: Path
         get() {
-            if (pathAndYamlConfig == null) {
+            if (pathAndConfig == null) {
                 error("Annotations config not initialized, call [AnnotationsConfig.init] first")
             }
-            return pathAndYamlConfig!!.first
+            return pathAndConfig!!.first
         }
+
     /**
      * Ensure annotations config loaded, use [AnnotationsConfigLoader.init]
      */
     val builds: Set<String>
         get() {
-            if (pathAndYamlConfig == null) {
-                error("Annotations config not initialized, call [AnnotationsConfig.init] first")
-            }
-            return pathAndYamlConfig!!.second.keys
+            return pathAndConfig!!.second.keys
         }
 
-    /**
-     * Ensure annotations config loaded, use [AnnotationsConfigLoader.init]
-     */
+
     operator fun get(build: String): GenomeAnnotationsConfig {
-        if (pathAndYamlConfig == null) {
-            error("Annotations config not initialized, call [AnnotationsConfig.ensureInitialized] first")
+        if (pathAndConfig == null) {
+            error("Annotations config not initialized, call [AnnotationsConfig.init] first")
         }
-
         check(build in builds) {
             "Unexpected build name $build, annotations are available only for ${builds.joinToString()}"
         }
-        return pathAndYamlConfig!!.second.getValue(build)
+        return pathAndConfig!!.second[build]!!
     }
 
-    internal fun parseYaml(yamlConfig: Path, currentVersion: Int): Triple<Int, Map<String, GenomeAnnotationsConfig>?, YamlMapper> {
-        val yaml = YamlMapper.load(yamlConfig)
-        val yamlVers = yaml.version
-        if (yamlVers != currentVersion) {
-            return Triple(yamlVers, null, yaml)
+    internal fun parseYaml(yamlPath: Path, currentVersion: Int):
+            Triple<Int, Map<String, GenomeAnnotationsConfig>?, AnnotationConfigYAMLSerializable> {
+        val yaml = AnnotationConfigYAMLSerializable.load(yamlPath)
+        val yamlVersion = yaml.version
+        if (yamlVersion != currentVersion) {
+            return Triple(yamlVersion, null, yaml)
         }
 
-        val buildsConfig = yaml.genomes.keys.map { build ->
-            build to yaml[build]
-        }.toMap()
-
-        return Triple(yamlVers, Collections.unmodifiableMap(buildsConfig), yaml)
+        return Triple(yamlVersion, yaml.genomes.mapValues {
+            val deserializedMap = yaml.genomes[it.key]
+            checkNotNull(deserializedMap) { "Annotations not defined for $it" }
+            fromMap(it.key, deserializedMap)
+        }, yaml)
     }
 
-    private fun loadOrCreateBuild2ConfigMapping(yamlConfig: Path): Map<String, GenomeAnnotationsConfig> {
+    fun saveYaml(yamlPath: Path, map: Map<String, GenomeAnnotationsConfig>) {
+        val convertedMap = LinkedHashMap<String, LinkedHashMap<String, Any>>()
+        map.forEach { (build, genomeAnnotationsConfig) ->
+            convertedMap[build] = toMap(build, genomeAnnotationsConfig)
+        }
+        val toSerialize = AnnotationConfigYAMLSerializable().apply {
+            version = VERSION
+            genomes = convertedMap
+        }
+        AnnotationConfigYAMLSerializable.save(yamlPath, toSerialize)
+    }
+
+
+    private fun loadOrCreateAnnotationsConfig(yamlConfig: Path): Map<String, GenomeAnnotationsConfig> {
         if (yamlConfig.exists) {
             // check if outdated
             val (version, mapping, yaml) = parseYaml(yamlConfig, VERSION)
@@ -143,15 +151,17 @@ object AnnotationsConfigLoader {
 
             val bkPath = yamlConfig.withExtension("$suffix.yaml")
             yamlConfig.move(bkPath, StandardCopyOption.ATOMIC_MOVE)
-            LOG.info("Outdated annotations file $yamlConfig (version: $version) was backed up to $bkPath " +
-                    "and replaced with recent version: $VERSION).")
+            LOG.error(
+                "Outdated annotations file $yamlConfig (version: $version) was backed up to $bkPath " +
+                        "and replaced with recent version: $VERSION)."
+            )
         }
         // create if not exist or was outdated
         yamlConfig.checkOrRecalculate { output ->
             val text = AnnotationsConfigLoader::class.java
-                    .getResourceAsStream("/annotations.yaml")
-                    .bufferedReader(Charsets.UTF_8)
-                    .readText()
+                .getResourceAsStream("/annotations.yaml")
+                .bufferedReader(Charsets.UTF_8)
+                .readText()
             output.path.write(text)
         }
         // ensure version
@@ -162,7 +172,10 @@ object AnnotationsConfigLoader {
         return newMapping!!
     }
 
-    internal class YamlMapper {
+    /**
+     * This is a technical class that is used for serialization / deserialization in YAML
+     */
+    internal class AnnotationConfigYAMLSerializable {
         @JvmField
         var version: Int = 0
 
@@ -172,101 +185,145 @@ object AnnotationsConfigLoader {
         @JvmField
         var genomes = LinkedHashMap<String, LinkedHashMap<String, Any>>()
 
-        operator fun get(build: String): GenomeAnnotationsConfig {
-            val genomeAttrs = genomes[build]
-
-            checkNotNull(genomeAttrs) { "Annotations not defined for $build" }
-
-            val chrAltName2CanonicalMapping = if ("chr_alt_name_to_canonical" in genomeAttrs) {
-                (genomeAttrs["chr_alt_name_to_canonical"] as List<Map<String, String>>).map {
-                    it.entries.first().let { (k, v) -> k to v }
-                }.toMap()
-            } else {
-                emptyMap()
-            }
-
-            /* names = build + ucsc_alias + aliases, with duplicates removed later */
-            val names = arrayListOf(build)
-            val ucscAlias = genomeAttrs["ucsc_alias"] as? String
-            ucscAlias?.let { names.add(it) }
-            names.addAll(when (val aliases = genomeAttrs["aliases"]) {
-                is String -> listOf(aliases)
-                is List<*> -> aliases.map { it.toString() }
-                else -> emptyList()
-            })
-
-            val biomart = genomeAttrs["biomart"]
-            val mart = if (biomart != null) {
-                val biomartMap = biomart as Map<String, String>
-                val url = biomartMap["url"] as String
-                val dataset = biomartMap["dataset"] as String
-                Biomart(dataset, url)
-            } else {
-                null
-            }
-            try {
-                return GenomeAnnotationsConfig(
-                    genomeAttrs["species"] as String,
-                    ucscAlias,
-                    names.distinct(),
-                    genomeAttrs["description"] as String,
-                    genomeAttrs["gtf"] as String,
-                    chrAltName2CanonicalMapping,
-                    genomeAttrs["ucsc_annotations_legacy"]?.toString()?.toBoolean() ?: false,
-                    genomeAttrs["sequence"] as String,
-                    genomeAttrs["chromsizes"] as String,
-                    genomeAttrs["repeats"] as String?,
-                    genomeAttrs["cytobands"] as String?,
-                    genomeAttrs["gaps"] as String,
-                    genomeAttrs["centromeres"] as String?,
-                    genomeAttrs["cgis"] as String?,
-                    mart
-                )
-            } catch (e: Exception) {
-                throw RuntimeException("Cannot parse: [${genomeAttrs}]", e)
-            }
-        }
-
         companion object {
-            private fun createMapper(): ObjectMapper {
+            /**
+             * Used during serialization / deserialization procedure
+             */
+            private fun createObjectMapper(): ObjectMapper {
                 val yamlFactory = YAMLFactory()
                 yamlFactory.configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true)
                 return ObjectMapper(yamlFactory)
             }
 
-            /** Loads configuration from a YAML file with id as file name. */
-            fun load(path: Path) = path.bufferedReader().use { reader ->
-                createMapper().readValue(reader, YamlMapper::class.java)
+            /**
+             * Deserialization. See [saveYaml] for serialization
+             */
+            fun load(yamlPath: Path): AnnotationConfigYAMLSerializable = yamlPath.bufferedReader().use { reader ->
+                createObjectMapper().readValue(reader, AnnotationConfigYAMLSerializable::class.java)
             }!!
 
-        }
-    }
-
-    fun updateAnnotations(markupPath: Path) {
-        val path = markupPath / "annotations.tar.gz.txt"
-        if (path.exists) {
-            var version = -1
-            path.bufferedReader().use {
-                try {
-                    version = it.readLine().toInt()
-                } catch (t: Throwable) {
-                    LOG.error("Failed to read version number from $path", t)
+            /**
+             * Serialization. See [saveYaml] for deserialization
+             */
+            fun save(yamlPath: Path, serializable: AnnotationConfigYAMLSerializable) {
+                yamlPath.bufferedWriter().use { writer ->
+                    createObjectMapper().writeValue(writer, serializable)
                 }
             }
-            if (version != VERSION) {
-                LOG.info("Outdated cache file $path (version: $version) recent version: $VERSION).")
-                path.delete()
-            }
-        }
-        val bundled = AnnotationsConfigLoader::class.java.getResource("/annotations.tar.gz")
-        checkNotNull(bundled) { "Bundled annotations not available" }
 
-        if (path.notExists) {
-            Tar.decompress(GZIPInputStream(bundled.openStream()), markupPath.toFile(), false)
-            path.bufferedWriter().use {
-                it.write(VERSION.toString())
-            }
         }
     }
+
+    private const val UCSC_ALIAS_FIELD = "ucsc_alias"
+    private const val SPECIES_FIELD = "species"
+    private const val DESCRIPTION_FIELD = "description"
+    private const val CHR_ALT_NAME_TO_CANONICAL_FIELD = "chr_alt_name_to_canonical"
+    private const val ALIASES_FIELD = "aliases"
+    private const val GTF_FIELD = "gtf"
+    private const val UCSC_ANNOTATIONS_LEGACY_FIELD = "ucsc_annotations_legacy"
+    private const val SEQUENCE_FIELD = "sequence"
+    private const val CHROMSIZES_FIELD = "chromsizes"
+    private const val REPEATS_FIELD = "repeats"
+    private const val CYTOBANDS_FIELD = "cytobands"
+    private const val GAPS_FIELD = "gaps"
+    private const val CENTROMERES_FIELD = "centromeres"
+    private const val CGIS_FIELD = "cgis"
+    private const val BIOMART_FIELD = "biomart"
+    private const val BIOMART_URL_FIELD = "url"
+    private const val BIOMART_DATASET_FIELD = "dataset"
+
+    fun fromMap(build: String, deserializedMap: Map<String, Any>): GenomeAnnotationsConfig {
+        val chrAltName2CanonicalMapping = if (CHR_ALT_NAME_TO_CANONICAL_FIELD in deserializedMap) {
+            (deserializedMap[CHR_ALT_NAME_TO_CANONICAL_FIELD] as List<Map<String, String>>).map {
+                it.entries.first().let { (k, v) -> k to v }
+            }.toMap()
+        } else {
+            emptyMap()
+        }
+
+        val ucscAlias = deserializedMap[UCSC_ALIAS_FIELD] as? String
+        /* names = build + ucsc_alias + aliases, with duplicates removed later */
+        val names = arrayListOf(build)
+        ucscAlias?.let { names.add(it) }
+        names.addAll(when (val aliases = deserializedMap[ALIASES_FIELD]) {
+            is String -> listOf(aliases)
+            is List<*> -> aliases.map { it.toString() }
+            else -> emptyList()
+        })
+
+        val biomart = deserializedMap[BIOMART_FIELD]
+        val mart = if (biomart != null) {
+            val biomartMap = biomart as Map<String, String>
+            val url = biomartMap[BIOMART_URL_FIELD] as String
+            val dataset = biomartMap[BIOMART_DATASET_FIELD] as String
+            Biomart(dataset, url)
+        } else {
+            null
+        }
+        try {
+            return GenomeAnnotationsConfig(
+                deserializedMap[SPECIES_FIELD] as String,
+                ucscAlias,
+                names.distinct(),
+                deserializedMap[DESCRIPTION_FIELD] as String,
+                deserializedMap[GTF_FIELD] as String,
+                chrAltName2CanonicalMapping,
+                deserializedMap[UCSC_ANNOTATIONS_LEGACY_FIELD]?.toString()?.toBoolean() ?: false,
+                deserializedMap[SEQUENCE_FIELD] as String,
+                deserializedMap[CHROMSIZES_FIELD] as String,
+                deserializedMap[REPEATS_FIELD] as String?,
+                deserializedMap[CYTOBANDS_FIELD] as String?,
+                deserializedMap[GAPS_FIELD] as String,
+                deserializedMap[CENTROMERES_FIELD] as String?,
+                deserializedMap[CGIS_FIELD] as String?,
+                mart
+            )
+        } catch (e: Exception) {
+            throw RuntimeException("Cannot parse: [${deserializedMap}]", e)
+        }
+    }
+
+    fun toMap(build: String, genomeAnnotationsConfig: GenomeAnnotationsConfig): LinkedHashMap<String, Any> {
+        val result = linkedMapOf(
+            SPECIES_FIELD to genomeAnnotationsConfig.species,
+            DESCRIPTION_FIELD to genomeAnnotationsConfig.description,
+            ALIASES_FIELD to genomeAnnotationsConfig.names.filter {
+                it != build && it != genomeAnnotationsConfig.ucscAlias
+            },
+            GTF_FIELD to genomeAnnotationsConfig.gtfUrl,
+            SEQUENCE_FIELD to genomeAnnotationsConfig.sequenceUrl,
+            CHROMSIZES_FIELD to genomeAnnotationsConfig.chromsizesUrl,
+            GAPS_FIELD to genomeAnnotationsConfig.gapsUrl
+        )
+        if (genomeAnnotationsConfig.ucscAlias != null) {
+            result[UCSC_ALIAS_FIELD] = genomeAnnotationsConfig.ucscAlias
+        }
+        if (genomeAnnotationsConfig.chrAltName2CanonicalMapping.isNotEmpty()) {
+            result[CHR_ALT_NAME_TO_CANONICAL_FIELD] = genomeAnnotationsConfig.chrAltName2CanonicalMapping
+        }
+        if (genomeAnnotationsConfig.ucscAnnLegacyFormat) {
+            result[UCSC_ANNOTATIONS_LEGACY_FIELD] = true
+        }
+        if (genomeAnnotationsConfig.repeatsUrl != null) {
+            result[REPEATS_FIELD] = genomeAnnotationsConfig.repeatsUrl
+        }
+        if (genomeAnnotationsConfig.cytobandsUrl != null) {
+            result[CYTOBANDS_FIELD] = genomeAnnotationsConfig.cytobandsUrl
+        }
+        if (genomeAnnotationsConfig.centromeresUrl != null) {
+            result[CENTROMERES_FIELD] = genomeAnnotationsConfig.centromeresUrl
+        }
+        if (genomeAnnotationsConfig.cpgIslandsUrl != null) {
+            result[CGIS_FIELD] = genomeAnnotationsConfig.cpgIslandsUrl
+        }
+        if (genomeAnnotationsConfig.mart != null) {
+            result[BIOMART_FIELD] = linkedMapOf(
+                BIOMART_DATASET_FIELD to genomeAnnotationsConfig.mart.dataset,
+                BIOMART_URL_FIELD to genomeAnnotationsConfig.mart.url
+            )
+        }
+        return result
+    }
+
 
 }

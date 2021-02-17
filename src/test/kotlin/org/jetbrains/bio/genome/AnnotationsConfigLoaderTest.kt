@@ -1,7 +1,7 @@
 package org.jetbrains.bio.genome
 
-import org.jetbrains.bio.genome.format.BedParserTest
 import org.jetbrains.bio.util.withResource
+import org.jetbrains.bio.util.withTempFile
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -24,7 +24,7 @@ class AnnotationsConfigLoaderTest {
 
     @Test
     fun parseYamlOutdated() {
-        withResource(BedParserTest::class.java, "test_annotations.yaml") { path ->
+        withResource(AnnotationsConfigLoader::class.java, "test_annotations.yaml") { path ->
             val (version, mapping, yaml) = AnnotationsConfigLoader.parseYaml(path, 0)
             assertEquals(1, version)
             assertNull(mapping)
@@ -34,7 +34,7 @@ class AnnotationsConfigLoaderTest {
 
     @Test
     fun parseYaml() {
-        withResource(BedParserTest::class.java, "test_annotations.yaml") { path ->
+        withResource(AnnotationsConfigLoader::class.java, "test_annotations.yaml") { path ->
             val (version, mapping, _) = AnnotationsConfigLoader.parseYaml(path, 1)
             assertEquals(1, version)
             assertEquals(5, mapping!!.entries.size)
@@ -43,17 +43,17 @@ class AnnotationsConfigLoaderTest {
             assertEquals(listOf("mm9", "NCBIM37"), mapping["mm9"]!!.names)
             assertEquals("mm9", mapping["mm9"]!!.ucscAlias)
             assertEquals(
-                    Biomart(
-                            "hsapiens_gene_ensembl",
-                            "http://mar2016.archive.ensembl.org/biomart/martservice"
-                    ),
+                Biomart(
+                    "hsapiens_gene_ensembl",
+                    "http://mar2016.archive.ensembl.org/biomart/martservice"
+                ),
                 mapping["hg38"]!!.mart
             )
             assertEquals(
-                    Biomart(
-                            "dmelanogaster_gene_ensembl",
-                            "http://dec2014.archive.ensembl.org/biomart/martservice"
-                    ),
+                Biomart(
+                    "dmelanogaster_gene_ensembl",
+                    "http://dec2014.archive.ensembl.org/biomart/martservice"
+                ),
                 mapping["dm3"]!!.mart
             )
             assertEquals(
@@ -67,28 +67,64 @@ class AnnotationsConfigLoaderTest {
 
             assertEquals(
                 "http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/rmsk.txt.gz",
-                mapping["hg38"]!!.repeatsUrl)
+                mapping["hg38"]!!.repeatsUrl
+            )
             assertEquals(
                 "http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/cytoBand.txt.gz",
-                mapping["hg38"]!!.cytobandsUrl)
+                mapping["hg38"]!!.cytobandsUrl
+            )
             assertNull(mapping["ce6"]!!.cytobandsUrl)
             assertEquals(
                 "http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/gap.txt.gz",
-                mapping["hg38"]!!.gapsUrl)
+                mapping["hg38"]!!.gapsUrl
+            )
             assertEquals(
                 "http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/centromeres.txt.gz",
-                mapping["hg38"]!!.centromeresUrl)
+                mapping["hg38"]!!.centromeresUrl
+            )
             assertNull(mapping["hg19"]!!.centromeresUrl)
             assertEquals(
                 "http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cpgIslandExt.txt.gz",
-                mapping["hg19"]!!.cpgIslandsUrl)
+                mapping["hg19"]!!.cpgIslandsUrl
+            )
             assertNull(mapping["dm3"]!!.cpgIslandsUrl)
             assertEquals(
                 "http://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips/dm3.2bit",
-                mapping["dm3"]!!.sequenceUrl)
+                mapping["dm3"]!!.sequenceUrl
+            )
             assertEquals(
                 "http://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips/dm3.chrom.sizes",
-                mapping["dm3"]!!.chromsizesUrl)
+                mapping["dm3"]!!.chromsizesUrl
+            )
+        }
+    }
+
+    @Test
+    fun serialization() {
+        val mapping =
+            mapOf(
+                "foo" to GenomeAnnotationsConfig(
+                    species = "species",
+                    ucscAlias = null,
+                    names = listOf("foo"),
+                    description = "description",
+                    gtfUrl = "https://gtf",
+                    chrAltName2CanonicalMapping = emptyMap(),
+                    ucscAnnLegacyFormat = false,
+                    sequenceUrl = "https://sequence",
+                    chromsizesUrl = "https://chromsizes",
+                    repeatsUrl = null,
+                    cytobandsUrl = "https://cytobands",
+                    gapsUrl = "https://gaps",
+                    centromeresUrl = null,
+                    cpgIslandsUrl = null,
+                    mart = null
+                )
+            )
+        withTempFile("foo", ".yaml") {
+            AnnotationsConfigLoader.saveYaml(it, mapping)
+            val (_, mapping2, _) = AnnotationsConfigLoader.parseYaml(it, 4)
+            assertEquals(mapping, mapping2)
         }
     }
 }
