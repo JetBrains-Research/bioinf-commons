@@ -9,6 +9,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.zip.GZIPInputStream
 
 /**
  * Generic genome information.
@@ -240,4 +241,32 @@ object AnnotationsConfigLoader {
 
         }
     }
+
+    fun updateAnnotations(markupPath: Path) {
+        val path = markupPath / "annotations.tar.gz.txt"
+        if (path.exists) {
+            var version = -1
+            path.bufferedReader().use {
+                try {
+                    version = it.readLine().toInt()
+                } catch (t: Throwable) {
+                    LOG.error("Failed to read version number from $path", t)
+                }
+            }
+            if (version != VERSION) {
+                LOG.info("Outdated cache file $path (version: $version) recent version: $VERSION).")
+                path.delete()
+            }
+        }
+        val bundled = AnnotationsConfigLoader::class.java.getResource("/annotations.tar.gz")
+        checkNotNull(bundled) { "Bundled annotations not available" }
+
+        if (path.notExists) {
+            Tar.decompress(GZIPInputStream(bundled.openStream()), markupPath.toFile(), false)
+            path.bufferedWriter().use {
+                it.write(VERSION.toString())
+            }
+        }
+    }
+
 }
