@@ -62,17 +62,12 @@ object AnnotationsConfigLoader {
      * Parse YAML file and load configuration. If YAML file doesn't exist if would be created with
      * default bundled content using [bioinf-commons/src/main/resources/annotations.yaml]
      */
-    fun init(yamlPath: Path) {
-        // 'Double checked synchronization' to configure pathAndYamlConfig singleton
-        if (pathAndConfig == null) {
-            // if 2-nd thread enters section after 1-st thread already left it: do not reassign the value
-            if (pathAndConfig == null) {
-                pathAndConfig = yamlPath to loadOrCreateAnnotationsConfig(yamlPath)
-            }
-        }
-        val path = pathAndConfig!!.first
-        require(yamlPath == path) {
-            "Already initialized with $path, couldn't be overridden with $yamlPath."
+    fun init(yamlPath: Path, checkAlreadyInitialized: Boolean = true) {
+        if (!initialized || !checkAlreadyInitialized) {
+            pathAndConfig = yamlPath to loadOrCreateAnnotationsConfig(yamlPath)
+        } else {
+            val path = pathAndConfig!!.first
+            error("Already initialized with $path, couldn't be overridden with $yamlPath.")
         }
     }
 
@@ -84,9 +79,7 @@ object AnnotationsConfigLoader {
      */
     val yamlPath: Path
         get() {
-            if (pathAndConfig == null) {
-                error("Annotations config not initialized, call [AnnotationsConfig.init] first")
-            }
+            require(initialized) { "Annotations config not initialized, call [AnnotationsConfig.init] first" }
             return pathAndConfig!!.first
         }
 
@@ -94,15 +87,14 @@ object AnnotationsConfigLoader {
      * Ensure annotations config loaded, use [AnnotationsConfigLoader.init]
      */
     val builds: Set<String>
-        get() {
-            return pathAndConfig!!.second.keys
-        }
+    get() {
+        require(initialized) { "Annotations config not initialized, call [AnnotationsConfig.init] first" }
+        return pathAndConfig!!.second.keys
+    }
 
 
     operator fun get(build: String): GenomeAnnotationsConfig {
-        if (pathAndConfig == null) {
-            error("Annotations config not initialized, call [AnnotationsConfig.init] first")
-        }
+        require(initialized) { "Annotations config not initialized, call [AnnotationsConfig.init] first" }
         check(build in builds) {
             "Unexpected build name $build, annotations are available only for ${builds.joinToString()}"
         }
