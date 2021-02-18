@@ -225,6 +225,10 @@ object AnnotationsConfigLoader {
     private const val BIOMART_DATASET_FIELD = "dataset"
 
     fun fromMap(build: String, deserializedMap: Map<String, Any>): GenomeAnnotationsConfig {
+        /** Formats fix: example below deserializes into list of maps
+         * chr_alt_name_to_canonical:
+         *    MT: chrM
+         */
         val chrAltName2CanonicalMapping = if (CHR_ALT_NAME_TO_CANONICAL_FIELD in deserializedMap) {
             (deserializedMap[CHR_ALT_NAME_TO_CANONICAL_FIELD] as List<Map<String, String>>).map {
                 it.entries.first().let { (k, v) -> k to v }
@@ -291,7 +295,9 @@ object AnnotationsConfigLoader {
             result[UCSC_ALIAS_FIELD] = genomeAnnotationsConfig.ucscAlias
         }
         if (genomeAnnotationsConfig.chrAltName2CanonicalMapping.isNotEmpty()) {
-            result[CHR_ALT_NAME_TO_CANONICAL_FIELD] = genomeAnnotationsConfig.chrAltName2CanonicalMapping
+            // Transform Map<String, String> to List<Map<String, String>>, see example while deserializing
+            result[CHR_ALT_NAME_TO_CANONICAL_FIELD] =
+                genomeAnnotationsConfig.chrAltName2CanonicalMapping.entries.map { (k, v) -> mapOf(k to v) }
         }
         if (genomeAnnotationsConfig.ucscAnnLegacyFormat) {
             result[UCSC_ANNOTATIONS_LEGACY_FIELD] = true

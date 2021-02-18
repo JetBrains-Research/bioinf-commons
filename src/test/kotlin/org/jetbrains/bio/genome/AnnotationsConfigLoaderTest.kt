@@ -109,7 +109,7 @@ class AnnotationsConfigLoaderTest {
                     names = listOf("foo"),
                     description = "description",
                     gtfUrl = "https://gtf",
-                    chrAltName2CanonicalMapping = emptyMap(),
+                    chrAltName2CanonicalMapping = mapOf("MT" to "chrM"),
                     ucscAnnLegacyFormat = false,
                     sequenceUrl = "https://sequence",
                     chromsizesUrl = "https://chromsizes",
@@ -127,4 +127,17 @@ class AnnotationsConfigLoaderTest {
             assertEquals(mapping, mapping2)
         }
     }
+
+    @Test
+    fun serializationPredefined() {
+        withResource(AnnotationsConfigLoader::class.java, "test_annotations.yaml") { path ->
+            val (_, mapping, _) = AnnotationsConfigLoader.parseYaml(path, 1)
+            withTempFile("foo", ".yaml") {
+                AnnotationsConfigLoader.saveYaml(it, mapping!!)
+                val (_, mapping2, _) = AnnotationsConfigLoader.parseYaml(it, 4)
+                assertEquals(mapping, mapping2)
+            }
+        }
+    }
+
 }
