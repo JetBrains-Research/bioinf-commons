@@ -235,17 +235,15 @@ class Genome private constructor(
          */
         operator fun get(build: String) =
                 getOrAdd(build, false) {
-                    val dataPath = Configuration.genomesPath / build
-                    val to = build == TEST_ORGANISM_BUILD
 
-                    val annCfg: GenomeAnnotationsConfig = when {
-                        to -> GenomeAnnotationsConfig(
-                            "Test Organism", "to1", listOf("to1"),
+                    val annCfg: GenomeAnnotationsConfig = when (build) {
+                        // For tests
+                        TEST_ORGANISM_BUILD -> GenomeAnnotationsConfig(
+                            "Test Organism", TEST_ORGANISM_BUILD, listOf("to1"),
                             "test", "<n/a>", emptyMap(), false,
                             "<n/a>", "<n/a>", "<n/a>", "<n/a>", "<n/a>",
                             null, "<n/a>", null
                         )
-
                         else -> {
                             if (!AnnotationsConfigLoader.initialized) {
                                 // Init with default settings only if not initialized by user before us
@@ -254,9 +252,11 @@ class Genome private constructor(
                             AnnotationsConfigLoader[build]
                         }
                     }
-                    val genesDescriptionsPath: Path? = if (to) null else dataPath / "description.tsv"
-                    val genesGTFPath: Path = dataPath / (when {
-                        to -> "genes.gtf.gz"
+                    val dataPath = Configuration.genomesPath / build
+                    val genesDescriptionsPath: Path? =
+                        if (build == TEST_ORGANISM_BUILD) null else dataPath / "description.tsv"
+                    val genesGTFPath: Path = dataPath / (when (build) {
+                        TEST_ORGANISM_BUILD -> "genes.gtf.gz"
                         else -> annCfg.gtfUrl.substringAfterLast('/')
                     })
 
@@ -264,7 +264,7 @@ class Genome private constructor(
                         build,
                         annotationsConfig = annCfg,
                         // we don't expect test genome to save smth in test data dir
-                        dataPath = if (to) null else dataPath,
+                        dataPath = if (build == TEST_ORGANISM_BUILD) null else dataPath,
 
                         chromSizesPath = dataPath / "$build.chrom.sizes",
                         chromSizesMapLambda = { chromSizesFromPath(build, dataPath / "$build.chrom.sizes", annCfg) },
