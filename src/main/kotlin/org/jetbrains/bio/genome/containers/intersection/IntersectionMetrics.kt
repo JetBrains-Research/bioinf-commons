@@ -19,13 +19,15 @@ object IntersectionMetrics {
         override val column = "jaccard"
 
         override fun calcMetric(a: LocationsList<out RangesList>, b: LocationsList<out RangesList>): Double {
-            val intersectionSize = a.calcAdditiveMetricDouble(b) { ra, rb ->
-                ra.intersectRanges(rb).sumByDouble { it.length().toDouble() }
-            }
-            val aSize = a.rangeLists.sumByDouble { it.sumByDouble { it.length().toDouble() } }
-            val bSize = b.rangeLists.sumByDouble { it.sumByDouble { it.length().toDouble() } }
+            val intersectionSize = a.calcAdditiveMetricDouble(b) { ra, rb -> calcMetric(ra, rb) }
+
+            val aSize = a.rangeLists.sumByDouble { ranges -> ranges.sumByDouble { it.length().toDouble() } }
+            val bSize = b.rangeLists.sumByDouble { ranges -> ranges.sumByDouble { it.length().toDouble() } }
             return intersectionSize / (aSize + bSize - intersectionSize)
         }
+
+        override fun calcMetric(ra: RangesList, rb: RangesList): Double =
+            ra.intersectRanges(rb).sumByDouble { it.length().toDouble() }
     }
 
     val OVERLAP_FRACTION = object : RegionsMetric {
@@ -33,6 +35,8 @@ object IntersectionMetrics {
 
         override fun calcMetric(a: LocationsList<out RangesList>, b: LocationsList<out RangesList>): Double =
             OVERLAP.calcMetric(a, b) / a.size
+
+        override fun calcMetric(ra: RangesList, rb: RangesList): Double = OVERLAP.calcMetric(ra, rb)
     }
 
     fun parse(options: OptionSet) = (options.valueOf("metric") as String).let { text ->

@@ -10,8 +10,9 @@ class OverlapNumberMetric(val aSetFlankedBothSides: Int = 0) : RegionsMetric {
     override val column =
         "overlap" + if (aSetFlankedBothSides == 0) "" else "_flnk_$aSetFlankedBothSides"
 
-    override fun calcMetric(a: LocationsList<out RangesList>, b: LocationsList<out RangesList>) =
-        a.calcAdditiveMetric(b) { ra, rb ->
-            ra.overlapRangesNumber(rb, flankBothSides = aSetFlankedBothSides).toLong()
-        }.toDouble()
+    override fun calcMetric(a: LocationsList<out RangesList>, b: LocationsList<out RangesList>): Double =
+        a.calcAdditiveMetricDouble(b) { ra, rb -> calcMetric(ra, rb) }
+
+    override fun calcMetric(ra: RangesList, rb: RangesList): Double =
+        ra.overlapRangesNumber(rb, flankBothSides = aSetFlankedBothSides).toDouble()
 }

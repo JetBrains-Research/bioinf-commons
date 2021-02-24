@@ -92,7 +92,8 @@ class RegionShuffleStats(
         mergeOverlapped: Boolean = true,
         intersectionFilter: LocationsList<out RangesList>? = null,
         genomeMaskedLociPath: Path? = null,
-        genomeAllowedLociPath: Path? = null
+        genomeAllowedLociPath: Path? = null,
+        addLoiToBg: Boolean = false
     ): DataFrame {
         outputFolderPath?.createDirectories()
         val dumpDetails = outputFolderPath != null
@@ -100,7 +101,7 @@ class RegionShuffleStats(
         val gq = genome.toQuery()
 
         val (sourceLoci, bgLociList) = loadSrcLociAndBg(
-            srcRegionsPath, backgroundRegions, genomeMaskedLociPath, genomeAllowedLociPath, gq
+            srcRegionsPath, backgroundRegions, addLoiToBg, genomeMaskedLociPath, genomeAllowedLociPath, gq
         )
         require(sourceLoci.isNotEmpty()) {
             "Loci file is empty or all loci were masked."
@@ -290,6 +291,7 @@ class RegionShuffleStats(
 
     private fun loadSrcLociAndBg(
         srcRegionsPath: Path, backgroundRegionsPath: Path?,
+        addLoiToBg: Boolean,
         genomeMaskedLociPath: Path?,
         genomeAllowedLociPath: Path?,
         gq: GenomeQuery
@@ -298,9 +300,14 @@ class RegionShuffleStats(
         LOG.info("Source loci: ${sourceLoci.size} regions")
 
         val bgLoci = if (backgroundRegionsPath != null) {
+            val bgLocations = readLocationsIgnoringStrand(backgroundRegionsPath, gq).toMutableList()
+            if (addLoiToBg) {
+                // merge source loci into background
+                bgLocations.addAll(sourceLoci)
+            }
             val bgLoci = LocationsMergingList.create(
                 gq,
-                readLocationsIgnoringStrand(backgroundRegionsPath, gq)
+                bgLocations
             )
             LOG.info("Background regions: ${bgLoci.size} regions")
 
@@ -310,8 +317,6 @@ class RegionShuffleStats(
                             "loci is missing in bg: ${it.toChromosomeRange()}"
                 }
             }
-            // XXX: optionally we could merge LOI into BG, but let's ask user to do in explicitly
-            //    background regions are often re-used for different type of analysis, let's take them as is
             bgLoci
         } else {
             // whole genome as bg

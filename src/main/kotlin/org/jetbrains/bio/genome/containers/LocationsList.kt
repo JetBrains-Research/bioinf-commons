@@ -81,6 +81,22 @@ abstract class LocationsList<T : RangesList> : GenomeStrandMapLike<List<Location
         return acc.result()
     }
 
+    /**
+        * 'inline' is important here otherwise each method usage will
+        * create new instance of anonymous 'metric' class
+        */
+       inline fun calcAdditiveMetricDouble(
+           other: RangesList, otherChromosome: Chromosome, otherStrand: Strand,
+           metric: (RangesList, RangesList) -> Double
+       ): Double {
+
+        if (!rangeLists.contains(otherChromosome, otherStrand)) {
+            return 0.0
+        }
+
+        return metric(rangeLists[otherChromosome, otherStrand], other)
+    }
+
     fun asLocationSequence(): Sequence<Location> = asSequence().flatMap { it.asSequence() }
 
     fun locationIterator(): Iterator<Location> = asLocationSequence().iterator()

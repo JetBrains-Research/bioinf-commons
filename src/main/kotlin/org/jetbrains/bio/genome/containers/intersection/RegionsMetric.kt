@@ -7,4 +7,5 @@ interface RegionsMetric {
     val column: String
 
     fun calcMetric(a: LocationsList<out RangesList>, b: LocationsList<out RangesList>): Double
+    fun calcMetric(ra: RangesList, rb: RangesList): Double
 }

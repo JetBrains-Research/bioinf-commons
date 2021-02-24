@@ -10,8 +10,9 @@ class IntersectionNumberMetric (val aSetFlankedBothSides: Int = 0) : RegionsMetr
     override val column =
         "intersection_number" + if (aSetFlankedBothSides == 0) "" else "_flnk_$aSetFlankedBothSides"
 
-    override fun calcMetric(a: LocationsList<out RangesList>, b: LocationsList<out RangesList>) =
-        a.calcAdditiveMetric(b) { ra, rb ->
-            ra.intersectRangesNumber(rb, flankBothSides = aSetFlankedBothSides).toLong()
-        }.toDouble()
+    override fun calcMetric(a: LocationsList<out RangesList>, b: LocationsList<out RangesList>): Double =
+        a.calcAdditiveMetricDouble(b) { ra, rb -> calcMetric(ra, rb) }
+
+    override fun calcMetric(ra: RangesList, rb: RangesList): Double =
+        ra.intersectRangesNumber(rb, flankBothSides = aSetFlankedBothSides).toDouble()
 }

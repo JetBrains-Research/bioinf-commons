@@ -26,6 +26,7 @@ object EnrichmentInRegions {
     fun doCalculations(
         loiPath: Path,
         backGroundRegions: Path?,
+        addLoiToBg: Boolean,
         regionsPath: Path,
         genome: Genome,
         simulationsNumber: Int,
@@ -78,7 +79,8 @@ object EnrichmentInRegions {
             mergeOverlapped = mergeOverlapped,
             intersectionFilter = regionsToTestFilter,
             genomeMaskedLociPath = genomeMaskedLociPath,
-            genomeAllowedLociPath = genomeAllowedLociPath
+            genomeAllowedLociPath = genomeAllowedLociPath,
+            addLoiToBg = addLoiToBg
         ).save(reportPath)
 
         LOG.info("Report saved to: $reportPath")
@@ -87,13 +89,13 @@ object EnrichmentInRegions {
         }
     }
 
-    private fun collectRegionsFrom(
+    fun collectRegionsFrom(
         filesStream: Stream<Path>,
         genome: Genome,
         mergeOverlapped: Boolean,
         intersectionFilter: LocationsSortedList?,
         regionsNameSuffix: String?
-    ) = filesStream.filter {  path ->
+    ): List<Pair<String, LocationsList<out RangesList>>> = filesStream.filter { path ->
         regionsNameSuffix == null || path.name.endsWith(regionsNameSuffix)
     }.map { path ->
         val name = path.fileName.toString()
@@ -150,6 +152,11 @@ object EnrichmentInRegions {
             )
                 .withRequiredArg()
                 .withValuesConvertedBy(PathConverter.noCheck())
+
+            accepts(
+                "add-loi-to-bg",
+                "Add loci of interest (loi) to background before sampling."
+            )
 
             acceptsAll(
                 listOf("genome-masked"),
@@ -262,7 +269,7 @@ object EnrichmentInRegions {
             acceptsAll(listOf("d", "debug"), "Print all the debug info")
 
             val tool = BioinfToolsCLA.Tools.LOCI_ENRICHMENT_IN_REGIONS
-            parse(args, description = "Given LOI enrichment in regions files") { options ->
+            parse(args, description = tool.description) { options ->
                 BioinfToolsCLA.configureLogging("quiet" in options, "debug" in options)
                 LOG.info("Tool [${tool.command}]: ${tool.description} (vers: ${BioinfToolsCLA.version()})")
 
@@ -291,6 +298,9 @@ object EnrichmentInRegions {
 
                 val backGroundRegions = options.valueOf("background") as Path?
                 LOG.info("BACKGROUND: $backGroundRegions")
+
+                val addLoiToBg = options.has("add-loi-to-bg")
+                LOG.info("ADD LOI TO BG: $addLoiToBg")
 
                 val regionsFolderPath = options.valueOf("regions") as Path
                 LOG.info("REGIONS_TO_TEST: $regionsFolderPath")
@@ -346,7 +356,7 @@ object EnrichmentInRegions {
 
 
                 doCalculations(
-                    srcLoci, backGroundRegions, regionsFolderPath, genome,
+                    srcLoci, backGroundRegions, addLoiToBg, regionsFolderPath, genome,
                     simulationsNumber,
                     if (chunkSize == 0) simulationsNumber else chunkSize,
                     outputBaseName,

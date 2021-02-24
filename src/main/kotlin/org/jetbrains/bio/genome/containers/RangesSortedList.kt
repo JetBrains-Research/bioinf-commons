@@ -2,6 +2,7 @@ package org.jetbrains.bio.genome.containers
 
 import gnu.trove.list.TIntList
 import gnu.trove.list.array.TIntArrayList
+import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.Range
 
 
@@ -98,6 +99,17 @@ fun Iterable<Range>.toRangeSortedList(): RangesSortedList {
         startOffsets.add(range.startOffset)
         endOffsets.add(range.endOffset)
     }
+    return RangesSortedList(startOffsets, endOffsets)
+}
+
+fun Location.toRangeSortedList(): RangesSortedList {
+    // store ranges as: start, end offsets
+    val startOffsets = TIntArrayList(1)
+    val endOffsets = TIntArrayList(1)
+
+    startOffsets.add(startOffset)
+    endOffsets.add(endOffset)
+
     return RangesSortedList(startOffsets, endOffsets)
 }
 
