@@ -3,11 +3,20 @@ package org.jetbrains.bio.statistics
 import com.google.common.collect.Sets
 import com.google.common.math.IntMath
 import org.apache.commons.math3.distribution.PoissonDistribution
+import org.jetbrains.bio.Retry
+import org.jetbrains.bio.RetryRule
+import org.junit.Rule
 import org.junit.Test
 import java.util.concurrent.ForkJoinPool
 import kotlin.test.assertEquals
 
 class MoreStreamsTest {
+
+    @get:Rule
+    var rule = RetryRule(3)
+
+    // the test checks empty range handling, so the empty range is intended
+    @Suppress("EmptyRange")
     @Test
     fun chunkedStreamEmpty() {
         assertEquals(emptyList(),
@@ -55,6 +64,7 @@ class MoreStreamsTest {
         assertEquals(acc, sum)
     }
 
+    @Retry
     @Test
     fun chunkedStreamIsParallel() {
         val numObservations = IntMath.pow(2, 16)
