@@ -101,7 +101,7 @@ object AnnotationsConfigLoader {
         return pathAndConfig!!.second[build]!!
     }
 
-    internal fun parseYaml(yamlPath: Path, currentVersion: Int):
+    fun parseYaml(yamlPath: Path, currentVersion: Int):
             Triple<Int, Map<String, GenomeAnnotationsConfig>?, AnnotationConfigYAMLSerializable> {
         val yaml = AnnotationConfigYAMLSerializable.load(yamlPath)
         val yamlVersion = yaml.version
@@ -167,7 +167,7 @@ object AnnotationsConfigLoader {
     /**
      * This is a technical class that is used for serialization / deserialization in YAML
      */
-    internal class AnnotationConfigYAMLSerializable {
+    class AnnotationConfigYAMLSerializable {
         @JvmField
         var version: Int = 0
 
@@ -280,12 +280,14 @@ object AnnotationsConfigLoader {
     }
 
     fun toMap(build: String, genomeAnnotationsConfig: GenomeAnnotationsConfig): LinkedHashMap<String, Any> {
+        val aliases = genomeAnnotationsConfig.names.filter {
+            it != build && it != genomeAnnotationsConfig.ucscAlias
+        }
         val result = linkedMapOf(
             SPECIES_FIELD to genomeAnnotationsConfig.species,
             DESCRIPTION_FIELD to genomeAnnotationsConfig.description,
-            ALIASES_FIELD to genomeAnnotationsConfig.names.filter {
-                it != build && it != genomeAnnotationsConfig.ucscAlias
-            },
+            // Should be serialized as list or single value (in most cases)
+            ALIASES_FIELD to if (aliases.size == 1) aliases.first() else aliases,
             GTF_FIELD to genomeAnnotationsConfig.gtfUrl,
             SEQUENCE_FIELD to genomeAnnotationsConfig.sequenceUrl,
             CHROMSIZES_FIELD to genomeAnnotationsConfig.chromsizesUrl,
