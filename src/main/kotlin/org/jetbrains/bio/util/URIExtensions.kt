@@ -135,6 +135,8 @@ fun URI.asByteSource() = if (isFile()) {
     Resources.asByteSource(toURL())!!
 }
 
+fun URI.extension(): String = path.substringAfterLast(".")
+
 fun URI.hasExt(vararg extensions: String): Boolean {
     val suffixes = extensions.map { ".${it.toLowerCase()}" }
 
