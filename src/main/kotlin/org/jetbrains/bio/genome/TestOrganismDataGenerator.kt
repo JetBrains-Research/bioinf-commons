@@ -9,15 +9,21 @@ import org.jetbrains.bio.experiment.Configuration
 import org.jetbrains.bio.genome.format.FastaRecord
 import org.jetbrains.bio.genome.format.TwoBitWriter
 import org.jetbrains.bio.genome.format.write
+import org.jetbrains.bio.genome.search.sa.SuffixArray
 import org.jetbrains.bio.genome.sequence.Nucleotide
+import org.jetbrains.bio.genome.sequence.NucleotideSequence
 import org.jetbrains.bio.util.bufferedWriter
 import org.jetbrains.bio.util.createDirectories
 import org.jetbrains.bio.util.div
 import org.jetbrains.bio.util.withTempFile
 import org.slf4j.LoggerFactory
+import java.io.DataOutputStream
+import java.io.IOException
+import java.nio.file.Files
 import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.stream.Collectors
+import kotlin.math.abs
 import kotlin.math.min
 
 /** A generator for the fake "to1" genome build. */
@@ -26,11 +32,11 @@ object TestOrganismDataGenerator {
     private val LOG = LoggerFactory.getLogger(TestOrganismDataGenerator::class.java)
 
     private val CHROMOSOMES_SIZES = mapOf(
-            "chr1" to IntMath.pow(10, 7),
-            "chr2" to IntMath.pow(10, 6),
-            "chr3" to IntMath.pow(10, 6),
-            "chrX" to IntMath.pow(10, 6),
-            "chrM" to IntMath.pow(10, 6)
+        "chr1" to IntMath.pow(10, 7),
+        "chr2" to IntMath.pow(10, 6),
+        "chr3" to IntMath.pow(10, 6),
+        "chrX" to IntMath.pow(10, 6),
+        "chrM" to IntMath.pow(10, 4)
     )
 
     @JvmStatic
@@ -50,7 +56,7 @@ object TestOrganismDataGenerator {
         val build = Genome.TEST_ORGANISM_BUILD
         val chromSizesPath = Configuration.genomesPath / build / "$build.chrom.sizes"
         CSVFormat.TDF.print(chromSizesPath.bufferedWriter()).use { csvPrinter ->
-            CHROMOSOMES_SIZES.forEach { name, size ->
+            CHROMOSOMES_SIZES.forEach { (name, size) ->
                 csvPrinter.printRecord(name, size.toString())
             }
         }
@@ -64,6 +70,7 @@ object TestOrganismDataGenerator {
         generateRepeats(genome)
         generateCGI(genome)
         generateMapability(genome)
+        generateSA(genome)
         LOG.info("Done")
     }
 
@@ -78,12 +85,11 @@ object TestOrganismDataGenerator {
         LOG.info("Generating FASTA sequence")
         withTempFile(genome.build, ".fa") { fastaPath ->
             val r = ThreadLocalRandom.current()
-            CHROMOSOMES_SIZES.asSequence().map {
-                val (name, length) = it
+            CHROMOSOMES_SIZES.map { (name, length) ->
                 val sequence = r.ints(length.toLong(), 0, Nucleotide.ALPHABET.size)
-                        .mapToObj { Nucleotide.ALPHABET[it].toString() }
-                        .collect(Collectors.joining())
-                        .toCharArray()
+                    .mapToObj { Nucleotide.ALPHABET[it].toString() }
+                    .collect(Collectors.joining())
+                    .toCharArray()
 
                 val numGaps = min(r.nextInt(maxGaps + 1), 3)
                 for (i in 0 until numGaps) {
@@ -97,7 +103,7 @@ object TestOrganismDataGenerator {
                 }
 
                 FastaRecord(name, String(sequence))
-            }.asIterable().write(fastaPath)
+            }.write(fastaPath)
 
             LOG.info("Converting FASTA sequence to 2bit")
             TwoBitWriter.convert(fastaPath, genome.twoBitPath(false))
@@ -116,7 +122,7 @@ object TestOrganismDataGenerator {
 
         genome.genesGtfPath(false).bufferedWriter().use { w ->
 
-            val transcripts = ArrayList<Transcript>()
+            val transcripts = arrayListOf<Transcript>()
 
             for (name in CHROMOSOMES_SIZES.keys.sorted()) {
                 val chromosome = Chromosome(genome, name)
@@ -129,8 +135,10 @@ object TestOrganismDataGenerator {
                     val currentStart = currentEnd + 10000 + r.nextInt(40000)
                     val currentLength = 100 + min(length - currentStart - 10000, 10000)
                     val strand = if (r.nextBoolean()) Strand.PLUS else Strand.MINUS
-                    val transcript = generateTranscript(geneNumber, geneSymbol, chromosome, strand,
-                            currentStart, currentLength)
+                    val transcript = generateTranscript(
+                        geneNumber, geneSymbol, chromosome, strand,
+                        currentStart, currentLength
+                    )
                     transcripts.add(transcript)
 
                     currentEnd = currentStart + currentLength
@@ -143,9 +151,11 @@ object TestOrganismDataGenerator {
     }
 
     /** Here be dragons! */
-    private fun generateTranscript(geneNumber: Int, geneSymbol: String,
-                                   chromosome: Chromosome, strand: Strand,
-                                   offset: Int, length: Int): Transcript {
+    private fun generateTranscript(
+        geneNumber: Int, geneSymbol: String,
+        chromosome: Chromosome, strand: Strand,
+        offset: Int, length: Int
+    ): Transcript {
         val ensemblId = "ENST$geneSymbol"
 
         val minExonLength = 3
@@ -173,11 +183,13 @@ object TestOrganismDataGenerator {
             lengthPool -= intronLen - minIntronLength
         }
 
-        exonEnds.add(exonCount - 1,
-                if (rightFlankingIntron)
-                    exonStarts[exonCount - 1] + minExonLength + r.nextInt(lengthPool)
-                else
-                    offset + length)
+        exonEnds.add(
+            exonCount - 1,
+            if (rightFlankingIntron)
+                exonStarts[exonCount - 1] + minExonLength + r.nextInt(lengthPool)
+            else
+                offset + length
+        )
 
         val exonRanges = (0 until exonCount).map { Range(exonStarts[it], exonEnds[it]) }.sorted()
 
@@ -210,11 +222,13 @@ object TestOrganismDataGenerator {
             cdsRange = null
             utr3End5 = -1
         }
-        return Transcript(ensemblId, "ENSG$geneSymbol",
-                geneSymbol,
-                Location(offset, offset + length, chromosome, strand),
-                cdsRange, utr3End5,
-                exonRanges)
+        return Transcript(
+            ensemblId, "ENSG$geneSymbol",
+            geneSymbol,
+            Location(offset, offset + length, chromosome, strand),
+            cdsRange, utr3End5,
+            exonRanges
+        )
     }
 
     /**
@@ -227,11 +241,13 @@ object TestOrganismDataGenerator {
         genome.gapsPath.bufferedWriter().use {
             val printer = Gaps.FORMAT.print(it)
             for (chromosome in genome.chromosomes) {
-                printer.printRecord(100,
-                        chromosome.name,
-                        chromosome.length / 2 - 1000,
-                        chromosome.length / 2 + 1000,
-                        "", "", 2000, "centromere", "")
+                printer.printRecord(
+                    100,
+                    chromosome.name,
+                    chromosome.length / 2 - 1000,
+                    chromosome.length / 2 + 1000,
+                    "", "", 2000, "centromere", ""
+                )
             }
         }
     }
@@ -246,11 +262,13 @@ object TestOrganismDataGenerator {
         genome.cytobandsPath!!.bufferedWriter().use {
             val printer = CytoBands.FORMAT.print(it)
             for ((i, chromosome) in genome.chromosomes.withIndex()) {
-                printer.printRecord(chromosome.name,
-                        chromosome.length / 2 - 1000,
-                        chromosome.length / 2 + 1000,
-                        "q$i.${i % 3 + 1}",
-                        "unknown region tag")
+                printer.printRecord(
+                    chromosome.name,
+                    chromosome.length / 2 - 1000,
+                    chromosome.length / 2 + 1000,
+                    "q$i.${i % 3 + 1}",
+                    "unknown region tag"
+                )
             }
         }
     }
@@ -264,8 +282,10 @@ object TestOrganismDataGenerator {
         LOG.info("Generating repeat annotations (stub)")
         genome.repeatsPath!!.bufferedWriter().use { w ->
             // This is the first line from mm9 annotations.
-            w.write("607\t687\t174\t0\t0\tchr1\t3000001\t3000156\t-194195276\t-" +
-                    "\tL1_Mur2\tLINE\tL1\t-4310\t1567\t1413\t1")
+            w.write(
+                "607\t687\t174\t0\t0\tchr1\t3000001\t3000156\t-194195276\t-" +
+                        "\tL1_Mur2\tLINE\tL1\t-4310\t1567\t1413\t1"
+            )
         }
     }
 
@@ -278,10 +298,12 @@ object TestOrganismDataGenerator {
         LOG.info("Generating repeat annotations (stub)")
         genome.cpgIslandsPath!!.bufferedWriter().use { w ->
             // This is the first line from hg19 annotations.
-            w.write("""
+            w.write(
+                """
                 |585	chr1	28735	29810	CpG: 116	1075	116	787	21.6	73.2	0.83
                 |586	chr1	135124	135563	CpG: 30	439	30	295	13.7	67.2	0.64
-            """.trimMargin().trim())
+            """.trimMargin().trim()
+            )
         }
     }
 
@@ -307,5 +329,58 @@ object TestOrganismDataGenerator {
             )
         )
         BigWigFile.write(listOf(section), gq.get().map { it.name to it.length }, path)
+    }
+
+    private fun generateSA(genome: Genome) {
+        LOG.info("Processing SA indexes and FASTQ mismatched reads")
+        for (chromosome in genome.chromosomes) {
+            SuffixArray.create(chromosome)
+            val sequence = chromosome.sequence
+            // Generate 35-bp FASTQ reads with 0 to 2 mismatches
+            val outputStream = DataOutputStream(
+                Files.newOutputStream(genome.chromSizesPath.parent!! / "sa"/ "${chromosome.name}.fastq")
+            )
+            var j = 0
+            while (j < 1e3) {
+                writeFastq(outputStream, j, sequence, 35, j % 3)
+                j++
+            }
+            outputStream.flush()
+            outputStream.close()
+        }
+    }
+
+    @Throws(IOException::class)
+    private fun writeFastq(
+        file: DataOutputStream,
+        number: Int,
+        sequence: NucleotideSequence,
+        length: Int,
+        maxMismatchCount: Int
+    ) {
+        val random = Random()
+        val strand = if (random.nextBoolean()) Strand.PLUS else Strand.MINUS
+        var pos: Int
+        var read: String
+        do {
+            pos = random.nextInt(sequence.length - length)
+            read = sequence.substring(pos, pos + length, strand)
+        } while (read.indexOf('n') != -1)
+
+        val alphabet = Nucleotide.ALPHABET
+        val readCharArray = read.toCharArray()
+        val mismatches = random.ints().map { i -> abs(i % length) }.distinct().limit(maxMismatchCount.toLong())
+        mismatches.forEach { mismatchPos -> readCharArray[mismatchPos] = alphabet[random.nextInt(alphabet.size)] }
+
+        read = String(readCharArray).toUpperCase()
+        val header = "TESTDATA." + number + " TAKENFROM:" + pos + ':' + strand + ':' +
+                maxMismatchCount + " length=" + length + '\n'
+        file.writeBytes("@$header")
+        file.writeBytes(read + '\n')
+        file.writeBytes("+$header")
+        for (i in 0 until length) {
+            file.writeByte('B'.toInt())
+        }
+        file.writeByte('\n'.toInt())
     }
 }
