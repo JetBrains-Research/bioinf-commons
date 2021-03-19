@@ -142,7 +142,7 @@ class ReadsQueryTest {
             val readsQuery = ReadsQuery(genomeQuery, path, false, fragment = FixedFragment(100))
             val (out, err) = Logs.captureLoggingOutput { readsQuery.get() }
             assertIn("Library: single_end.bam, Depth: ${"%,d".format(SINGLE_END_BAM_READS)}" +
-                    " is less than 0.1% x 14,000,000 of genome to1", out)
+                    " is less than 0.1% x 13,010,000 of genome to1", out)
             assertEquals("", err)
         }
     }
