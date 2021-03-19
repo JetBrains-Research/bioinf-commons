@@ -54,6 +54,7 @@ dependencies {
     compile 'com.github.samtools:htsjdk:2.10.1'
     compile 'com.github.broadinstitute:picard:2.18.26'
     compile 'org.jline:jline-terminal:3.10.0'
+    compile 'com.carrotsearch:jsuffixarrays:0.1.0'
 
     compile 'org.jetbrains.bio:big:0.9.0'
     compile 'org.jetbrains.bio:viktor:1.0.0'
