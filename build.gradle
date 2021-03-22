@@ -1,5 +1,3 @@
-import org.apache.tools.ant.filters.ReplaceTokens
-
 buildscript {
     ext.kotlin_version = '1.3.21'
 
@@ -16,12 +14,7 @@ buildscript {
     }
 }
 
-plugins {
-    id 'com.jfrog.bintray' version '1.8.1'
-}
-
 apply plugin: 'kotlin'
-apply plugin: 'maven-publish'
 
 sourceCompatibility = 1.8
 targetCompatibility = sourceCompatibility
@@ -104,64 +97,3 @@ test {
 
     include '**/*Test.class'
 }
-
-task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-artifacts {
-    archives sourcesJar
-}
-
-publishing {
-    group = groupId
-    version = project.version
-
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-
-            artifact sourcesJar
-        }
-    }
-}
-
-bintray {
-    user = project.hasProperty('bintrayUser') ? project.bintrayUser : System.getenv('BINTRAY_USER')
-    key = project.hasProperty('bintrayKey') ? project.bintrayKey : System.getenv('BINTRAY_KEY')
-    publications = ['mavenJava']
-    pkg {
-        repo = 'maven'
-        name = 'bioinf-commons'
-        userOrg = 'jetbrains-research'
-        licenses = ['MIT']
-        version {
-            name = project.version.toString()
-        }
-    }
-}
-
-/*task processBuildProperties(type: Copy) {
-    shadowJar.dependsOn name
-
-    // turn of cache for this task
-    outputs.upToDateWhen { false }
-
-    // Fix version and build in properties file
-    from(sourceSets.main.resources) {
-        include 'bioinf.properties'
-    }
-    into sourceSets.main.output.resourcesDir
-    filter(ReplaceTokens, tokens: [
-            VERSION: version,
-            BUILD: project.buildCounter,
-            DATE: new Date().format('MMMM dd, yyyy')
-    ])
-}
-
-shadowJar {
-    baseName = 'bioinf-commons'
-    classifier = ''
-    zip64 true
-}*/
