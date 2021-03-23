@@ -34,7 +34,7 @@ val String.sha: String get() = HASH_PREFIX + Hashing.sha1().hashString(this, Cha
 
 fun String.toPath(): Path =
         // Windows case URI.getPath() returns path in such a format /C:/path/to/file
-        if (this.startsWith(":/", 2)) {
+        if (isWindows() && this.startsWith(":/", 2)) {
             Paths.get(this.substring(1, this.length))
         } else
             Paths.get(this)
