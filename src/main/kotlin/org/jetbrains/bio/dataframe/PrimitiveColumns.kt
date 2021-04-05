@@ -19,9 +19,9 @@ class ByteColumn(
 
     override fun getAsDouble(row: Int) = data[row].toDouble()
 
-    override fun rename(newLabel: String) = ByteColumn(newLabel, data)
+    override fun rename(newLabel: String) = ByteColumn(newLabel, data, valueFormatter)
 
-    override fun wrap(newData: ByteArray) = ByteColumn(label, newData)
+    override fun wrap(newData: ByteArray) = ByteColumn(label, newData, valueFormatter)
 
     override fun plus(other: Column<*>): Column<ByteArray> {
         return wrap(Bytes.concat(data, other.data as ByteArray))
@@ -125,9 +125,9 @@ class ShortColumn(
 
     override fun getAsDouble(row: Int) = data[row].toDouble()
 
-    override fun rename(newLabel: String) = ShortColumn(newLabel, data)
+    override fun rename(newLabel: String) = ShortColumn(newLabel, data, valueFormatter)
 
-    override fun wrap(newData: ShortArray) = ShortColumn(label, newData)
+    override fun wrap(newData: ShortArray) = ShortColumn(label, newData, valueFormatter)
 
     override fun plus(other: Column<*>): Column<ShortArray> {
         return wrap(Shorts.concat(data, other.data as ShortArray))
@@ -231,9 +231,9 @@ class IntColumn(
 
     override fun getAsDouble(row: Int) = data[row].toDouble()
 
-    override fun rename(newLabel: String) = IntColumn(newLabel, data)
+    override fun rename(newLabel: String) = IntColumn(newLabel, data, valueFormatter)
 
-    override fun wrap(newData: IntArray) = IntColumn(label, newData)
+    override fun wrap(newData: IntArray) = IntColumn(label, newData, valueFormatter)
 
     override fun plus(other: Column<*>): Column<IntArray> {
         return wrap(Ints.concat(data, other.data as IntArray))
@@ -339,9 +339,9 @@ class LongColumn(
 
     override fun getAsDouble(row: Int) = data[row].toDouble()
 
-    override fun rename(newLabel: String) = LongColumn(newLabel, data)
+    override fun rename(newLabel: String) = LongColumn(newLabel, data, valueFormatter)
 
-    override fun wrap(newData: LongArray) = LongColumn(label, newData)
+    override fun wrap(newData: LongArray) = LongColumn(label, newData, valueFormatter)
 
     override fun plus(other: Column<*>): Column<LongArray> {
         return wrap(Longs.concat(data, other.data as LongArray))
@@ -443,9 +443,9 @@ class DoubleColumn(
 
     override fun getAsDouble(row: Int) = data[row]
 
-    override fun rename(newLabel: String) = DoubleColumn(newLabel, data)
+    override fun rename(newLabel: String) = DoubleColumn(newLabel, data, valueFormatter)
 
-    override fun wrap(newData: DoubleArray) = DoubleColumn(label, newData)
+    override fun wrap(newData: DoubleArray) = DoubleColumn(label, newData, valueFormatter)
 
     override fun plus(other: Column<*>): Column<DoubleArray> {
         return wrap(Doubles.concat(data, other.data as DoubleArray))
@@ -549,9 +549,9 @@ class FloatColumn(
 
     override fun getAsDouble(row: Int) = data[row].toDouble()
 
-    override fun rename(newLabel: String) = FloatColumn(newLabel, data)
+    override fun rename(newLabel: String) = FloatColumn(newLabel, data, valueFormatter)
 
-    override fun wrap(newData: FloatArray) = FloatColumn(label, newData)
+    override fun wrap(newData: FloatArray) = FloatColumn(label, newData, valueFormatter)
 
     override fun plus(other: Column<*>): Column<FloatArray> {
         return wrap(Floats.concat(data, other.data as FloatArray))
@@ -659,13 +659,9 @@ class BooleanColumn(
 
     override fun getAsDouble(row: Int) = if (data[row]) 1.0 else 0.0
 
-    override fun wrap(newData: BitterSet): Column<BitterSet> {
-        return BooleanColumn(label, newData)
-    }
+    override fun wrap(newData: BitterSet) = BooleanColumn(label, newData, valueFormatter)
 
-    override fun rename(newLabel: String): Column<BitterSet> {
-        return BooleanColumn(newLabel, data)
-    }
+    override fun rename(newLabel: String) = BooleanColumn(newLabel, data, valueFormatter)
 
     override fun reorder(indices: IntArray): Column<BitterSet> {
         require(size == indices.size)

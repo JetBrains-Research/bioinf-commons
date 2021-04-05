@@ -40,6 +40,9 @@ class DataFrame @JvmOverloads constructor(
     }
 
     fun test(pf: RowPredicateFactory, startRow: Int = 0, endRow: Int = rowsNumber): BitterSet {
+        if (rowsNumber == 0) {
+            return BitterSet(0)
+        }
         checkPositionIndexes(startRow, endRow, rowsNumber)
         val rowPredicate = pf(this)
         return BitterSet(endRow - startRow) { rowPredicate.test(startRow + it) }

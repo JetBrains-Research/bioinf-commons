@@ -170,6 +170,75 @@ class CsvMapperTest {
             buff.toString()
         )
     }
+
+    @Test fun testDumpChangedFormatAndRenameCols() {
+        val expected = """
+            |# Integer;	Short;	Byte;	Long;	Boolean;	String;	org.jetbrains.bio.dataframe.TestEnum;	Double;	Float
+            |"[i]"	[s]	[b]	[l]	[f]	[str]	[e]	[d]	[fl]
+            |i:5	s:5	b:5	l:5	f:false	str5	VAL5	1.6667	1.67
+            |i:1	s:1	b:1	l:1	f:false	str1	VAL1	0.3333	0.33
+            |i:3	s:3	b:3	l:3	f:true	str3	VAL3	1.0000	1.00
+            |i:4	s:4	b:4	l:4	f:true	str4	VAL4	1.3333	1.33
+            |i:2	s:2	b:2	l:2	f:false	str2	VAL2	0.6667	0.67
+            |
+        """.trimMargin()
+
+        val buff = StringBuilder()
+        val tdf = testDataFrame
+        val newDf = tdf
+            .with("i", tdf.sliceAsInt("i")) { "i:${it}" }
+            .with("s", tdf.sliceAsShort("s")) { "s:${it}" }
+            .with("b", tdf.sliceAsByte("b")) { "b:${it}" }
+            .with("l", tdf.sliceAsLong("l")) { "l:${it}" }
+            .with("f", tdf.sliceAsBool("f")) { "f:${it}" }
+            .with("str", tdf.sliceAsObj("str")) { "str:${it}" }
+            .with("e", TestEnum::class.java, tdf.sliceAsObj("e")) { "e:${it}" }
+            .with("d", tdf.sliceAsInt("i").map { it / 3.0 }.toDoubleArray()) { "%.4f".format(it) }
+            .with("fl", tdf.sliceAsInt("i").map { it / 3.0f }.toFloatArray())  { "%.2f".format(it) }
+
+        val renamedDf = DataFrame(
+            rowsNumber=newDf.rowsNumber,
+            columns=newDf.columns.map { it.rename("[${it.label}]") }
+        )
+        DataFrameMappers.TSV.save(buff, renamedDf, true, true);
+        Assert.assertEquals(
+            expected,
+            buff.toString()
+        )
+    }
+
+    @Test fun testDumpChangedFormatAndResizeDown() {
+        val expected = """
+            |# Integer;	Short;	Byte;	Long;	Boolean;	String;	org.jetbrains.bio.dataframe.TestEnum;	Double;	Float
+            |i	s	b	l	f	str	e	d	fl
+            |i:5	s:5	b:5	l:5	f:false	str5	VAL5	1.6667	1.67
+            |i:1	s:1	b:1	l:1	f:false	str1	VAL1	0.3333	0.33
+            |i:3	s:3	b:3	l:3	f:true	str3	VAL3	1.0000	1.00
+            |
+        """.trimMargin()
+
+        val buff = StringBuilder()
+        val tdf = testDataFrame
+        val newDf = tdf
+            .with("i", tdf.sliceAsInt("i")) { "i:${it}" }
+            .with("s", tdf.sliceAsShort("s")) { "s:${it}" }
+            .with("b", tdf.sliceAsByte("b")) { "b:${it}" }
+            .with("l", tdf.sliceAsLong("l")) { "l:${it}" }
+            .with("f", tdf.sliceAsBool("f")) { "f:${it}" }
+            .with("str", tdf.sliceAsObj("str")) { "str:${it}" }
+            .with("e", TestEnum::class.java, tdf.sliceAsObj("e")) { "e:${it}" }
+            .with("d", tdf.sliceAsInt("i").map { it / 3.0 }.toDoubleArray()) { "%.4f".format(it) }
+            .with("fl", tdf.sliceAsInt("i").map { it / 3.0f }.toFloatArray())  { "%.2f".format(it) }
+
+        val resizedDf = newDf.resize(newDf.rowsNumber - 2)
+        DataFrameMappers.TSV.save(buff, resizedDf, true, true);
+        Assert.assertEquals(
+            expected,
+            buff.toString()
+        )
+    }
+
+
 }
 
 class NpzMapperTest {

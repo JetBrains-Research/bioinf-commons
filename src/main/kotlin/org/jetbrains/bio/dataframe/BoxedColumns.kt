@@ -10,7 +10,7 @@ abstract class ObjColumn<T: Any> protected constructor(
         label: String,
         valueType: Class<T>,
         data: Array<T>,
-        val valueToStringFun: ((T) -> String)? = null
+        val valueFormatter: ((T) -> String)? = null
 ) : Column<Array<T>>(label, data, valueType) {
 
     override fun getAsDouble(row: Int): Double {
@@ -85,9 +85,9 @@ class StringColumn(
     valueToStringFun: ((String) -> String)? = null
 ) : ObjColumn<String>(label, String::class.java, data, valueToStringFun) {
 
-    override fun rename(newLabel: String) = StringColumn(newLabel, data)
+    override fun rename(newLabel: String) = StringColumn(newLabel, data, valueFormatter)
 
-    override fun wrap(newData: Array<String>) = StringColumn(label, newData)
+    override fun wrap(newData: Array<String>) = StringColumn(label, newData, valueFormatter)
 
     @Suppress("unchecked_cast")
     override fun merge(other: Column<*>): Column<Array<String>> {
@@ -135,11 +135,11 @@ class EnumColumn<T : Enum<T>>(
 ) : ObjColumn<T>(label, enumType, data, valueToStringFun) {
 
     override fun rename(newLabel: String): Column<Array<T>> {
-        return EnumColumn(newLabel, boxedType as Class<T>, data)
+        return EnumColumn(newLabel, boxedType as Class<T>, data, valueFormatter)
     }
 
     override fun wrap(newData: Array<T>): EnumColumn<T> {
-        return EnumColumn(label, boxedType as Class<T>, newData)
+        return EnumColumn(label, boxedType as Class<T>, newData, valueFormatter)
     }
 
     override fun sorted(reverse: Boolean): IntArray {
