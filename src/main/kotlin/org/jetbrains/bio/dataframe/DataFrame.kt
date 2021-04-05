@@ -99,28 +99,51 @@ class DataFrame @JvmOverloads constructor(
         return DataFrame(rowsNumber, columnBuilder.build())
     }
 
-    fun with(label: String, data: ByteArray) = with(data.size, ByteColumn(label, data))
+    fun with(
+            label: String, data: ByteArray,
+            valueFormatter: ((Byte) -> String)? = null
+        ) = with(data.size, ByteColumn(label, data, valueFormatter))
 
-    fun with(label: String, data: ShortArray) = with(data.size, ShortColumn(label, data))
+        fun with(
+            label: String, data: ShortArray,
+            valueFormatter: ((Short) -> String)? = null
+        ) = with(data.size, ShortColumn(label, data, valueFormatter))
 
-    fun with(label: String, data: IntArray) = with(data.size, IntColumn(label, data))
+        fun with(
+            label: String, data: IntArray,
+            valueFormatter: ((Int) -> String)? = null
+        ) = with(data.size, IntColumn(label, data, valueFormatter))
 
-    fun with(label: String, data: LongArray) = with(data.size, LongColumn(label, data))
+        fun with(
+            label: String, data: LongArray,
+            valueFormatter: ((Long) -> String)? = null
+        ) = with(data.size, LongColumn(label, data, valueFormatter))
 
-    fun with(label: String, data: FloatArray) = with(data.size, FloatColumn(label, data))
+        fun with(
+            label: String, data: FloatArray,
+            valueFormatter: ((Float) -> String)? = null
+        ) = with(data.size, FloatColumn(label, data, valueFormatter))
 
-    fun with(label: String, data: DoubleArray) = with(data.size, DoubleColumn(label, data))
+        fun with(
+            label: String, data: DoubleArray,
+            valueFormatter: ((Double) -> String)? = null
+        ) = with(data.size, DoubleColumn(label, data, valueFormatter))
 
-    // TODO: could be optimized for factors.
-    fun with(label: String, data: Array<String>) = with(data.size, StringColumn(label, data))
+        // TODO: could be optimized for factors.
+        fun with(
+            label: String, data: Array<String>,
+            valueFormatter: ((String) -> String)? = null
+        ) = with(data.size, StringColumn(label, data, valueFormatter))
 
-    fun with(label: String, data: BitterSet): DataFrame {
-        return with(data.size(), BooleanColumn(label, data))
-    }
+        fun with(
+            label: String, data: BitterSet,
+            valueFormatter: ((Boolean) -> String)? = null
+        ) = with(data.size(), BooleanColumn(label, data, valueFormatter))
 
-    fun <T : Enum<T>> with(label: String, enumType: Class<T>, data: Array<T>): DataFrame {
-        return with(data.size, EnumColumn(label, enumType, data))
-    }
+        fun <T : Enum<T>> with(
+            label: String, enumType: Class<T>, data: Array<T>,
+            valueFormatter: ((T) -> String)? = null
+        ) = with(data.size, EnumColumn(label, enumType, data, valueFormatter))
 
     fun getAsByte(r: Int, label: String) = sliceAsByte(label)[r]
 

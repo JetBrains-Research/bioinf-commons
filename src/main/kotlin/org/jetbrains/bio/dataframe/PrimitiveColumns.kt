@@ -12,8 +12,10 @@ import java.util.*
 // XXX this is done because kotlin.Byte (and other primitives)
 // resolve to a _boxed_ java.lang.Byte, instead of a primitive
 // class.
-class ByteColumn(label: String, data: ByteArray) :
-        Column<ByteArray>(label, data, java.lang.Byte::class.java) {
+class ByteColumn(
+    label: String, data: ByteArray,
+    val valueFormatter: ((Byte) -> String)? = null
+) : Column<ByteArray>(label, data, java.lang.Byte::class.java) {
 
     override fun getAsDouble(row: Int) = data[row].toDouble()
 
@@ -96,7 +98,10 @@ class ByteColumn(label: String, data: ByteArray) :
         data[row] = value.toByte()
     }
 
-    override fun dump(row: Int) = data[row].toString()
+    override fun dump(row: Int): String {
+        val value = data[row]
+        return valueFormatter?.let { it(value) } ?: value.toString()
+    }
 
     override fun equals(other: Any?) = when {
         this === other -> true
@@ -107,13 +112,16 @@ class ByteColumn(label: String, data: ByteArray) :
     override fun hashCode() = arrayOf(label, data).contentDeepHashCode()
 
     override fun toString() = MoreObjects.toStringHelper(this)
-            .add("label", label)
-            .add("data", data.contentToString())
-            .toString()
+        .add("label", label)
+        .add("data", data.contentToString())
+        .toString()
 }
 
-class ShortColumn(label: String, data: ShortArray) :
-        Column<ShortArray>(label, data, java.lang.Short::class.java) {
+class ShortColumn(
+    label: String,
+    data: ShortArray,
+    val valueFormatter: ((Short) -> String)? = null
+) : Column<ShortArray>(label, data, java.lang.Short::class.java) {
 
     override fun getAsDouble(row: Int) = data[row].toDouble()
 
@@ -196,7 +204,10 @@ class ShortColumn(label: String, data: ShortArray) :
         data[row] = value.toShort()
     }
 
-    override fun dump(row: Int) = data[row].toString()
+    override fun dump(row: Int): String {
+        val value = data[row]
+        return valueFormatter?.let { it(value) } ?: value.toString()
+    }
 
     override fun equals(other: Any?) = when {
         this === other -> true
@@ -212,8 +223,11 @@ class ShortColumn(label: String, data: ShortArray) :
             .toString()
 }
 
-class IntColumn(label: String, data: IntArray) :
-        Column<IntArray>(label, data, java.lang.Integer::class.java) {
+class IntColumn(
+    label: String,
+    data: IntArray,
+    val valueFormatter: ((Int) -> String)? = null
+) : Column<IntArray>(label, data, java.lang.Integer::class.java) {
 
     override fun getAsDouble(row: Int) = data[row].toDouble()
 
@@ -299,7 +313,10 @@ class IntColumn(label: String, data: IntArray) :
         data[row] = value.toInt()
     }
 
-    override fun dump(row: Int) = data[row].toString()
+    override fun dump(row: Int): String {
+        val value = data[row]
+        return valueFormatter?.let { it(value) } ?: value.toString()
+    }
 
     override fun equals(other: Any?) = when {
         this === other -> true
@@ -315,8 +332,10 @@ class IntColumn(label: String, data: IntArray) :
             .toString()
 }
 
-class LongColumn(label: String, data: LongArray) :
-        Column<LongArray>(label, data, java.lang.Long::class.java) {
+class LongColumn(
+    label: String, data: LongArray,
+    val valueFormatter: ((Long) -> String)? = null
+) : Column<LongArray>(label, data, java.lang.Long::class.java) {
 
     override fun getAsDouble(row: Int) = data[row].toDouble()
 
@@ -398,7 +417,10 @@ class LongColumn(label: String, data: LongArray) :
         data[row] = value.toLong()
     }
 
-    override fun dump(row: Int) = data[row].toString()
+    override fun dump(row: Int): String {
+        val value = data[row]
+        return valueFormatter?.let { it(value) } ?: value.toString()
+    }
 
     override fun equals(other: Any?) = when {
         this === other -> true
@@ -414,8 +436,10 @@ class LongColumn(label: String, data: LongArray) :
             .toString()
 }
 
-class DoubleColumn(label: String, data: DoubleArray) :
-        Column<DoubleArray>(label, data, java.lang.Double::class.java) {
+class DoubleColumn(
+    label: String, data: DoubleArray,
+    val valueFormatter: ((Double) -> String)? = null
+) : Column<DoubleArray>(label, data, java.lang.Double::class.java) {
 
     override fun getAsDouble(row: Int) = data[row]
 
@@ -498,7 +522,10 @@ class DoubleColumn(label: String, data: DoubleArray) :
         data[row] = value.toDouble()
     }
 
-    override fun dump(row: Int) = data[row].toString()
+    override fun dump(row: Int): String {
+        val value = data[row]
+        return valueFormatter?.let { it(value) } ?: value.toString()
+    }
 
     override fun equals(other: Any?) = when {
         this === other -> true
@@ -514,8 +541,11 @@ class DoubleColumn(label: String, data: DoubleArray) :
             .toString()
 }
 
-class FloatColumn(label: String, data: FloatArray) :
-        Column<FloatArray>(label, data, java.lang.Float::class.java) {
+class FloatColumn(
+    label: String,
+    data: FloatArray,
+    val valueFormatter: ((Float) -> String)? = null
+) : Column<FloatArray>(label, data, java.lang.Float::class.java) {
 
     override fun getAsDouble(row: Int) = data[row].toDouble()
 
@@ -598,7 +628,10 @@ class FloatColumn(label: String, data: FloatArray) :
         data[row] = value.toFloat()
     }
 
-    override fun dump(row: Int) = data[row].toString()
+    override fun dump(row: Int): String {
+        val value = data[row]
+        return valueFormatter?.let { it(value) } ?: value.toString()
+    }
 
     override fun equals(other: Any?) = when {
         this === other -> true
@@ -614,8 +647,11 @@ class FloatColumn(label: String, data: FloatArray) :
             .toString()
 }
 
-class BooleanColumn(label: String, data: BitterSet) :
-        Column<BitterSet>(label, data, java.lang.Boolean::class.java) {
+class BooleanColumn(
+    label: String,
+    data: BitterSet,
+    val valueFormatter: ((Boolean) -> String)? = null
+) : Column<BitterSet>(label, data, java.lang.Boolean::class.java) {
 
     override fun load(row: Int, value: String) {
         data[row] = value == "1" || value.equals("true", ignoreCase = true)
@@ -693,7 +729,10 @@ class BooleanColumn(label: String, data: BitterSet) :
 
     override val size: Int get() = data.size()
 
-    override fun dump(row: Int): String = if (data[row]) "1" else "0"
+    override fun dump(row: Int): String {
+        val value = data[row]
+        return valueFormatter?.let { it(value) } ?: (if (data[row]) "1" else "0")
+    }
 
     override fun equals(other: Any?) = when {
         this === other -> true

@@ -7,9 +7,11 @@ import java.util.*
 
 @Suppress("unchecked_cast")
 abstract class ObjColumn<T: Any> protected constructor(
-        label: String, valueType: Class<T>, data: Array<T>)
-:
-        Column<Array<T>>(label, data, valueType) {
+        label: String,
+        valueType: Class<T>,
+        data: Array<T>,
+        val valueToStringFun: ((T) -> String)? = null
+) : Column<Array<T>>(label, data, valueType) {
 
     override fun getAsDouble(row: Int): Double {
         check(false) { "not a numeric column" }
@@ -78,8 +80,10 @@ abstract class ObjColumn<T: Any> protected constructor(
             .toString()
 }
 
-class StringColumn(label: String, data: Array<String>) :
-        ObjColumn<String>(label, String::class.java, data) {
+class StringColumn(
+    label: String, data: Array<String>,
+    valueToStringFun: ((String) -> String)? = null
+) : ObjColumn<String>(label, String::class.java, data, valueToStringFun) {
 
     override fun rename(newLabel: String) = StringColumn(newLabel, data)
 
@@ -123,10 +127,12 @@ class StringColumn(label: String, data: Array<String>) :
 }
 
 @Suppress("unchecked_cast")
-class EnumColumn<T : Enum<T>>(label: String, val enumType: Class<T>,
-                              data: Array<T>)
-:
-        ObjColumn<T>(label, enumType, data) {
+class EnumColumn<T : Enum<T>>(
+    label: String,
+    val enumType: Class<T>,
+    data: Array<T>,
+    valueToStringFun: ((T) -> String)? = null
+) : ObjColumn<T>(label, enumType, data, valueToStringFun) {
 
     override fun rename(newLabel: String): Column<Array<T>> {
         return EnumColumn(newLabel, boxedType as Class<T>, data)
