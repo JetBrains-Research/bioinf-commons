@@ -53,9 +53,15 @@ fun DataFrame.dumpHead(rowsCount: Int): String {
 }
 
 object DataFrameMappers {
-    val TSV = CSVLike(CSVFormat.TDF.withQuoteMode(QuoteMode.MINIMAL).withCommentMarker('#')!!)
+    val TSV = CSVLike(
+        CSVFormat.TDF.withQuoteMode(QuoteMode.MINIMAL).withCommentMarker('#')
+            .withRecordSeparator("\n")!!
+    )
 
-    val CSV = CSVLike(CSVFormat.DEFAULT.withQuoteMode(QuoteMode.MINIMAL).withCommentMarker('#')!!)
+    val CSV = CSVLike(
+        CSVFormat.DEFAULT.withQuoteMode(QuoteMode.MINIMAL).withCommentMarker('#')
+            .withRecordSeparator("\n")!!
+    )
 
     val NPZ = object : DataFrameMapper() {
         override fun guess(path: Path) = NpzFile.read(path).use { reader ->

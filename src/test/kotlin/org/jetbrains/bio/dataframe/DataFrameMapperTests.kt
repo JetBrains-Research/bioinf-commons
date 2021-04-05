@@ -122,7 +122,7 @@ class CsvMapperTest {
                                "3\t3\t3\t3\t1\tstr3\tVAL3",
                                "4\t4\t4\t4\t1\tstr4\tVAL4",
                                "2\t2\t2\t2\t0\tstr2\tVAL2",
-                               "").joinToString("\r\n")
+                               "").joinToString("\n")
 
         val buff = StringBuilder()
         DataFrameMappers.TSV.save(buff, testDataFrame, true, true);
@@ -136,7 +136,7 @@ class CsvMapperTest {
                                "5\t5\t5\t5\t0\tstr5\tVAL5",
                                "1\t1\t1\t1\t0\tstr1\tVAL1",
                                "3\t3\t3\t3\t1\tstr3\tVAL3",
-                               "").joinToString("\r\n")
+                               "").joinToString("\n")
         assertEquals(expected, dump)
     }
 
