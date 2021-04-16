@@ -150,7 +150,7 @@ class Genome private constructor(
      *     chr21
      *     CHRX
      *     21 or X
-     *
+     *     + mapping from genome [Genome.chrAltName2CanonicalMapping] field
      * @author Sergei Lebedev
      */
     val chromosomeNamesMap: Map<String, Chromosome> by lazy {
@@ -178,6 +178,28 @@ class Genome private constructor(
         map
     }
 
+    /**
+     * Conventional to alternative names mapping
+     *
+     * Currently support the following names:
+     *
+     *     chr21
+     *     CHRX
+     *     21 or X
+     *     + mapping from genome [Genome.chrAltName2CanonicalMapping] field
+     * @author Roman Cherniatchik
+     */
+    val chromosomeNamesToAltNamesMap: Map<String, List<String>> by lazy {
+        val map = hashMapOf<String, MutableList<String>>()
+        chromosomeNamesMap.entries.forEach { (name, chr) ->
+            val chrName = chr.name
+            if (chrName != name) {
+                val names = map.getOrPut(chrName) { arrayListOf() }
+                names.add(name)
+            }
+        }
+        map
+    }
     val transcripts: Collection<Transcript> by lazy { Transcripts.all(this).values() }
 
     val genes: List<Gene> by lazy { groupTranscripts(transcripts) }
@@ -233,10 +255,16 @@ class Genome private constructor(
          * Get or init default genome, which downloads all missing files to [Configuration.genomesPath]
          * See [Genome] constructor
          */
-        operator fun get(build: String) =
-                getOrAdd(build, false) {
+        operator fun get(build: String) = getCustomised(build, build, false, null)
+        fun getCustomised(
+            build: String,
+            parentBuild: String,
+            customized: Boolean,
+            annConfigModifier: ((GenomeAnnotationsConfig) -> GenomeAnnotationsConfig)?
+        ) =
+                getOrAdd(parentBuild, customized) {
 
-                    val annCfg: GenomeAnnotationsConfig = when (build) {
+                    val annCfg: GenomeAnnotationsConfig = when (parentBuild) {
                         // For tests
                         TEST_ORGANISM_BUILD -> GenomeAnnotationsConfig(
                             "Test Organism", TEST_ORGANISM_BUILD, listOf("to1"),
@@ -249,33 +277,34 @@ class Genome private constructor(
                                 // Init with default settings only if not initialized by user before us
                                 AnnotationsConfigLoader.init(Configuration.genomesPath / "annotations.yaml")
                             }
-                            AnnotationsConfigLoader[build]
+                            AnnotationsConfigLoader[parentBuild]
                         }
                     }
-                    val dataPath = Configuration.genomesPath / build
+                    val dataPath = Configuration.genomesPath / parentBuild
                     val genesDescriptionsPath: Path? =
-                        if (build == TEST_ORGANISM_BUILD) null else dataPath / "description.tsv"
-                    val genesGTFPath: Path = dataPath / (when (build) {
+                        if (parentBuild == TEST_ORGANISM_BUILD) null else dataPath / "description.tsv"
+                    val genesGTFPath: Path = dataPath / (when (parentBuild) {
                         TEST_ORGANISM_BUILD -> "genes.gtf.gz"
                         else -> annCfg.gtfUrl.substringAfterLast('/')
                     })
 
+                    val annCfgUpdated = if (annConfigModifier == null) annCfg else annConfigModifier(annCfg)
                     Genome(
                         build,
-                        annotationsConfig = annCfg,
+                        annotationsConfig = annCfgUpdated,
                         // we don't expect test genome to save smth in test data dir
-                        dataPath = if (build == TEST_ORGANISM_BUILD) null else dataPath,
+                        dataPath = if (parentBuild == TEST_ORGANISM_BUILD) null else dataPath,
 
-                        chromSizesPath = dataPath / "$build.chrom.sizes",
-                        chromSizesMapLambda = { chromSizesFromPath(build, dataPath / "$build.chrom.sizes", annCfg) },
-                        cpgIslandsPath = annCfg.cpgIslandsUrl?.let { dataPath / CpGIslands.ISLANDS_FILE_NAME },
-                        cytobandsPath = annCfg.cytobandsUrl?.let { dataPath / CytoBands.FILE_NAME },
+                        chromSizesPath = dataPath / "$parentBuild.chrom.sizes",
+                        chromSizesMapLambda = { chromSizesFromPath(parentBuild, dataPath / "$parentBuild.chrom.sizes", annCfg) },
+                        cpgIslandsPath = annCfgUpdated.cpgIslandsUrl?.let { dataPath / CpGIslands.ISLANDS_FILE_NAME },
+                        cytobandsPath = annCfgUpdated.cytobandsUrl?.let { dataPath / CytoBands.FILE_NAME },
                         repeatsPath = dataPath / Repeats.FILE_NAME,
                         gapsPath = dataPath / Gaps.FILE_NAME,
-                        twoBitPath = dataPath / "$build.2bit",
+                        twoBitPath = dataPath / "$parentBuild.2bit",
                         genesGTFPath = genesGTFPath,
                         genesDescriptionsPath = genesDescriptionsPath,
-                        chrAltName2CanonicalMapping = annCfg.chrAltName2CanonicalMapping
+                        chrAltName2CanonicalMapping = annCfgUpdated.chrAltName2CanonicalMapping
                     )
                 }
 

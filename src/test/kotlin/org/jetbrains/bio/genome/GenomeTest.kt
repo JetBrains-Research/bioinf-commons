@@ -20,7 +20,7 @@ class GenomeTest {
     }
 
     @Test
-    fun testGet() {
+    fun get() {
         withTempDirectory("foo") { dir ->
             val chromSizesPath1 = dir / "foo1.chrom.sizes"
             chromSizesPath1.bufferedWriter().use {
@@ -46,7 +46,7 @@ class GenomeTest {
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun testConflictingChromSizePath() {
+    fun conflictingChromSizePath() {
         withTempDirectory("foo") { dir ->
             val chromSizesPath1 = dir / "foo1.chrom.sizes"
             chromSizesPath1.bufferedWriter().use {
@@ -68,7 +68,7 @@ class GenomeTest {
     }
 
     @Test
-    fun testChromSizes() {
+    fun chromSizes() {
         withTempDirectory("foo") { dir ->
             val chromSizesPath = dir / "to1.chrom.sizes"
             chromSizesPath.bufferedWriter().use {
@@ -86,7 +86,7 @@ class GenomeTest {
     }
 
     @Test
-    fun testChromSizes_LoggedError() {
+    fun chromSizes_LoggedError() {
         withTempFile("foo", ".galaxy.dat") { path ->
             val logStream = ByteArrayOutputStream()
 
@@ -104,5 +104,47 @@ class GenomeTest {
                 Logs.getRootLogger().detachAppender("AppenderGenomeTest")
             }
         }
+    }
+
+    @Test
+    fun chromosomeNamesToAltNamesMap() {
+        val genome = Genome.getCustomised("to1_chr1_foo", "to1", true) {
+            it.copy(chrAltName2CanonicalMapping = mapOf(
+                "foo" to "chr1", "foo2" to "chr1", "boo" to "chr3"
+            ))
+        }
+        require(genome.chrAltName2CanonicalMapping.size == 3)
+
+        val chromosomeNamesToAltNamesMap = genome.chromosomeNamesToAltNamesMap
+        assertEquals(
+            chromosomeNamesToAltNamesMap["chr1"]!!.sorted(),
+            listOf("1",  "foo", "foo2")
+        )
+        assertEquals(
+            chromosomeNamesToAltNamesMap["chr3"]!!.sorted(),
+            listOf("3", "boo")
+        )
+        assertEquals(
+            chromosomeNamesToAltNamesMap["chr2"]!!.sorted(),
+            listOf("2")
+        )
+    }
+
+    @Test
+    fun chromosomeNamesMap() {
+        val genome = Genome.getCustomised("to1_chr1_foo", "to1", true) {
+            it.copy(chrAltName2CanonicalMapping = mapOf(
+                "foo" to "chr1", "foo2" to "chr1", "boo" to "chr3"
+            ))
+        }
+        require(genome.chrAltName2CanonicalMapping.size == 3)
+
+        val chrNamesMap = genome.chromosomeNamesMap
+        assertEquals("chr1", chrNamesMap["1"]!!.name)
+        assertEquals("chr2", chrNamesMap["2"]!!.name)
+        assertEquals("chr1", chrNamesMap["foo"]!!.name)
+        assertEquals("chr1", chrNamesMap["foo2"]!!.name)
+        assertEquals("chr3", chrNamesMap["boo"]!!.name)
+        assertEquals("chr1", chrNamesMap["foo2"]!!.name)
     }
 }
