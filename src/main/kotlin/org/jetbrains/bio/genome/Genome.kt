@@ -255,14 +255,19 @@ class Genome private constructor(
          * Get or init default genome, which downloads all missing files to [Configuration.genomesPath]
          * See [Genome] constructor
          */
-        operator fun get(build: String) = getCustomised(build, build, false, null)
+        operator fun get(build: String) = getCustomised(build, build,
+            customized = false,
+            forceUpdateCache = false,
+            annConfigModifier = null
+        )
         fun getCustomised(
             build: String,
             parentBuild: String,
             customized: Boolean,
+            forceUpdateCache: Boolean = false,
             annConfigModifier: ((GenomeAnnotationsConfig) -> GenomeAnnotationsConfig)?
         ) =
-                getOrAdd(parentBuild, customized) {
+                getOrAdd(parentBuild, customized, forceUpdateCache) {
 
                     val annCfg: GenomeAnnotationsConfig = when (parentBuild) {
                         // For tests
@@ -326,7 +331,7 @@ class Genome private constructor(
             genesGTFPath: Path? = null,
             genesDescriptionsPath: Path? = null,
             chrAltName2CanonicalMapping: Map<String, String>? = null
-        ) = getOrAdd(build, true) {
+        ) = getOrAdd(build, customized = true, forceUpdateCache = false) {
             val chromSizesDir = chromSizesPath.parent
 
             val chrMapping = HashMap<String, String>()
@@ -356,7 +361,7 @@ class Genome private constructor(
         operator fun get(
                 build: String,
                 chromSizesMap: LinkedHashMap<String, Int>
-        ) = getOrAdd(build, false) { Genome(
+        ) = getOrAdd(build, customized = false, forceUpdateCache = false) { Genome(
             build = build,
             annotationsConfig = null,
             dataPath = null,
@@ -372,8 +377,13 @@ class Genome private constructor(
             chrAltName2CanonicalMapping = emptyMap()
         ) }
 
-        private fun getOrAdd(build: String, customized: Boolean, genomeProvider: () -> Genome): Genome =
-                if (!customized) {
+        private fun getOrAdd(
+            build: String,
+            customized: Boolean,
+            forceUpdateCache: Boolean,
+            genomeProvider: () -> Genome
+        ): Genome =
+                if (!customized && !forceUpdateCache) {
                     // If genome getter not customized:
                     // * genome not initialized => return genome with default paths
                     // * already initialized => return cached genome even if cached genome is a customized one
@@ -390,6 +400,10 @@ class Genome private constructor(
                 } else {
                     // Create genome, it is cheap. Need further to compare with cached version
                     val newGenome = genomeProvider()
+
+                    if (forceUpdateCache) {
+                        CACHE[build] = newGenome
+                    }
 
                     val cachedGenome = CACHE.computeIfAbsent(build) {
                         newGenome

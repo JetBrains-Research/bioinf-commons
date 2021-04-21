@@ -108,7 +108,10 @@ class GenomeTest {
 
     @Test
     fun chromosomeNamesToAltNamesMap() {
-        val genome = Genome.getCustomised("to1_chr1_foo", "to1", true) {
+        val genome = Genome.getCustomised("to1_gt_chromosomeNamesToAltNamesMap", "to1",
+            customized = true,
+            forceUpdateCache = true
+        ) {
             it.copy(chrAltName2CanonicalMapping = mapOf(
                 "foo" to "chr1", "foo2" to "chr1", "boo" to "chr3"
             ))
@@ -132,7 +135,11 @@ class GenomeTest {
 
     @Test
     fun chromosomeNamesMap() {
-        val genome = Genome.getCustomised("to1_chr1_foo", "to1", true) {
+        // Use uniq name here:
+        val genome = Genome.getCustomised("to1_gt_chromosomeNamesMap", "to1",
+            customized = true,
+            forceUpdateCache = true
+        ) {
             it.copy(chrAltName2CanonicalMapping = mapOf(
                 "foo" to "chr1", "foo2" to "chr1", "boo" to "chr3"
             ))
