@@ -4,6 +4,8 @@ import org.jetbrains.bio.dataframe.BitterSet
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.argSort
 import org.jetbrains.bio.viktor.logAddExp
+import kotlin.math.ln
+import kotlin.math.min
 
 interface Predictor {
     fun predict(logNullMemberships: F64Array): BitterSet
@@ -54,8 +56,8 @@ class Fdr(private val alpha: Double) : Predictor {
             do {
                 logSum = logSum logAddExp logNullMemberships[indices[count]]
                 count++
-                logFdr = logSum - Math.log(count.toDouble())
-            } while (count < logNullMemberships.size && logFdr <= Math.log(alpha))
+                logFdr = logSum - ln(count.toDouble())
+            } while (count < logNullMemberships.size && logFdr <= ln(alpha))
 
             // All hypotheses prior to and including 'count' are rejected. The
             // '-1' is to compensate the increment in the while loop above.
@@ -99,11 +101,11 @@ class Fdr(private val alpha: Double) : Predictor {
             var acc = Double.NEGATIVE_INFINITY
             for (t in 0 until length) {
                 acc = acc logAddExp qvalues[t]
-                qvalues[t] = acc - Math.log((t + 1).toDouble())
+                qvalues[t] = acc - ln((t + 1).toDouble())
             }
 
             for (t in length - 2 downTo 0) {
-                qvalues[t] = Math.min(qvalues[t], qvalues[t + 1])
+                qvalues[t] = min(qvalues[t], qvalues[t + 1])
             }
 
             qvalues.reorder(original)
