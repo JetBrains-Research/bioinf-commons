@@ -267,7 +267,7 @@ class Genome private constructor(
             forceUpdateCache: Boolean = false,
             annConfigModifier: ((GenomeAnnotationsConfig) -> GenomeAnnotationsConfig)?
         ) =
-                getOrAdd(parentBuild, customized, forceUpdateCache) {
+                getOrAdd(build, customized, forceUpdateCache) {
 
                     val annCfg: GenomeAnnotationsConfig = when (parentBuild) {
                         // For tests
