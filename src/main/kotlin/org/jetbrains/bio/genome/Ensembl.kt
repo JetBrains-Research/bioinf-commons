@@ -7,8 +7,6 @@ import org.slf4j.LoggerFactory
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.nio.file.Path
-import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -39,7 +37,7 @@ object Ensembl {
 }
 
 typealias Attributes = Array<String?>
-class GtfReader(val reader: BufferedReader, val genome: Genome) {
+class GtfReader(val reader: BufferedReader, val genome: Genome, val gff3: Boolean=false) {
 
     fun readTranscripts(): List<Transcript> {
         var hasDetailedUTRInfo: Boolean? = null
@@ -52,7 +50,7 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
             if (hasDetailedUTRInfo == null) {
                 if (featureType == "five_prime_utr" || featureType == "three_prime_utr") {
                     hasDetailedUTRInfo = true
-                } else if (featureType == "UTR") {
+                } else if (featureType == "utr") {
                     hasDetailedUTRInfo = false
                 }
             }
@@ -143,17 +141,20 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
          * 1. old: exon, CDS, start_codon, stop_codon
          * 2. 75: exon, CDS, start_codon, stop_codon, transcript, UTR
          * 3. 87: exon, CDS, stop_codon, gene, transcript, three_prime_utr, five_prime_utr
+         * 4. gff3 [chm13t2t-v1.1.gene_annotation.v4.gff3.gz]:
+         *        exon, CDS, stop_codon, gene, transcript, start_codon, stop_codon, three_prime_UTR, five_prime_UTR,
          */
         val chrStr = parts[0]
-        val type = parts[2]
+        val type = parts[2].toLowerCase()
 
         val chr = chrsNamesMapping[chrStr]?.let { chr ->
             if (genomeQuery.accepts(chr)) chr else null
         } ?: return type
         
-        when (type) {
+        when (type.toLowerCase()) {
             // just not to write long if condition:
-            "transcript", "exon", "CDS", "start_codon", "three_prime_utr" -> { /* noop */ }
+            "transcript", "exon", "cds", "start_codon", "three_prime_utr" -> { /* noop */ }
+            // e.g. five_prime_utr, stop_codon : transcript is already configured by 3' and start_codon
             else -> return type
         }
 
@@ -167,20 +168,35 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
         //      transcript_source "havana"
         // Predicted genes:
         //      transcript_source "ensembl"
+        // Or
+        //      transcript_source "CAT"
 
-        val transcriptId = attributes[GtfAttrTypes.TRANSCRIPT_ID.ordinal]!!
+        val transcriptIdKey: AttrTypes = when {
+            gff3 -> Gff3AttrTypes.TRANSCRIPT_ID
+            else -> GtfAttrTypes.TRANSCRIPT_ID
+        }
 
+        val geneNameKey: AttrTypes = when {
+            gff3 -> Gff3AttrTypes.GENE_NAME
+            else -> GtfAttrTypes.GENE_NAME
+        }
+        val geneIdKey: AttrTypes = when {
+            gff3 -> Gff3AttrTypes.GENE_ID
+            else -> GtfAttrTypes.GENE_ID
+        }
+
+        val transcriptId = attributes[transcriptIdKey.ordinal]!!
         val transcriptInfo = transcriptsMap.getOrPut(transcriptId) {
             TranscriptInfo(transcriptId,
-                           attributes[GtfAttrTypes.GENE_NAME.ordinal]!!,
-                           attributes[GtfAttrTypes.GENE_ID.ordinal]!!)
+                           attributes[geneNameKey.ordinal]!!,
+                           attributes[geneIdKey.ordinal]!!)
         }
 
         val location = Location(start - 1, end, chr, strand)
 
         when (type) {
             "exon" -> {  transcriptInfo.exons.add(location) }
-            "CDS" -> { transcriptInfo.cds.add(location) }
+            "cds" -> { transcriptInfo.cds.add(location) }
             "transcript" -> { transcriptInfo.transcript = location }
             "three_prime_utr" -> { transcriptInfo.utr3.add(location) }
             "start_codon" -> {
@@ -210,7 +226,10 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
     }
 
     private fun parseAttributes(rest: String): Attributes {
-        val attrTypes = GtfAttrTypes.values()
+        val attrTypes: Array<out AttrTypes> = when {
+            gff3 -> Gff3AttrTypes.values()
+            else -> GtfAttrTypes.values()
+        }
         val attributes = Array<String?>(attrTypes.size) { null }
 
         for (chunk in rest.split(";")) {
@@ -221,17 +240,36 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
 
                 // if attr not set & is our key
                 if (trimmed.startsWith(key)) {
-                    val value = trimmed.substring(key.length).trimStart()
-                    check(value[0] == '"' && value.last() == '"') { "Cannot parse: $key value, attrs list = $rest" }
-                    attributes[i] = value.substring(1, value.length - 1)
-                    break
+
+                    if (gff3) {
+                        val chunks = trimmed.split('=', limit = 2)
+                        check(chunks.size == 2) { "Cannot parse: $key value from <$trimmed>, attrs list = $rest" }
+                        if (chunks[0] == key) {
+                            attributes[i] = chunks[1]
+                        }
+                    } else {
+                        val value = trimmed.substring(key.length).trimStart()
+                        check(value[0] == '"' && value.last() == '"') { "Cannot parse: $key value from <$trimmed>, attrs list = $rest" }
+                        attributes[i] = value.substring(1, value.length - 1)
+                        break
+                    }
                 }
             }
         }
 
-        if (attributes[GtfAttrTypes.GENE_NAME.ordinal] == null) {
+
+        val geneNameKey: AttrTypes = when {
+            gff3 -> Gff3AttrTypes.GENE_NAME
+            else -> GtfAttrTypes.GENE_NAME
+        }
+        val geneIdKey: AttrTypes = when {
+            gff3 -> Gff3AttrTypes.GENE_ID
+            else -> GtfAttrTypes.GENE_ID
+        }
+
+        if (attributes[geneNameKey.ordinal] == null) {
             // not all gtf genes has 'gene_name' attr, i.e. defines gene symbol, e.g not info in ce11, rn5
-            attributes[GtfAttrTypes.GENE_NAME.ordinal] = attributes[GtfAttrTypes.GENE_ID .ordinal]
+            attributes[geneNameKey.ordinal] = attributes[geneIdKey.ordinal]
         }
 
         check(attributes.all { it != null }) {
@@ -241,10 +279,20 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
         return attributes
     }
 
-    enum class GtfAttrTypes(val key: String) {
+    interface AttrTypes {
+        val key: String
+        val ordinal: Int
+    }
+    enum class GtfAttrTypes(override val key: String) : AttrTypes {
         TRANSCRIPT_ID("transcript_id"),
         GENE_ID("gene_id"),
         GENE_NAME("gene_name");
+    }
+
+    enum class Gff3AttrTypes(override val key: String) : AttrTypes {
+        TRANSCRIPT_ID("source_transcript"),
+        GENE_ID("source_gene"),
+        GENE_NAME("source_gene_common_name");
     }
 
     class TranscriptInfo(val transcriptId: String,

@@ -116,7 +116,7 @@ class Genome private constructor(
     val genesDescriptionsPath: Path by lazy { ensureNotNull(genesDescriptionsPath, "Gene Description") }
 
     /**
-     * Ensure *.gtf file exists and download it if necessary
+     * Ensure *.gtf or *.gff file exists and download it if necessary
      */
     fun genesGtfPath(downloadIfMissed: Boolean = true) =
             ensureNotNull(genesGTFPath, "Genes GTF Annotations").also { genesGTFPath ->

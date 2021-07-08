@@ -281,8 +281,10 @@ object Transcripts {
             genome.genesGtfPath(true)
 
             val transcripts = LOG.time(level = Level.INFO, message = "Parsing genes $gtfFile") {
+                val fileNameLower = gtfFile.name.toLowerCase()
+                val gff3 = fileNameLower.endsWith(".gff3") || fileNameLower.endsWith(".gff3.gz")
                 gtfFile.bufferedReader().use { reader ->
-                    GtfReader(reader, genome).readTranscripts()
+                    GtfReader(reader, genome, gff3=gff3).readTranscripts()
                             // sort by 5' offset then by ensemblId (to be deterministic),
                             // it is required for bound5Index() correct work,
                             // please don't change it to sort by start offset
