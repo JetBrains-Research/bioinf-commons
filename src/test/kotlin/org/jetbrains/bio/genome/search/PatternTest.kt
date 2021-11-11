@@ -33,7 +33,7 @@ class PatternTest {
                 RANDOM.ints(0, chromosome.length - length).limit(1000).forEach { i ->
                     val pattern = sequence.substring(i, i + length)
                     if ('n' !in pattern) {
-                        print("Length $length, mismatches $mismatches, position $i, pattern $pattern")
+//                        print("Length $length, mismatches $mismatches, position $i, pattern $pattern")
                         Pattern.getSeeds(pattern, mismatches).forEach { s ->
                             assertTrue(Pattern.matches(sequence, s, i, 0))
                         }
