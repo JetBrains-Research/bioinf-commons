@@ -39,21 +39,3 @@ dependencies {
     compile 'org.jetbrains.bio:bioinf-commons:0.0.9'
 }
 ```
-
-Publishing
-----------
-
-You can publish a new release with a one-liner
-
-```bash
-./gradlew clean assemble test generatePomFileForMavenJavaPublication bintrayUpload
-```
-
-Make sure to set Bintray credentials (see API key section
-[here](https://bintray.com/profile/edit)) in `$HOME/.gradle/gradle.properties`.
-
-```
-$ cat $HOME/.gradle/gradle.properties
-bintrayUser=CHANGEME
-bintrayKey=CHANGEME
-```
