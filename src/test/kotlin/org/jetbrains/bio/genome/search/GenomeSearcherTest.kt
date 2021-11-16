@@ -14,9 +14,9 @@ class GenomeSearcherTest {
         val genomeQuery = Genome["to1"].toQuery()
         for (chromosome in genomeQuery.get()) {
             val fastqPath = chromosome.fastqPath
-            println("Aligning reads from $fastqPath")
+//            println("Aligning reads from $fastqPath")
             for (mismatches in 0..2) {
-                println("Performing testCorrectness with $mismatches mismatch(es).")
+//                println("Performing testCorrectness with $mismatches mismatch(es).")
 
                 val genomeSearcher = GenomeSearcher(genomeQuery, mismatches)
                 for (fastqRecord in FastqReader(fastqPath.toFile())) {
@@ -53,9 +53,9 @@ class GenomeSearcherTest {
         val genomeQuery = Genome["to1"].toQuery()
         for (chromosome in genomeQuery.get()) {
             val fastqPath = chromosome.fastqPath
-            println("Aligning reads from $fastqPath")
+//            println("Aligning reads from $fastqPath")
             for (mismatches in 0..2) {
-                println("Performing testSpecificity with $mismatches mismatch(es).")
+//                println("Performing testSpecificity with $mismatches mismatch(es).")
                 val genomeSearcher = GenomeSearcher(genomeQuery, mismatches)
                 for (fastqRecord in FastqReader(fastqPath.toFile())) {
                     val header = fastqRecord.readHeader

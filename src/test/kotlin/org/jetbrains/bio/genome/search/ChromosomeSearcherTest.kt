@@ -82,13 +82,13 @@ class ChromosomeSearcherTest : TestCase() {
         randomized = false
         fromChromosome = false
         generatePattern()
-        println("testCorrectness on a fixed pattern: " + pattern!!)
+//        println("testCorrectness on a fixed pattern: " + pattern!!)
         performTestCorrectness()
 
         randomized = true
         fromChromosome = true
         generatePattern()
-        println("testCorrectness on a pattern from chromosome: " + pattern!!)
+//        println("testCorrectness on a pattern from chromosome: " + pattern!!)
         println("Position: $chomosomePos $strand")
         performTestCorrectness()
 
@@ -96,14 +96,14 @@ class ChromosomeSearcherTest : TestCase() {
         randomized = true
         fromChromosome = true
         generatePattern()
-        println("testCorrectness on a changed pattern from chromosome: $pattern (was: $actualPattern)")
+//        println("testCorrectness on a changed pattern from chromosome: $pattern (was: $actualPattern)")
         println("Position: $chomosomePos $strand")
         performTestCorrectness()
 
         randomized = true
         fromChromosome = true
         generatePattern()
-        println("testCorrectness on a random pattern: " + pattern!!)
+//        println("testCorrectness on a random pattern: " + pattern!!)
         performTestCorrectness()
     }
 
@@ -117,7 +117,7 @@ class ChromosomeSearcherTest : TestCase() {
                         .match(Nucleotide.valueOf(matchingSeq[i].toString().toUpperCase()).byte))
                     ++mismatchCount
             }
-            println("Found pattern: " + matchingSeq + " at " + match.startOffset + ' ' + match.strand)
+//            println("Found pattern: " + matchingSeq + " at " + match.startOffset + ' ' + match.strand)
             assertTrue("testCorrectness(): mismatch count exceeds maximum allowed value: $mismatchCount",
                 mismatchCount <= MAX_MISMATCH)
         }
@@ -129,16 +129,16 @@ class ChromosomeSearcherTest : TestCase() {
         randomized = true
         fromChromosome = true
         generatePattern()
-        println("testSpecificity on a pattern from chromosome: " + pattern!!)
-        println("Position: $chomosomePos $strand")
+//        println("testSpecificity on a pattern from chromosome: " + pattern!!)
+//        println("Position: $chomosomePos $strand")
         performTestSpecificity()
 
         mutatePattern = true
         randomized = true
         fromChromosome = true
         generatePattern()
-        println("testSpecificity on a changed pattern from chromosome: $pattern (was: $actualPattern)")
-        println("Position: $chomosomePos $strand")
+//        println("testSpecificity on a changed pattern from chromosome: $pattern (was: $actualPattern)")
+//        println("Position: $chomosomePos $strand")
         performTestSpecificity()
     }
 
@@ -158,28 +158,28 @@ class ChromosomeSearcherTest : TestCase() {
         randomized = false
         fromChromosome = false
         generatePattern()
-        println("testDistinct on a fixed pattern: " + pattern!!)
+//        println("testDistinct on a fixed pattern: " + pattern!!)
         performTestDistinct()
 
         randomized = true
         fromChromosome = true
         generatePattern()
-        println("testDistinct on a pattern from chromosome: " + pattern!!)
-        println("Position: $chomosomePos $strand")
+//        println("testDistinct on a pattern from chromosome: " + pattern!!)
+//        println("Position: $chomosomePos $strand")
         performTestDistinct()
 
         mutatePattern = true
         randomized = true
         fromChromosome = true
         generatePattern()
-        println("testDistinct on a changed pattern from chromosome: $pattern (was: $actualPattern)")
-        println("Position: $chomosomePos $strand")
+//        println("testDistinct on a changed pattern from chromosome: $pattern (was: $actualPattern)")
+//        println("Position: $chomosomePos $strand")
         performTestDistinct()
 
         randomized = true
         fromChromosome = true
         generatePattern()
-        println("testDistinct on a random pattern: " + pattern!!)
+//        println("testDistinct on a random pattern: " + pattern!!)
         performTestDistinct()
     }
 
@@ -200,7 +200,7 @@ class ChromosomeSearcherTest : TestCase() {
             }
             val location = this.searcher!!.findUnique(pattern)
             if (location != null) {
-                println("Found $pattern at $location")
+//                println("Found $pattern at $location")
                 assertEquals(pattern,
                     chromosome.sequence.substring(location.startOffset, location.endOffset, location.strand))
 
