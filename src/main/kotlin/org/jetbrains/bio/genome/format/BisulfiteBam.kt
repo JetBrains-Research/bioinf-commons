@@ -75,9 +75,11 @@ object BisulfiteBamParser {
         return builder.build()
     }
 
-    fun parse(path: Path, chromosome: Chromosome, sequence: NucleotideSequence,
-              builder: MethylomeBuilder, progress: Progress,
-              minBasePhred: Byte) {
+    fun parse(
+        path: Path, chromosome: Chromosome, sequence: NucleotideSequence,
+        builder: MethylomeBuilder, progress: Progress,
+        minBasePhred: Byte
+    ) {
 
         getPiler(path, chromosome, minBasePhred).use { piler ->
             loop@ while (piler.hasNext()) {
@@ -104,9 +106,13 @@ object BisulfiteBamParser {
         // 'htsjdk' doesn't allow concurrent queries on 'BAMFileReader'
         // thus we have to re-create 'SamReader' for each chromosome.
         val samReader = SamReaderFactory.makeDefault()
-                .referenceSource(WrappedReferenceSource(chromosome.name,
-                        chromosome.sequence))
-                .open(path.toFile())
+            .referenceSource(
+                WrappedReferenceSource(
+                    chromosome.name,
+                    chromosome.sequence
+                )
+            )
+            .open(path.toFile())
 
         check(samReader.hasIndex()) { "$path must have index available" }
         return BowtieSamPiler(samReader, chromosome, minBasePhred)
@@ -121,14 +127,16 @@ object BisulfiteBamParser {
  * @author Sergei Lebedev
  */
 private abstract class SamPiler<T : PilerColumn>(
-        private val samReader: SamReader,
-        chromosome: Chromosome,
-        private val bismarkFormat: Boolean = false) :
-        Iterator<T>, AutoCloseable {
+    private val samReader: SamReader,
+    chromosome: Chromosome,
+    private val bismarkFormat: Boolean = false
+) :
+    Iterator<T>, AutoCloseable {
 
     /** An iterator for SAM records with the SAME reference index. */
     private val samIterator = Iterators.peekingIterator<SAMRecord>(
-            samReader.query(chromosome.name, 0, 0, false))
+        samReader.query(chromosome.name, 0, 0, false)
+    )
 
     /** A queue for loci waiting for more SAM records coming.  */
     protected val waitingQueue = ArrayList<T>()
@@ -144,19 +152,24 @@ private abstract class SamPiler<T : PilerColumn>(
 
         val sortOrder = samHeader.sortOrder
         if (sortOrder == null || sortOrder == SortOrder.unsorted) {
-            LOG.warn("SAM sort order is unspecified. "
-                    + "Assuming SAM is coordinate sorted, but exceptions may occur if it is not.")
+            LOG.warn(
+                "SAM sort order is unspecified. "
+                        + "Assuming SAM is coordinate sorted, but exceptions may occur if it is not."
+            )
         } else if (sortOrder != SortOrder.coordinate) {
             throw IllegalArgumentException(
-                    "Cannot operate on a SAM file that is not coordinate sorted.")
+                "Cannot operate on a SAM file that is not coordinate sorted."
+            )
         }
     }
 
     protected abstract fun updateWaiting(record: SAMRecord)
-    abstract fun handleLocus(builder: MethylomeBuilder,
-                             chromosome: Chromosome, strand: Strand,
-                             offset: Int, context: CytosineContext?,
-                             pc: PilerColumn)
+    abstract fun handleLocus(
+        builder: MethylomeBuilder,
+        chromosome: Chromosome, strand: Strand,
+        offset: Int, context: CytosineContext?,
+        pc: PilerColumn
+    )
 
     override fun hasNext(): Boolean {
         prefetch()
@@ -174,9 +187,10 @@ private abstract class SamPiler<T : PilerColumn>(
         while (completedQueue.isEmpty() && samIterator.hasNext()) {
             val record = samIterator.peek()
             if (record.readUnmappedFlag
-                    || record.isSecondaryOrSupplementary
-                    || record.duplicateReadFlag
-                    || record.mappingQuality == 0) {  // BWA multi-alignment evidence
+                || record.isSecondaryOrSupplementary
+                || record.duplicateReadFlag
+                || record.mappingQuality == 0
+            ) {  // BWA multi-alignment evidence
                 samIterator.next()
                 continue
             }
@@ -212,10 +226,11 @@ private abstract class SamPiler<T : PilerColumn>(
     }
 }
 
-private class BowtieSamPiler(samReader: SamReader,
-                             chromosome: Chromosome,
-                             private val minBasePhred: Byte = 0)
-    : SamPiler<BowtiePilerColumn>(samReader, chromosome) {
+private class BowtieSamPiler(
+    samReader: SamReader,
+    chromosome: Chromosome,
+    private val minBasePhred: Byte = 0
+) : SamPiler<BowtiePilerColumn>(samReader, chromosome) {
 
     override fun updateWaiting(record: SAMRecord) {
         val cigar = record.cigar ?: return
@@ -262,10 +277,12 @@ private class BowtieSamPiler(samReader: SamReader,
         }
     }
 
-    override fun handleLocus(builder: MethylomeBuilder,
-                             chromosome: Chromosome, strand: Strand,
-                             offset: Int, context: CytosineContext?,
-                             pc: PilerColumn) {
+    override fun handleLocus(
+        builder: MethylomeBuilder,
+        chromosome: Chromosome, strand: Strand,
+        offset: Int, context: CytosineContext?,
+        pc: PilerColumn
+    ) {
         var countA = 0
         var countT = 0
         var countC = 0
@@ -312,10 +329,11 @@ private class BowtieSamPiler(samReader: SamReader,
 
 }
 
-private class BismarkSamPiler(samReader: SamReader,
-                              chromosome: Chromosome,
-                              private val minBasePhred: Byte = 0)
-    : SamPiler<BismarkPilerColumn>(samReader, chromosome) {
+private class BismarkSamPiler(
+    samReader: SamReader,
+    chromosome: Chromosome,
+    private val minBasePhred: Byte = 0
+) : SamPiler<BismarkPilerColumn>(samReader, chromosome) {
 
     override fun updateWaiting(record: SAMRecord) {
         val alignmentStart = record.alignmentStart
@@ -342,10 +360,12 @@ private class BismarkSamPiler(samReader: SamReader,
         }
     }
 
-    override fun handleLocus(builder: MethylomeBuilder,
-                             chromosome: Chromosome, strand: Strand,
-                             offset: Int, context: CytosineContext?,
-                             pc: PilerColumn) {
+    override fun handleLocus(
+        builder: MethylomeBuilder,
+        chromosome: Chromosome, strand: Strand,
+        offset: Int, context: CytosineContext?,
+        pc: PilerColumn
+    ) {
         var countA = 0
         var countT = 0
         var countC = 0
@@ -463,16 +483,20 @@ private data class BismarkPilerColumn(override val position: Int) : PilerColumn 
 /**
  * A fake [htsjdk.samtools.cram.ref.ReferenceSource] which stores bytes for a single [Chromosome].
  */
-internal class WrappedReferenceSource(private val name: String,
-                                      sequence: NucleotideSequence) : ReferenceSource(null as File?) {
+internal class WrappedReferenceSource(
+    private val name: String,
+    sequence: NucleotideSequence
+) : ReferenceSource(null as File?) {
 
     // XXX please keep lazy to reduce memory consumption.
     private val bytes: ByteArray by lazy(LazyThreadSafetyMode.PUBLICATION) {
         sequence.toString().toByteArray()
     }
 
-    override fun getReferenceBases(record: SAMSequenceRecord,
-                                   tryNameVariants: Boolean): ByteArray? {
+    override fun getReferenceBases(
+        record: SAMSequenceRecord,
+        tryNameVariants: Boolean
+    ): ByteArray? {
         if (tryNameVariants) {
             for (variant in getVariants(record.sequenceName)) {
                 if (variant == name) {

@@ -77,7 +77,7 @@ class RangesSortedList internal constructor(
             if (endOffsets[idx] > startOffset) {
                 val start = kotlin.math.max(startOffset, startOffsets[idx])
                 val end = kotlin.math.min(endOffset, endOffsets[idx])
-                if(start < end) {
+                if (start < end) {
                     result.add(Range(start, end))
                 }
             }

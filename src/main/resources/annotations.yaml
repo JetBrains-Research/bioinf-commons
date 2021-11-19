@@ -149,7 +149,7 @@ genomes:
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/rmsk.txt.gz
     cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/cytoBand.txt.gz
     gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/gap.txt.gz
-    centromeres:  http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/centromeres.txt.gz
+    centromeres: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/centromeres.txt.gz
     cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/cpgIslandExt.txt.gz
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.2bit
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
@@ -298,43 +298,43 @@ genomes:
   #
   # http://www.ensembl.org/Heterocephalus_glaber_female/
   # http://hgdownload.soe.ucsc.edu/downloads.html#naked_mole-rat
-#  hetGla1:
-#    species: Naked mole-rat male (Heterocephalus glaber)
-#    alias: HetGla_1.0
-#    biomart:
-#      # XXX: mirror not mentioned anywhere but works, apr2018 is release date for vers 92
-#      url: http://apr2018.archive.ensembl.org/biomart/martservice
-#      dataset: hmale_gene_ensembl
-#    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-92/gtf/heterocephalus_glaber_male/Heterocephalus_glaber_male.HetGla_1.0.92.gtf.gz
-#    chr_alt_name_to_canonical:
-#      - MT: chrM
-#    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/database/rmsk.txt.gz
-#    cytobands: # n/a
-#    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/database/gap.txt.gz
-#    # centromeres:  n/a
-#    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/database/cpgIslandExt.txt.gz
-#    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/bigZips/hetGla1.2bit
-#    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/bigZips/hetGla1.chrom.sizes
-#
-#  # http://www.ensembl.org/Heterocephalus_glaber_male/
-#  # http://hgdownload.soe.ucsc.edu/downloads.html#naked_mole-rat
-#  hetGla2:
-#    species: Naked mole-rat female (Heterocephalus glaber)
-#    alias: HetGla_female_1.0
-#    biomart:
-#      # XXX: mirror not mentioned anywhere but works, apr2018 is release date for vers 92
-#      url: http://apr2018.archive.ensembl.org/biomart/martservice
-#      dataset: hfemale_gene_ensembl
-#    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-92/gtf/heterocephalus_glaber_female/Heterocephalus_glaber_female.HetGla_female_1.0.92.gtf.gz
-#    chr_alt_name_to_canonical:
-#      - MT: chrM
-#    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/rmsk.txt.gz
-#    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/cytoBandIdeo.txt.gz
-#    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/gap.txt.gz
-#    # centromeres:  n/a
-#    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/cpgIslandExt.txt.gz
-#    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/bigZips/hetGla2.2bit
-#    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/bigZips/hetGla2.chrom.sizes
+  #  hetGla1:
+  #    species: Naked mole-rat male (Heterocephalus glaber)
+  #    alias: HetGla_1.0
+  #    biomart:
+  #      # XXX: mirror not mentioned anywhere but works, apr2018 is release date for vers 92
+  #      url: http://apr2018.archive.ensembl.org/biomart/martservice
+  #      dataset: hmale_gene_ensembl
+  #    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-92/gtf/heterocephalus_glaber_male/Heterocephalus_glaber_male.HetGla_1.0.92.gtf.gz
+  #    chr_alt_name_to_canonical:
+  #      - MT: chrM
+  #    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/database/rmsk.txt.gz
+  #    cytobands: # n/a
+  #    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/database/gap.txt.gz
+  #    # centromeres:  n/a
+  #    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/database/cpgIslandExt.txt.gz
+  #    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/bigZips/hetGla1.2bit
+  #    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/bigZips/hetGla1.chrom.sizes
+  #
+  #  # http://www.ensembl.org/Heterocephalus_glaber_male/
+  #  # http://hgdownload.soe.ucsc.edu/downloads.html#naked_mole-rat
+  #  hetGla2:
+  #    species: Naked mole-rat female (Heterocephalus glaber)
+  #    alias: HetGla_female_1.0
+  #    biomart:
+  #      # XXX: mirror not mentioned anywhere but works, apr2018 is release date for vers 92
+  #      url: http://apr2018.archive.ensembl.org/biomart/martservice
+  #      dataset: hfemale_gene_ensembl
+  #    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-92/gtf/heterocephalus_glaber_female/Heterocephalus_glaber_female.HetGla_female_1.0.92.gtf.gz
+  #    chr_alt_name_to_canonical:
+  #      - MT: chrM
+  #    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/rmsk.txt.gz
+  #    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/cytoBandIdeo.txt.gz
+  #    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/gap.txt.gz
+  #    # centromeres:  n/a
+  #    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/cpgIslandExt.txt.gz
+  #    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/bigZips/hetGla2.2bit
+  #    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/bigZips/hetGla2.chrom.sizes
 
   # http://www.ensembl.org/Caenorhabditis_elegans/
   ce6:
@@ -375,20 +375,20 @@ genomes:
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/ce10/bigZips/ce10.2bit
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/ce10/bigZips/ce10.chrom.sizes
 
-#  wbcel215:
-#    species: Caenorhabditis elegans
-#    alias: Bcel215
-#    biomart:
-#      url: http://may2012.archive.ensembl.org/biomart/martservice
-#      dataset: celegans_gene_ensembl
-#    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-67/gtf/caenorhabditis_elegans/Caenorhabditis_elegans.WS215.67.gtf.gz
-#    # repeats: n/a
-#    # cytobands: n/a
-#    # gaps: n/a
-#    # centromeres:  n/a
-#    # cgis: n/a
-#    # sequence: n/a
-#    # chromsizes: n/a
+  #  wbcel215:
+  #    species: Caenorhabditis elegans
+  #    alias: Bcel215
+  #    biomart:
+  #      url: http://may2012.archive.ensembl.org/biomart/martservice
+  #      dataset: celegans_gene_ensembl
+  #    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-67/gtf/caenorhabditis_elegans/Caenorhabditis_elegans.WS215.67.gtf.gz
+  #    # repeats: n/a
+  #    # cytobands: n/a
+  #    # gaps: n/a
+  #    # centromeres:  n/a
+  #    # cgis: n/a
+  #    # sequence: n/a
+  #    # chromsizes: n/a
 
   ce11:
     species: Caenorhabditis elegans

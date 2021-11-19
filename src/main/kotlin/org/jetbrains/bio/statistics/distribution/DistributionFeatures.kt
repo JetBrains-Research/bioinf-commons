@@ -63,7 +63,7 @@ object Sampling {
     }
 
     fun sampleNegBinomial(mean: Double, failures: Double): Int {
-        require(mean >= 0 && failures > 0) {"mean and failures must be > 0"}
+        require(mean >= 0 && failures > 0) { "mean and failures must be > 0" }
         if (mean == 0.0) return 0
         val rate = sampleGamma(failures, failures / mean)
         return samplePoisson(rate)
@@ -146,8 +146,10 @@ object Sampling {
  * @since 25/09/13
  */
 object Densities {
-    fun logDirichletDensity(weights: F64Array,
-                            concentration: F64Array): Double {
+    fun logDirichletDensity(
+        weights: F64Array,
+        concentration: F64Array
+    ): Double {
         val k = weights.size
         val totalConcentration = concentration.sum()
         var acc = Gamma.logGamma(totalConcentration)
@@ -169,10 +171,12 @@ object Densities {
             return if (n == 0) 0.0 else Double.NEGATIVE_INFINITY
         }
 
-        return PoissonDistribution(null, rate,
-                PoissonDistribution.DEFAULT_EPSILON,
-                PoissonDistribution.DEFAULT_MAX_ITERATIONS)
-                .logProbability(n)
+        return PoissonDistribution(
+            null, rate,
+            PoissonDistribution.DEFAULT_EPSILON,
+            PoissonDistribution.DEFAULT_MAX_ITERATIONS
+        )
+            .logProbability(n)
     }
 
     fun logBinomialDensity(k: Int, n: Int, p: Double): Double {

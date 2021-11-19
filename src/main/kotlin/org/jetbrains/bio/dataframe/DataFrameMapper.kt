@@ -74,50 +74,50 @@ object DataFrameMappers {
         override fun load(path: Path, spec: DataFrameSpec): DataFrame {
             return NpzFile.read(path).use { reader ->
                 val columns = spec.columns.map { column ->
-                        val values = reader[column.label]
-                        when (column) {
-                            is ByteColumn -> column.wrap(values.asByteArray())
-                            is ShortColumn -> column.wrap(values.asShortArray())
-                            is IntColumn -> column.wrap(values.asIntArray())
-                            is LongColumn -> column.wrap(values.asLongArray())
-                            is FloatColumn -> column.wrap(values.asFloatArray())
-                            is DoubleColumn -> column.wrap(values.asDoubleArray())
-                            is BooleanColumn -> {
-                                val witness = values.asBooleanArray()
-                                column.wrap(BitterSet(witness.size) { witness[it] })
-                            }
-                            is StringColumn -> column.wrap(values.asStringArray())
-                            else -> error("unsupported column type: ${column.javaClass.canonicalName}")
+                    val values = reader[column.label]
+                    when (column) {
+                        is ByteColumn -> column.wrap(values.asByteArray())
+                        is ShortColumn -> column.wrap(values.asShortArray())
+                        is IntColumn -> column.wrap(values.asIntArray())
+                        is LongColumn -> column.wrap(values.asLongArray())
+                        is FloatColumn -> column.wrap(values.asFloatArray())
+                        is DoubleColumn -> column.wrap(values.asDoubleArray())
+                        is BooleanColumn -> {
+                            val witness = values.asBooleanArray()
+                            column.wrap(BitterSet(witness.size) { witness[it] })
                         }
+                        is StringColumn -> column.wrap(values.asStringArray())
+                        else -> error("unsupported column type: ${column.javaClass.canonicalName}")
                     }
-
-                    val rowsNumber = columns.map { it.size }.distinct().single()
-                    DataFrame(rowsNumber, columns)
                 }
-            }
 
-            override fun save(path: Path, df: DataFrame) {
-                NpzFile.write(path).use { writer ->
-                    for (column in df.columns) {
-                        when (column) {
-                            is ByteColumn -> writer.write(column.label, column.data)
-                            is ShortColumn -> writer.write(column.label, column.data)
-                            is IntColumn -> writer.write(column.label, column.data)
-                            is LongColumn -> writer.write(column.label, column.data)
-                            is FloatColumn -> writer.write(column.label, column.data)
-                            is DoubleColumn -> writer.write(column.label, column.data)
-                            is BooleanColumn -> writer.write(
-                                    column.label, with(column.data) { BooleanArray(size()) { get(it) } })
-                            is StringColumn -> writer.write(column.label, column.data)
-                            else -> error("unsupported column type: ${column.javaClass.canonicalName}")
-                        }
+                val rowsNumber = columns.map { it.size }.distinct().single()
+                DataFrame(rowsNumber, columns)
+            }
+        }
+
+        override fun save(path: Path, df: DataFrame) {
+            NpzFile.write(path).use { writer ->
+                for (column in df.columns) {
+                    when (column) {
+                        is ByteColumn -> writer.write(column.label, column.data)
+                        is ShortColumn -> writer.write(column.label, column.data)
+                        is IntColumn -> writer.write(column.label, column.data)
+                        is LongColumn -> writer.write(column.label, column.data)
+                        is FloatColumn -> writer.write(column.label, column.data)
+                        is DoubleColumn -> writer.write(column.label, column.data)
+                        is BooleanColumn -> writer.write(
+                            column.label, with(column.data) { BooleanArray(size()) { get(it) } })
+                        is StringColumn -> writer.write(column.label, column.data)
+                        else -> error("unsupported column type: ${column.javaClass.canonicalName}")
                     }
                 }
             }
         }
+    }
 
     /** Determines the appropriate mapper from file extension. */
-    fun forPath(path: Path) = when (path.extension.toLowerCase()) {
+    fun forPath(path: Path) = when (path.extension.lowercase()) {
         "npz" -> NPZ
         "csv" -> CSV
         else -> TSV

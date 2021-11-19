@@ -48,12 +48,13 @@ import kotlin.math.min
  * @author Sergei Lebedev
  */
 class TwoBitSequence(
-        /** Total length of the DNA sequence including Ns. */
-        override val length: Int,
-        /** N-block coordinates. */
-        private val nBlockStarts: IntArray, private val nBlockSizes: IntArray,
-        /** 2-bit packed DNA sequence. */
-        private val packedDna: IntArray) : NucleotideSequence {
+    /** Total length of the DNA sequence including Ns. */
+    override val length: Int,
+    /** N-block coordinates. */
+    private val nBlockStarts: IntArray, private val nBlockSizes: IntArray,
+    /** 2-bit packed DNA sequence. */
+    private val packedDna: IntArray
+) : NucleotideSequence {
 
     private val nBlockLut = BinaryLut.of(nBlockStarts, 8)
 
@@ -74,7 +75,7 @@ class TwoBitSequence(
 
     private fun inNBlock(index: Int, block: Int): Boolean {
         return block >= 0 && block < nBlockStarts.size &&
-               index - nBlockStarts[block] < nBlockSizes[block]
+                index - nBlockStarts[block] < nBlockSizes[block]
     }
 
     private fun getByte(index: Int): Byte {
@@ -90,7 +91,7 @@ class TwoBitSequence(
      * Returns the index of the block containing a given position or -1 otherwise.
      */
     private fun getBlock(pos: Int): Int {
-        if (nBlockStarts.size == 0 || pos < nBlockStarts[0]) {
+        if (nBlockStarts.isEmpty() || pos < nBlockStarts[0]) {
             return -1
         }
 
@@ -118,7 +119,7 @@ class TwoBitSequence(
     }
 
     override fun equals(other: Any?): Boolean = when {
-        this === other ->  true
+        this === other -> true
         other == null || javaClass != other.javaClass -> false
         else -> {
             val tbs = other as TwoBitSequence
@@ -206,8 +207,10 @@ class TwoBitSequence(
                 i += NUCLEOTIDE_PER_INTEGER
             }
 
-            return TwoBitSequence(dnaSize, nBlockStarts.toArray(), nBlockSizes.toArray(),
-                    packedDna.toArray())
+            return TwoBitSequence(
+                dnaSize, nBlockStarts.toArray(), nBlockSizes.toArray(),
+                packedDna.toArray()
+            )
         }
     }
 }
@@ -231,7 +234,8 @@ object TwoBitReader {
      *         doesn't conform to 2bit format specification.
      */
     @Throws(IOException::class)
-    @JvmStatic fun names(path: Path): ImmutableSet<String> {
+    @JvmStatic
+    fun names(path: Path): ImmutableSet<String> {
         val buf = getBuffer(path)
         val index = getIndex(buf)
         return ImmutableSet.copyOf(index.keySet())
@@ -247,7 +251,8 @@ object TwoBitReader {
      *         contain `name`.
      */
     @Throws(IOException::class)
-    @JvmStatic fun length(path: Path, name: String): Int {
+    @JvmStatic
+    fun length(path: Path, name: String): Int {
         val buf = getBuffer(path)
         val index = getIndex(buf)
         require(index.containsKey(name)) { "unknown sequence: $name" }
@@ -265,7 +270,8 @@ object TwoBitReader {
      *         contain `name`.
      */
     @Throws(IOException::class)
-    @JvmStatic fun read(path: Path, name: String): TwoBitSequence {
+    @JvmStatic
+    fun read(path: Path, name: String): TwoBitSequence {
         val buf = getBuffer(path)
         val index = getIndex(buf)
         require(index.containsKey(name)) { "unknown sequence: $name" }
@@ -350,8 +356,12 @@ object TwoBitReader {
         if (leftover > 0) {
             buf.position(buf.position() + packsCount * Integer.BYTES)
             val pack = ByteArray(Integer.BYTES)
-            buf.get(pack, 0, IntMath.divide(leftover * TwoBitSequence.BITS_PER_NUCLEOTIDE,
-                                            java.lang.Byte.SIZE, RoundingMode.CEILING))
+            buf.get(
+                pack, 0, IntMath.divide(
+                    leftover * TwoBitSequence.BITS_PER_NUCLEOTIDE,
+                    java.lang.Byte.SIZE, RoundingMode.CEILING
+                )
+            )
             packedDna[packsCount] = Ints.fromByteArray(pack)
         }
 
@@ -367,7 +377,8 @@ object TwoBitReader {
  */
 object TwoBitWriter {
     @Throws(IOException::class)
-    @JvmStatic fun convert(fastaPath: Path, twoBitPath: Path) {
+    @JvmStatic
+    fun convert(fastaPath: Path, twoBitPath: Path) {
         val chrNames = FastaReader.read(fastaPath, false)
             .map { it.description.split(' ').first() }
             .collect(Collectors.toList())

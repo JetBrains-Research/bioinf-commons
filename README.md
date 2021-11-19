@@ -20,7 +20,7 @@ Contents
     * `query` - Named functions - queries with caching capabilities
     * `sampling` - API for genomic sampling - sequencies, locations, etc.
     * `sequence` - Genome sequence API<br/>
-    Also: Biomart, Ensembl, UCSC support, Genomes and Genes annotations
+      Also: Biomart, Ensembl, UCSC support, Genomes and Genes annotations
 * `org.jetbrains.bio.statistics` - Statistics utilities including distributions mixtures, hmms and hypothesis testing
 * `org.jetbrains.bio.util` - Cancellable computations, progress reporters, logging utilities, and other utils
 

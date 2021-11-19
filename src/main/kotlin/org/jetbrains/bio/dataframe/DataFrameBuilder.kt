@@ -11,8 +11,8 @@ import java.util.*
  * @author Evgeny Kurbatsky
  */
 class DataFrameBuilder(private val spec: DataFrameSpec) {
-    private val accumulator
-            = if (spec.synchronized) Collections.synchronizedList(ArrayList<Array<Any>>()) else ArrayList<Array<Any>>()
+    private val accumulator =
+        if (spec.synchronized) Collections.synchronizedList(ArrayList<Array<Any>>()) else ArrayList()
 
     fun add(vararg row: Any) {
         accumulator.add(arrayOf(*row))
@@ -28,8 +28,10 @@ class DataFrameBuilder(private val spec: DataFrameSpec) {
                     check(newColumn.boxedType.isInstance(value))
                     newColumn.load(row, value.toString())
                 } catch (e: Exception) {
-                    throw IllegalArgumentException("Wrong type: $row-th arg (column: ${newColumn.label}) value " +
-                            "$value is expected to be of type ${newColumn.typeName()}")
+                    throw IllegalArgumentException(
+                        "Wrong type: $row-th arg (column: ${newColumn.label}) value " +
+                                "$value is expected to be of type ${newColumn.typeName()}"
+                    )
                 }
             }
             newColumn

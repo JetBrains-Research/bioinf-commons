@@ -13,10 +13,12 @@ import org.slf4j.event.Level
  * @author Sergei Lebedev
  * @since 05/09/14
  */
-abstract class ConvergenceMonitor(protected val title: String,
-                                  protected val threshold: Double,
-                                  protected val maxIter: Int,
-                                  private val level: Level) {
+abstract class ConvergenceMonitor(
+    protected val title: String,
+    protected val threshold: Double,
+    protected val maxIter: Int,
+    private val level: Level
+) {
     init {
         require(maxIter > 1) { "maximum number of iterations must be greater than one" }
         require(threshold >= 0) { "threshold must be >= 0" }
@@ -41,9 +43,11 @@ abstract class ConvergenceMonitor(protected val title: String,
  * @author Sergei Lebedev
  * @since 03/09/14
  */
-class MLMonitor(title: String, threshold: Double, maxIter: Int,
-                level: Level = Level.DEBUG) :
-        ConvergenceMonitor(title, threshold, maxIter, level) {
+class MLMonitor(
+    title: String, threshold: Double, maxIter: Int,
+    level: Level = Level.DEBUG
+) :
+    ConvergenceMonitor(title, threshold, maxIter, level) {
 
     private val logLikelihoods = TDoubleArrayList(maxIter)
 

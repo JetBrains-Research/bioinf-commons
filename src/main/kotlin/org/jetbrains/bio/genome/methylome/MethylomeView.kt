@@ -10,7 +10,8 @@ import org.jetbrains.bio.dataframe.DataFrame
  * @author Sergei Lebedev
  */
 data class StrandMethylomeView internal constructor(
-        private val frame: MethylomeFrame) : MethylomeView {
+    private val frame: MethylomeFrame
+) : MethylomeView {
 
     override fun peel() = frame.peel()
 
@@ -23,20 +24,21 @@ data class StrandMethylomeView internal constructor(
  * @author Sergei Lebedev
  */
 data class ChromosomeMethylomeView internal constructor(
-        private val framePlus: MethylomeFrame,
-        private val frameMinus: MethylomeFrame) : MethylomeView {
+    private val framePlus: MethylomeFrame,
+    private val frameMinus: MethylomeFrame
+) : MethylomeView {
 
     override fun peel() = DataFrame.rowBind(
-            framePlus.peel().with("strand", BitterSet(framePlus.size) { true }),
-            frameMinus.peel().with("strand", BitterSet(frameMinus.size) { false })
+        framePlus.peel().with("strand", BitterSet(framePlus.size) { true }),
+        frameMinus.peel().with("strand", BitterSet(frameMinus.size) { false })
     ).reorder("offset")
 
     override val size = framePlus.size + frameMinus.size
 
     override fun toString() = MoreObjects.toStringHelper(this)
-            .add("+", framePlus.size)
-            .add("-", frameMinus.size)
-            .toString()
+        .add("+", framePlus.size)
+        .add("-", frameMinus.size)
+        .toString()
 }
 
 /**

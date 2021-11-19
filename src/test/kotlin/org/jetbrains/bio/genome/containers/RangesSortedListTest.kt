@@ -135,8 +135,22 @@ class RangesSortedListTest {
         assertFalse(rangeSortedList(Range(0, 10), Range(11, 20)).includesRange(Range(5, 15)))
 
         // multiple
-        assertTrue(rangeSortedList(Range(0, 100), Range(5, 8), Range(10, 20), Range(20, 30)).includesRange(Range(5, 15)))
-        assertFalse(rangeSortedList(Range(0, 10), Range(5, 8), Range(10, 20), Range(20, 30)).includesRange(Range(5, 15)))
+        assertTrue(
+            rangeSortedList(Range(0, 100), Range(5, 8), Range(10, 20), Range(20, 30)).includesRange(
+                Range(
+                    5,
+                    15
+                )
+            )
+        )
+        assertFalse(
+            rangeSortedList(Range(0, 10), Range(5, 8), Range(10, 20), Range(20, 30)).includesRange(
+                Range(
+                    5,
+                    15
+                )
+            )
+        )
         assertTrue(
             rangeSortedList(
                 Range(0, 10),
@@ -221,19 +235,19 @@ class RangesSortedListTest {
     @Test
     fun intersectRangesComplex1() {
         val rl1 = rangeSortedList(
-                    Range(0, 40),
-                    Range(2, 6),
-                    Range(9, 15),
-                    Range(10, 30),
-                    Range(10, 50),
-                    Range(20, 40),
-                    Range(20, 50),
-                    Range(30, 70),
-                    Range(50, 100),
-                    Range(60, 70),
-                    Range(70, 80),
-                    Range(90, 140)
-                )
+            Range(0, 40),
+            Range(2, 6),
+            Range(9, 15),
+            Range(10, 30),
+            Range(10, 50),
+            Range(20, 40),
+            Range(20, 50),
+            Range(30, 70),
+            Range(50, 100),
+            Range(60, 70),
+            Range(70, 80),
+            Range(90, 140)
+        )
         val rl2 = rangeSortedList(Range(0, 5), Range(0, 90), Range(10, 15))
         // List with duplicated!
         doCheckIntersectedRanges(
@@ -292,7 +306,7 @@ class RangesSortedListTest {
             rl1.intersectRanges(rl2).let {
                 if (sortActual) {
                     it.toRangeSortedList().toList()
-                }  else {
+                } else {
                     it
                 }
             }

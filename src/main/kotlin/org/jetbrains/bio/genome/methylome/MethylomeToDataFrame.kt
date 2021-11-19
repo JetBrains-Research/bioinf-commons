@@ -17,8 +17,9 @@ import org.jetbrains.bio.genome.StrandFilter
  * @author Sergei Lebedev
  */
 class MethylomeToDataFrame private constructor(
-        val strandFilter: StrandFilter,
-        val cytosineContext: CytosineContext?) {
+    val strandFilter: StrandFilter,
+    val cytosineContext: CytosineContext?
+) {
 
     fun apply(methylome: Methylome, chromosome: Chromosome): DataFrame {
         return apply(listOf(methylome), chromosome)
@@ -51,9 +52,9 @@ class MethylomeToDataFrame private constructor(
 
     private fun get(methylome: Methylome, chromosome: Chromosome): MethylomeView {
         return when (strandFilter) {
-            StrandFilter.PLUS  -> methylome[chromosome, Strand.PLUS]
+            StrandFilter.PLUS -> methylome[chromosome, Strand.PLUS]
             StrandFilter.MINUS -> methylome[chromosome, Strand.MINUS]
-            StrandFilter.BOTH  -> methylome.getCombined(chromosome)
+            StrandFilter.BOTH -> methylome.getCombined(chromosome)
         }
     }
 
@@ -81,13 +82,17 @@ class MethylomeToDataFrame private constructor(
     }
 
     override fun toString(): String = Joiner.on('_')
-            .join(strandFilter, cytosineContext?.toString() ?: "ANY")
+        .join(strandFilter, cytosineContext?.toString() ?: "ANY")
 
     companion object {
-        @JvmStatic val DEFAULT = create(StrandFilter.PLUS, CytosineContext.CG)
+        @JvmStatic
+        val DEFAULT = create(StrandFilter.PLUS, CytosineContext.CG)
 
-        @JvmStatic fun create(strandFilter: StrandFilter,
-                              cytosineContext: CytosineContext? = null): MethylomeToDataFrame {
+        @JvmStatic
+        fun create(
+            strandFilter: StrandFilter,
+            cytosineContext: CytosineContext? = null
+        ): MethylomeToDataFrame {
             return MethylomeToDataFrame(strandFilter, cytosineContext)
         }
     }

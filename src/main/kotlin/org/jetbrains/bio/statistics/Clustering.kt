@@ -9,7 +9,6 @@ import org.apache.commons.math3.ml.clustering.MultiKMeansPlusPlusClusterer
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics
 import org.apache.commons.math3.util.FastMath
 import org.jetbrains.bio.dataframe.DataFrame
-import java.util.*
 
 /**
  * @author Sergei Lebedev
@@ -62,6 +61,6 @@ object Clustering {
             summaries.add(summary)
         }
 
-        return summaries.sortedBy {it.mean + it.standardDeviation / FastMath.sqrt(it.n.toDouble())}
+        return summaries.sortedBy { it.mean + it.standardDeviation / FastMath.sqrt(it.n.toDouble()) }
     }
 }

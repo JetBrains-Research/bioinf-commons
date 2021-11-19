@@ -25,93 +25,99 @@ class SingleEndCoverageTest {
     @Test
     fun testSimpleTagsCoverage() {
         val coverage = SingleEndCoverage.builder(genomeQuery)
-                .process(Location(0, 100, chromosome1, Strand.PLUS))
-                .process(Location(5, 100, chromosome1, Strand.PLUS))
-                .process(Location(9, 100, chromosome1, Strand.PLUS))
-                .build(unique = false).withFragment(0)
+            .process(Location(0, 100, chromosome1, Strand.PLUS))
+            .process(Location(5, 100, chromosome1, Strand.PLUS))
+            .process(Location(9, 100, chromosome1, Strand.PLUS))
+            .build(unique = false).withFragment(0)
         assertEquals(3, coverage.getCoverage(Location(0, 10, chromosome1, Strand.PLUS)))
     }
 
     @Test
     fun testStartIndex() {
         val coverage = SingleEndCoverage.builder(genomeQuery)
-                .process(Location(0, 100, chromosome1, Strand.PLUS))
-                .process(Location(5, 100, chromosome1, Strand.PLUS))
-                .process(Location(9, 100, chromosome1, Strand.PLUS))
-                .build(unique = false).withFragment(0)
+            .process(Location(0, 100, chromosome1, Strand.PLUS))
+            .process(Location(5, 100, chromosome1, Strand.PLUS))
+            .process(Location(9, 100, chromosome1, Strand.PLUS))
+            .build(unique = false).withFragment(0)
         assertEquals(2, coverage.getCoverage(Location(1, 10, chromosome1, Strand.PLUS)))
     }
 
     @Test
     fun testSortingTagsCoverage() {
         val coverage = SingleEndCoverage.builder(genomeQuery)
-                .process(Location(9, 100, chromosome1, Strand.PLUS))
-                .process(Location(5, 100, chromosome1, Strand.PLUS))
-                .process(Location(0, 100, chromosome1, Strand.PLUS))
-                .build(unique = false).withFragment(0)
+            .process(Location(9, 100, chromosome1, Strand.PLUS))
+            .process(Location(5, 100, chromosome1, Strand.PLUS))
+            .process(Location(0, 100, chromosome1, Strand.PLUS))
+            .build(unique = false).withFragment(0)
         assertEquals(3, coverage.getCoverage(Location(0, 10, chromosome1, Strand.PLUS)))
     }
 
     @Test
     fun testMultiplePointsTagsCoverage() {
         val coverage = SingleEndCoverage.builder(genomeQuery)
-                .process(Location(0, 100, chromosome1, Strand.PLUS))
-                .process(Location(0, 100, chromosome1, Strand.PLUS))
-                .process(Location(0, 100, chromosome1, Strand.PLUS))
-                .process(Location(5, 100, chromosome1, Strand.PLUS))
-                .process(Location(5, 100, chromosome1, Strand.PLUS))
-                .process(Location(5, 100, chromosome1, Strand.PLUS))
-                .process(Location(9, 100, chromosome1, Strand.PLUS))
-                .process(Location(9, 100, chromosome1, Strand.PLUS))
-                .process(Location(9, 100, chromosome1, Strand.PLUS))
-                .build(unique = false).withFragment(0)
+            .process(Location(0, 100, chromosome1, Strand.PLUS))
+            .process(Location(0, 100, chromosome1, Strand.PLUS))
+            .process(Location(0, 100, chromosome1, Strand.PLUS))
+            .process(Location(5, 100, chromosome1, Strand.PLUS))
+            .process(Location(5, 100, chromosome1, Strand.PLUS))
+            .process(Location(5, 100, chromosome1, Strand.PLUS))
+            .process(Location(9, 100, chromosome1, Strand.PLUS))
+            .process(Location(9, 100, chromosome1, Strand.PLUS))
+            .process(Location(9, 100, chromosome1, Strand.PLUS))
+            .build(unique = false).withFragment(0)
         assertEquals(9, coverage.getCoverage(Location(0, 10, chromosome1, Strand.PLUS)))
     }
 
     @Test
     fun testWrongStrandTagsCoverage() {
         val coverage = SingleEndCoverage.builder(genomeQuery)
-                .process(Location(1, 100, chromosome1, Strand.MINUS))
-                .build(unique = false).withFragment(0)
+            .process(Location(1, 100, chromosome1, Strand.MINUS))
+            .build(unique = false).withFragment(0)
         assertEquals(0, coverage.getCoverage(Location(0, 10, chromosome1, Strand.PLUS)))
     }
 
     @Test
     fun testWrongOutOfBoundsLeftTagsCoverage() {
         val coverage = SingleEndCoverage.builder(genomeQuery)
-                .process(Location(0, 100, chromosome1, Strand.PLUS))
-                .build(unique = false).withFragment(0)
+            .process(Location(0, 100, chromosome1, Strand.PLUS))
+            .build(unique = false).withFragment(0)
         assertEquals(0, coverage.getCoverage(Location(10, 20, chromosome1, Strand.PLUS)))
     }
 
     @Test
     fun testWrongOutOfBoundsRightTagsCoverage() {
         val coverage = SingleEndCoverage.builder(genomeQuery)
-                .process(Location(30, 100, chromosome1, Strand.PLUS))
-                .build(unique = false).withFragment(0)
+            .process(Location(30, 100, chromosome1, Strand.PLUS))
+            .build(unique = false).withFragment(0)
         assertEquals(0, coverage.getCoverage(Location(10, 20, chromosome1, Strand.PLUS)))
     }
 
     @Test
     fun testGetTagsSimple() {
         val coverage = SingleEndCoverage.builder(genomeQuery)
-                .putAll(chromosome1, Strand.PLUS, 5, 13, 23, 1, 111, 7, 4, 5, 50)
-                .build(unique = false).withFragment(0)
+            .putAll(chromosome1, Strand.PLUS, 5, 13, 23, 1, 111, 7, 4, 5, 50)
+            .build(unique = false).withFragment(0)
 
-        assertArrayEquals(intArrayOf(5, 5, 7, 13, 23),
-                coverage.getTags(Location(5, 50, chromosome1, Strand.PLUS)))
-        assertArrayEquals(intArrayOf(13, 23),
-                coverage.getTags(Location(10, 25, chromosome1, Strand.PLUS)))
-        assertArrayEquals(intArrayOf(5, 5, 7, 13, 23, 50),
-                coverage.getTags(Location(5, 55, chromosome1, Strand.PLUS)))
+        assertArrayEquals(
+            intArrayOf(5, 5, 7, 13, 23),
+            coverage.getTags(Location(5, 50, chromosome1, Strand.PLUS))
+        )
+        assertArrayEquals(
+            intArrayOf(13, 23),
+            coverage.getTags(Location(10, 25, chromosome1, Strand.PLUS))
+        )
+        assertArrayEquals(
+            intArrayOf(5, 5, 7, 13, 23, 50),
+            coverage.getTags(Location(5, 55, chromosome1, Strand.PLUS))
+        )
     }
 
     @Test
     fun testGetEqualTags() {
         val tags = intArrayOf(5, 5, 5, 5, 5, 5, 5, 5, 5)
         val coverage = SingleEndCoverage.builder(genomeQuery)
-                .putAll(chromosome1, Strand.PLUS, *tags)
-                .build(unique = false).withFragment(0)
+            .putAll(chromosome1, Strand.PLUS, *tags)
+            .build(unique = false).withFragment(0)
 
         assertArrayEquals(tags, coverage.getTags(Location(5, 50, chromosome1, Strand.PLUS)))
     }
@@ -234,12 +240,18 @@ class SingleEndCoverageTest {
                     this.process(it)
                 }
             }.build(true).withFragment(150)
-            assertArrayEquals(intArrayOf(0),
-                    coverage.getTags(Location(0, 100, chromosome1, Strand.PLUS)))
-            assertArrayEquals(intArrayOf(0),
-                    coverage.getTags(Location(0, 500, chromosome1, Strand.PLUS)))
-            assertArrayEquals(intArrayOf(100, 150),
-                    coverage.getTags(Location(0, 100, chromosome1, Strand.MINUS)))
+            assertArrayEquals(
+                intArrayOf(0),
+                coverage.getTags(Location(0, 100, chromosome1, Strand.PLUS))
+            )
+            assertArrayEquals(
+                intArrayOf(0),
+                coverage.getTags(Location(0, 500, chromosome1, Strand.PLUS))
+            )
+            assertArrayEquals(
+                intArrayOf(100, 150),
+                coverage.getTags(Location(0, 100, chromosome1, Strand.MINUS))
+            )
         }
     }
 
@@ -301,9 +313,11 @@ class SingleEndCoverageTest {
 internal fun SingleEndCoverage.withFragment(fragment: Int): SingleEndCoverage = withFragment(FixedFragment(fragment))
 
 
-internal fun SingleEndCoverage.Builder.putAll(chromosome: Chromosome,
-                                     strand: Strand,
-                                     vararg offsets: Int): SingleEndCoverage.Builder {
+internal fun SingleEndCoverage.Builder.putAll(
+    chromosome: Chromosome,
+    strand: Strand,
+    vararg offsets: Int
+): SingleEndCoverage.Builder {
     data[chromosome, strand].addAll(offsets)
     return this
 }

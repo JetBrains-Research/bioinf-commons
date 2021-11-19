@@ -28,8 +28,10 @@ abstract class MLAbstractMixture(protected val numComponents: Int, weights: F64A
         return MLMixtureIterationContext(df)
     }
 
-    override fun fit(preprocessed: Preprocessed<DataFrame>, title: String,
-                     threshold: Double, maxIter: Int) {
+    override fun fit(
+        preprocessed: Preprocessed<DataFrame>, title: String,
+        threshold: Double, maxIter: Int
+    ) {
         val df = preprocessed.get()
         val context = context(df)
         val monitor = MLMonitor(title, threshold, maxIter)
@@ -90,7 +92,7 @@ abstract class MLAbstractMixture(protected val numComponents: Int, weights: F64A
     }
 
     protected open inner class MLMixtureIterationContext(df: DataFrame) :
-            MixtureIterationContext(numComponents, df) {
+        MixtureIterationContext(numComponents, df) {
 
         override fun refill() {
             val numObservations = df.rowsNumber

@@ -53,7 +53,7 @@ class GtfReaderTest {
 1	havana	three_prime_utr	10853874	10853952	.	-	.	gene_id "ENSG00000060138"; gene_version "8"; transcript_id "ENST00000541351"; transcript_version "1"; gene_name "YBX3"; gene_source "ensembl_havana"; gene_biotype "protein_coding"; transcript_name "YBX3-014"; transcript_source "havana"; transcript_biotype "nonsense_mediated_decay"; havana_transcript "OTTHUMT00000399636"; havana_transcript_version "1"; tag "cds_start_NF"; tag "mRNA_start_NF";
 """
 
-    val ENST00000311042="""# ENST00000311042, hg19: +chr3:39509171-39557492
+    val ENST00000311042 = """# ENST00000311042, hg19: +chr3:39509171-39557492
 # [several UTR5; STOP codon split in 2 exons (several stop codon records)]
 1	havana	transcript	39509171	39557492	.	+	.	gene_id "ENSG00000168314"; gene_version "13"; transcript_id "ENST00000311042"; transcript_version "6"; gene_name "MOBP"; gene_source "ensembl_havana"; gene_biotype "protein_coding"; transcript_name "MOBP-015"; transcript_source "havana"; transcript_biotype "protein_coding"; tag "CCDS"; ccds_id "CCDS63598"; havana_transcript "OTTHUMT00000343653"; havana_transcript_version "1"; tag "basic";
 1	havana	exon	39509171	39509231	.	+	.	gene_id "ENSG00000168314"; gene_version "13"; transcript_id "ENST00000311042"; transcript_version "6"; exon_number "1"; gene_name "MOBP"; gene_source "ensembl_havana"; gene_biotype "protein_coding"; transcript_name "MOBP-015"; transcript_source "havana"; transcript_biotype "protein_coding"; tag "CCDS"; ccds_id "CCDS63598"; havana_transcript "OTTHUMT00000343653"; havana_transcript_version "1"; exon_id "ENSE00001773788"; exon_version "1"; tag "basic";
@@ -168,7 +168,7 @@ class GtfReaderTest {
 1	ensembl_havana	three_prime_utr	9238639	9238826	.	+	.	gene_id "ENSG00000228927"; gene_version "5"; transcript_id "ENST00000457222"; transcript_version "2"; gene_name "TSPY3"; gene_source "ensembl_havana"; gene_biotype "protein_coding"; transcript_name "TSPY3-001"; transcript_source "ensembl_havana"; transcript_biotype "protein_coding"; tag "CCDS"; ccds_id "CCDS48204"; havana_transcript "OTTHUMT00000099505"; havana_transcript_version "1"; tag "basic";
 """
 
-    val ENST00000423104 =  """# ENST00000423104, hg19, -chr2:204306801-204360076
+    val ENST00000423104 = """# ENST00000423104, hg19, -chr2:204306801-204360076
 # short 3bp exon with stop codon
 2	protein_coding	transcript	204306801	204360076	.	-	.	gene_id "ENSG00000173166"; transcript_id "ENST00000423104"; gene_name "RAPH1"; gene_source "ensembl_havana"; gene_biotype "protein_coding"; transcript_name "RAPH1-015"; transcript_source "havana";
 2	protein_coding	exon	204359957	204360076	.	-	.	gene_id "ENSG00000173166"; transcript_id "ENST00000423104"; exon_number "1"; gene_name "RAPH1"; gene_source "ensembl_havana"; gene_biotype "protein_coding"; transcript_name "RAPH1-015"; transcript_source "havana"; exon_id "ENSE00003567360";
@@ -255,9 +255,13 @@ class GtfReaderTest {
     @Test
     fun noStartCodon() {
         val transcript = readTranscript(ENST00000541351)
-        assertEquals(Location(10853873, 10863313, Chromosome(Genome["to1"], "chr1"),
-                              Strand.MINUS),
-                     transcript.location)
+        assertEquals(
+            Location(
+                10853873, 10863313, Chromosome(Genome["to1"], "chr1"),
+                Strand.MINUS
+            ),
+            transcript.location
+        )
         assertEquals(Range(10854688, 10863313), transcript.cdsRange)
     }
 
@@ -295,9 +299,13 @@ class GtfReaderTest {
         assertEquals(Range(6523131, 6523132), transcript.cds.map(Location::toRange).last())
 
         assertEquals(5, transcript.utr5.size)
-        assertEquals(listOf(Range(6523132, 6523187), Range(6524434, 6524513), Range(6524611, 6524779),
-                            Range(6525147, 6525282), Range(6525499, 6525690)),
-                     transcript.utr5.map(Location::toRange))
+        assertEquals(
+            listOf(
+                Range(6523132, 6523187), Range(6524434, 6524513), Range(6524611, 6524779),
+                Range(6525147, 6525282), Range(6525499, 6525690)
+            ),
+            transcript.utr5.map(Location::toRange)
+        )
     }
 
     @Test
@@ -327,8 +335,10 @@ class GtfReaderTest {
     fun multipleUTR5() {
         val transcript = readTranscript(ENST00000441980)
         assertEquals(3, transcript.utr5.size)
-        assertEquals(listOf(Range(39509170, 39509231), Range(39540957, 39541023), Range(39543556,39543560)),
-                     transcript.utr5.map(Location::toRange))
+        assertEquals(
+            listOf(Range(39509170, 39509231), Range(39540957, 39541023), Range(39543556, 39543560)),
+            transcript.utr5.map(Location::toRange)
+        )
     }
 
     @Test
@@ -336,8 +346,10 @@ class GtfReaderTest {
         val transcript = readTranscript(ENST00000541351)
 
         assertEquals(2, transcript.utr3.size)
-        assertEquals(listOf(Range(10853873, 10853952), Range(10854558, 10854685)),
-                     transcript.utr3.map(Location::toRange))
+        assertEquals(
+            listOf(Range(10853873, 10853952), Range(10854558, 10854685)),
+            transcript.utr3.map(Location::toRange)
+        )
     }
 
 
@@ -351,21 +363,28 @@ class GtfReaderTest {
 
         // Exons
         assertEquals(4, transcript.exons.size)
-        assertEquals(listOf(Range(39509170, 39509231), Range(39540957, 39541023), Range(39543556, 39543766),
-                            Range(39544025, 39544518)),
-                     transcript.exons.map { it.toRange() })
+        assertEquals(listOf(
+            Range(39509170, 39509231), Range(39540957, 39541023), Range(39543556, 39543766),
+            Range(39544025, 39544518)
+        ),
+            transcript.exons.map { it.toRange() })
 
         // CDS
         assertEquals(2, transcript.cds.size)
-        assertEquals(listOf(Range(39543560, 39543766), Range(39544025, 39544368)), transcript.cds.map(Location::toRange))
+        assertEquals(
+            listOf(Range(39543560, 39543766), Range(39544025, 39544368)),
+            transcript.cds.map(Location::toRange)
+        )
 
         // CDS Bounds
         assertEquals(Range(39543560, 39544368), transcript.cdsRange)
 
         // UTR5
         assertEquals(3, transcript.utr5.size)
-        assertEquals(listOf(Range(39509170, 39509231), Range(39540957, 39541023), Range(39543556, 39543560)),
-                     transcript.utr5.map(Location::toRange))
+        assertEquals(
+            listOf(Range(39509170, 39509231), Range(39540957, 39541023), Range(39543556, 39543560)),
+            transcript.utr5.map(Location::toRange)
+        )
 
         // UTR3
         assertEquals(1, transcript.utr3.size)
@@ -398,8 +417,10 @@ class GtfReaderTest {
 
         // UTR5
         assertEquals(2, transcript.utr5.size)
-        assertEquals(listOf(Range(99574, 99581), Range(100124, 100313)),
-                     transcript.utr5.map(Location::toRange))
+        assertEquals(
+            listOf(Range(99574, 99581), Range(100124, 100313)),
+            transcript.utr5.map(Location::toRange)
+        )
 
         // UTR3
         assertEquals(1, transcript.utr3.size)
@@ -435,7 +456,7 @@ class GtfReaderTest {
         assertEquals(Range(60670054, 60670128), transcript.cds.map(Location::toRange)[5])
         assertEquals(Range(60673835, 60673854), transcript.cds.map(Location::toRange).last())
     }
-    
+
     @Test
     fun multipleExons() {
         val transcript = readTranscript(ENST00000541371)
@@ -445,7 +466,7 @@ class GtfReaderTest {
         assertEquals(Range(60669874, 60669937), transcript.exons[4].toRange())
         assertEquals(Range(60673835, 60674041), transcript.exons.last().toRange())
     }
-    
+
     @Test
     fun startCodon() {
         val transcript = readTranscript(ENST00000541371)
@@ -500,54 +521,70 @@ class GtfReaderTest {
         val chr = Chromosome(Genome["to1"], "chr1")
 
         // basic:
-        assertEquals(83, GtfReader.determineUTR3End5(
+        assertEquals(
+            83, GtfReader.determineUTR3End5(
                 Location(20, 80, chr, Strand.PLUS),
                 listOf(Range(10, 90)),
                 "ENCT"
-        ))
+            )
+        )
 
-        assertEquals(16, GtfReader.determineUTR3End5(
+        assertEquals(
+            16, GtfReader.determineUTR3End5(
                 Location(20, 80, chr, Strand.MINUS),
                 listOf(Range(10, 90)),
                 "ENCT"
-        ))
+            )
+        )
 
         // Next exon:
-        assertEquals(93, GtfReader.determineUTR3End5(
+        assertEquals(
+            93, GtfReader.determineUTR3End5(
                 Location(20, 80, chr, Strand.PLUS),
                 listOf(Range(10, 80), Range(90, 94)),
                 "ENCT"
-        ))
-        assertEquals(10, GtfReader.determineUTR3End5(
+            )
+        )
+        assertEquals(
+            10, GtfReader.determineUTR3End5(
                 Location(20, 80, chr, Strand.MINUS),
                 listOf(Range(10, 14), Range(20, 90)),
                 "ENCT"
-        ))
+            )
+        )
 
         // Split:
-        assertEquals(92, GtfReader.determineUTR3End5(
+        assertEquals(
+            92, GtfReader.determineUTR3End5(
                 Location(20, 80, chr, Strand.PLUS),
                 listOf(Range(10, 81), Range(90, 93)),
                 "ENCT"
-        ))
-        assertEquals(11, GtfReader.determineUTR3End5(
+            )
+        )
+        assertEquals(
+            11, GtfReader.determineUTR3End5(
                 Location(20, 80, chr, Strand.MINUS),
                 listOf(Range(11, 14), Range(19, 90)),
                 "ENCT"
-        ))
+            )
+        )
 
         // No space:
-        assertEquals(-1, GtfReader.determineUTR3End5(
+        assertEquals(
+            -1, GtfReader.determineUTR3End5(
                 Location(20, 80, chr, Strand.PLUS),
                 listOf(Range(10, 80), Range(90, 93)),
                 "ENCT"
-        ))
+            )
+        )
 
-        assertEquals(-1, GtfReader.determineUTR3End5(
+        assertEquals(
+            -1, GtfReader.determineUTR3End5(
                 Location(20, 80, chr, Strand.MINUS),
                 listOf(Range(10, 13), Range(20, 90)),
                 "ENCT"
-        ))
+            )
+        )
     }
 
     private fun readTranscript(content: String): Transcript {

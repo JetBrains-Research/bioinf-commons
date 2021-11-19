@@ -7,17 +7,20 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class DataFrameBuilderTest {
-    @Rule @JvmField var thrown = ExpectedException.none()
+    @Rule
+    @JvmField
+    var thrown = ExpectedException.none()
 
-    @Test fun testBuilder() {
+    @Test
+    fun testBuilder() {
         val builder = DataFrameSpec()
-                .ints("i")
-                .bytes("b")
-                .doubles("d")
-                .strings("s")
-                .bools("f")
-                .enums("e", TestEnum::class.java)
-                .builder()
+            .ints("i")
+            .bytes("b")
+            .doubles("d")
+            .strings("s")
+            .booleans("f")
+            .enums("e", TestEnum::class.java)
+            .builder()
         builder.add(1000, 1.toByte(), 1.0, "a", true, TestEnum.VAL1)
         builder.add(2000, 2.toByte(), 2.0, "b", false, TestEnum.VAL2)
         builder.add(3000, 3.toByte(), 3.0, "c", true, TestEnum.VAL1)
@@ -27,13 +30,15 @@ class DataFrameBuilderTest {
         bitSet.set(2)
 
         val expectedDf = DataFrame()
-                .with("i", intArrayOf(1000, 2000, 3000))
-                .with("b", byteArrayOf(1, 2, 3))
-                .with("d", doubleArrayOf(1.0, 2.0, 3.0))
-                .with("s", arrayOf("a", "b", "c"))
-                .with("f", bitSet)
-                .with("e", TestEnum::class.java,
-                      arrayOf(TestEnum.VAL1, TestEnum.VAL2, TestEnum.VAL1))
+            .with("i", intArrayOf(1000, 2000, 3000))
+            .with("b", byteArrayOf(1, 2, 3))
+            .with("d", doubleArrayOf(1.0, 2.0, 3.0))
+            .with("s", arrayOf("a", "b", "c"))
+            .with("f", bitSet)
+            .with(
+                "e", TestEnum::class.java,
+                arrayOf(TestEnum.VAL1, TestEnum.VAL2, TestEnum.VAL1)
+            )
 
 
         val df = builder.build()
@@ -47,7 +52,8 @@ class DataFrameBuilderTest {
         assertEquals(expectedDf, df)
     }
 
-    @Test fun testCheckWrongIntRow() {
+    @Test
+    fun testCheckWrongIntRow() {
         val builder = DataFrameSpec().ints("v").builder()
         thrown.expect(IllegalArgumentException::class.java)
         thrown.expectMessage("Wrong type: 0-th arg (column: v) value 1 is expected to be of type Integer")
@@ -55,7 +61,8 @@ class DataFrameBuilderTest {
         builder.build()
     }
 
-    @Test fun testCheckWrongLongRow() {
+    @Test
+    fun testCheckWrongLongRow() {
         val builder = DataFrameSpec().longs("v").builder()
         thrown.expect(IllegalArgumentException::class.java)
         thrown.expectMessage("Wrong type: 0-th arg (column: v) value 1 is expected to be of type Long")
@@ -63,7 +70,8 @@ class DataFrameBuilderTest {
         builder.build()
     }
 
-    @Test fun testCheckWrongByteRow() {
+    @Test
+    fun testCheckWrongByteRow() {
         val builder = DataFrameSpec().bytes("v").builder()
         thrown.expect(IllegalArgumentException::class.java)
         thrown.expectMessage("Wrong type: 0-th arg (column: v) value 1 is expected to be of type Byte")
@@ -71,7 +79,8 @@ class DataFrameBuilderTest {
         builder.build()
     }
 
-    @Test fun testCheckWrongDoubleRow() {
+    @Test
+    fun testCheckWrongDoubleRow() {
         val builder = DataFrameSpec().doubles("v").builder()
         thrown.expect(IllegalArgumentException::class.java)
         thrown.expectMessage("is expected to be of type Double")
@@ -79,7 +88,8 @@ class DataFrameBuilderTest {
         builder.build()
     }
 
-    @Test fun testCheckWrongStringRow() {
+    @Test
+    fun testCheckWrongStringRow() {
         val builder = DataFrameSpec().strings("v").builder()
         thrown.expect(IllegalArgumentException::class.java)
         thrown.expectMessage("Wrong type: 0-th arg (column: v) value 1 is expected to be of type String")

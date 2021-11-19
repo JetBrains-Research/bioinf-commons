@@ -18,16 +18,16 @@ fun isPaired(path: Path): Boolean {
     return when (path.extension) {
         "bam", "cram" ->
             SamReaderFactory.make()
-                    .validationStringency(ValidationStringency.SILENT)
-                    .open(path.toFile()).use {
-                        it.forEach { record ->
-                            if (record.invalid()) {
-                                return@forEach
-                            }
-                            return@use record.readPairedFlag
+                .validationStringency(ValidationStringency.SILENT)
+                .open(path.toFile()).use {
+                    it.forEach { record ->
+                        if (record.invalid()) {
+                            return@forEach
                         }
-                        return@use false
+                        return@use record.readPairedFlag
                     }
+                    return@use false
+                }
         else -> false
     }
 }
@@ -50,9 +50,11 @@ fun processReads(genomeQuery: GenomeQuery, path: Path, consumer: (Location) -> U
                             val e = entry.unpackRegularFields(format)
                             val strand = e.strand.toStrand()
                             progress.report()
-                            consumer(Location(
-                                e.start, Math.max(e.start + 1, e.end), chromosome, strand
-                            ))
+                            consumer(
+                                Location(
+                                    e.start, Math.max(e.start + 1, e.end), chromosome, strand
+                                )
+                            )
                         }
                     }
                 }
@@ -96,7 +98,7 @@ fun processReads(genomeQuery: GenomeQuery, path: Path, consumer: (Location) -> U
  * something very wrong has happened.
  */
 fun processPairedReads(
-        genomeQuery: GenomeQuery, path: Path, consumer: (Chromosome, Int, Int, Int) -> Unit
+    genomeQuery: GenomeQuery, path: Path, consumer: (Chromosome, Int, Int, Int) -> Unit
 ): Int {
     val progress = Progress { title = "Loading paired-end reads ${path.name}" }.unbounded()
     try {
@@ -104,43 +106,44 @@ fun processPairedReads(
         when (path.extension) {
             "bam", "cram" -> {
                 SamReaderFactory.make()
-                        .validationStringency(ValidationStringency.SILENT)
-                        .open(path.toFile()).use { iterationReader ->
-                            iterationReader.forEach { record ->
-                                if (record.invalid()) {
-                                    return@forEach
-                                }
-                                progress.report()
-                                if (!record.readPairedFlag) {
-                                    /* this really, really shouldn't happen,
-                                    * but it's nice to have a safety net */
-                                    unpairedCount++
-                                    return@forEach
-                                }
-                                if (record.mateUnmappedFlag) {
-                                    // we skip partially mapped pairs
-                                    return@forEach
-                                }
-                                if (!record.readNegativeStrandFlag || record.mateNegativeStrandFlag
-                                        || record.referenceName != record.mateReferenceName) {
-                                    // We only process negative strand reads.
-                                    // We skip same-strand pairs because we can't easily
-                                    // infer insert size for them.
-                                    // We also skip pairs mapped to different chromosomes.
-                                    return@forEach
-                                }
+                    .validationStringency(ValidationStringency.SILENT)
+                    .open(path.toFile()).use { iterationReader ->
+                        iterationReader.forEach { record ->
+                            if (record.invalid()) {
+                                return@forEach
+                            }
+                            progress.report()
+                            if (!record.readPairedFlag) {
+                                /* this really, really shouldn't happen,
+                                * but it's nice to have a safety net */
+                                unpairedCount++
+                                return@forEach
+                            }
+                            if (record.mateUnmappedFlag) {
+                                // we skip partially mapped pairs
+                                return@forEach
+                            }
+                            if (!record.readNegativeStrandFlag || record.mateNegativeStrandFlag
+                                || record.referenceName != record.mateReferenceName
+                            ) {
+                                // We only process negative strand reads.
+                                // We skip same-strand pairs because we can't easily
+                                // infer insert size for them.
+                                // We also skip pairs mapped to different chromosomes.
+                                return@forEach
+                            }
 
-                                val pos = record.alignmentStart
-                                val pnext = record.mateAlignmentStart
-                                val length = record.readLength
-                                val chromosome = genomeQuery[record.referenceName]
-                                if (pnext != 0 && length != 0 && chromosome != null) {
-                                    consumer(
-                                        chromosome, pos, pnext, length
-                                    )
-                                }
+                            val pos = record.alignmentStart
+                            val pnext = record.mateAlignmentStart
+                            val length = record.readLength
+                            val chromosome = genomeQuery[record.referenceName]
+                            if (pnext != 0 && length != 0 && chromosome != null) {
+                                consumer(
+                                    chromosome, pos, pnext, length
+                                )
                             }
                         }
+                    }
             }
             else -> error("unsupported file type: $path")
         }
@@ -159,11 +162,14 @@ fun removeDuplicates(path: Path): Path {
     }
     val uniqueReads = path.toString().replace(".bam", "_unique.bam").toPath()
     uniqueReads.checkOrRecalculate("Unique reads") { output ->
-        MarkDuplicates.main(arrayOf(
+        MarkDuplicates.main(
+            arrayOf(
                 "REMOVE_DUPLICATES=true",
                 "INPUT=$path",
                 "OUTPUT=${output.path}",
-                "M=${path.toString().replace(".bam", "_metrics.txt")}"))
+                "M=${path.toString().replace(".bam", "_metrics.txt")}"
+            )
+        )
     }
     return uniqueReads
 }
@@ -178,10 +184,11 @@ private fun SAMRecord.invalid(): Boolean = readUnmappedFlag
         || alignmentStart == 0
 
 private fun SAMRecord.toLocation(genomeQuery: GenomeQuery): Location? =
-        // 1 based, end inclusive
-        genomeQuery[referenceName]?.let { chromosome ->
-            Location(
-                alignmentStart - 1, alignmentEnd,
-                chromosome,
-                if (readNegativeStrandFlag) Strand.MINUS else Strand.PLUS
-            ) }
+    // 1 based, end inclusive
+    genomeQuery[referenceName]?.let { chromosome ->
+        Location(
+            alignmentStart - 1, alignmentEnd,
+            chromosome,
+            if (readNegativeStrandFlag) Strand.MINUS else Strand.PLUS
+        )
+    }

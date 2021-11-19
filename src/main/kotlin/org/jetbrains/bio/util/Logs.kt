@@ -110,10 +110,11 @@ object Logs {
     }
 
     private fun isAux(t: IThrowableProxy) =
-            t.className in setOf(
-                    RuntimeException::class.qualifiedName,
-                    ExecutionException::class.qualifiedName,
-                    InvocationTargetException::class.qualifiedName)
+        t.className in setOf(
+            RuntimeException::class.qualifiedName,
+            ExecutionException::class.qualifiedName,
+            InvocationTargetException::class.qualifiedName
+        )
 
     fun addLoggingToFile(path: Path) {
         val loggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
@@ -183,9 +184,11 @@ object Logs {
 
         private fun timePart(event: ILoggingEvent): String {
             val date = Date(event.timeStamp)
-            return "${DateFormat.getDateInstance(
+            return "${
+                DateFormat.getDateInstance(
                     DateFormat.MEDIUM, Locale.getDefault()
-            ).format(date)} ${SimpleDateFormat("HH:mm:ss").format(date)}"
+                ).format(date)
+            } ${SimpleDateFormat("HH:mm:ss").format(date)}"
         }
 
 
@@ -198,7 +201,8 @@ object Logs {
         private fun throwablePart(event: ILoggingEvent): String {
             return if (event.throwableProxy != null) {
                 "${CoreConstants.LINE_SEPARATOR}Caused by: ${
-                getMessage(event.throwableProxy, includeStackTrace = true)}"
+                    getMessage(event.throwableProxy, includeStackTrace = true)
+                }"
             } else
                 ""
         }

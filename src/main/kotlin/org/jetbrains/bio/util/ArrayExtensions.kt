@@ -23,50 +23,50 @@ import java.util.stream.IntStream
  */
 fun ByteArray.argSort(reverse: Boolean = false): IntArray {
     return IntStream.range(0, size)
-            .mapToObj { IntIntPair(this[it].toInt(), it) }
-            .sorted(IntIntPair.comparator(reverse))
-            .mapToInt { it.second }
-            .toArray()
+        .mapToObj { IntIntPair(this[it].toInt(), it) }
+        .sorted(IntIntPair.comparator(reverse))
+        .mapToInt { it.second }
+        .toArray()
 }
 
 fun ShortArray.argSort(reverse: Boolean = false): IntArray {
     return IntStream.range(0, size)
-            .mapToObj { IntIntPair(this[it].toInt(), it) }
-            .sorted(IntIntPair.comparator(reverse))
-            .mapToInt { it.second }
-            .toArray()
+        .mapToObj { IntIntPair(this[it].toInt(), it) }
+        .sorted(IntIntPair.comparator(reverse))
+        .mapToInt { it.second }
+        .toArray()
 }
 
 fun IntArray.argSort(reverse: Boolean = false): IntArray {
     return IntStream.range(0, size)
-            .mapToObj { IntIntPair(this[it], it) }
-            .sorted(IntIntPair.comparator(reverse))
-            .mapToInt { it.second }
-            .toArray()
+        .mapToObj { IntIntPair(this[it], it) }
+        .sorted(IntIntPair.comparator(reverse))
+        .mapToInt { it.second }
+        .toArray()
 }
 
 fun LongArray.argSort(reverse: Boolean = false): IntArray {
     return IntStream.range(0, size)
-            .mapToObj { LongIntPair(this[it], it) }
-            .sorted(LongIntPair.comparator(reverse))
-            .mapToInt { it.second }
-            .toArray()
+        .mapToObj { LongIntPair(this[it], it) }
+        .sorted(LongIntPair.comparator(reverse))
+        .mapToInt { it.second }
+        .toArray()
 }
 
 fun FloatArray.argSort(reverse: Boolean = false): IntArray {
     return IntStream.range(0, size)
-            .mapToObj { DoubleIntPair(this[it].toDouble(), it) }
-            .sorted(DoubleIntPair.comparator(reverse))
-            .mapToInt { it.second }
-            .toArray()
+        .mapToObj { DoubleIntPair(this[it].toDouble(), it) }
+        .sorted(DoubleIntPair.comparator(reverse))
+        .mapToInt { it.second }
+        .toArray()
 }
 
 fun DoubleArray.argSort(reverse: Boolean = false): IntArray {
     return IntStream.range(0, size)
-            .mapToObj { DoubleIntPair(this[it], it) }
-            .sorted(DoubleIntPair.comparator(reverse))
-            .mapToInt { it.second }
-            .toArray()
+        .mapToObj { DoubleIntPair(this[it], it) }
+        .sorted(DoubleIntPair.comparator(reverse))
+        .mapToInt { it.second }
+        .toArray()
 }
 
 private class IntIntPair(val first: Int, val second: Int) {
@@ -77,9 +77,9 @@ private class IntIntPair(val first: Int, val second: Int) {
 
         private val COMPARATOR: Comparator<IntIntPair> = Comparator { p1, p2 ->
             ComparisonChain.start()
-                    .compare(p1.first, p2.first)
-                    .compare(p1.second, p2.second)
-                    .result()
+                .compare(p1.first, p2.first)
+                .compare(p1.second, p2.second)
+                .result()
         }
     }
 }
@@ -92,9 +92,9 @@ private class LongIntPair(val first: Long, val second: Int) {
 
         private val COMPARATOR: Comparator<LongIntPair> = Comparator { p1, p2 ->
             ComparisonChain.start()
-                    .compare(p1.first, p2.first)
-                    .compare(p1.second, p2.second)
-                    .result()
+                .compare(p1.first, p2.first)
+                .compare(p1.second, p2.second)
+                .result()
         }
     }
 }
@@ -107,9 +107,9 @@ private class DoubleIntPair(val first: Double, val second: Int) {
 
         private val COMPARATOR: Comparator<DoubleIntPair> = Comparator { p1, p2 ->
             ComparisonChain.start()
-                    .compare(p1.first, p2.first)
-                    .compare(p1.second, p2.second)
-                    .result()
+                .compare(p1.first, p2.first)
+                .compare(p1.second, p2.second)
+                .result()
         }
     }
 }

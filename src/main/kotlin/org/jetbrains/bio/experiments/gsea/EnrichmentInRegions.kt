@@ -132,11 +132,11 @@ object EnrichmentInRegions {
 
             // Chromosome additional mapping
             acceptsAll(
-                    listOf("chrmap"),
-                    "Comma separated list of `chrInput:chrGenome` pairs, where `chrInput` is chromosome name in " +
-                            "input file and `chrGenome` chromosome name in *.chrom.sizes file."
+                listOf("chrmap"),
+                "Comma separated list of `chrInput:chrGenome` pairs, where `chrInput` is chromosome name in " +
+                        "input file and `chrGenome` chromosome name in *.chrom.sizes file."
             ).withRequiredArg()
-                    .withValuesSeparatedBy(",")
+                .withValuesSeparatedBy(",")
 
             acceptsAll(
                 listOf("l", "loi"),
@@ -230,8 +230,10 @@ object EnrichmentInRegions {
                 .ofType(Int::class.java)
                 .defaultsTo(1000000)
 
-            acceptsAll(listOf("chunk-size"), "To reduce mem usage, simulation is done in several steps with" +
-                    " provided simulations number per chunk. Use 0 to sample all sets at once.")
+            acceptsAll(
+                listOf("chunk-size"), "To reduce mem usage, simulation is done in several steps with" +
+                        " provided simulations number per chunk. Use 0 to sample all sets at once."
+            )
                 .withRequiredArg()
                 .ofType(Int::class.java)
                 .defaultsTo(50000)
@@ -343,7 +345,9 @@ object EnrichmentInRegions {
                 val metric = when (metricStr) {
                     "overlap" -> OverlapNumberMetric(aSetFlankedBothSides);
                     "intersection" -> IntersectionNumberMetric(aSetFlankedBothSides);
-                    else -> throw IllegalArgumentException("Unsupported metric '${metricStr}', use one of: ${metrics.joinToString()}")
+                    else -> throw IllegalArgumentException(
+                        "Unsupported metric '${metricStr}', use one of: ${metrics.joinToString()}"
+                    )
                 }
                 LOG.info("METRIC: ${metric.column}")
 
@@ -413,8 +417,7 @@ object EnrichmentInRegions {
         require(endOffset in chromosome.range) {
             "End offset $endOffset is out of chromosome '${chrName}' ${chromosome.range} range"
         }
-        val intersectionFilter = Location(startOffset, endOffset, chromosome)
-        return intersectionFilter
+        return Location(startOffset, endOffset, chromosome)
     }
 }
 

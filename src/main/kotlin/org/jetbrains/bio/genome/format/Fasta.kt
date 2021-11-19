@@ -58,8 +58,8 @@ class FastaReader(val readSequence: Boolean) {
         @Throws(IOException::class)
         fun read(path: Path, readSequence: Boolean = true): Stream<FastaRecord> {
             val lines = path.bufferedReader().lines()
-                    .map { CharMatcher.whitespace().trimFrom(it) }
-                    .filter(String::isNotEmpty)
+                .map { CharMatcher.whitespace().trimFrom(it) }
+                .filter(String::isNotEmpty)
             val iterator = FastaReader(readSequence).read(Iterators.peekingIterator(lines.iterator()))
             return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false)
         }
@@ -94,6 +94,6 @@ data class FastaRecord(val description: String, val sequence: String)
 
 fun Genome.writeAsFasta(path: Path) {
     this.chromosomes.asSequence()
-            .map { chr -> FastaRecord(chr.name, chr.sequence.toString()) }
-            .asIterable().write(path)
+        .map { chr -> FastaRecord(chr.name, chr.sequence.toString()) }
+        .asIterable().write(path)
 }

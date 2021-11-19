@@ -30,9 +30,11 @@ object GSONUtil {
      * If it's a descendant, the factory creates and returns an adapter
      * via [typeAdapter] function, otherwise it returns null.
      */
-    @JvmStatic fun <C> classSpecificFactory(
-            aClass: Class<C>,
-            typeAdapter: (Gson, TypeAdapterFactory) -> TypeAdapter<C>): TypeAdapterFactory {
+    @JvmStatic
+    fun <C> classSpecificFactory(
+        aClass: Class<C>,
+        typeAdapter: (Gson, TypeAdapterFactory) -> TypeAdapter<C>
+    ): TypeAdapterFactory {
         return object : TypeAdapterFactory {
             override fun <T> create(gson: Gson, type: TypeToken<T>): TypeAdapter<T>? {
                 return if (aClass.isAssignableFrom(type.rawType)) {
@@ -50,8 +52,10 @@ object GSONUtil {
      * respectively, can read it from there and return an appropriate
      * type object.
      */
-    @JvmStatic fun <T: Any> classAwareAdapter(
-            gson: Gson, factory: TypeAdapterFactory, fqnField: String): TypeAdapter<T> {
+    @JvmStatic
+    fun <T : Any> classAwareAdapter(
+        gson: Gson, factory: TypeAdapterFactory, fqnField: String
+    ): TypeAdapter<T> {
         return object : TypeAdapter<T>() {
             @Throws(IOException::class)
             override fun write(out: JsonWriter, value: T) {
@@ -74,8 +78,10 @@ object GSONUtil {
                 val element = Streams.parse(reader)
                 val fqnElement = element.asJsonObject.remove(fqnField)
                 if (fqnElement == null) {
-                    deserializationError("Class name (%s) field is missing." +
-                            " Please, recalculate the model.", fqnField)
+                    deserializationError(
+                        "Class name (%s) field is missing." +
+                                " Please, recalculate the model.", fqnField
+                    )
                 }
                 val fqn = fqnElement!!.asString
 
@@ -104,12 +110,13 @@ object GSONUtil {
      * Helps to work around the changes in the class field layout;
      * a version change is more self-explanatory than a random field reading failure.
      */
-    @JvmStatic fun <T : Any> classAndVersionAdapter(
-            gson: Gson,
-            factory: TypeAdapterFactory,
-            fqnField: String,
-            versionField: String,
-            fallbackClassFQN: String? = null
+    @JvmStatic
+    fun <T : Any> classAndVersionAdapter(
+        gson: Gson,
+        factory: TypeAdapterFactory,
+        fqnField: String,
+        versionField: String,
+        fallbackClassFQN: String? = null
     ): TypeAdapter<T> {
         return object : TypeAdapter<T>() {
             override fun write(out: JsonWriter, value: T) {
@@ -152,8 +159,10 @@ object GSONUtil {
 
                 val recentVersion = getSerializationFormatVersion(aClass)
                 if (recentVersion != vers) {
-                    deserializationError("Format has changed, '%s' expects '%s' version, but got '%s'",
-                        fqn, recentVersion, vers)
+                    deserializationError(
+                        "Format has changed, '%s' expects '%s' version, but got '%s'",
+                        fqn, recentVersion, vers
+                    )
                 }
 
                 val adapter = gson.getDelegateAdapter(factory, TypeToken.get(aClass))
@@ -167,9 +176,11 @@ object GSONUtil {
                 try {
                     return (aClass.getDeclaredField("VERSION").get(null)).toString()
                 } catch (e: Exception) {
-                    deserializationError("Cannot get serialization format version." +
-                            " Probably VERSION field is missing in %s. Exception message: %s",
-                        aClass.name, e.message, cause = e)
+                    deserializationError(
+                        "Cannot get serialization format version." +
+                                " Probably VERSION field is missing in %s. Exception message: %s",
+                        aClass.name, e.message, cause = e
+                    )
                     return "" // this statement can never be reached
                 }
             }

@@ -31,22 +31,25 @@ import java.util.concurrent.atomic.AtomicLong
  * @param stranded Whether methylome contain stranded (strand-specific) or strand-independent (e.g merged CpG) data
  */
 open class Methylome internal constructor(
-        val genomeQuery: GenomeQuery,
-        private val plusData: GenomeMap<MethylomeFrame>,
-        private val minusData: GenomeMap<MethylomeFrame>,
-        val stranded: Boolean) {
+    val genomeQuery: GenomeQuery,
+    private val plusData: GenomeMap<MethylomeFrame>,
+    private val minusData: GenomeMap<MethylomeFrame>,
+    val stranded: Boolean
+) {
 
     operator fun get(chromosome: Chromosome, strand: Strand): StrandMethylomeView {
         require(stranded || strand != Strand.MINUS) {
             "Cannot access minus strand in strand-independent methylome"
         }
-        
+
         return StrandMethylomeView(getInternal(chromosome, strand))
     }
 
     fun getCombined(chromosome: Chromosome): ChromosomeMethylomeView {
-        return ChromosomeMethylomeView(getInternal(chromosome, Strand.PLUS),
-                                       getInternal(chromosome, Strand.MINUS))
+        return ChromosomeMethylomeView(
+            getInternal(chromosome, Strand.PLUS),
+            getInternal(chromosome, Strand.MINUS)
+        )
     }
 
     /**
@@ -56,7 +59,7 @@ open class Methylome internal constructor(
         return strand.choose(plusData, minusData)[chromosome]
     }
 
-    val size: Int get() = genomeQuery.get().sumBy { getCombined(it).size }
+    val size: Int get() = genomeQuery.get().sumOf { getCombined(it).size }
 
     @Throws(IOException::class)
     fun save(outputPath: Path) {
@@ -76,18 +79,18 @@ open class Methylome internal constructor(
     }
 
     override fun toString() = MoreObjects.toStringHelper(this)
-            .addValue(genomeQuery).toString()
+        .addValue(genomeQuery).toString()
 
     companion object {
         /** Binary format version.  */
         internal const val VERSION: Int = 7
 
         fun builder(
-                genomeQuery: GenomeQuery,
-                ignoreDuplicatedOffsets: Boolean = false,
-                stranded: Boolean = true
+            genomeQuery: GenomeQuery,
+            ignoreDuplicatedOffsets: Boolean = false,
+            stranded: Boolean = true
         ): MethylomeBuilder = MethylomeBuilder(
-                genomeQuery, ignoreDuplicatedOffsets, stranded
+            genomeQuery, ignoreDuplicatedOffsets, stranded
         )
 
         fun lazy(genomeQuery: GenomeQuery, inputPath: Path): Methylome {
@@ -115,11 +118,10 @@ open class Methylome internal constructor(
  * The current implementation *never* invalidates the loaded entries.
  */
 private class LazyMethylome(
-        genomeQuery: GenomeQuery,
-        private val inputPath: Path,
-        stranded: Boolean
-)
-    : Methylome(genomeQuery, frameMap(genomeQuery), frameMap(genomeQuery), stranded) {
+    genomeQuery: GenomeQuery,
+    private val inputPath: Path,
+    stranded: Boolean
+) : Methylome(genomeQuery, frameMap(genomeQuery), frameMap(genomeQuery), stranded) {
 
     private val chromosomeNamesMap = TObjectIntHashMap<String>().apply {
         genomeQuery.get().sortedBy { it.name }.forEachIndexed { i, n ->
@@ -167,22 +169,24 @@ private fun Pair<Chromosome, Strand>.toKey(): String {
  * @param stranded False if strand independent data, e.g. merged counts for CpG dinucleotides.
  */
 class MethylomeBuilder(
-        private val genomeQuery: GenomeQuery,
-        private val ignoreDuplicatedOffsets: Boolean,
-        private val stranded: Boolean
+    private val genomeQuery: GenomeQuery,
+    private val ignoreDuplicatedOffsets: Boolean,
+    private val stranded: Boolean
 ) {
     private val plusData = frameMap(genomeQuery)
     private val minusData = frameMap(genomeQuery)
     private val uniqueOffsets = genomeMap(genomeQuery) {
-            BitterSet(it.length)
+        BitterSet(it.length)
     }
 
     private val duplicatedOffsets = AtomicLong()
     fun duplicatedOffsets() = duplicatedOffsets.get()
 
-    fun add(chromosome: Chromosome, strand: Strand,
-            offset: Int, context: CytosineContext?,
-            methylatedCount: Int, totalCount: Int): MethylomeBuilder {
+    fun add(
+        chromosome: Chromosome, strand: Strand,
+        offset: Int, context: CytosineContext?,
+        methylatedCount: Int, totalCount: Int
+    ): MethylomeBuilder {
 
         if (!stranded) {
             require(strand != Strand.MINUS) {
@@ -206,9 +210,11 @@ class MethylomeBuilder(
             if (!ignoreDuplicatedOffsets || !alreadySeen) {
                 val frame = strand.choose(plusData, minusData)[chromosome]
                 // The magic constant is # of contexts + 1.
-                frame.add(offset, context?.tag ?: 3,
-                        Shorts.saturatedCast(methylatedCount.toLong()),
-                        Shorts.saturatedCast(totalCount.toLong()))
+                frame.add(
+                    offset, context?.tag ?: 3,
+                    Shorts.saturatedCast(methylatedCount.toLong()),
+                    Shorts.saturatedCast(totalCount.toLong())
+                )
             }
         }
         return this

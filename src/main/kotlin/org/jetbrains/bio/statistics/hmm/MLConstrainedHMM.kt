@@ -34,24 +34,24 @@ import java.util.function.IntPredicate
  * @date 26/03/15
  */
 abstract class MLConstrainedHMM(
-        /**
-         * A map which assigns an emission scheme to each pair of state
-         * and dimension:
-         *
-         * stateDimensionEmissionMap[state number][dimension number] = emission scheme number
-         */
-        protected val stateDimensionEmissionMap: Array<IntArray>,
-        priorProbabilities: F64Array,
-        transitionProbabilities: F64Array)
-    : MLAbstractHMM(stateDimensionEmissionMap.size, priorProbabilities, transitionProbabilities),
-        NotDirectlyDeserializable {
+    /**
+     * A map which assigns an emission scheme to each pair of state
+     * and dimension:
+     *
+     * stateDimensionEmissionMap[state number][dimension number] = emission scheme number
+     */
+    protected val stateDimensionEmissionMap: Array<IntArray>,
+    priorProbabilities: F64Array,
+    transitionProbabilities: F64Array
+) : MLAbstractHMM(stateDimensionEmissionMap.size, priorProbabilities, transitionProbabilities),
+    NotDirectlyDeserializable {
 
     protected val numDimensions: Int = stateDimensionEmissionMap[0].size
     protected val numEmissionSchemes: Int = generateEmissionCount(stateDimensionEmissionMap)
 
     @Transient
     private var emissionDimensionMap: IntArray =
-            generateEmissionDimensionMap(stateDimensionEmissionMap)
+        generateEmissionDimensionMap(stateDimensionEmissionMap)
 
     init {
         @Suppress("LeakingThis")
@@ -122,7 +122,7 @@ abstract class MLConstrainedHMM(
 
     companion object {
         fun generateEmissionCount(stateDimensionEmissionMap: Array<IntArray>): Int {
-            return stateDimensionEmissionMap.map { it.max()!! }.max()!! + 1
+            return stateDimensionEmissionMap.maxOf { it.maxOrNull()!! } + 1
         }
 
         fun generateEmissionDimensionMap(stateDimensionEmissionMap: Array<IntArray>): IntArray {

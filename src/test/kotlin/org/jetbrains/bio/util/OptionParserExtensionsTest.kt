@@ -77,9 +77,9 @@ class OptionParserExtensionsTest {
         val (stdOut, stdErr) = Logs.captureLoggingOutput {
             with(OptionParser()) {
                 acceptsAll(listOf("path"))
-                        .withRequiredArg()
-                        .withValuesConvertedBy(PathConverter.noCheck())
-                        .required()
+                    .withRequiredArg()
+                    .withValuesConvertedBy(PathConverter.noCheck())
+                    .required()
                 parse(arrayOf("--path", "foo")) { options ->
                     val path = options.valueOf("path") as Path
                     require(path.notExists)
@@ -97,9 +97,9 @@ class OptionParserExtensionsTest {
         val (stdOut, stdErr) = Logs.captureLoggingOutput {
             with(OptionParser()) {
                 acceptsAll(listOf("path"))
-                        .withRequiredArg()
-                        .withValuesConvertedBy(PathConverter.exists())
-                        .required()
+                    .withRequiredArg()
+                    .withValuesConvertedBy(PathConverter.exists())
+                    .required()
                 parse(arrayOf("--path", "foo")) { options ->
                     require(Paths.get("foo").notExists)
                     assertNull(options.valueOf("path"))
@@ -118,9 +118,9 @@ class OptionParserExtensionsTest {
             val (stdOut, stdErr) = Logs.captureLoggingOutput {
                 with(OptionParser()) {
                     acceptsAll(listOf("path"))
-                            .withRequiredArg()
-                            .withValuesConvertedBy(PathConverter.exists())
-                            .required()
+                        .withRequiredArg()
+                        .withValuesConvertedBy(PathConverter.exists())
+                        .required()
                     parse(arrayOf("--path", file.toString())) { options ->
                         assertEquals(file, options.valueOf("path") as Path)
                     }
@@ -140,9 +140,9 @@ class OptionParserExtensionsTest {
             val (stdOut, stdErr) = Logs.captureLoggingOutput {
                 with(OptionParser()) {
                     acceptsAll(listOf("path"))
-                            .withRequiredArg()
-                            .withValuesConvertedBy(PathConverter.exists("bed"))
-                            .required()
+                        .withRequiredArg()
+                        .withValuesConvertedBy(PathConverter.exists("bed"))
+                        .required()
                     parse(arrayOf("--path", file.toString())) { options ->
                         assertEquals(file, options.valueOf("path") as Path)
                     }
@@ -163,9 +163,9 @@ class OptionParserExtensionsTest {
             val (stdOut, stdErr) = Logs.captureLoggingOutput {
                 with(OptionParser()) {
                     acceptsAll(listOf("path"))
-                            .withRequiredArg()
-                            .withValuesConvertedBy(PathConverter.exists("bed"))
-                            .required()
+                        .withRequiredArg()
+                        .withValuesConvertedBy(PathConverter.exists("bed"))
+                        .required()
                     parse(arrayOf("--path", file.toString())) { options ->
                         assertEquals(file, options.valueOf("path") as Path)
                     }
@@ -185,9 +185,9 @@ class OptionParserExtensionsTest {
             val (stdOut, stdErr) = Logs.captureLoggingOutput {
                 with(OptionParser()) {
                     acceptsAll(listOf("path"))
-                            .withRequiredArg()
-                            .withValuesConvertedBy(PathConverter.exists("bed"))
-                            .required()
+                        .withRequiredArg()
+                        .withValuesConvertedBy(PathConverter.exists("bed"))
+                        .required()
                     parse(arrayOf("--path", file.toString())) { options ->
                         assertNull(options.valueOf("path"))
                     }
@@ -204,9 +204,9 @@ class OptionParserExtensionsTest {
         val (stdOut, stdErr) = Logs.captureLoggingOutput {
             with(OptionParser()) {
                 acceptsAll(listOf("path"))
-                        .withRequiredArg()
-                        .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
-                        .required()
+                    .withRequiredArg()
+                    .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
+                    .required()
                 parse(arrayOf("--path", "foo")) { options ->
                     require(Paths.get("foo").notExists)
                     assertNull(options.valueOf("path"))
@@ -226,9 +226,9 @@ class OptionParserExtensionsTest {
             val (stdOut, stdErr) = Logs.captureLoggingOutput {
                 with(OptionParser()) {
                     acceptsAll(listOf("path"))
-                            .withRequiredArg()
-                            .withValuesConvertedBy(PathConverter.bedtoolsValidFile("bed"))
-                            .required()
+                        .withRequiredArg()
+                        .withValuesConvertedBy(PathConverter.bedtoolsValidFile("bed"))
+                        .required()
                     parse(arrayOf("--path", file.toString())) { options ->
                         assertNull(options.valueOf("path"))
                     }
@@ -250,9 +250,9 @@ class OptionParserExtensionsTest {
             val (stdOut, stdErr) = Logs.captureLoggingOutput {
                 with(OptionParser()) {
                     acceptsAll(listOf("path"))
-                            .withRequiredArg()
-                            .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
-                            .required()
+                        .withRequiredArg()
+                        .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
+                        .required()
                     parse(arrayOf("--path", file.toString())) { options ->
                         assertNull(options.valueOf("path"))
                     }
@@ -273,9 +273,9 @@ class OptionParserExtensionsTest {
             val (stdOut, stdErr) = Logs.captureLoggingOutput {
                 with(OptionParser()) {
                     acceptsAll(listOf("path"))
-                            .withRequiredArg()
-                            .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
-                            .required()
+                        .withRequiredArg()
+                        .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
+                        .required()
                     parse(arrayOf("--path", file.toString())) { options ->
                         assertNull(options.valueOf("path"))
                     }
@@ -299,9 +299,9 @@ class OptionParserExtensionsTest {
             val (stdOut, stdErr) = Logs.captureLoggingOutput {
                 with(OptionParser()) {
                     acceptsAll(listOf("path"))
-                            .withRequiredArg()
-                            .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
-                            .required()
+                        .withRequiredArg()
+                        .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
+                        .required()
                     parse(arrayOf("--path", file.toString())) { options ->
                         assertNull(options.valueOf("path"))
                     }
@@ -325,9 +325,9 @@ class OptionParserExtensionsTest {
             val (stdOut, stdErr) = Logs.captureLoggingOutput {
                 with(OptionParser()) {
                     acceptsAll(listOf("path"))
-                            .withRequiredArg()
-                            .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
-                            .required()
+                        .withRequiredArg()
+                        .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
+                        .required()
                     parse(arrayOf("--path", file.toString())) { options ->
                         assertNull(options.valueOf("path"))
                     }
@@ -351,9 +351,9 @@ class OptionParserExtensionsTest {
             val (stdOut, stdErr) = Logs.captureLoggingOutput {
                 with(OptionParser()) {
                     acceptsAll(listOf("path"))
-                            .withRequiredArg()
-                            .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
-                            .required()
+                        .withRequiredArg()
+                        .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
+                        .required()
                     parse(arrayOf("--path", file.toString())) { options ->
                         assertEquals(file, options.valueOf("path") as Path)
                     }
@@ -374,9 +374,9 @@ class OptionParserExtensionsTest {
             val (stdOut, stdErr) = Logs.captureLoggingOutput {
                 with(OptionParser()) {
                     acceptsAll(listOf("path"))
-                            .withRequiredArg()
-                            .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
-                            .required()
+                        .withRequiredArg()
+                        .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
+                        .required()
                     parse(arrayOf("--path", file.toString())) { options ->
                         assertEquals(file, options.valueOf("path") as Path)
                     }
@@ -397,9 +397,9 @@ class OptionParserExtensionsTest {
             val (stdOut, stdErr) = Logs.captureLoggingOutput {
                 with(OptionParser()) {
                     acceptsAll(listOf("path"))
-                            .withRequiredArg()
-                            .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
-                            .required()
+                        .withRequiredArg()
+                        .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
+                        .required()
                     parse(arrayOf("--path", file.toString())) { options ->
                         assertEquals(file, options.valueOf("path") as Path)
                     }
@@ -420,9 +420,9 @@ class OptionParserExtensionsTest {
             val (stdOut, stdErr) = Logs.captureLoggingOutput {
                 with(OptionParser()) {
                     acceptsAll(listOf("path"))
-                            .withRequiredArg()
-                            .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
-                            .required()
+                        .withRequiredArg()
+                        .withValuesConvertedBy(PathConverter.bedtoolsValidFile())
+                        .required()
                     parse(arrayOf("--path", file.toString())) { options ->
                         assertEquals(file, options.valueOf("path") as Path)
                     }
@@ -443,9 +443,9 @@ class OptionParserExtensionsTest {
             val (stdOut, stdErr) = Logs.captureLoggingOutput {
                 with(OptionParser()) {
                     acceptsAll(listOf("path"))
-                            .withRequiredArg()
-                            .withValuesConvertedBy(PathConverter.bedtoolsValidFile(minBedSpecFields = 4))
-                            .required()
+                        .withRequiredArg()
+                        .withValuesConvertedBy(PathConverter.bedtoolsValidFile(minBedSpecFields = 4))
+                        .required()
                     parse(arrayOf("--path", file.toString())) { options ->
                         assertNull(options.valueOf("path"))
                     }

@@ -12,8 +12,9 @@ import java.util.stream.Stream
 
 @Suppress("unused")
 class DataFrame @JvmOverloads constructor(
-        val rowsNumber: Int = 0,
-        internal val columns: List<Column<*>> = emptyList()) {
+    val rowsNumber: Int = 0,
+    internal val columns: List<Column<*>> = emptyList()
+) {
 
     val labels = columns.map { it.label.intern() }.toTypedArray()
 
@@ -48,7 +49,7 @@ class DataFrame @JvmOverloads constructor(
         return BitterSet(endRow - startRow) { rowPredicate.test(startRow + it) }
     }
 
-    fun filter(pf: RowPredicateFactory, startRow: Int = 0, endRow: Int = rowsNumber) : DataFrame {
+    fun filter(pf: RowPredicateFactory, startRow: Int = 0, endRow: Int = rowsNumber): DataFrame {
         val mask = test(pf, startRow, endRow)
 
         val fullMask = if (startRow == 0 && endRow == rowsNumber) {
@@ -103,50 +104,50 @@ class DataFrame @JvmOverloads constructor(
     }
 
     fun with(
-            label: String, data: ByteArray,
-            valueFormatter: ((Byte) -> String)? = null
-        ) = with(data.size, ByteColumn(label, data, valueFormatter))
+        label: String, data: ByteArray,
+        valueFormatter: ((Byte) -> String)? = null
+    ) = with(data.size, ByteColumn(label, data, valueFormatter))
 
-        fun with(
-            label: String, data: ShortArray,
-            valueFormatter: ((Short) -> String)? = null
-        ) = with(data.size, ShortColumn(label, data, valueFormatter))
+    fun with(
+        label: String, data: ShortArray,
+        valueFormatter: ((Short) -> String)? = null
+    ) = with(data.size, ShortColumn(label, data, valueFormatter))
 
-        fun with(
-            label: String, data: IntArray,
-            valueFormatter: ((Int) -> String)? = null
-        ) = with(data.size, IntColumn(label, data, valueFormatter))
+    fun with(
+        label: String, data: IntArray,
+        valueFormatter: ((Int) -> String)? = null
+    ) = with(data.size, IntColumn(label, data, valueFormatter))
 
-        fun with(
-            label: String, data: LongArray,
-            valueFormatter: ((Long) -> String)? = null
-        ) = with(data.size, LongColumn(label, data, valueFormatter))
+    fun with(
+        label: String, data: LongArray,
+        valueFormatter: ((Long) -> String)? = null
+    ) = with(data.size, LongColumn(label, data, valueFormatter))
 
-        fun with(
-            label: String, data: FloatArray,
-            valueFormatter: ((Float) -> String)? = null
-        ) = with(data.size, FloatColumn(label, data, valueFormatter))
+    fun with(
+        label: String, data: FloatArray,
+        valueFormatter: ((Float) -> String)? = null
+    ) = with(data.size, FloatColumn(label, data, valueFormatter))
 
-        fun with(
-            label: String, data: DoubleArray,
-            valueFormatter: ((Double) -> String)? = null
-        ) = with(data.size, DoubleColumn(label, data, valueFormatter))
+    fun with(
+        label: String, data: DoubleArray,
+        valueFormatter: ((Double) -> String)? = null
+    ) = with(data.size, DoubleColumn(label, data, valueFormatter))
 
-        // TODO: could be optimized for factors.
-        fun with(
-            label: String, data: Array<String>,
-            valueFormatter: ((String) -> String)? = null
-        ) = with(data.size, StringColumn(label, data, valueFormatter))
+    // TODO: could be optimized for factors.
+    fun with(
+        label: String, data: Array<String>,
+        valueFormatter: ((String) -> String)? = null
+    ) = with(data.size, StringColumn(label, data, valueFormatter))
 
-        fun with(
-            label: String, data: BitterSet,
-            valueFormatter: ((Boolean) -> String)? = null
-        ) = with(data.size(), BooleanColumn(label, data, valueFormatter))
+    fun with(
+        label: String, data: BitterSet,
+        valueFormatter: ((Boolean) -> String)? = null
+    ) = with(data.size(), BooleanColumn(label, data, valueFormatter))
 
-        fun <T : Enum<T>> with(
-            label: String, enumType: Class<T>, data: Array<T>,
-            valueFormatter: ((T) -> String)? = null
-        ) = with(data.size, EnumColumn(label, enumType, data, valueFormatter))
+    fun <T : Enum<T>> with(
+        label: String, enumType: Class<T>, data: Array<T>,
+        valueFormatter: ((T) -> String)? = null
+    ) = with(data.size, EnumColumn(label, enumType, data, valueFormatter))
 
     fun getAsByte(r: Int, label: String) = sliceAsByte(label)[r]
 
@@ -205,10 +206,12 @@ class DataFrame @JvmOverloads constructor(
     private fun getLabelIndex(label: String): Int {
         val idx = getLabelIndexUnsafe(label)
         require(idx >= 0) {
-            listOf("Unknown label '$label'.",
-                    "Make sure that you are using interned string as a label!",
-                    "Reference equality is used for lookup.",
-                    "Known labels ${labels.contentToString()}").joinToString(" ")
+            listOf(
+                "Unknown label '$label'.",
+                "Make sure that you are using interned string as a label!",
+                "Reference equality is used for lookup.",
+                "Known labels ${labels.contentToString()}"
+            ).joinToString(" ")
         }
 
         return idx
@@ -226,9 +229,9 @@ class DataFrame @JvmOverloads constructor(
     override fun hashCode() = Objects.hash(rowsNumber, columns)
 
     override fun toString() = MoreObjects.toStringHelper(this)
-            .add("rowsNumber", rowsNumber)
-            .add("columns", '[' + labels.joinToString(", ") + ']')
-            .toString()
+        .add("rowsNumber", rowsNumber)
+        .add("columns", '[' + labels.joinToString(", ") + ']')
+        .toString()
 
     inner class Slicer {
         operator fun get(rowsRange: IntProgression) = this@DataFrame.apply {
@@ -250,7 +253,8 @@ class DataFrame @JvmOverloads constructor(
 
     companion object {
         @Throws(IOException::class)
-        @JvmStatic fun load(path: Path) = DataFrameMappers.forPath(path).load(path)
+        @JvmStatic
+        fun load(path: Path) = DataFrameMappers.forPath(path).load(path)
 
         /**
          * Performs an inner join of a list of data frames.
@@ -263,7 +267,8 @@ class DataFrame @JvmOverloads constructor(
          *         join column.
          */
         @Suppress("unchecked_cast")
-        @JvmStatic fun mergeInner(on: String, vararg dfs: DataFrame): DataFrame {
+        @JvmStatic
+        fun mergeInner(on: String, vararg dfs: DataFrame): DataFrame {
             require(dfs.size >= 2) { "expected at least two data frames" }
 
             var predicate: ObjIntPredicate<*> = ObjIntPredicate<Any> { _, _ -> true }
@@ -285,7 +290,7 @@ class DataFrame @JvmOverloads constructor(
 
             val first = filtered.first()
             return columnBind(setOf(on), *filtered)
-                    .with(first.rowsNumber, first[on])
+                .with(first.rowsNumber, first[on])
         }
 
 
@@ -299,22 +304,23 @@ class DataFrame @JvmOverloads constructor(
          * @return new data frame with join result sorted wrt to the
          *         join column.
          */
-        @JvmStatic fun mergeOuter(on: String, vararg dfs: DataFrame): DataFrame {
+        @JvmStatic
+        fun mergeOuter(on: String, vararg dfs: DataFrame): DataFrame {
             require(dfs.size >= 2) { "expected at least two data frames" }
 
             val combinedColumn = dfs.asSequence().map { it[on] }
-                    .reduce(Column<*>::merge)
-                    .let { it.reorder(it.sorted()) }
+                .reduce(Column<*>::merge)
+                .let { it.reorder(it.sorted()) }
 
             val rowsNumber = combinedColumn.size
             val resized = dfs.map { df ->
                 df.omit(on).resize(rowsNumber)
-                        .with(rowsNumber, df[on].merge(combinedColumn))
-                        .reorder(on)
+                    .with(rowsNumber, df[on].merge(combinedColumn))
+                    .reorder(on)
             }.toTypedArray()
 
             return columnBind(setOf(on), *resized)
-                    .with(rowsNumber, combinedColumn)
+                .with(rowsNumber, combinedColumn)
         }
 
         /**
@@ -331,12 +337,15 @@ class DataFrame @JvmOverloads constructor(
          *            of columns.
          * @return a new data frame.
          */
-        @JvmStatic fun columnBind(exclude: Set<String>,
-                                  vararg dfs: DataFrame): DataFrame {
+        @JvmStatic
+        fun columnBind(
+            exclude: Set<String>,
+            vararg dfs: DataFrame
+        ): DataFrame {
             require(dfs.isNotEmpty()) { "no data" }
 
             val summary = Stream.of(*dfs).mapToInt { it.rowsNumber }
-                    .summaryStatistics()
+                .summaryStatistics()
             val rowsNumber = summary.max
             require(rowsNumber == summary.min) { "different number of rows" }
 
@@ -364,19 +373,23 @@ class DataFrame @JvmOverloads constructor(
             return DataFrame(rowsNumber, columns)
         }
 
-        @JvmStatic fun columnBind(vararg dfs: DataFrame): DataFrame {
+        @JvmStatic
+        fun columnBind(vararg dfs: DataFrame): DataFrame {
             return columnBind(emptySet(), *dfs)
         }
 
         /**
          * Combines data frames with the same set of columns by rows.
          */
-        @JvmStatic fun rowBind(df1: DataFrame, df2: DataFrame): DataFrame {
+        @JvmStatic
+        fun rowBind(df1: DataFrame, df2: DataFrame): DataFrame {
             val labels = df1.labels
             if (!labels.contentEquals(df2.labels)) {
-                val chunks = arrayOf("columns do not match: ",
-                        labels.contentToString(), " ",
-                        df2.labels.contentToString())
+                val chunks = arrayOf(
+                    "columns do not match: ",
+                    labels.contentToString(), " ",
+                    df2.labels.contentToString()
+                )
                 throw IllegalArgumentException(chunks.joinToString("\n"))
             }
 
@@ -390,7 +403,8 @@ class DataFrame @JvmOverloads constructor(
             }
         }
 
-        @JvmStatic fun rowBind(dfs: Array<DataFrame>): DataFrame {
+        @JvmStatic
+        fun rowBind(dfs: Array<DataFrame>): DataFrame {
             require(dfs.isNotEmpty()) { "expected at least one dataframe" }
             return dfs.reduce { a, b -> rowBind(a, b) }
         }

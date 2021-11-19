@@ -7,13 +7,14 @@ import org.junit.Test
 import kotlin.test.assertEquals
 
 private val GSON_BUILDER = GsonBuilder()
-        .setFieldNamingStrategy(GSONUtil.NO_MY_UNDESCORE_NAMING_STRATEGY)
+    .setFieldNamingStrategy(GSONUtil.NO_MY_UNDESCORE_NAMING_STRATEGY)
 
 class F64ArrayTypeAdapterTest {
-    @Test fun toJsonFromJson() {
+    @Test
+    fun toJsonFromJson() {
         val gson = GSON_BUILDER
-                .registerTypeAdapter(F64Array::class.java, F64ArrayTypeAdapter)
-                .create()
+            .registerTypeAdapter(F64Array::class.java, F64ArrayTypeAdapter)
+            .create()
 
         val token = object : TypeToken<F64Array>() {}.type
         val m = F64Array(3, 4) { i, j -> Math.pow(i.toDouble(), j.toDouble()) }

@@ -21,13 +21,13 @@ object IntersectionMetrics {
         override fun calcMetric(a: LocationsList<out RangesList>, b: LocationsList<out RangesList>): Double {
             val intersectionSize = a.calcAdditiveMetricDouble(b) { ra, rb -> calcMetric(ra, rb) }
 
-            val aSize = a.rangeLists.sumByDouble { ranges -> ranges.sumByDouble { it.length().toDouble() } }
-            val bSize = b.rangeLists.sumByDouble { ranges -> ranges.sumByDouble { it.length().toDouble() } }
+            val aSize = a.rangeLists.sumOf { ranges -> ranges.sumOf { it.length().toDouble() } }
+            val bSize = b.rangeLists.sumOf { ranges -> ranges.sumOf { it.length().toDouble() } }
             return intersectionSize / (aSize + bSize - intersectionSize)
         }
 
         override fun calcMetric(ra: RangesList, rb: RangesList): Double =
-            ra.intersectRanges(rb).sumByDouble { it.length().toDouble() }
+            ra.intersectRanges(rb).sumOf { it.length().toDouble() }
     }
 
     val OVERLAP_FRACTION = object : RegionsMetric {
@@ -55,7 +55,8 @@ object IntersectionMetrics {
             .ofType(String::class.java)
             .withValuesConvertedBy(
                 RegexMatcher.regex(
-                    listOf(OVERLAP, INTERSECTION_NUMBER, JACCARD, OVERLAP_FRACTION).joinToString(separator = "|") { "(${it.column})" }
+                    listOf(OVERLAP, INTERSECTION_NUMBER, JACCARD, OVERLAP_FRACTION)
+                        .joinToString(separator = "|") { "(${it.column})" }
                 ))
             .defaultsTo(default)
     }

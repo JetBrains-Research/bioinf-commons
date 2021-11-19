@@ -6,11 +6,11 @@ import com.google.common.collect.ObjectArrays
 import java.util.*
 
 @Suppress("unchecked_cast")
-abstract class ObjColumn<T: Any> protected constructor(
-        label: String,
-        valueType: Class<T>,
-        data: Array<T>,
-        val valueFormatter: ((T) -> String)? = null
+abstract class ObjColumn<T : Any> protected constructor(
+    label: String,
+    valueType: Class<T>,
+    data: Array<T>,
+    val valueFormatter: ((T) -> String)? = null
 ) : Column<Array<T>>(label, data, valueType) {
 
     override fun getAsDouble(row: Int): Double {
@@ -19,8 +19,12 @@ abstract class ObjColumn<T: Any> protected constructor(
     }
 
     override fun plus(other: Column<*>): Column<Array<T>> {
-        return wrap(ObjectArrays.concat(data, other.data as Array<T>,
-                                        boxedType as Class<T>))
+        return wrap(
+            ObjectArrays.concat(
+                data, other.data as Array<T>,
+                boxedType as Class<T>
+            )
+        )
     }
 
     @Deprecated("")
@@ -56,7 +60,7 @@ abstract class ObjColumn<T: Any> protected constructor(
     override fun resize(newSize: Int) = wrap(Arrays.copyOf(data, newSize))
 
     override fun intersect(c: Column<*>): ObjIntPredicate<Array<T>> {
-        val seen = data.intersect((c as ObjColumn<T>).data.asList())
+        val seen = data.intersect((c as ObjColumn<T>).data.toSet())
         return ObjIntPredicate { data, i -> data[i] in seen }
     }
 
@@ -69,15 +73,15 @@ abstract class ObjColumn<T: Any> protected constructor(
     override fun equals(other: Any?) = when {
         this === other -> true
         other !is ObjColumn<*> -> false
-        else -> label == other.label && Arrays.equals(data, other.data)
+        else -> label == other.label && data.contentEquals(other.data)
     }
 
-    override fun hashCode() = Arrays.deepHashCode(arrayOf(label, data))
+    override fun hashCode() = arrayOf(label, data).contentDeepHashCode()
 
     override fun toString() = MoreObjects.toStringHelper(this)
-            .add("label", label)
-            .add("data", Arrays.toString(data))
-            .toString()
+        .add("label", label)
+        .add("data", data.contentToString())
+        .toString()
 }
 
 class StringColumn(
@@ -108,15 +112,15 @@ class StringColumn(
     override fun sorted(reverse: Boolean): IntArray {
         val comparator = Comparator<IndexedValue<String>> { p1, p2 ->
             ComparisonChain.start()
-                    .compare(p1.value, p2.value)
-                    .compare(p1.index, p2.index)
-                    .result()
+                .compare(p1.value, p2.value)
+                .compare(p1.index, p2.index)
+                .result()
         }
 
         return data.withIndex()
-                .sortedWith(if (reverse) comparator.reversed() else comparator)
-                .map { it.index }
-                .toIntArray()
+            .sortedWith(if (reverse) comparator.reversed() else comparator)
+            .map { it.index }
+            .toIntArray()
     }
 
     override fun load(row: Int, value: String) {

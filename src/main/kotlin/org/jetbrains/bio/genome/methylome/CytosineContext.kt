@@ -34,8 +34,10 @@ enum class CytosineContext(val tag: Byte) {
          */
         val CONTEXTS = arrayOf(CG, CHH, CHG, ANY)
 
-        fun determine(sequence: NucleotideSequence,
-                      offset: Int, strand: Strand): CytosineContext? {
+        fun determine(
+            sequence: NucleotideSequence,
+            offset: Int, strand: Strand
+        ): CytosineContext? {
             val seqLength = sequence.length
             val direction = if (strand === Strand.PLUS) 1 else -1
 

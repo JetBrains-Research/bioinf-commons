@@ -23,7 +23,8 @@ class ShuffleTest {
                     continue
                 }
                 if (shuffled[i1].chromosome == shuffled[i2].chromosome &&
-                        shuffled[i1].toRange() intersects shuffled[i2].toRange()) {
+                    shuffled[i1].toRange() intersects shuffled[i2].toRange()
+                ) {
                     fail("Regions must not intersect")
                 }
             }
@@ -33,15 +34,15 @@ class ShuffleTest {
     @Test
     fun shuffleRegionsWithBackgroud() {
         val regions = listOf(
-                ChromosomeRange(0, 100, chromosomes[0]),
-                ChromosomeRange(0, 200, chromosomes[1]),
-                ChromosomeRange(0, 300, chromosomes[2])
+            ChromosomeRange(0, 100, chromosomes[0]),
+            ChromosomeRange(0, 200, chromosomes[1]),
+            ChromosomeRange(0, 300, chromosomes[2])
         )
 
         val background = listOf(
-                ChromosomeRange(100, 300, chromosomes[0]),
-                ChromosomeRange(1000, 2000, chromosomes[1]),
-                ChromosomeRange(2000, 3000, chromosomes[2])
+            ChromosomeRange(100, 300, chromosomes[0]),
+            ChromosomeRange(1000, 2000, chromosomes[1]),
+            ChromosomeRange(2000, 3000, chromosomes[2])
         )
 
         val shuffled = shuffleChromosomeRanges(genomeQuery, regions, background)
@@ -62,9 +63,9 @@ class ShuffleTest {
     @Test
     fun shuffleRegions() {
         val regions = listOf(
-                ChromosomeRange(0, 100, chromosomes[0]),
-                ChromosomeRange(0, 200, chromosomes[1]),
-                ChromosomeRange(0, 300, chromosomes[2])
+            ChromosomeRange(0, 100, chromosomes[0]),
+            ChromosomeRange(0, 200, chromosomes[1]),
+            ChromosomeRange(0, 300, chromosomes[2])
         )
 
         val shuffled = shuffleChromosomeRanges(genomeQuery, regions)

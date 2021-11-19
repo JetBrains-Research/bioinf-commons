@@ -37,9 +37,11 @@ private fun HttpClient.tryGet(url: String): HttpEntity? {
  * @param timeout HTTP connection timeout (in seconds).
  * @param maxRetries maximum number of download attempts.
  */
-fun String.downloadTo(outputPath: Path,
-                      timeout: Int = 30,
-                      maxRetries: Int = 10) {
+fun String.downloadTo(
+    outputPath: Path,
+    timeout: Int = 30,
+    maxRetries: Int = 10
+) {
     outputPath.parent.createDirectories()
 
     try {
@@ -90,10 +92,10 @@ private fun String.downloadFtp(outputPath: Path) {
 
 private fun String.downloadHttp(timeoutMs: Int, maxRetries: Int, outputPath: Path): Boolean {
     val httpClient = HttpClientBuilder.create()
-            .setDefaultRequestConfig(RequestConfig.custom().setConnectTimeout(timeoutMs).build())
-            .setDefaultSocketConfig(SocketConfig.custom().setSoTimeout(timeoutMs).build())
-            .setRedirectStrategy(LaxRedirectStrategy())
-            .build()
+        .setDefaultRequestConfig(RequestConfig.custom().setConnectTimeout(timeoutMs).build())
+        .setDefaultSocketConfig(SocketConfig.custom().setSoTimeout(timeoutMs).build())
+        .setRedirectStrategy(LaxRedirectStrategy())
+        .build()
 
     for (trial in 1..maxRetries) {
         try {
@@ -105,7 +107,8 @@ private fun String.downloadHttp(timeoutMs: Int, maxRetries: Int, outputPath: Pat
             return true   // VICTORY!
         } catch (e: Exception) {
             if (trial == maxRetries ||
-                    e !is SocketTimeoutException || e !is ConnectTimeoutException) {
+                e !is SocketTimeoutException || e !is ConnectTimeoutException
+            ) {
                 throw e
             }
 

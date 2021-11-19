@@ -10,10 +10,11 @@ import java.util.function.IntPredicate
  * @author Evgeny Kurbatsky
  * @since 04/07/15
  */
-abstract class MLFreeMixture(numComponents: Int,
-                             protected val numDimensions: Int,
-                             weights: F64Array = F64Array.stochastic(numComponents))
-    : MLAbstractMixture(numComponents, weights) {
+abstract class MLFreeMixture(
+    numComponents: Int,
+    protected val numDimensions: Int,
+    weights: F64Array = F64Array.stochastic(numComponents)
+) : MLAbstractMixture(numComponents, weights) {
 
     protected abstract fun getEmissionScheme(i: Int, d: Int): EmissionScheme
 
@@ -47,7 +48,7 @@ abstract class MLFreeMixture(numComponents: Int,
         return res.with("state", states)
     }
 
-    open fun sample(df:DataFrame, d: IntArray) {
+    open fun sample(df: DataFrame, d: IntArray) {
         val states = sampleStates(df.rowsNumber)
         for (t in 0 until numDimensions) {
             for (i in 0 until numComponents) {

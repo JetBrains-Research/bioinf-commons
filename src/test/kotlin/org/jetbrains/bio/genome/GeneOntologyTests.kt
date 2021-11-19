@@ -13,7 +13,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
 class OboFileTest {
-    @Test fun testParse() {
+    @Test
+    fun testParse() {
         withResource(OboFileTest::class.java, "go-basic-excerpt.obo") { path ->
             path.bufferedReader().use { reader ->
                 val it = OboFile(Ontology.BIOLOGICAL_PROCESS, reader).iterator()
@@ -34,20 +35,26 @@ class OboFileTest {
         }
     }
 
-    @Test fun testRead() {
+    @Test
+    fun testRead() {
         withResource(OboFileTest::class.java, "go-basic-excerpt.obo") { path ->
             val (g, _terms) = OboFile.read(Ontology.BIOLOGICAL_PROCESS, path)
-            assertEquals(emptySet(),
-                         setOf("GO:0000001", "GO:0000002", "GO:0000003") - g.vertexSet())
+            assertEquals(
+                emptySet(),
+                setOf("GO:0000001", "GO:0000002", "GO:0000003") - g.vertexSet()
+            )
             assertFalse("GO:0000005" in g.vertexSet())
         }
     }
 }
 
 class MapDepthTest {
-    @Test fun example() {
-        val graph = listOf("1" to "2", "1" to "3",
-                           "2" to "4", "2" to "3").toGraph()
+    @Test
+    fun example() {
+        val graph = listOf(
+            "1" to "2", "1" to "3",
+            "2" to "4", "2" to "3"
+        ).toGraph()
         val depth = graph.mapDepth()
 
         assertEquals(0, depth["1"])
@@ -56,7 +63,6 @@ class MapDepthTest {
         assertEquals(2, depth["4"])
     }
 }
-
 
 
 private fun List<Pair<String, String>>.toGraph(): DirectedAcyclicGraph<String, Pair<String, String>> {

@@ -164,7 +164,7 @@ object MultitaskProgress {
                     progressBar?.setState(processed, total)
 
                     val progressPart = "%.2f%% (%,d/%,d), Elapsed time: ${asTime(duration)}"
-                            .format(processed * 100.0 / total, processed, total)
+                        .format(processed * 100.0 / total, processed, total)
 
                     val throughputPart = if (processed > 1) {
                         val eta = asTime((duration.toDouble() * total / processed).toLong() - duration)

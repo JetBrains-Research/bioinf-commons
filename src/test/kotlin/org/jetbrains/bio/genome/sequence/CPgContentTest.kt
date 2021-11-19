@@ -8,15 +8,18 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class CpGContentTest {
-    @Test fun testComputeCpG() {
+    @Test
+    fun testComputeCpG() {
         assertEquals(1, CpGContent.computeCpG("cacgg".toCharArray()))
     }
 
-    @Test fun testComputeCG() {
+    @Test
+    fun testComputeCG() {
         assertEquals(2, CpGContent.computeCG("acg".toCharArray()))
     }
 
-    @Test fun testClassify() {
+    @Test
+    fun testClassify() {
         assertEquals(CpGContent.LCP, CpGContent.classify("AAAAAA".asNucleotideSequence(), 3))
         assertEquals(CpGContent.LCP, CpGContent.classify("CCCCCC".asNucleotideSequence(), 5))
         assertEquals(CpGContent.HCP, CpGContent.classify("CCCCGCCC".asNucleotideSequence(), 5))
@@ -27,7 +30,8 @@ class CpGContentTest {
         assertEquals(CpGContent.HCP, CpGContent.classify("CGCGCG".asNucleotideSequence(), 5))
     }
 
-    @Test fun testBinnedMeanCG() {
+    @Test
+    fun testBinnedMeanCG() {
         val chr = Genome["to1"].toQuery()["chr1"]!!
         val binned100 = CpGContent.binnedMeanCG(chr, 100)
         val binned200 = CpGContent.binnedMeanCG(chr, 200)
@@ -36,14 +40,15 @@ class CpGContentTest {
         binned200.forEachIndexed { index, value ->
             assertTrue(value >= 0, "Mean CG content was negative ($value at bin $index)")
             assertTrue(value <= 1, "Mean CG content was greater than 1 ($value at bin $index)")
-            if (index < binned200.size -1) {
+            if (index < binned200.size - 1) {
                 Tests.assertEquals(
                     (binned100[2 * index] + binned100[2 * index + 1]) / 2,
                     value,
                     1E-10, // we want to ignore double arithmetic precision issues
                     "Expected mean CG $value at 200 bps bin $index to be equal to mean of 100bps bins " +
                             "${2 * index} (${binned100[2 * index]}) and " +
-                            "${2 * index + 1} (${binned100[2 * index + 1]}).")
+                            "${2 * index + 1} (${binned100[2 * index + 1]})."
+                )
             }
         }
     }

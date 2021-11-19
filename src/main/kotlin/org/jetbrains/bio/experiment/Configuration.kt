@@ -73,13 +73,14 @@ object Configuration {
         try {
             val properties = System.getProperties()
             val configPath = System.getProperty(CONFIG_PATH_PROPERTY, null)
-                    ?.replace("~", properties.getProperty("user.home"))?.toPath()
+                ?.replace("~", properties.getProperty("user.home"))?.toPath()
             if (configPath != null && configPath.exists) {
                 LOG.info("Loading config: '$configPath'...")
                 if (!configPath.isReadable) {
                     LOG.error("Cannot read: '$configPath'.")
                 } else {
-                    LOG.info("""
+                    LOG.info(
+                        """
                         |----------------  config ----------------
                         |${configPath.bufferedReader().readText()}
                         |-----------------------------------------

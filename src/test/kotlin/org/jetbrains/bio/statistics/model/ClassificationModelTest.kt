@@ -16,34 +16,42 @@ import java.util.*
 import kotlin.test.assertEquals
 
 class ClassificationModelTest {
-    @Rule @JvmField val thrown = ExpectedException.none()
+    @Rule
+    @JvmField
+    val thrown = ExpectedException.none()
 
-    @Before fun setUp() {
+    @Before
+    fun setUp() {
         Boo.VERSION = 222
     }
 
-    @Test fun testSave() = withTempFile("model", ".json") { path ->
+    @Test
+    fun testSave() = withTempFile("model", ".json") { path ->
         Boo(1).save(path)
-        assertEquals("{\n  \"b\": \"bbb\",\n" +
-                     "  \"value\": 1,\n" +
-                     "  \"name\": \"bboo\",\n" +
-                     "  \"model.class.fqn\": \"org.jetbrains.bio.statistics.model.Boo\",\n" +
-                     "  \"model.class.format\": 222\n}",
-                path.read())
+        assertEquals(
+            "{\n  \"b\": \"bbb\",\n" +
+                    "  \"value\": 1,\n" +
+                    "  \"name\": \"bboo\",\n" +
+                    "  \"model.class.fqn\": \"org.jetbrains.bio.statistics.model.Boo\",\n" +
+                    "  \"model.class.format\": 222\n}",
+            path.read()
+        )
     }
 
-    @Test fun testLoad() = withTempFile("model", ".json") { path ->
+    @Test
+    fun testLoad() = withTempFile("model", ".json") { path ->
         val obj = Boo(1)
         obj.save(path)
         val boo = ClassificationModel.load<Boo>(path)
         assertEquals(obj, boo)
     }
 
-    @Test fun testLoadNoVersion() {
+    @Test
+    fun testLoadNoVersion() {
         withTempFile("model", ".json") { path ->
             val gson = GsonBuilder().setPrettyPrinting()
-                    .serializeSpecialFloatingPointValues()
-                    .create()
+                .serializeSpecialFloatingPointValues()
+                .create()
 
             val obj = Boo(1)
             path.bufferedWriter().use { gson.toJson(obj, it) }
@@ -54,19 +62,23 @@ class ClassificationModelTest {
         }
     }
 
-    @Test fun testSaveNaN() = withTempFile("model", ".json") { path ->
+    @Test
+    fun testSaveNaN() = withTempFile("model", ".json") { path ->
         val nanBoo = NanBoo()
         nanBoo.save(path)
-        assertEquals("{\n  \"value\": NaN,\n  " +
-                     "\"name\": \"NaN-boo\",\n  " +
-                     "\"model.class.fqn\": \"org.jetbrains.bio.statistics.model.NanBoo\",\n  " +
-                     "\"model.class.format\": 0\n}",
-                path.read())
+        assertEquals(
+            "{\n  \"value\": NaN,\n  " +
+                    "\"name\": \"NaN-boo\",\n  " +
+                    "\"model.class.fqn\": \"org.jetbrains.bio.statistics.model.NanBoo\",\n  " +
+                    "\"model.class.format\": 0\n}",
+            path.read()
+        )
 
         assertEquals(nanBoo, ClassificationModel.load<NanBoo>(path))
     }
 
-    @Test fun testLoadWrongVersion1() {
+    @Test
+    fun testLoadWrongVersion1() {
         withTempFile("model", ".json") { path ->
             val obj = Boo(1)
             obj.save(path)
@@ -75,13 +87,16 @@ class ClassificationModelTest {
             Boo.VERSION = 123
 
             thrown.expect(JsonParseException::class.java)
-            thrown.expectMessage("Deserialization error: Format has changed, " +
-                                 "'org.jetbrains.bio.statistics.model.Boo' expects '123' version, but got '222'")
+            thrown.expectMessage(
+                "Deserialization error: Format has changed, " +
+                        "'org.jetbrains.bio.statistics.model.Boo' expects '123' version, but got '222'"
+            )
             ClassificationModel.load<Boo>(path)
         }
     }
 
-    @Test fun testLoadWrongVersion2() {
+    @Test
+    fun testLoadWrongVersion2() {
         withTempFile("model", ".json") { path ->
             val obj = Boo(1)
 
@@ -91,8 +106,10 @@ class ClassificationModelTest {
             Boo.VERSION = 666
 
             thrown.expect(JsonParseException::class.java)
-            thrown.expectMessage("Deserialization error: Format has changed, " +
-                                 "'org.jetbrains.bio.statistics.model.Boo' expects '666' version, but got '222'")
+            thrown.expectMessage(
+                "Deserialization error: Format has changed, " +
+                        "'org.jetbrains.bio.statistics.model.Boo' expects '666' version, but got '222'"
+            )
 
             ClassificationModel.load<Boo>(path)
         }
@@ -102,8 +119,10 @@ class ClassificationModelTest {
 abstract class AbstractBoo(private val name: String) : ClassificationModel {
     override fun degreesOfFreedom() = 0
 
-    override fun fit(preprocessed: Preprocessed<DataFrame>,
-                     title: String, threshold: Double, maxIter: Int) {
+    override fun fit(
+        preprocessed: Preprocessed<DataFrame>,
+        title: String, threshold: Double, maxIter: Int
+    ) {
     }
 
     override fun predict(preprocessed: Preprocessed<DataFrame>) = IntArray(0)
@@ -134,7 +153,9 @@ class Boo(private val value: Int) : AbstractBoo("bboo") {
     override fun hashCode() = Objects.hash(b, value)
 
     companion object {
-        @Transient @JvmField var VERSION = 222
+        @Transient
+        @JvmField
+        var VERSION = 222
     }
 }
 
@@ -155,6 +176,8 @@ class NanBoo : AbstractBoo("NaN-boo") {
 
     companion object {
         @Suppress("unused")
-        @Transient @JvmField val VERSION = 0
+        @Transient
+        @JvmField
+        val VERSION = 0
     }
 }

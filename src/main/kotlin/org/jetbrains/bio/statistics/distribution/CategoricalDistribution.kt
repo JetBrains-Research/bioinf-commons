@@ -17,9 +17,10 @@ import org.jetbrains.bio.viktor.asF64Array
  * @since 16/09/13
  */
 class CategoricalDistribution @JvmOverloads constructor(
-        private val probabilities: F64Array,
-        randomGenerator: RandomGenerator = Sampling.RANDOM_DATA_GENERATOR.randomGenerator) :
-        AbstractIntegerDistribution(randomGenerator) {
+    private val probabilities: F64Array,
+    randomGenerator: RandomGenerator = Sampling.RANDOM_DATA_GENERATOR.randomGenerator
+) :
+    AbstractIntegerDistribution(randomGenerator) {
 
     // Remove this once we get rid of all the Java usages.
     constructor(probabilities: DoubleArray) : this(probabilities.asF64Array())
@@ -111,7 +112,8 @@ class CategoricalDistribution @JvmOverloads constructor(
     }
 
     companion object {
-        @JvmStatic fun of(values: IntArray): CategoricalDistribution {
+        @JvmStatic
+        fun of(values: IntArray): CategoricalDistribution {
             require(Ints.min(*values) >= 1) { "categories must be positive integers" }
 
             val probabilities = F64Array(Ints.max(*values))

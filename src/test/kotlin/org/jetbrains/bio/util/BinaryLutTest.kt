@@ -6,7 +6,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BinaryLutTest {
-    @Test fun random() {
+    @Test
+    fun random() {
         val data = RANDOM.ints(512, 0, 1024).toArray()
         data.sort()
 
@@ -17,7 +18,8 @@ class BinaryLutTest {
         }
     }
 
-    @Test fun randomNegative() {
+    @Test
+    fun randomNegative() {
         val data = RANDOM.ints(512, 0, 1024).toArray()
         data.sort()
 
@@ -28,7 +30,8 @@ class BinaryLutTest {
         }
     }
 
-    @Test fun randomNearestElementDist() {
+    @Test
+    fun randomNearestElementDist() {
         val data = RANDOM.ints(512, 0, 256).toArray()
         data.sort()
 
@@ -37,12 +40,15 @@ class BinaryLutTest {
             val key = RANDOM.nextInt(256)
             val (low, high) = lut.nearestElemDist(data, key)
             val insertPoint = data.binarySearch(key).let { if (it < 0) it.inv() else it }
-            assertTrue(insertPoint in low-1..high+1,
-                    "Expected insert point $insertPoint to be inside range [${low-1},${high+1}]")
+            assertTrue(
+                insertPoint in low - 1..high + 1,
+                "Expected insert point $insertPoint to be inside range [${low - 1},${high + 1}]"
+            )
         }
     }
 
-    @Test fun randomNearestElementLR() {
+    @Test
+    fun randomNearestElementLR() {
         val data = RANDOM.ints(512, 0, 256).toArray()
         data.sort()
 
@@ -51,12 +57,15 @@ class BinaryLutTest {
             val key = RANDOM.nextInt(256)
             val (low, high) = lut.nearestElemLR(data, key)
             val insertPoint = data.binarySearch(key).let { if (it < 0) it.inv() else it }
-            assertTrue(insertPoint in low-1..high+1,
-                    "Expected insert point $insertPoint to be inside range [${low-1},${high+1}]")
+            assertTrue(
+                insertPoint in low - 1..high + 1,
+                "Expected insert point $insertPoint to be inside range [${low - 1},${high + 1}]"
+            )
         }
     }
 
-    @Test fun randomElementsWithinDist() {
+    @Test
+    fun randomElementsWithinDist() {
         val data = RANDOM.ints(512, 0, 256).toArray()
         data.sort()
 
@@ -67,59 +76,70 @@ class BinaryLutTest {
             val right = RANDOM.nextInt(128)
             val (low, high) = lut.elemWithinDist(data, key, left, right)
             assertTrue((low == -1 && high == -1) || (low..high).map { data[it] in key - left..key + right }.all { it },
-                    "Not all elements in range are within given distance to the key")
-            assertTrue((low == -1 && high == -1) || ((0..low - 1).map { data[it] !in key - left..key + right }.all { it }
-                    && (high + 1..data.size - 1).map { data[it] !in key - left..key + right }.all { it }),
-                    "Some elements outside of range are within given distance to the key")
+                "Not all elements in range are within given distance to the key"
+            )
+            assertTrue((low == -1 && high == -1) || ((0 until low).map { data[it] !in key - left..key + right }
+                .all { it }
+                    && (high + 1 until data.size).map { data[it] !in key - left..key + right }.all { it }),
+                "Some elements outside of range are within given distance to the key"
+            )
             if (low == -1 || high == -1) {
                 assertTrue(low == -1 && high == -1, "Only one end of range is -1")
-                assertTrue((0..data.size - 1).map { data[it] !in key - left..key + right }.all { it },
-                        "Some elements outside of range are within given distance to the key")
+                assertTrue((0 until data.size).map { data[it] !in key - left..key + right }.all { it },
+                    "Some elements outside of range are within given distance to the key"
+                )
             }
         }
     }
 
-    @Test fun powersOfTwo() {
+    @Test
+    fun powersOfTwo() {
         val data = intArrayOf(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024)
         val lut = BinaryLut.of(data, 24)
         for (iter in 0..99) {
-            val key = RANDOM.nextInt(data.max()!!)
+            val key = RANDOM.nextInt(data.maxOrNull()!!)
             assertSameIndex(data, key, lut)
         }
     }
 
-    @Test fun specialCase() {
+    @Test
+    fun specialCase() {
         val data = intArrayOf(4076, 9675)
         val lut = BinaryLut.of(data, 24)
         val actual = lut.binarySearch(data, 368)
         assertEquals(-1, actual, "Expected -1, got $actual, see issue #1033")
     }
 
-    @Test fun nearestElemIdxEmptyArray() {
+    @Test
+    fun nearestElemIdxEmptyArray() {
         val data = intArrayOf()
         val lut = BinaryLut.of(data, 24)
         assertEquals(-1, lut.nearestElemIdx(data, 0))
     }
 
-    @Test fun nearestElemDistEmptyArray() {
+    @Test
+    fun nearestElemDistEmptyArray() {
         val data = intArrayOf()
         val lut = BinaryLut.of(data, 24)
         assertEquals(-1 to -1, lut.nearestElemDist(data, 0))
     }
 
-    @Test fun nearestElemLREmptyArray() {
+    @Test
+    fun nearestElemLREmptyArray() {
         val data = intArrayOf()
         val lut = BinaryLut.of(data, 24)
         assertEquals(-1 to -1, lut.nearestElemLR(data, 0))
     }
 
-    @Test fun elemWithinDistEmptyArray() {
+    @Test
+    fun elemWithinDistEmptyArray() {
         val data = intArrayOf()
         val lut = BinaryLut.of(data, 24)
         assertEquals(-1 to -1, lut.elemWithinDist(data, 0, 1))
     }
 
-    @Test fun nearestElemIdx() {
+    @Test
+    fun nearestElemIdx() {
         val data = intArrayOf(4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048)
         val lut = BinaryLut.of(data, 8)
         assertEquals(4, data[lut.nearestElemIdx(data, 0)])
@@ -135,15 +155,17 @@ class BinaryLutTest {
         assertEquals(2048, data[lut.nearestElemIdx(data, 5000)])
     }
 
-    @Test fun nearestElemIdxWithDuplicates() {
+    @Test
+    fun nearestElemIdxWithDuplicates() {
         val data = intArrayOf(4, 8, 32, 32, 64, 128, 256, 512, 1024, 2048)
         val lut = BinaryLut.of(data, 8)
-        assertEquals(2 to 32, lut.nearestElemIdx(data, 31).let { it to data[it]})
-        assertEquals(2 to 32, lut.nearestElemIdx(data, 32).let { it to data[it]})
-        assertEquals(3 to 32, lut.nearestElemIdx(data, 33).let { it to data[it]})
+        assertEquals(2 to 32, lut.nearestElemIdx(data, 31).let { it to data[it] })
+        assertEquals(2 to 32, lut.nearestElemIdx(data, 32).let { it to data[it] })
+        assertEquals(3 to 32, lut.nearestElemIdx(data, 33).let { it to data[it] })
     }
 
-    @Test fun nearestElemDistWithDuplicates() {
+    @Test
+    fun nearestElemDistWithDuplicates() {
         val data = intArrayOf(4, 8, 32, 32, 64, 128, 256, 512, 1024, 2048)
         val lut = BinaryLut.of(data, 8)
         assertEquals(0 to 0, lut.nearestElemDist(data, 2))
@@ -156,7 +178,8 @@ class BinaryLutTest {
         assertEquals(2 to 3, lut.nearestElemDist(data, 33))
     }
 
-    @Test fun nearestElemLRWithDuplicates() {
+    @Test
+    fun nearestElemLRWithDuplicates() {
         val data = intArrayOf(4, 8, 32, 32, 64, 128, 256, 512, 1024, 2048)
         val lut = BinaryLut.of(data, 8)
         assertEquals(0 to 0, lut.nearestElemLR(data, 2))
@@ -169,7 +192,8 @@ class BinaryLutTest {
         assertEquals(2 to 4, lut.nearestElemLR(data, 33))
     }
 
-    @Test fun elemWithinDistWithDuplicates() {
+    @Test
+    fun elemWithinDistWithDuplicates() {
         val data = intArrayOf(4, 8, 32, 32, 64, 128, 256, 512, 1024, 2048)
         val lut = BinaryLut.of(data, 8)
         assertEquals(0 to 0, lut.elemWithinDist(data, 2, 2))
@@ -185,9 +209,11 @@ class BinaryLutTest {
     private fun assertSameIndex(data: IntArray, key: Int, lut: BinaryLut) {
         val i = lut.binarySearch(data, key)
         val j = data.binarySearch(key)
-        assertTrue(i == j
-                   || (i >= 0 && j >= 0 && data[i] == data[j])
-                   || (i < 0 && j < 0 && data[-(i + 1)] == data[-(j + 1)]))
+        assertTrue(
+            i == j
+                    || (i >= 0 && j >= 0 && data[i] == data[j])
+                    || (i < 0 && j < 0 && data[-(i + 1)] == data[-(j + 1)])
+        )
     }
 
     companion object {

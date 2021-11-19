@@ -19,8 +19,8 @@ object LockManager {
     private val LOG = LoggerFactory.getLogger(LockManager::class.java)
 
     private val lockMap = CacheBuilder.newBuilder()
-            .expireAfterAccess(1, TimeUnit.DAYS)
-            .build<Any, ReentrantLock>()
+        .expireAfterAccess(1, TimeUnit.DAYS)
+        .build<Any, ReentrantLock>()
 
     /**
      * Fork/Join-friendly [synchronized].

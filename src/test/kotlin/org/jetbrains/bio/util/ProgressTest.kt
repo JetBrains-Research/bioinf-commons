@@ -45,64 +45,98 @@ class ProgressFormattingTest {
 
     @Test
     fun fromBoundedProgressString() {
-        assertEquals(ProgressPart(1.0, 1, 100, 18),
-                fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18 s"))
+        assertEquals(
+            ProgressPart(1.0, 1, 100, 18),
+            fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18 s")
+        )
 
-        assertEquals(ProgressPart(1.0, 1, 100, 0),
-                fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18 ns"))
-        assertEquals(ProgressPart(1.0, 1, 100, 18),
-                fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18000000000 ns"))
+        assertEquals(
+            ProgressPart(1.0, 1, 100, 0),
+            fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18 ns")
+        )
+        assertEquals(
+            ProgressPart(1.0, 1, 100, 18),
+            fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18000000000 ns")
+        )
 
-        assertEquals(ProgressPart(1.0, 1, 100, 0),
-                fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18 ms"))
-        assertEquals(ProgressPart(1.0, 1, 100, 18),
-                fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18000 ms"))
+        assertEquals(
+            ProgressPart(1.0, 1, 100, 0),
+            fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18 ms")
+        )
+        assertEquals(
+            ProgressPart(1.0, 1, 100, 18),
+            fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18000 ms")
+        )
 
-        assertEquals(ProgressPart(1.0, 1, 100, 0),
-                fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18 μs"))
-        assertEquals(ProgressPart(1.0, 1, 100, 18),
-                fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18000000 μs"))
+        assertEquals(
+            ProgressPart(1.0, 1, 100, 0),
+            fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18 μs")
+        )
+        assertEquals(
+            ProgressPart(1.0, 1, 100, 18),
+            fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18000000 μs")
+        )
 
-        assertEquals(ProgressPart(1.0, 1, 100, 18),
-                fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18000000 ?s"))
+        assertEquals(
+            ProgressPart(1.0, 1, 100, 18),
+            fromBoundedProgressString("INFO - Progress: 1% (1/100), Elapsed time: 18000000 ?s")
+        )
     }
 
     @Test
     fun fromUnBoundedProgressString() {
-        assertEquals(ProgressPart(-1.0, 100, -1, 18),
-                fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18 s"))
+        assertEquals(
+            ProgressPart(-1.0, 100, -1, 18),
+            fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18 s")
+        )
 
-        assertEquals(ProgressPart(-1.0, 100, -1, 0),
-                fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18 ns"))
-        assertEquals(ProgressPart(-1.0, 100, -1, 18),
-                fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18000000000 ns"))
+        assertEquals(
+            ProgressPart(-1.0, 100, -1, 0),
+            fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18 ns")
+        )
+        assertEquals(
+            ProgressPart(-1.0, 100, -1, 18),
+            fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18000000000 ns")
+        )
 
-        assertEquals(ProgressPart(-1.0, 100, -1, 0),
-                fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18 ms"))
-        assertEquals(ProgressPart(-1.0, 100, -1, 18),
-                fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18000 ms"))
+        assertEquals(
+            ProgressPart(-1.0, 100, -1, 0),
+            fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18 ms")
+        )
+        assertEquals(
+            ProgressPart(-1.0, 100, -1, 18),
+            fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18000 ms")
+        )
 
-        assertEquals(ProgressPart(-1.0, 100, -1, 0),
-                fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18 μs"))
-        assertEquals(ProgressPart(-1.0, 100, -1, 18),
-                fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18000000 μs"))
+        assertEquals(
+            ProgressPart(-1.0, 100, -1, 0),
+            fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18 μs")
+        )
+        assertEquals(
+            ProgressPart(-1.0, 100, -1, 18),
+            fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18000000 μs")
+        )
 
-        assertEquals(ProgressPart(-1.0, 100, -1, 18),
-                fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18000000 ?s"))
+        assertEquals(
+            ProgressPart(-1.0, 100, -1, 18),
+            fromUnboundedProgressString("INFO - Processed items: 100, Elapsed time: 18000000 ?s")
+        )
     }
 
 }
 
-data class ProgressPart(val percentCompleted: Double,
-                        val itemsDone: Int, val itemsOverall: Int,
-                        val elapsedSeconds: Int) {
+data class ProgressPart(
+    val percentCompleted: Double,
+    val itemsDone: Int, val itemsOverall: Int,
+    val elapsedSeconds: Int
+) {
     companion object {
         private val PAT_BOUNDED =
-                ("Progress: (\\d+(?:\\.\\d+)?)% \\((\\d+)/(\\d+)\\), " +
-                        "Elapsed time: (\\d+)(?:\\.\\d+)? ([\\wμ?]+)").toRegex()
+            ("Progress: (\\d+(?:\\.\\d+)?)% \\((\\d+)/(\\d+)\\), " +
+                    "Elapsed time: (\\d+)(?:\\.\\d+)? ([\\wμ?]+)").toRegex()
         private val PAT_UNBOUNDED =
-                ("Processed items: ((?:\\d+,)*\\d+), " +
-                        "Elapsed time: (\\d+)(?:\\.\\d+)? ([\\wμ?]+)").toRegex()
+            ("Processed items: ((?:\\d+,)*\\d+), " +
+                    "Elapsed time: (\\d+)(?:\\.\\d+)? ([\\wμ?]+)").toRegex()
 
         /** Converts (duration, unit) pair to seconds. */
         private fun Pair<Long, String>.toSeconds(): Int {
@@ -120,17 +154,21 @@ data class ProgressPart(val percentCompleted: Double,
         fun fromBoundedProgressString(str: String): ProgressPart {
             assertTrue(PAT_BOUNDED in str, "This should match regexp: '$str'")
             val match = PAT_BOUNDED.find(str)!!.groups
-            return ProgressPart(match[1]!!.value.toDouble(),
-                    match[2]!!.value.toInt(),
-                    match[3]!!.value.toInt(),
-                    (match[4]!!.value.toLong() to match[5]!!.value).toSeconds())
+            return ProgressPart(
+                match[1]!!.value.toDouble(),
+                match[2]!!.value.toInt(),
+                match[3]!!.value.toInt(),
+                (match[4]!!.value.toLong() to match[5]!!.value).toSeconds()
+            )
         }
 
         fun fromUnboundedProgressString(str: String): ProgressPart {
             assertTrue(PAT_UNBOUNDED in str, "This should match regexp: '$str'")
             val match = PAT_UNBOUNDED.find(str)!!.groups
-            return ProgressPart(-1.0, match[1]!!.value.filter { it.isDigit() }.toInt(), -1,
-                    (match[2]!!.value.toLong() to match[3]!!.value).toSeconds())
+            return ProgressPart(
+                -1.0, match[1]!!.value.filter { it.isDigit() }.toInt(), -1,
+                (match[2]!!.value.toLong() to match[3]!!.value).toSeconds()
+            )
         }
     }
 }
@@ -143,7 +181,7 @@ abstract class ProgressTest {
     /** A list of log output lines. */
     protected val logStrings: List<String>
         get() = logStream.toString().trim().split('\n')
-                .filter { it.isNotBlank() }
+            .filter { it.isNotBlank() }
 
     /** A list of reports from progress. */
     protected abstract val parts: List<ProgressPart>
@@ -187,12 +225,15 @@ class SequentialProgressTest : ProgressTest() {
 
         val uniqueSeconds = parts.asSequence().map { it.elapsedSeconds }.distinct().count()
         println("Unique seconds: $uniqueSeconds\n" +
-                "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}")
+                "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
+        )
 
         val expPartsRange = 10..12
         val expPartsRangeStr = "[${expPartsRange.start}..${expPartsRange.endInclusive}]"
-        assertTrue(logStrings.size in expPartsRange,
-                "Timer progress lines count is expected to be $expPartsRangeStr, but was ${logStrings.size}")
+        assertTrue(
+            logStrings.size in expPartsRange,
+            "Timer progress lines count is expected to be $expPartsRangeStr, but was ${logStrings.size}"
+        )
         assertEquals(1.0, parts[0].percentCompleted)
         assertEquals(0, parts[0].elapsedSeconds)
         assertEquals(1, parts[0].itemsDone)
@@ -201,9 +242,11 @@ class SequentialProgressTest : ProgressTest() {
         val elapsedSecs = parts.last().elapsedSeconds
         val expElapsedRange = 10..11
         val expElapsedRangeStr = "[${expElapsedRange.start}..${expElapsedRange.endInclusive}]"
-        assertTrue(elapsedSecs in expElapsedRange,
-                "Elapsed times expected to be $expElapsedRangeStr sec, " +
-                        "but was $elapsedSecs")
+        assertTrue(
+            elapsedSecs in expElapsedRange,
+            "Elapsed times expected to be $expElapsedRangeStr sec, " +
+                    "but was $elapsedSecs"
+        )
         assertEquals(100, parts.last().itemsDone)
         assertTrue("[done]" in logStrings.last())
     }
@@ -238,13 +281,16 @@ class SequentialProgressTest : ProgressTest() {
 
         val uniqueSeconds = parts.asSequence().map { it.elapsedSeconds }.distinct().count()
         println("Unique seconds: $uniqueSeconds\n" +
-                "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}")
+                "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
+        )
 
         val expPartsRange = 10..12
         val expPartsRangeStr = "[${expPartsRange.start}..${expPartsRange.endInclusive}]"
-        assertTrue(logStrings.size in expPartsRange,
-                "Timer progress lines count is expected to be $expPartsRangeStr," +
-                        " but was ${logStrings.size}")
+        assertTrue(
+            logStrings.size in expPartsRange,
+            "Timer progress lines count is expected to be $expPartsRangeStr," +
+                    " but was ${logStrings.size}"
+        )
         assertEquals(1.0, parts[0].percentCompleted)
         // can be <1s, e.g. 258ms.
         // assertEquals(0, parts.get(0).elapsed);
@@ -255,8 +301,10 @@ class SequentialProgressTest : ProgressTest() {
         val elapsedSecs = parts.last().elapsedSeconds
         val expElapsedRange = 10..11
         val expElapsedRangeStr = "[${expElapsedRange.start}..${expElapsedRange.endInclusive}]"
-        assertTrue(elapsedSecs in expElapsedRange,
-                "Elapsed times expected to be $expElapsedRangeStr sec, but was $elapsedSecs")
+        assertTrue(
+            elapsedSecs in expElapsedRange,
+            "Elapsed times expected to be $expElapsedRangeStr sec, but was $elapsedSecs"
+        )
         assertTrue("[done]" in logStrings.last())
     }
 }
@@ -299,14 +347,19 @@ class ParallelProgressTest : ProgressTest() {
 
         val uniqueSeconds = parts.asSequence().map { it.elapsedSeconds }.distinct().count()
         println("Unique seconds: $uniqueSeconds\n" +
-                "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}")
+                "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
+        )
 
         val allSeconds = parts.size
-        assertEquals(allSeconds, uniqueSeconds + 1,
-                "shouldn't report progress more often than once in second, except [done]")
+        assertEquals(
+            allSeconds, uniqueSeconds + 1,
+            "shouldn't report progress more often than once in second, except [done]"
+        )
         assertTrue("[done]" in logStrings[logStrings.size - 1])
-        assertEquals(adder.sum(), parts[parts.size - 1].itemsDone.toLong(),
-                "should report all progress")
+        assertEquals(
+            adder.sum(), parts[parts.size - 1].itemsDone.toLong(),
+            "should report all progress"
+        )
     }
 
     @Retry
@@ -339,14 +392,18 @@ class ParallelProgressTest : ProgressTest() {
 
         val uniqueSeconds = parts.asSequence().map { it.elapsedSeconds }.distinct().count()
         println("Unique seconds: $uniqueSeconds\n" +
-                "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}")
+                "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
+        )
 
         assertEquals(parts.size, uniqueSeconds + 1,
-                "shouldn't report progress more often than once in second, except [done].\n" +
-                        "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}")
+            "shouldn't report progress more often than once in second, except [done].\n" +
+                    "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
+        )
         assertTrue("[done]" in logStrings[logStrings.size - 1])
-        assertEquals(adder.sum(), parts.last().itemsDone.toLong(),
-                "should report all progress")
+        assertEquals(
+            adder.sum(), parts.last().itemsDone.toLong(),
+            "should report all progress"
+        )
     }
 
     companion object {

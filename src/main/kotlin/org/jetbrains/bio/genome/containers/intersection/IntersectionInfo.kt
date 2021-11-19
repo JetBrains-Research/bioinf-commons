@@ -38,7 +38,7 @@ data class IntersectionInfo(
                 p.print("b_merged_loci_count")
                 p.print(".")
                 for (i in 0 until ncols) {
-                   p.print(colsMergedLociNumber[i])
+                    p.print(colsMergedLociNumber[i])
                 }
                 p.println()
 
@@ -85,8 +85,8 @@ data class IntersectionInfo(
                         }
                         1 -> {
                             requireNotNull(colNames)
-                            colsMergedLociNumber = IntArray(colNames!!.size) {i ->
-                                csvRecord.get(i+2).toInt()
+                            colsMergedLociNumber = IntArray(colNames!!.size) { i ->
+                                csvRecord.get(i + 2).toInt()
                             }
                         }
                         else -> {

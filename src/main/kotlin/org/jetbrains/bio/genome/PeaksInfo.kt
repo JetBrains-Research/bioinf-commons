@@ -31,11 +31,11 @@ object PeaksInfo {
     private val LOG = LoggerFactory.getLogger(PeaksInfo::class.java)
 
     fun compute(
-            genomeQuery: GenomeQuery,
-            peaksStream: Stream<Location>,
-            src: URI?,
-            paths: List<Path>,
-            fragment: Fragment = AutoFragment
+        genomeQuery: GenomeQuery,
+        peaksStream: Stream<Location>,
+        src: URI?,
+        paths: List<Path>,
+        fragment: Fragment = AutoFragment
     ): List<TrackAboutMetricValue<*>> {
         val peaks = peaksStream.collect(Collectors.toList())
         val peaksLengths = peaks.map { it.length().toDouble() }.toDoubleArray()
@@ -54,7 +54,9 @@ object PeaksInfo {
         result.add(CT_MIN_LEN to if (peaksLengths.isEmpty()) 0L else StatUtils.min(peaksLengths).toLong())
         result.add(CT_MAX_LEN to if (peaksLengths.isEmpty()) 0L else StatUtils.max(peaksLengths).toLong())
         result.add(CT_MEAN_LEN to if (peaksLengths.isEmpty()) 0L else peaksLengths.average().toLong())
-        result.add(CT_MEDIAN_LEN to if (peaksLengths.isEmpty()) 0L else StatUtils.percentile(peaksLengths, 50.0).toLong())
+        result.add(
+            CT_MEDIAN_LEN to if (peaksLengths.isEmpty()) 0L else StatUtils.percentile(peaksLengths, 50.0).toLong()
+        )
 
         // Don't recompute tags coverage if it is not processed locally
         if (paths.isNotEmpty()) {

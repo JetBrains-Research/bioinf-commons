@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
  */
 class URIExtensionsTest {
     @get:Rule
-        var expectedEx = ExpectedException.none()
+    var expectedEx = ExpectedException.none()
 
     @Test
     fun isFile() {
@@ -52,29 +52,29 @@ class URIExtensionsTest {
 
         if (isWindows()) {
             assertEquals(
-                    "C:\\mnt\\stripe\\foo.bw",
-                    URI.create("file:///C:/mnt/stripe/foo.bw").toPath().toString()
+                "C:\\mnt\\stripe\\foo.bw",
+                URI.create("file:///C:/mnt/stripe/foo.bw").toPath().toString()
             )
             assertEquals(
-                    "C:\\mnt\\stripe\\foo.bw",
-                    URI.create("file:/C:/mnt/stripe/foo.bw").toPath().toString()
+                "C:\\mnt\\stripe\\foo.bw",
+                URI.create("file:/C:/mnt/stripe/foo.bw").toPath().toString()
             )
             assertEquals(
-                    "C:\\mnt\\stripe\\boo foo.bw",
-                    URI.create("file:/C:/mnt/stripe/boo%20foo.bw").toPath().toString()
+                "C:\\mnt\\stripe\\boo foo.bw",
+                URI.create("file:/C:/mnt/stripe/boo%20foo.bw").toPath().toString()
             )
         } else {
             assertEquals(
-                    "/mnt/stripe/foo.bw",
-                    URI.create("file:///mnt/stripe/foo.bw").toPath().toString()
+                "/mnt/stripe/foo.bw",
+                URI.create("file:///mnt/stripe/foo.bw").toPath().toString()
             )
             assertEquals(
-                    "/mnt/stripe/foo.bw",
-                    URI.create("file:/mnt/stripe/foo.bw").toPath().toString()
+                "/mnt/stripe/foo.bw",
+                URI.create("file:/mnt/stripe/foo.bw").toPath().toString()
             )
             assertEquals(
-                    "/mnt/stripe/boo foo.bw",
-                    URI.create("file:/mnt/stripe/boo%20foo.bw").toPath().toString()
+                "/mnt/stripe/boo foo.bw",
+                URI.create("file:/mnt/stripe/boo%20foo.bw").toPath().toString()
             )
         }
     }
@@ -97,27 +97,28 @@ class URIExtensionsTest {
     fun presentablePath() {
         if (isWindows()) {
             assertEquals(
-                    "C:\\mnt\\stripe\\foo.bw",
-                    URI.create("file:/C:/mnt/stripe/foo.bw").presentablePath()
+                "C:\\mnt\\stripe\\foo.bw",
+                URI.create("file:/C:/mnt/stripe/foo.bw").presentablePath()
             )
             assertEquals(
-                    "C:\\mnt\\stripe\\foo.bw",
-                    URI.create("file:///C:/mnt/stripe/foo.bw").presentablePath()
+                "C:\\mnt\\stripe\\foo.bw",
+                URI.create("file:///C:/mnt/stripe/foo.bw").presentablePath()
             )
         } else {
             assertEquals(
-                    "/mnt/stripe/foo.bw",
-                    URI.create("file:///mnt/stripe/foo.bw").presentablePath()
+                "/mnt/stripe/foo.bw",
+                URI.create("file:///mnt/stripe/foo.bw").presentablePath()
             )
         }
 
         assertEquals(
-                "https://www.encodeproject.org/files/@@download/foo.bigWig",
-                URI.create("https://www.encodeproject.org/files/@@download/foo.bigWig").presentablePath()
+            "https://www.encodeproject.org/files/@@download/foo.bigWig",
+            URI.create("https://www.encodeproject.org/files/@@download/foo.bigWig").presentablePath()
         )
         assertEquals(
-                "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSM3074498&format=file&file=GSM3074498_CC_GVO_RNAseq_rep1.bw",
-                URI.create("https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSM3074498&format=file&file=GSM3074498%5FCC%5FGVO%5FRNAseq%5Frep1%2Ebw").presentablePath()
+            "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSM3074498&format=file&file=GSM3074498_CC_GVO_RNAseq_rep1.bw",
+            URI.create("https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSM3074498&format=file&file=GSM3074498%5FCC%5FGVO%5FRNAseq%5Frep1%2Ebw")
+                .presentablePath()
         )
     }
 
@@ -131,29 +132,30 @@ class URIExtensionsTest {
     @Test
     fun shortNameURL() {
         assertEquals(
-                "foo.bigWig",
-                "https://www.doo.org/foo.bigWig".toUri().shortName()
+            "foo.bigWig",
+            "https://www.doo.org/foo.bigWig".toUri().shortName()
         )
         assertEquals(
-                "foo.bigWig",
-                "https://www.doo.org/aaa/foo.bigWig".toUri().shortName()
+            "foo.bigWig",
+            "https://www.doo.org/aaa/foo.bigWig".toUri().shortName()
         )
 
         assertEquals(
-                "https://www.doo.org",
-                "https://www.doo.org".toUri().shortName()
+            "https://www.doo.org",
+            "https://www.doo.org".toUri().shortName()
         )
         assertEquals(
-                "https://www.doo.org/foo.bigWig?request_id=foo",
-                "https://www.doo.org/foo.bigWig?request_id=foo".toUri().shortName()
+            "https://www.doo.org/foo.bigWig?request_id=foo",
+            "https://www.doo.org/foo.bigWig?request_id=foo".toUri().shortName()
         )
         assertEquals(
-                "https://www.doo.org?request_id=foo",
-                "https://www.doo.org?request_id=foo".toUri().shortName()
+            "https://www.doo.org?request_id=foo",
+            "https://www.doo.org?request_id=foo".toUri().shortName()
         )
         assertEquals(
-                "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSM3074498&format=file&file=GSM3074498_CC_GVO_RNAseq_rep1.bw",
-                "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSM3074498&format=file&file=GSM3074498%5FCC%5FGVO%5FRNAseq%5Frep1%2Ebw".toUri().shortName()
+            "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSM3074498&format=file&file=GSM3074498_CC_GVO_RNAseq_rep1.bw",
+            "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSM3074498&format=file&file=GSM3074498%5FCC%5FGVO%5FRNAseq%5Frep1%2Ebw".toUri()
+                .shortName()
         )
     }
 
@@ -163,16 +165,24 @@ class URIExtensionsTest {
             assertEquals(URI.create("file:///C:/mnt/stripe/foo%20foo.bw"), "C:/mnt/stripe/foo foo.bw".toUri())
             assertEquals(URI.create("file:///C:/mnt/stripe/foo.bw"), "C:/mnt/stripe/foo.bw".toUri())
             assertEquals(URI.create("file:///C:/mnt/stripe/foo.bw"), "C:\\mnt\\stripe\\foo.bw".toUri())
-            assertEquals(URI.create("file:///${Paths.get(".").toAbsolutePath().normalize().toString().replace(File.separatorChar, '/')}/stripe/foo.bw"),
-                    "stripe\\foo.bw".toUri())
+            assertEquals(
+                URI.create(
+                    "file:///${
+                        Paths.get(".").toAbsolutePath().normalize().toString().replace(File.separatorChar, '/')
+                    }/stripe/foo.bw"
+                ),
+                "stripe\\foo.bw".toUri()
+            )
             assertEquals(URI.create("file:///C:/mnt/stripe/foo.bw"), "file:///C:/mnt/stripe/foo.bw".toUri())
             assertEquals(URI.create("file:///C:/mnt/stripe/foo.bw"), "file:/C:/mnt/stripe/foo.bw".toUri())
             //assertEquals(URI.create("file:///C:/mnt/stripe/foo.bw"), "file://C:/mnt/stripe/foo.bw".toUri())
         } else {
             assertEquals(URI.create("file:///mnt/stripe/foo.bw"), "/mnt/stripe/foo.bw".toUri())
             assertEquals(URI.create("file:///mnt/stripe/foo%20foo.bw"), "/mnt/stripe/foo foo.bw".toUri())
-            assertEquals(URI.create("file://${Paths.get(".").toAbsolutePath().normalize()}/stripe/foo.bw"),
-                    "stripe/foo.bw".toUri())
+            assertEquals(
+                URI.create("file://${Paths.get(".").toAbsolutePath().normalize()}/stripe/foo.bw"),
+                "stripe/foo.bw".toUri()
+            )
             assertEquals(URI.create("file:///mnt/stripe/boo%20foo.bw"), "file:/mnt/stripe/boo foo.bw".toUri())
         }
         assertEquals(URI.create("file:///mnt/stripe/foo.bw"), "file:///mnt/stripe/foo.bw".toUri())
@@ -213,21 +223,21 @@ class URIExtensionsTest {
 
     @Test
     fun checkAccessibleFile() {
-        withTempFile("foo", "boo") {path ->
+        withTempFile("foo", "boo") { path ->
             path.toUri().checkAccessible()
         }
     }
 
     @Test
     fun isAccessibleFile() {
-        withTempFile("foo", "boo") {path ->
+        withTempFile("foo", "boo") { path ->
             assertTrue(path.toUri().isAccessible())
         }
     }
 
     @Test
     fun checkAccessibleFileNotExist() {
-        withTempFile("foo", "boo") {path ->
+        withTempFile("foo", "boo") { path ->
             path.deleteIfExists()
 
             expectedEx.expect(IllegalStateException::class.java)
@@ -239,7 +249,7 @@ class URIExtensionsTest {
 
     @Test
     fun isAccessibleFileNotExist() {
-        withTempFile("foo", "boo") {path ->
+        withTempFile("foo", "boo") { path ->
             path.deleteIfExists()
             assertFalse(path.toUri().isAccessible())
         }
@@ -264,19 +274,31 @@ class URIExtensionsTest {
         assertTrue("https://github.com/blob/master/ENCFF575VMI.bigBed".toUri().hasExt("bigBed"))
         assertTrue("https://github.com/blob/master/ENCFF575VMI.bigBed".toUri().hasExt("bigbed"))
         assertTrue("https://github.com/blob/master/ENCFF575VMI.bigbed".toUri().hasExt("bigBed"))
-        assertTrue(("https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE63874&format=file&file=" +
-                "GSE63874%5FNa%5FK2%5Fall%5Fminus%5Fcov.tdf").toUri().hasExt("tdf"))
-        assertTrue(("ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE63nnn/GSE63874/suppl/" +
-                "GSE63874%5FNa%5FK2%5Fall%5Fminus%5Fcov%2Etdf").toUri().hasExt("tdf"))
+        assertTrue(
+            ("https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE63874&format=file&file=" +
+                    "GSE63874%5FNa%5FK2%5Fall%5Fminus%5Fcov.tdf").toUri().hasExt("tdf")
+        )
+        assertTrue(
+            ("ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE63nnn/GSE63874/suppl/" +
+                    "GSE63874%5FNa%5FK2%5Fall%5Fminus%5Fcov%2Etdf").toUri().hasExt("tdf")
+        )
 
-        assertTrue(("https://github.com/PetrTsurinov/BigBedTest/blob/master/" +
-                "ENCFF575VMI.bigBed?raw=true").toUri().hasExt("bigBed"))
+        assertTrue(
+            ("https://github.com/PetrTsurinov/BigBedTest/blob/master/" +
+                    "ENCFF575VMI.bigBed?raw=true").toUri().hasExt("bigBed")
+        )
 
         assertFalse("https://github.com/ENCFF575VMI.bed".toUri().hasExt("bam", "foo"))
         assertTrue("https://github.com/ENCFF575VMI.bed".toUri().hasExt("bam", "bed", "foo"))
 
-        assertTrue("https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSM3074498&format=file&file=GSM3074498%5FCC%5FGVO%5FRNAseq%5Frep1%2Ebw".toUri().hasExt("bw"))
-        assertTrue("ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3074nnn/GSM3074498/suppl/GSM3074498%5FCC%5FGVO%5FRNAseq%5Frep1%2Ebw".toUri().hasExt("bw"))
+        assertTrue(
+            "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSM3074498&format=file&file=GSM3074498%5FCC%5FGVO%5FRNAseq%5Frep1%2Ebw".toUri()
+                .hasExt("bw")
+        )
+        assertTrue(
+            "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3074nnn/GSM3074498/suppl/GSM3074498%5FCC%5FGVO%5FRNAseq%5Frep1%2Ebw".toUri()
+                .hasExt("bw")
+        )
 
     }
 
@@ -293,7 +315,7 @@ class URIExtensionsTest {
 
         assertTrue("C:/foo/boo/doo.bigBed".toUri().hasExt("bigBed"))
         assertTrue("C:///foo/boo/doo.bigBed".toUri().hasExt("bigBed"))
-    } 
+    }
 
     @Test
     fun asByteSource() {

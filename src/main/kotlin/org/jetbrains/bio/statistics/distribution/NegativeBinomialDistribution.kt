@@ -28,9 +28,11 @@ import kotlin.math.ln
  * @since 17/10/13
  * @see [Negative binomial distribution](http://en.wikipedia.org/wiki/Negative_binomial_distribution)
  */
-class NegativeBinomialDistribution(rng: RandomGenerator,
-                                   private val mean: Double,
-                                   internal val failures: Double) : AbstractIntegerDistribution(rng) {
+class NegativeBinomialDistribution(
+    rng: RandomGenerator,
+    private val mean: Double,
+    internal val failures: Double
+) : AbstractIntegerDistribution(rng) {
 
     /**
      * Access the probability of success for this distribution.
@@ -44,6 +46,7 @@ class NegativeBinomialDistribution(rng: RandomGenerator,
      * failures * log(1-p) - log Gamma(failures)
      */
     private val fLog1MinusPMinusLogGammaF: Double
+
     /**
      * (1-p)^failures / Gamma(failures)
      */
@@ -138,9 +141,11 @@ class NegativeBinomialDistribution(rng: RandomGenerator,
             GammaDistribution(random, failures, probabilityOfSuccess / (1 - probabilityOfSuccess)).sample()
         return if (Precision.equals(lambda, 0.0)) {
             0
-        } else PoissonDistribution(random, lambda,
-                PoissonDistribution.DEFAULT_EPSILON,
-                PoissonDistribution.DEFAULT_MAX_ITERATIONS).sample()
+        } else PoissonDistribution(
+            random, lambda,
+            PoissonDistribution.DEFAULT_EPSILON,
+            PoissonDistribution.DEFAULT_MAX_ITERATIONS
+        ).sample()
     }
 
     override fun toString(): String {
@@ -180,10 +185,12 @@ class NegativeBinomialDistribution(rng: RandomGenerator,
             val mean = values.average()
             val sd = values.standardDeviation()
 
-            val failures = fitNumberOfFailures(values,
-                    weights.asF64Array(),
-                    mean,
-                    estimateFailuresUsingMoments(mean, sd * sd))
+            val failures = fitNumberOfFailures(
+                values,
+                weights.asF64Array(),
+                mean,
+                estimateFailuresUsingMoments(mean, sd * sd)
+            )
 
             return usingMean(mean, failures)
         }
@@ -229,10 +236,12 @@ class NegativeBinomialDistribution(rng: RandomGenerator,
          * NegativeBinomial fit based on
          * http://research.microsoft.com/en-us/um/people/minka/papers/minka-gamma.pdf
          */
-        fun fitNumberOfFailures(values: IntArray,
-                                weights: F64Array,
-                                mean: Double,
-                                failures: Double): Double {
+        fun fitNumberOfFailures(
+            values: IntArray,
+            weights: F64Array,
+            mean: Double,
+            failures: Double
+        ): Double {
             if (failures.isInfinite() || mean == 0.0) {
                 /* this is already Poisson or singular distribution, can't be optimized */
                 return failures
@@ -286,16 +295,18 @@ class NegativeBinomialDistribution(rng: RandomGenerator,
             return a
         }
 
-        fun fitNumberOfFailures(values: F64Array,
-                                  weights: F64Array,
-                                  mean: F64Array,
-                                  failures: Double): Double {
+        fun fitNumberOfFailures(
+            values: F64Array,
+            weights: F64Array,
+            mean: F64Array,
+            failures: Double
+        ): Double {
 
             if (failures.isInfinite() || mean.equals(0)) {
                 /* this is already Poisson or singular distribution, can't be optimized */
                 return failures
             }
-            var a = weights.sum()/(weights*(values/mean - 1.0)*(values/mean - 1.0)).sum() // shape
+            var a = weights.sum() / (weights * (values / mean - 1.0) * (values / mean - 1.0)).sum() // shape
             //var a = 1.0
             for (i in 0..99) {
                 a = abs(a)
@@ -303,16 +314,16 @@ class NegativeBinomialDistribution(rng: RandomGenerator,
                         Gamma.digamma(a) -
                         (mean + a).apply { logInPlace() } -
                         (values + a) / (mean + a) + ln(a) + 1.0))
-                        .sum()
+                    .sum()
                 val fSecDeriv = (weights *
                         (triGammaInPlace(values + a) -
-                            Gamma.trigamma(a) +
-                            ((values + a)/((mean + a).apply { timesAssign(mean + a)})) +
-                            (1.0 / a)) -
+                                Gamma.trigamma(a) +
+                                ((values + a) / ((mean + a).apply { timesAssign(mean + a) })) +
+                                (1.0 / a)) -
                         weights * 2.0 / (mean + a))
-                        .sum()
+                    .sum()
 
-                val aNext = a - fDeriv/fSecDeriv
+                val aNext = a - fDeriv / fSecDeriv
                 if (Math.abs(a - aNext) < 1E-4) {
                     println(aNext)
                     return aNext
@@ -326,8 +337,10 @@ class NegativeBinomialDistribution(rng: RandomGenerator,
             val p1 = if (Precision.equals(variance, 0.0)) 1.0 else mean / variance
             val p0 = 1 - p1
             if (p0 < 0.0001) {
-                LOG.debug("Failures = ${Double.POSITIVE_INFINITY} for negative binomial distribution: " +
-                        "mean = $mean is greater than variance = $variance")
+                LOG.debug(
+                    "Failures = ${Double.POSITIVE_INFINITY} for negative binomial distribution: " +
+                            "mean = $mean is greater than variance = $variance"
+                )
                 return Double.POSITIVE_INFINITY
             }
             return mean * p1 / p0

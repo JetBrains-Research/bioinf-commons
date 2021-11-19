@@ -7,7 +7,7 @@ import java.util.*
 /**
  * [GenomeQuery] represents arbitrary set of chromosomes available for [Genome].
  */
-class GenomeQuery (val genome: Genome, vararg names: String) {
+class GenomeQuery(val genome: Genome, vararg names: String) {
     /** A subset of chromosomes to be considered or null for all chromosomes. */
     val restriction: Set<String>? = if (names.isNotEmpty()) names.toSet() else null
 

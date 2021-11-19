@@ -8,7 +8,8 @@ import java.util.*
  * @author Sergei Lebedev
  */
 abstract class Column<T> protected constructor(
-        val label: String, val data: T, val boxedType: Class<out Any>) {
+    val label: String, val data: T, val boxedType: Class<out Any>
+) {
 
     // Note(lebedev): I'm not sure if this is the best way to perform
     // T->double coercion. Any suggestions -- let me know.

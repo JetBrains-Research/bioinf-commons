@@ -7,14 +7,16 @@ import org.junit.Test
 import kotlin.test.assertEquals
 
 class NucleotideSequenceTest {
-    @Test fun testSubstringBasic() {
+    @Test
+    fun testSubstringBasic() {
         val sequence = "aaccggtt".asNucleotideSequence()
         assertEquals("ccggt", sequence.substring(2, 7))
         assertEquals("ccggt", sequence.substring(2, 7, Strand.PLUS))
         assertEquals("accgg", sequence.substring(2, 7, Strand.MINUS))
     }
 
-    @Test fun testSubstringTestOrganism() {
+    @Test
+    fun testSubstringTestOrganism() {
         val chromosome = Chromosome(Genome["to1"], "chr1")
         val sequence = chromosome.sequence
         val from = sequence.length / 3
@@ -23,10 +25,12 @@ class NucleotideSequenceTest {
         testSubstring(sequence, from, to, Strand.MINUS)
     }
 
-    private fun testSubstring(sequence: NucleotideSequence, from: Int,
-                              to: Int, strand: Strand) {
+    private fun testSubstring(
+        sequence: NucleotideSequence, from: Int,
+        to: Int, strand: Strand
+    ) {
         val sub = sequence.substring(from, to, strand)
-        for (offset in from..to - 1) {
+        for (offset in from until to) {
             val expected = sequence.charAt(offset)
             val actual = sub[if (strand.isMinus()) to - offset - 1 else offset - from]
             if (expected == Nucleotide.N && actual == Nucleotide.N) {
@@ -42,7 +46,8 @@ class NucleotideSequenceTest {
         }
     }
 
-    @Test fun byteAtCasing() {
+    @Test
+    fun byteAtCasing() {
         // XXX currently 'NucleotideSequence' doesn't distinguish between
         // character casing.
         val sequence = "aacCgGtT".asNucleotideSequence()

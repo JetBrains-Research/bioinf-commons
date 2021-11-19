@@ -34,7 +34,7 @@ enum class Ontology {
         val path = Configuration.genomesPath / "go-basic.obo"
         path.checkOrRecalculate("GO") { output ->
             "http://geneontology.org/ontology/go-basic.obo"
-                    .downloadTo(output.path)
+                .downloadTo(output.path)
         }
 
         OboFile.read(this, path)
@@ -68,7 +68,7 @@ enum class Ontology {
         val path = Configuration.genomesPath / name
         path.checkOrRecalculate("GOA") { output ->
             ("http://ftp.ebi.ac.uk/pub/databases/GO/goa/" +
-                    "${speciesInformal.toUpperCase()}/$name").downloadTo(output.path)
+                    "${speciesInformal.uppercase()}/$name").downloadTo(output.path)
         }
 
         GafFile.read(genome, path, this)
@@ -76,7 +76,7 @@ enum class Ontology {
 
     companion object {
         private var CACHE: ConcurrentMap<Pair<Genome, Ontology>, SetMultimap<String, String>> =
-                Maps.newConcurrentMap()
+            Maps.newConcurrentMap()
     }
 }
 
@@ -85,9 +85,11 @@ enum class Ontology {
  * the GO graph.
  */
 fun DirectedGraph<String, Pair<String, String>>.mapDepth(): TObjectIntMap<String> {
-    val depth = TObjectIntHashMap<String>(Constants.DEFAULT_CAPACITY,
-            Constants.DEFAULT_LOAD_FACTOR,
-            Int.MAX_VALUE)
+    val depth = TObjectIntHashMap<String>(
+        Constants.DEFAULT_CAPACITY,
+        Constants.DEFAULT_LOAD_FACTOR,
+        Int.MAX_VALUE
+    )
     val root = vertexSet().filter { inDegreeOf(it) == 0 }.single()
     val it = DepthFirstIterator(this, root)
     it.addTraversalListener(object : TraversalListenerAdapter<String, Pair<String, String>>() {
@@ -107,8 +109,10 @@ fun DirectedGraph<String, Pair<String, String>>.mapDepth(): TObjectIntMap<String
 }
 
 
-data class Term(val id: String, val description: String, val isObsolete: Boolean,
-                val children: Set<String>) {
+data class Term(
+    val id: String, val description: String, val isObsolete: Boolean,
+    val children: Set<String>
+) {
     companion object {
         internal fun ofProperties(properties: ListMultimap<String, String>): Term {
             @Suppress("unused_variable") val children = properties["is_a"].map {
@@ -116,9 +120,11 @@ data class Term(val id: String, val description: String, val isObsolete: Boolean
                 id
             }.toSet()
 
-            return Term(properties.single("id"), properties.single("name"),
-                    properties["is_obsolete"] == listOf("true"),
-                    children)
+            return Term(
+                properties.single("id"), properties.single("name"),
+                properties["is_obsolete"] == listOf("true"),
+                children
+            )
         }
     }
 }
@@ -130,8 +136,10 @@ data class Term(val id: String, val description: String, val isObsolete: Boolean
  * available from this page: http://geneontology.org/page/download-ontology.
  */
 @VisibleForTesting
-internal class OboFile constructor(private val ontology: Ontology,
-                                   private val reader: Reader) : Iterable<Term> {
+internal class OboFile constructor(
+    private val ontology: Ontology,
+    private val reader: Reader
+) : Iterable<Term> {
     override fun iterator(): Iterator<Term> = OboIterator(ontology, reader.buffered())
 
     companion object {
@@ -144,7 +152,7 @@ internal class OboFile constructor(private val ontology: Ontology,
         fun read(ontology: Ontology, path: Path) = path.bufferedReader().use { reader ->
             val g = DirectedAcyclicGraph(EdgeFactory { u: String, v -> u to v })
             val terms = OboFile(ontology, reader).filterNot(Term::isObsolete)
-                    .toList()
+                .toList()
 
             for ((id, _, _, children) in terms) {
                 g.addVertex(id)
@@ -159,10 +167,11 @@ internal class OboFile constructor(private val ontology: Ontology,
     }
 }
 
-private class OboIterator(private val ontology: Ontology,
-                          reader: BufferedReader)
-    :
-        CachingIterator<String, Term>(reader.lines().iterator()) {
+private class OboIterator(
+    private val ontology: Ontology,
+    reader: BufferedReader
+) :
+    CachingIterator<String, Term>(reader.lines().iterator()) {
 
     override fun cache(): Term? {
         while (it.hasNext()) {
@@ -178,7 +187,7 @@ private class OboIterator(private val ontology: Ontology,
                     properties.put(key, value)
                 }
 
-                if (properties.single("namespace").toUpperCase() == ontology.toString()) {
+                if (properties.single("namespace").uppercase() == ontology.toString()) {
                     return Term.ofProperties(properties)
                 }
             }
@@ -203,12 +212,14 @@ object GafFile {
     // See
     // for field descriptions.
     private val FORMAT = CSVFormat.TDF
-            .withCommentMarker('!')
-            .withHeader("db", "db_object_id", "db_object_symbol", "qualifier",
-                    "go_id", "db_reference", "evidence_code", "with_or_from",
-                    "aspect", "db_object_name", "db_object_synonym",
-                    "do_object_type", "taxon", "date", "assigned_by",
-                    "annotation_extension", "gene_product_form_id")
+        .withCommentMarker('!')
+        .withHeader(
+            "db", "db_object_id", "db_object_symbol", "qualifier",
+            "go_id", "db_reference", "evidence_code", "with_or_from",
+            "aspect", "db_object_name", "db_object_synonym",
+            "do_object_type", "taxon", "date", "assigned_by",
+            "annotation_extension", "gene_product_form_id"
+        )
 
     fun read(genome: Genome, path: Path, ontology: Ontology): SetMultimap<String, String> {
         val aspect = when (ontology) {
@@ -233,15 +244,17 @@ object GafFile {
 
                 val aliases = (sequenceOf(row["db_object_symbol"]) +
                         row["db_object_synonym"].splitToSequence('|'))
-                        .iterator()
+                    .iterator()
 
                 // XXX we can only distinguish between genes with different
                 // gene symbols. This is a limitation of the annotations.
                 var transcript: Transcript?
                 do {
-                    transcript = GeneResolver.get(genome, aliases.next(),
-                            GeneAliasType.GENE_SYMBOL)
-                            .firstOrNull()
+                    transcript = GeneResolver.get(
+                        genome, aliases.next(),
+                        GeneAliasType.GENE_SYMBOL
+                    )
+                        .firstOrNull()
                 } while (transcript == null && aliases.hasNext())
 
                 total++

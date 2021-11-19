@@ -2,15 +2,16 @@ package org.jetbrains.bio.dataframe
 
 import com.google.common.collect.ObjectArrays
 import java.nio.file.Path
-import java.util.*
 
 /**
  * A spec holds data frame column names and types.
  *
  * @author Sergei Lebedev
  */
-data class DataFrameSpec(val columns: MutableList<Column<*>> = ArrayList(),
-                         val synchronized: Boolean = false) {
+data class DataFrameSpec(
+    val columns: MutableList<Column<*>> = ArrayList(),
+    val synchronized: Boolean = false
+) {
 
     fun ints(vararg names: String): DataFrameSpec {
         for (name in names) {
@@ -26,7 +27,7 @@ data class DataFrameSpec(val columns: MutableList<Column<*>> = ArrayList(),
         return this
     }
 
-    fun bools(vararg names: String): DataFrameSpec {
+    fun booleans(vararg names: String): DataFrameSpec {
         for (name in names) {
             columns.add(BooleanColumn(name, BitterSet(0)))
         }
@@ -54,10 +55,15 @@ data class DataFrameSpec(val columns: MutableList<Column<*>> = ArrayList(),
         return this
     }
 
-    fun <T : Enum<T>> enums(name: String,
-                            valueType: Class<T>): DataFrameSpec {
-        columns.add(EnumColumn(
-                name, valueType, ObjectArrays.newArray(valueType, 0)))
+    fun <T : Enum<T>> enums(
+        name: String,
+        valueType: Class<T>
+    ): DataFrameSpec {
+        columns.add(
+            EnumColumn(
+                name, valueType, ObjectArrays.newArray(valueType, 0)
+            )
+        )
         return this
     }
 
@@ -82,12 +88,14 @@ data class DataFrameSpec(val columns: MutableList<Column<*>> = ArrayList(),
         private enum class Traitor
 
         @Suppress("unchecked_cast")
-        internal fun fromNamesAndTypes(names: List<String>,
-                                       types: List<String>,
-                                       source: Path): DataFrameSpec {
+        internal fun fromNamesAndTypes(
+            names: List<String>,
+            types: List<String>,
+            source: Path
+        ): DataFrameSpec {
             require(types.size == names.size) {
                 "expected types for ${names.size} columns ($names), " +
-                "but got ${types.size}: $types"
+                        "but got ${types.size}: $types"
             }
 
             val header = DataFrameSpec()
@@ -102,7 +110,7 @@ data class DataFrameSpec(val columns: MutableList<Column<*>> = ArrayList(),
                     "Long" -> header.longs(name)
                     "Float" -> header.floats(name)
                     "Double" -> header.doubles(name)
-                    "Boolean" -> header.bools(name)
+                    "Boolean" -> header.booleans(name)
                     "String" -> header.strings(name)
                     else -> {  // enum fqn given.
                         val valueType = try {

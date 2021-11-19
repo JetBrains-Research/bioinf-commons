@@ -4,6 +4,8 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 
+private val LOG = LoggerFactory.getLogger("org.jetbrains.bio.util.ExecKt")
+
 /**
  * A sweeter extended version of the [Exec] API.
  *
@@ -12,15 +14,21 @@ import java.nio.file.Path
  *            and [System.err] of the current process.
  * @param init a custom initializer for [ProcessBuilder].
  */
-fun String.exec(vararg args: Any, log: Boolean = true,
-                init: ProcessBuilder.() -> Unit = {}) =
-        Exec.exec(this, *args,
-                output = if (log) OutputType.LOG else OutputType.IGNORE,
-                init = init)
+fun String.exec(
+    vararg args: Any, log: Boolean = true,
+    init: ProcessBuilder.() -> Unit = {}
+) =
+    Exec.exec(
+        this, *args,
+        output = if (log) OutputType.LOG else OutputType.IGNORE,
+        init = init
+    )
 
 
-fun Path.exec(vararg args: Any, log: Boolean = true,
-              init: ProcessBuilder.() -> Unit = {}) = this.toString().exec(*args, log = log, init = init)
+fun Path.exec(
+    vararg args: Any, log: Boolean = true,
+    init: ProcessBuilder.() -> Unit = {}
+) = this.toString().exec(*args, log = log, init = init)
 
 enum class OutputType {
     LOG,
@@ -31,10 +39,12 @@ enum class OutputType {
 private object Exec {
     private val LOG = LoggerFactory.getLogger(Exec::class.java)
 
-    internal fun exec(executable: String,
-                      vararg args: Any,
-                      output: OutputType,
-                      init: ProcessBuilder.() -> Unit = {}): String? {
+    fun exec(
+        executable: String,
+        vararg args: Any,
+        output: OutputType,
+        init: ProcessBuilder.() -> Unit = {}
+    ): String? {
         val pb = ProcessBuilder(executable, *args.map(Any::toString).toTypedArray())
         when (output) {
             OutputType.IGNORE -> pb.inheritIO()
@@ -62,9 +72,11 @@ private object Exec {
 
         val exitCode = process.waitFor()
         if (exitCode != 0) {
-            throw RuntimeException("Process stopped with exit code $exitCode.\n" +
-                    "Output\n${process.inputStream.bufferedReader().readText()}\n" +
-                    "Error\n${process.errorStream.bufferedReader().readText()}")
+            throw RuntimeException(
+                "Process stopped with exit code $exitCode.\n" +
+                        "Output\n${process.inputStream.bufferedReader().readText()}\n" +
+                        "Error\n${process.errorStream.bufferedReader().readText()}"
+            )
         }
 
         return resultText
@@ -84,14 +96,16 @@ private object Exec {
  * @param name path to resource without the starting '/', e.g. "run_sleuth.R".
  * @param block DWYW.
  */
-inline fun <T> withResource(proxy: Class<*>, name: String,
-                            checkNotNull: Boolean = true,
-                            block: (Path) -> T): T {
+fun <T> withResource(
+    proxy: Class<*>, name: String,
+    checkNotNull: Boolean = true,
+    block: (Path) -> T
+): T {
     val resource = proxy.getResource("/$name")
     if (checkNotNull) {
         checkNotNull(resource) { "Resource '$name' not found for class: $proxy" }
     } else {
-        Logs.getRootLogger().warn("Resource '$name' not found for class: $proxy")
+        LOG.warn("Resource '$name' not found for class: $proxy")
     }
 
     return withTempDirectory(proxy.simpleName) { dir ->

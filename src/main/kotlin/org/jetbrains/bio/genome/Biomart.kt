@@ -21,18 +21,20 @@ import java.io.InputStream
  * because we don't need cross-organism queries at the moment.
  */
 data class Biomart(
-        val dataset: String,
-        val url: String,
-        val name: String = "ENSEMBL_MART_ENSEMBL"
+    val dataset: String,
+    val url: String,
+    val name: String = "ENSEMBL_MART_ENSEMBL"
 ) {
 
     data class Attribute(val name: String, val description: String)
 
     /** Lists available attributes, e.g. `"ensembl_gene_id"`. */
     val attributes: List<Attribute> by lazy(LazyThreadSafetyMode.NONE) {
-        val params = mapOf("type" to "attributes",
-                "mart" to name,
-                "dataset" to dataset)
+        val params = mapOf(
+            "type" to "attributes",
+            "mart" to name,
+            "dataset" to dataset
+        )
         wire(url, params) {
             CSVFormat.TDF.parse(it.bufferedReader()).map {
                 Attribute(it[0], it[1])
@@ -44,14 +46,17 @@ data class Biomart(
 
     /** Lists available filters, e.g. `"chromosome_name"`. */
     val filters: List<Filter> by lazy(LazyThreadSafetyMode.NONE) {
-        val params = mapOf("type" to "filters",
-                           "mart" to name,
-                           "dataset" to dataset)
+        val params = mapOf(
+            "type" to "filters",
+            "mart" to name,
+            "dataset" to dataset
+        )
         wire(url, params) {
             val format = CSVFormat.TDF.withHeader(
-                    "name", "short_description", "allowed_values",
-                    "long_description", "<unknown>", "type", "operator",
-                    "config", "default")
+                "name", "short_description", "allowed_values",
+                "long_description", "<unknown>", "type", "operator",
+                "config", "default"
+            )
             format.parse(it.bufferedReader()).map {
                 Filter(it["name"], it["short_description"])
             }.sortedBy { it.name }
@@ -73,8 +78,10 @@ data class Biomart(
         return attributes
     }
 
-    fun <T> query(attributes: List<String>, format: Format = Format.TSV,
-                  unique: Boolean = true, block: (CSVParser) -> T): T {
+    fun <T> query(
+        attributes: List<String>, format: Format = Format.TSV,
+        unique: Boolean = true, block: (CSVParser) -> T
+    ): T {
 
         // Yes, string formatting sucks, but it's not as bad as
         // AbstractDomBuilderFactoryBlahBlah.newBuilder.
@@ -85,7 +92,7 @@ data class Biomart(
             |       formatter="$format" header="1" uniqueRows="${if (unique) 1 else 0}"
             |       datasetConfigVersion="0.6">
             |    <Dataset name="$dataset">
-            |        ${normalize(attributes).joinToString("\n") { "<Attribute name=\"$it\" />"}}
+            |        ${normalize(attributes).joinToString("\n") { "<Attribute name=\"$it\" />" }}
             |    </Dataset>
             |</Query>""".trimMargin().trim()
         return wire(url, mapOf("query" to query)) {
@@ -97,9 +104,11 @@ data class Biomart(
                 throw IOException(line.substringAfterLast(": "))
             }
 
-            block(CSVFormat.TDF.withHeader(*attributes.toTypedArray())
-                          .withSkipHeaderRecord()
-                          .parse(reader))
+            block(
+                CSVFormat.TDF.withHeader(*attributes.toTypedArray())
+                    .withSkipHeaderRecord()
+                    .parse(reader)
+            )
         }
     }
 
@@ -118,9 +127,11 @@ data class Biomart(
          * @param params a mapping of GET params.
          * @param block called with HTTP response content.
          */
-        internal inline fun <T> wire(url: String, 
-                                     params: Map<String, Any> = emptyMap(),
-                                     block: (InputStream) -> T): T {
+        internal inline fun <T> wire(
+            url: String,
+            params: Map<String, Any> = emptyMap(),
+            block: (InputStream) -> T
+        ): T {
             LOG.info("Access: $url")
 
             val builder = URIBuilder(url)
@@ -134,8 +145,10 @@ data class Biomart(
             val response = HttpClientBuilder.create().build().execute(HttpGet(uri))
             val statusLine = response.statusLine
             if (statusLine.statusCode / 100 != 2) {
-                throw HttpResponseException(statusLine.statusCode,
-                                            statusLine.reasonPhrase)
+                throw HttpResponseException(
+                    statusLine.statusCode,
+                    statusLine.reasonPhrase
+                )
             }
 
             return response.entity.content.use { block(it) }

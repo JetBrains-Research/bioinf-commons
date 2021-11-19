@@ -162,7 +162,7 @@ object OverlapRegionsWithEachLoci {
                 genome, mergeOverlapped, null, regionsNameSuffix
             ).chunked(threadsNumber)
 
-        val regionsSetsToTestNumber = regionLabelAndLociToTest.sumBy { chunk -> chunk.size }
+        val regionsSetsToTestNumber = regionLabelAndLociToTest.sumOf { it.size }
         LOG.info("Regions sets to test: $regionsSetsToTestNumber")
         require(regionsSetsToTestNumber > 0) {
             "No regions files passed file suffix filter."
@@ -173,7 +173,7 @@ object OverlapRegionsWithEachLoci {
             "Loci file is empty or all loci were masked."
         }
         LOG.info("Loaded ${sourceLoci.size} loci, bed format: $sourceLociBedFormat")
-        val sourceLoci2RangeList = sourceLoci.map { namedLocus -> namedLocus to namedLocus.location.toRangeSortedList() }
+        val sourceLoci2RangeList = sourceLoci.map { it to it.location.toRangeSortedList() }
 
         val progress = Progress { title = "Overlap(region set, locus) progress" }.bounded(
             regionsSetsToTestNumber.toLong()

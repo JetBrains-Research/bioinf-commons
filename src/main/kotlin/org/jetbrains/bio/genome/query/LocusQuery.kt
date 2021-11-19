@@ -10,8 +10,7 @@ import org.jetbrains.bio.util.parseInt
 import java.util.*
 
 
-abstract class TranscriptLocusQuery(override val id: String)
-    : Query<Transcript, Collection<Location>> {
+abstract class TranscriptLocusQuery(override val id: String) : Query<Transcript, Collection<Location>> {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -34,7 +33,8 @@ abstract class TranscriptLocusQuery(override val id: String)
             override fun apply(t: Gene): Collection<Location> {
                 // Take the longest transcript
                 return this@TranscriptLocusQuery.apply(
-                        t.transcripts.maxBy { it.length() }!!)
+                    t.transcripts.maxByOrNull { it.length() }!!
+                )
             }
 
         }
@@ -49,7 +49,7 @@ abstract class TranscriptLocusQuery(override val id: String)
          * TSS[-2000..2000]
          */
         fun parse(text: String): TranscriptLocusQuery? {
-            val lcText = text.toLowerCase()
+            val lcText = text.lowercase()
             if (lcText in TRANSCRIPT_LOCUS_QUERIES) {
                 return TRANSCRIPT_LOCUS_QUERIES[lcText]!!
             }
@@ -96,14 +96,15 @@ abstract class TranscriptLocusQuery(override val id: String)
 }
 
 val TRANSCRIPT_LOCUS_QUERIES = mapOf(
-        "tss" to TssQuery(),
-        "tes" to TesQuery(),
-        "transcript" to TranscriptQuery(),
-        "cds" to CDSQuery(),
-        "utr5" to UTR5Query(),
-        "utr3" to UTR3Query(),
-        "introns" to IntronsQuery(),
-        "exons" to ExonsQuery())
+    "tss" to TssQuery(),
+    "tes" to TesQuery(),
+    "transcript" to TranscriptQuery(),
+    "cds" to CDSQuery(),
+    "utr5" to UTR5Query(),
+    "utr3" to UTR3Query(),
+    "introns" to IntronsQuery(),
+    "exons" to ExonsQuery()
+)
 
 class CDSQuery : TranscriptLocusQuery("cds") {
     // All exons intersecting CDS
@@ -124,8 +125,9 @@ class IntronsQuery : TranscriptLocusQuery("introns") {
 
 /** Transcription end site query. */
 class TesQuery @JvmOverloads constructor(
-        private val leftBound: Int = -2000,
-        private val rightBound: Int = 2000) : TranscriptLocusQuery("tes") {
+    private val leftBound: Int = -2000,
+    private val rightBound: Int = 2000
+) : TranscriptLocusQuery("tes") {
 
     init {
         check(leftBound < rightBound)
@@ -148,8 +150,9 @@ class TesQuery @JvmOverloads constructor(
 
 /** Transcription start site query. */
 class TssQuery @JvmOverloads constructor(
-        private val leftBound: Int = -2000,
-        private val rightBound: Int = 2000) : TranscriptLocusQuery("tss") {
+    private val leftBound: Int = -2000,
+    private val rightBound: Int = 2000
+) : TranscriptLocusQuery("tss") {
 
     init {
         check(leftBound < rightBound)
@@ -200,9 +203,9 @@ abstract class ChromosomeLocusQuery(override val id: String) : Query<Chromosome,
 }
 
 val CHROMOSOME_LOCUS_QUERIES = mapOf(
-        "repeats" to RepeatsQuery(),
-        "non_repeats" to NonRepeatsQuery(),
-        "cpg_islands" to CGIQuery()
+    "repeats" to RepeatsQuery(),
+    "non_repeats" to NonRepeatsQuery(),
+    "cpg_islands" to CGIQuery()
 )
 
 class CGIQuery : ChromosomeLocusQuery("cgi") {

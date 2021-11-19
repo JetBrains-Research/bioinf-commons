@@ -82,28 +82,42 @@ class PathExtensionsTest {
 
     @Test
     fun withName() {
-        assertEquals("/path/to/boo".toPath(),
-                "/path/to/foo.bar".toPath().withName("boo"))
+        assertEquals(
+            "/path/to/boo".toPath(),
+            "/path/to/foo.bar".toPath().withName("boo")
+        )
     }
 
     @Test
     fun withExtension() {
-        assertEquals("/path/to/foo.baz".toPath(),
-                "/path/to/foo.bar".toPath().withExtension("baz"))
-        assertEquals("/path/to/foo.e.baz".toPath(),
-                "/path/to/foo.e.bar".toPath().withExtension("baz"))
-        assertEquals("/path/to/foo.baz".toPath(),
-                "/path/to/foo".toPath().withExtension("baz"))
+        assertEquals(
+            "/path/to/foo.baz".toPath(),
+            "/path/to/foo.bar".toPath().withExtension("baz")
+        )
+        assertEquals(
+            "/path/to/foo.e.baz".toPath(),
+            "/path/to/foo.e.bar".toPath().withExtension("baz")
+        )
+        assertEquals(
+            "/path/to/foo.baz".toPath(),
+            "/path/to/foo".toPath().withExtension("baz")
+        )
     }
 
     @Test
     fun withStem() {
-        assertEquals("/path/to/bar.baz".toPath(),
-                "/path/to/foo.baz".toPath().withStem("bar"))
-        assertEquals("/path/to/bar.baz".toPath(),
-                "/path/to/foo.baz".toPath().withStem("bar"))
-        assertEquals("/path/to/bar".toPath(),
-                "/path/to/foo".toPath().withStem("bar"))
+        assertEquals(
+            "/path/to/bar.baz".toPath(),
+            "/path/to/foo.baz".toPath().withStem("bar")
+        )
+        assertEquals(
+            "/path/to/bar.baz".toPath(),
+            "/path/to/foo.baz".toPath().withStem("bar")
+        )
+        assertEquals(
+            "/path/to/bar".toPath(),
+            "/path/to/foo".toPath().withStem("bar")
+        )
     }
 
     @Test

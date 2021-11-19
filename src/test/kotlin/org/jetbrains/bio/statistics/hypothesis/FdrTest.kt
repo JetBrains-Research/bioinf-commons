@@ -9,16 +9,17 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class FdrTest {
-    @Test fun testQValueEstimation() {
+    @Test
+    fun testQValueEstimation() {
         val numTests = IntMath.pow(2, 16)
         val logMemberships = BetaDistribution(1.0, 1.0).sample(numTests)
-                .asF64Array().log()
+            .asF64Array().log()
 
         val alphas = F64Array.of(0.0001, 0.001, 0.01, 0.1)
         for (i in 0 until alphas.size) {
             val directRejected = Fdr.control(logMemberships, alphas[i]).cardinality()
             val qvalueRejected = Fdr.qvalidate(logMemberships).toDoubleArray()
-                    .count { it <= alphas[i] }
+                .count { it <= alphas[i] }
             assertTrue(directRejected > 0)
             assertEquals(directRejected, qvalueRejected)
         }

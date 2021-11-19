@@ -7,12 +7,13 @@ import com.google.common.base.Preconditions.checkElementIndex
  * DNA nucleotide.
  */
 enum class Nucleotide constructor(
-        /**
-         * Two bit coding as defined by the 2bit format.
-         *
-         * See http://genome.ucsc.edu/FAQ/FAQformat.html#format7.
-         */
-        val byte: Byte) {
+    /**
+     * Two bit coding as defined by the 2bit format.
+     *
+     * See http://genome.ucsc.edu/FAQ/FAQformat.html#format7.
+     */
+    val byte: Byte
+) {
 
     // Please keep 'em in bytes order
     T(0b00),
@@ -27,7 +28,7 @@ enum class Nucleotide constructor(
 
         init {
             for (nucleotide in values()) {
-                ALPHABET[nucleotide.byte.toInt()] = nucleotide.toString().first().toLowerCase()
+                ALPHABET[nucleotide.byte.toInt()] = nucleotide.toString().first().lowercaseChar()
             }
         }
 
@@ -55,8 +56,8 @@ enum class Nucleotide constructor(
             't', 'T' -> 'a'
             'c', 'C' -> 'g'
             'g', 'G' -> 'c'
-            'n'      -> 'n'
-            else     -> error("invalid nucleotide: $ch")
+            'n' -> 'n'
+            else -> error("invalid nucleotide: $ch")
         }
     }
 }

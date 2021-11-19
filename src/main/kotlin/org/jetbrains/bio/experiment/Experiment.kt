@@ -15,10 +15,11 @@ import java.nio.file.Path
  * @author Oleg Shpynov
  */
 abstract class Experiment @JvmOverloads constructor(
-        /** Folder, the data produced by this experiment should be stored. */
-        open val experimentFolder: String,
-        /** Prefix of the log-file. */
-        experimentName: String? = null) {
+    /** Folder, the data produced by this experiment should be stored. */
+    open val experimentFolder: String,
+    /** Prefix of the log-file. */
+    experimentName: String? = null
+) {
 
     // XXX we don't do this in the constructor because `.javaClass` is
     // not available there.

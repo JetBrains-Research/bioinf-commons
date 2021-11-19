@@ -11,11 +11,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class CategoricalDistributionTest {
-    @Before fun setUp() {
+    @Before
+    fun setUp() {
         Sampling.RANDOM_DATA_GENERATOR.randomGenerator.setSeed(12345)
     }
 
-    @Test fun testProbability() {
+    @Test
+    fun testProbability() {
         val d = CategoricalDistribution.of(values)
         for (value in d.supportLowerBound..d.supportUpperBound) {
             val expected: Double
@@ -29,13 +31,15 @@ class CategoricalDistributionTest {
         }
     }
 
-    @Test fun testSupport() {
+    @Test
+    fun testSupport() {
         val d = CategoricalDistribution.of(values)
         assertEquals(1, d.supportLowerBound)
         assertEquals(42, d.supportUpperBound)
     }
 
-    @Test fun testSample() {
+    @Test
+    fun testSample() {
         val probabilities = doubleArrayOf(.15, .6, .25).asF64Array()
         val alias = CategoricalDistribution(probabilities)
 
@@ -46,8 +50,10 @@ class CategoricalDistributionTest {
         }
 
         workBuffer.rescale()
-        assertArrayEquals(probabilities.toDoubleArray(),
-                          workBuffer.toDoubleArray(), 1e-2)
+        assertArrayEquals(
+            probabilities.toDoubleArray(),
+            workBuffer.toDoubleArray(), 1e-2
+        )
     }
 
     companion object {

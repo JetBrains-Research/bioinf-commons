@@ -9,23 +9,28 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class PatternTest {
-    @Test fun testNoMismatches() {
+    @Test
+    fun testNoMismatches() {
         assertEquals("acgtacgt", seeds("acgtacgt", 0))
     }
 
-    @Test fun testMismatches1() {
+    @Test
+    fun testMismatches1() {
         assertEquals("acgt, acgt", seeds("acgtacgt", 1))
     }
 
-    @Test fun testMismatches2() {
+    @Test
+    fun testMismatches2() {
         assertEquals("ac, gta, cgt", seeds("acgtacgt", 2))
     }
 
-    @Test fun testMismatchesAlternatives() {
+    @Test
+    fun testMismatchesAlternatives() {
         assertEquals("ata, aca, aaa, aga, ctc, ccc, cac, cgc", seeds("aNacNc", 1))
     }
 
-    @Test fun testMismatchesTO() {
+    @Test
+    fun testMismatchesTO() {
         val chromosome = Chromosome(Genome["to1"], "chr1")
         val sequence = chromosome.sequence
         for (mismatches in intArrayOf(1, 2, 3)) {

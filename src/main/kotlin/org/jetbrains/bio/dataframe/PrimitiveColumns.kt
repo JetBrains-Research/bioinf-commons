@@ -7,7 +7,10 @@ import com.google.common.primitives.*
 import gnu.trove.list.array.*
 import gnu.trove.set.hash.*
 import org.jetbrains.bio.util.Logs
+import org.slf4j.LoggerFactory
 import java.util.*
+
+private val LOG = LoggerFactory.getLogger("org.jetbrains.bio.dataframe.PrimitiveColumns")
 
 // XXX this is done because kotlin.Byte (and other primitives)
 // resolve to a _boxed_ java.lang.Byte, instead of a primitive
@@ -218,9 +221,9 @@ class ShortColumn(
     override fun hashCode() = arrayOf(label, data).contentDeepHashCode()
 
     override fun toString() = MoreObjects.toStringHelper(this)
-            .add("label", label)
-            .add("data", data.contentToString())
-            .toString()
+        .add("label", label)
+        .add("data", data.contentToString())
+        .toString()
 }
 
 class IntColumn(
@@ -295,7 +298,8 @@ class IntColumn(
 
     override fun resize(newSize: Int): Column<IntArray> {
         if (newSize < 0) {
-            Logs.getRootLogger().error("Current size: $size, new size = $newSize")
+            Logs.getRootLogger()
+            LOG.error("Current size: $size, new size = $newSize")
         }
         return wrap(data.copyOf(newSize))
     }
@@ -327,9 +331,9 @@ class IntColumn(
     override fun hashCode() = arrayOf(label, data).contentDeepHashCode()
 
     override fun toString() = MoreObjects.toStringHelper(this)
-            .add("label", label)
-            .add("data", data.contentToString())
-            .toString()
+        .add("label", label)
+        .add("data", data.contentToString())
+        .toString()
 }
 
 class LongColumn(
@@ -431,9 +435,9 @@ class LongColumn(
     override fun hashCode() = arrayOf(label, data).contentDeepHashCode()
 
     override fun toString() = MoreObjects.toStringHelper(this)
-            .add("label", label)
-            .add("data", data.contentToString())
-            .toString()
+        .add("label", label)
+        .add("data", data.contentToString())
+        .toString()
 }
 
 class DoubleColumn(
@@ -536,9 +540,9 @@ class DoubleColumn(
     override fun hashCode() = arrayOf(label, data).contentDeepHashCode()
 
     override fun toString() = MoreObjects.toStringHelper(this)
-            .add("label", label)
-            .add("data", data.contentToString())
-            .toString()
+        .add("label", label)
+        .add("data", data.contentToString())
+        .toString()
 }
 
 class FloatColumn(
@@ -642,9 +646,9 @@ class FloatColumn(
     override fun hashCode() = arrayOf(label, data).contentDeepHashCode()
 
     override fun toString() = MoreObjects.toStringHelper(this)
-            .add("label", label)
-            .add("data", data.contentToString())
-            .toString()
+        .add("label", label)
+        .add("data", data.contentToString())
+        .toString()
 }
 
 class BooleanColumn(
@@ -739,7 +743,7 @@ class BooleanColumn(
     override fun hashCode() = Objects.hash(label, data)
 
     override fun toString() = MoreObjects.toStringHelper(this)
-            .add("label", label)
-            .add("data", data)
-            .toString()
+        .add("label", label)
+        .add("data", data)
+        .toString()
 }

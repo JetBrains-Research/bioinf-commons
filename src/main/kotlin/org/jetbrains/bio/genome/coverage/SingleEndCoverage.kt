@@ -28,11 +28,11 @@ import kotlin.math.sqrt
  * @author Aleksei Dievskii
  */
 class SingleEndCoverage private constructor(
-        override val genomeQuery: GenomeQuery,
-        val detectedFragment: Int,
-        val actualFragment: Int = detectedFragment,
-        internal val data: GenomeStrandMap<TIntList>
-): Coverage {
+    override val genomeQuery: GenomeQuery,
+    val detectedFragment: Int,
+    val actualFragment: Int = detectedFragment,
+    internal val data: GenomeStrandMap<TIntList>
+) : Coverage {
 
     override fun getCoverage(location: Location) = getTags(location).size
 
@@ -50,15 +50,16 @@ class SingleEndCoverage private constructor(
         /* we don't really care if the offsets are outside of chromosome range,
            since this won't lead to incorrect results */
         val locationShift = location.strand.choose(
-                (-actualFragment) / 2,
-                actualFragment / 2
+            (-actualFragment) / 2,
+            actualFragment / 2
         )
         val startOffset = location.startOffset + locationShift
         val endOffset = location.endOffset + locationShift
         val index = data.binarySearchLeft(startOffset)
         var size = 0
         while (index + size < data.size() &&
-                data[index + size] < endOffset) {
+            data[index + size] < endOffset
+        ) {
             size++
         }
 
@@ -82,7 +83,7 @@ class SingleEndCoverage private constructor(
     }
 
     override fun toString() = MoreObjects.toStringHelper(this)
-            .addValue(genomeQuery).toString()
+        .addValue(genomeQuery).toString()
 
     /**
      * Sets fragment size to specified value or reverts to a detected one if "null" is provided.
@@ -102,8 +103,8 @@ class SingleEndCoverage private constructor(
 
     class Builder(val genomeQuery: GenomeQuery) {
 
-        val data: GenomeStrandMap<TIntList> = genomeStrandMap(genomeQuery) {
-            _, _ -> TIntArrayList()
+        val data: GenomeStrandMap<TIntList> = genomeStrandMap(genomeQuery) { _, _ ->
+            TIntArrayList()
         }
 
         private var readLengthSum = 0L
@@ -141,8 +142,8 @@ class SingleEndCoverage private constructor(
             }
 
             val detectedFragment = detectFragmentSize(
-                    data,
-                    readLengthSum * 1.0 / readCount
+                data,
+                readLengthSum * 1.0 / readCount
             )
 
             return SingleEndCoverage(genomeQuery, detectedFragment, data = data)
@@ -163,8 +164,8 @@ class SingleEndCoverage private constructor(
         fun builder(genomeQuery: GenomeQuery) = Builder(genomeQuery)
 
         internal fun load(
-                npzReader: NpzFile.Reader,
-                genomeQuery: GenomeQuery
+            npzReader: NpzFile.Reader,
+            genomeQuery: GenomeQuery
         ): SingleEndCoverage {
             check(!npzReader[Coverage.PAIRED_FIELD].asBooleanArray().single()) {
                 "${npzReader.path} attempting to read single-end coverage from paired-end cache file"
@@ -181,12 +182,12 @@ class SingleEndCoverage private constructor(
                         data[chromosome, strand] = TIntArrayList.wrap(npyArray.asIntArray())
                     } catch (e: IllegalStateException) {
                         throw IllegalStateException(
-                                "Cache file ${npzReader.path} doesn't contain $key.\n" +
-                                        "It's likely that chrom.sizes file used for its creation differs " +
-                                        "from the one being used to read it now.\n" +
-                                        "If problem persists, delete the cache file ${npzReader.path} " +
-                                        "and Span will recreate it with correct settings.",
-                                e
+                            "Cache file ${npzReader.path} doesn't contain $key.\n" +
+                                    "It's likely that chrom.sizes file used for its creation differs " +
+                                    "from the one being used to read it now.\n" +
+                                    "If problem persists, delete the cache file ${npzReader.path} " +
+                                    "and Span will recreate it with correct settings.",
+                            e
                         )
                     }
                 }
@@ -212,8 +213,8 @@ class SingleEndCoverage private constructor(
          * of candidate fragment sizes.
          */
         private fun computePearsonCorrelationTransform(
-                fragments: List<Int>,
-                data: GenomeStrandMap<TIntList>
+            fragments: List<Int>,
+            data: GenomeStrandMap<TIntList>
         ): List<CrossCorrelation> {
             /*
                 Using the approach from Kharchenko et. al, 2008
@@ -268,8 +269,8 @@ class SingleEndCoverage private constructor(
          * for the definition of the transform and its calculation details.
          */
         private fun CrossCorrelation.updatePearsonTransform(
-                positive: TIntList, negative: TIntList,
-                chrLength: Double
+            positive: TIntList, negative: TIntList,
+            chrLength: Double
         ) {
             val positiveSize = positive.size()
             val negativeSize = negative.size()
@@ -301,8 +302,8 @@ class SingleEndCoverage private constructor(
             }
             val coefficient = (positiveSize + negativeSize) * chrLength /
                     sqrt(
-                            positiveSize * (chrLength - positiveSize) *
-                                    negativeSize * (chrLength - negativeSize)
+                        positiveSize * (chrLength - positiveSize) *
+                                negativeSize * (chrLength - negativeSize)
                     )
             pearsonTransform += matchedTags * coefficient
         }
@@ -316,8 +317,8 @@ class SingleEndCoverage private constructor(
          * Marked internal for testing.
          */
         internal fun detectFragmentSize(
-                data: GenomeStrandMap<TIntList>,
-                averageReadLength: Double
+            data: GenomeStrandMap<TIntList>,
+            averageReadLength: Double
         ): Int {
             if (averageReadLength.isNaN()) {
                 // empty data, return a placeholder value
@@ -329,7 +330,7 @@ class SingleEndCoverage private constructor(
                 return averageReadLength.toInt()
             }
             val ccs = computePearsonCorrelationTransform(candidateRange.toList(), data)
-            return ccs.maxBy { it.pearsonTransform }!!.fragment
+            return ccs.maxByOrNull { it.pearsonTransform }!!.fragment
         }
     }
 }

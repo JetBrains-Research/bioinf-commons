@@ -12,16 +12,18 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class RangeTest {
-    @Test fun testContainsOffset() {
+    @Test
+    fun testContainsOffset() {
         val range = Range(0, 10)
-        
+
         assertTrue(0 in range)
         assertTrue(9 in range)
         assertFalse(10 in range)
         assertFalse(-1 in range)
     }
 
-    @Test fun testIntersects() {
+    @Test
+    fun testIntersects() {
         assertFalse(Range(10, 11) intersects Range(11, 12))
         assertFalse(Range(11, 12) intersects Range(10, 11))
         assertTrue(Range(0, 10) intersects Range(0, 10))
@@ -31,7 +33,8 @@ class RangeTest {
         assertTrue(Range(4, 5) intersects Range(0, 10))
     }
 
-    @Test fun testDistanceTo() {
+    @Test
+    fun testDistanceTo() {
         assertEquals(10, Range(0, 10) distanceTo Range(20, 30))
         assertEquals(10, Range(20, 30) distanceTo Range(0, 10))
         assertEquals(0, Range(0, 10) distanceTo Range(10, 20))
@@ -39,12 +42,14 @@ class RangeTest {
     }
 
 
-    @Test fun testIntersection() {
+    @Test
+    fun testIntersection() {
         assertEquals(Range(0, 0), Range(10, 11) intersection Range(11, 12))
         assertEquals(Range(11, 12), Range(10, 12) intersection Range(11, 12))
     }
 
-    @Test fun testSlice() {
+    @Test
+    fun testSlice() {
         var bins = 0
         var prevBound = 0
         for (r in Range(0, 103).slice(10)) {
@@ -68,7 +73,8 @@ class RangeTest {
 class LocationTest {
     private var chromosome = Chromosome(Genome["to1"], "chr1")
 
-    @Test fun testContainsOffset() {
+    @Test
+    fun testContainsOffset() {
         val loc = Location(0, 10, chromosome, PLUS)
 
         assertTrue(0 in loc)
@@ -77,17 +83,20 @@ class LocationTest {
         assertFalse(-1 in loc)
     }
 
-    @Test fun testGetLength_EmptyLocation() {
+    @Test
+    fun testGetLength_EmptyLocation() {
         assertEquals(0, Location(0, 0, chromosome, PLUS).length())
         assertEquals(0, Location(1, 1, chromosome, PLUS).length())
     }
 
-    @Test fun testGetLength() {
+    @Test
+    fun testGetLength() {
         assertEquals(2, Location(0, 2, chromosome, PLUS).length())
         assertEquals(2, Location(1, 3, chromosome, PLUS).length())
     }
 
-    @Test fun testConvert5BoundRelativeToAbsoluteOffset() {
+    @Test
+    fun testConvert5BoundRelativeToAbsoluteOffset() {
         assertEquals(0, Location(1, 5, chromosome, PLUS).get5Bound(-1))
         assertEquals(1, Location(1, 5, chromosome, PLUS).get5Bound(0))
         assertEquals(2, Location(1, 5, chromosome, PLUS).get5Bound(1))
@@ -97,7 +106,8 @@ class LocationTest {
         assertEquals(3, Location(1, 5, chromosome, Strand.MINUS).get5Bound(1))
     }
 
-    @Test fun testConvert53BoundRelativeToAbsoluteOffset() {
+    @Test
+    fun testConvert53BoundRelativeToAbsoluteOffset() {
         assertEquals(3, Location(1, 5, chromosome, PLUS).get3Bound(-1))
         assertEquals(4, Location(1, 5, chromosome, PLUS).get3Bound(0))
         assertEquals(5, Location(1, 5, chromosome, PLUS).get3Bound(1))
@@ -107,60 +117,90 @@ class LocationTest {
         assertEquals(0, Location(1, 5, chromosome, Strand.MINUS).get3Bound(1))
     }
 
-    @Test fun testGetSequence() {
+    @Test
+    fun testGetSequence() {
         val plusSequence = Location(1, 10, chromosome, PLUS).sequence
         val rcSequence = plusSequence.asNucleotideSequence()
-                .substring(0, plusSequence.length, Strand.MINUS)
+            .substring(0, plusSequence.length, Strand.MINUS)
         assertEquals(rcSequence, Location(1, 10, chromosome, Strand.MINUS).sequence)
     }
 
-    @Test fun testAroundStart_Plus() {
+    @Test
+    fun testAroundStart_Plus() {
         val location = Location(100, 200, chromosome, PLUS)
-        assertEquals("chr1:+[100, 106)",
-                RelativePosition.FIVE_PRIME.of(location, 0, 6).toString())
-        assertEquals("chr1:+[100, 200)",
-                RelativePosition.FIVE_PRIME.of(location, 0, 100).toString())
-        assertEquals("chr1:+[0, 2100)", // Edge case.
-                RelativePosition.FIVE_PRIME.of(location, -2000, 2000).toString())
+        assertEquals(
+            "chr1:+[100, 106)",
+            RelativePosition.FIVE_PRIME.of(location, 0, 6).toString()
+        )
+        assertEquals(
+            "chr1:+[100, 200)",
+            RelativePosition.FIVE_PRIME.of(location, 0, 100).toString()
+        )
+        assertEquals(
+            "chr1:+[0, 2100)", // Edge case.
+            RelativePosition.FIVE_PRIME.of(location, -2000, 2000).toString()
+        )
     }
 
-    @Test fun testAroundStart_Minus() {
+    @Test
+    fun testAroundStart_Minus() {
         val location = Location(100, 200, chromosome, Strand.MINUS)
-        assertEquals("chr1:-[194, 200)",
-                RelativePosition.FIVE_PRIME.of(location, 0, 6).toString())
-        assertEquals("chr1:-[100, 200)",
-                RelativePosition.FIVE_PRIME.of(location, 0, 100).toString())
+        assertEquals(
+            "chr1:-[194, 200)",
+            RelativePosition.FIVE_PRIME.of(location, 0, 6).toString()
+        )
+        assertEquals(
+            "chr1:-[100, 200)",
+            RelativePosition.FIVE_PRIME.of(location, 0, 100).toString()
+        )
     }
 
-    @Test fun testAroundEnd_Plus() {
+    @Test
+    fun testAroundEnd_Plus() {
         val location = Location(100, 200, chromosome, PLUS)
-        assertEquals("chr1:+[199, 205)",
-                RelativePosition.THREE_PRIME.of(location, 0, 6).toString())
-        assertEquals("chr1:+[100, 200)",
-                RelativePosition.THREE_PRIME.of(location, -99, 1).toString())
+        assertEquals(
+            "chr1:+[199, 205)",
+            RelativePosition.THREE_PRIME.of(location, 0, 6).toString()
+        )
+        assertEquals(
+            "chr1:+[100, 200)",
+            RelativePosition.THREE_PRIME.of(location, -99, 1).toString()
+        )
     }
 
-    @Test fun testAroundEnd_Minus() {
+    @Test
+    fun testAroundEnd_Minus() {
         val location = Location(100, 200, chromosome, Strand.MINUS)
-        assertEquals("chr1:-[95, 101)",
-                RelativePosition.THREE_PRIME.of(location, 0, 6).toString())
-        assertEquals("chr1:-[100, 200)",
-                RelativePosition.THREE_PRIME.of(location, -99, 1).toString())
+        assertEquals(
+            "chr1:-[95, 101)",
+            RelativePosition.THREE_PRIME.of(location, 0, 6).toString()
+        )
+        assertEquals(
+            "chr1:-[100, 200)",
+            RelativePosition.THREE_PRIME.of(location, -99, 1).toString()
+        )
     }
 
-    @Test fun testAroundWhole_Plus() {
+    @Test
+    fun testAroundWhole_Plus() {
         val location = Location(100, 200, chromosome, PLUS)
-        assertEquals("chr1:+[100, 200)",
-                RelativePosition.ALL.of(location, 0, 1).toString())
+        assertEquals(
+            "chr1:+[100, 200)",
+            RelativePosition.ALL.of(location, 0, 1).toString()
+        )
     }
 
-    @Test fun testAroundWhole_End() {
+    @Test
+    fun testAroundWhole_End() {
         val location = Location(100, 200, chromosome, Strand.MINUS)
-        assertEquals("chr1:-[100, 200)",
-                RelativePosition.ALL.of(location, 0, 1).toString())
+        assertEquals(
+            "chr1:-[100, 200)",
+            RelativePosition.ALL.of(location, 0, 1).toString()
+        )
     }
 
-    @Test fun testComparator() {
+    @Test
+    fun testComparator() {
         val location1 = Location(0, 100, chromosome, PLUS)
         val location2 = Location(0, 100, chromosome, Strand.MINUS)
         assertNotEquals(0, location1.compareTo(location2))
@@ -179,8 +219,12 @@ class LocationTest {
 
         assertFalse(Location.intersects(null, Location(1, 5, chromosome, PLUS)))
         assertFalse(Location.intersects(Location(1, 5, chromosome, PLUS), null))
-        assertFalse(Location.intersects(Location(1, 5, chromosome, PLUS),
-                Location(1, 5, Chromosome(Genome["to1"], "chr2"), PLUS)))
+        assertFalse(
+            Location.intersects(
+                Location(1, 5, chromosome, PLUS),
+                Location(1, 5, Chromosome(Genome["to1"], "chr2"), PLUS)
+            )
+        )
 
         assertTrue(Location.intersects(Location(1, 5, chromosome, PLUS), Location(1, 5, chromosome, MINUS)))
         assertTrue(Location.intersects(Location(1, 5, chromosome, PLUS), Location(4, 6, chromosome, PLUS)))

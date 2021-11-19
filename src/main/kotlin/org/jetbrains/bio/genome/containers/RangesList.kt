@@ -40,19 +40,20 @@ interface RangesList : Iterable<Range> {
     fun includesRange(offset: Int) = includesRange(offset, offset + 1)
 
     /**
-      * Intersect each list interval with requested [startOffset], [endOffset] range,
-      *  empty intervals not reported
-      */
+     * Intersect each list interval with requested [startOffset], [endOffset] range,
+     *  empty intervals not reported
+     */
     fun intersectRanges(startOffset: Int, endOffset: Int): List<Range>
+
     /**
-      * Intersect each list interval with requested [range], empty intervals not reported
-      */
+     * Intersect each list interval with requested [range], empty intervals not reported
+     */
     fun intersectRanges(range: Range) = intersectRanges(range.startOffset, range.endOffset)
     infix fun intersectRanges(other: RangesList): List<Range>
 
     /**
-      * If intersected ranges not needed use this function to do less GS
-      */
+     * If intersected ranges not needed use this function to do less GS
+     */
     fun intersectRangesNumber(other: RangesList, flankBothSides: Int = 0): Int
 }
 

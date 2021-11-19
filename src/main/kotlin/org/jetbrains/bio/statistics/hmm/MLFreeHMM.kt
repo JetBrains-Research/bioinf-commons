@@ -27,11 +27,12 @@ import java.util.function.IntPredicate
  * @author Alexey Dievsky
  * @date 01/04/15
  */
-abstract class MLFreeHMM(numStates: Int,
-                         private val numDimensions: Int,
-                         priorProbabilities: F64Array = F64Array.stochastic(numStates),
-                         transitionProbabilities: F64Array = F64Array.stochastic(numStates, numStates))
-    : MLAbstractHMM(numStates, priorProbabilities, transitionProbabilities) {
+abstract class MLFreeHMM(
+    numStates: Int,
+    private val numDimensions: Int,
+    priorProbabilities: F64Array = F64Array.stochastic(numStates),
+    transitionProbabilities: F64Array = F64Array.stochastic(numStates, numStates)
+) : MLAbstractHMM(numStates, priorProbabilities, transitionProbabilities) {
 
     protected abstract fun getEmissionScheme(i: Int, d: Int): EmissionScheme
 

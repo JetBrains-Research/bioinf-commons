@@ -206,7 +206,8 @@ tracks:
                         withTempFile("test3", ".bam") { p3 ->
                             withTempDirectory("test4") { p4 ->
                                 withTempFile("test5", ".txt") { p5 ->
-                                    val config = DataConfig.load("""genome: to1
+                                    val config = DataConfig.load(
+                                        """genome: to1
 tracks:
    H3K27ac:
       test0:
@@ -236,7 +237,8 @@ tracks:
 aux:
    H3K27ac:
       test5: true
-""".reader(), "test")
+""".reader(), "test"
+                                    )
                                     block(config)
                                 }
                             }

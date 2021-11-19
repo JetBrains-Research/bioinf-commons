@@ -128,9 +128,9 @@ internal class StringCompressorChunk {
  * to [StringCompressorChunk.finish], if it hasn't done so already.
  */
 data class CompressedString internal constructor(
-        private val chunk: StringCompressorChunk,
-        private val offset: Int,
-        private val length: Int
+    private val chunk: StringCompressorChunk,
+    private val offset: Int,
+    private val length: Int
 ) {
     override fun toString() = String(chunk.decompressedString, offset, length)
 }

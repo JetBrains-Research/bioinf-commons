@@ -24,6 +24,7 @@ class IntersectionMetricsTest {
             0, 0.0
         )
     }
+
     @Test
     fun overlapTest_NoIntersection2() {
         doCheckOverlapAB(
@@ -149,6 +150,7 @@ class IntersectionMetricsTest {
             0.0
         )
     }
+
     @Test
     fun jaccardTest_NoIntersection2() {
         doCheckJaccardAB(
@@ -171,7 +173,7 @@ class IntersectionMetricsTest {
             """
                 |chr1,9,12
             """.trimMargin(),
-            1.0 * 1/(5+3-1)
+            1.0 * 1 / (5 + 3 - 1)
         )
     }
 
@@ -201,28 +203,28 @@ class IntersectionMetricsTest {
                 |chr1,20,21
             """.trimMargin(),
             // {[5,11), [20, 21)}, {[9,12), [20, 21)}
-            1.0 * (2+1) / (6 + 1 + 3 + 1 - (2+1)),
+            1.0 * (2 + 1) / (6 + 1 + 3 + 1 - (2 + 1)),
             "merged"
         )
     }
 
     @Test
-       fun jaccardTest_1bpMultiple_Sorted() {
-           doCheckJaccardAB(
-               """
+    fun jaccardTest_1bpMultiple_Sorted() {
+        doCheckJaccardAB(
+            """
                    |chr1,5,10
                    |chr1,6,11
                    |chr1,20,21
                """.trimMargin(),
-               """ 
+            """ 
                    |chr1,9,12
                    |chr1,20,21
                """.trimMargin(),
-               // {[9,10)}, {[9,11)}, {[20,21)},
-               1.0 * (1+2+1) / ( 5+5+1+3+1 - (1+2+1)),
-               "sorted"
-           )
-       }
+            // {[9,10)}, {[9,11)}, {[20,21)},
+            1.0 * (1 + 2 + 1) / (5 + 5 + 1 + 3 + 1 - (1 + 2 + 1)),
+            "sorted"
+        )
+    }
 
     @Test
     fun jaccardTest_Other_Merged() {
@@ -242,7 +244,7 @@ class IntersectionMetricsTest {
                 |chr1,30,36
             """.trimMargin(),
             // {[5,15), [18, 21), [22,24), [26,28)}, {[6, 7), [9,12), [20, 26), [30, 36)}
-            1.0 * (1+3+1+2) / ((5 + 5 + 3 + 2 + 2) + (1 + 3 + 6 + 6) - (1+3+1+2))    ,
+            1.0 * (1 + 3 + 1 + 2) / ((5 + 5 + 3 + 2 + 2) + (1 + 3 + 6 + 6) - (1 + 3 + 1 + 2)),
             "merged"
         )
     }
@@ -265,14 +267,14 @@ class IntersectionMetricsTest {
                 |chr1,30,36
             """.trimMargin(),
             // {[6,7), [9,12)}, {[6,7), [9,11)}, {[20,21)}, {[22,23)}, {[23,24)}, {}}
-            1.0 * (1+3+1+2+1+1+1) / (10+5+3+1+1+2+1+3+6+6-(1+3+1+2+1+1+1)),
+            1.0 * (1 + 3 + 1 + 2 + 1 + 1 + 1) / (10 + 5 + 3 + 1 + 1 + 2 + 1 + 3 + 6 + 6 - (1 + 3 + 1 + 2 + 1 + 1 + 1)),
             "sorted"
         )
     }
 
 
     private fun doCheckOverlapAB(
-        aContent: String, bContent: String, overlapNum: Long, overlapFract: Double, mode: String="both"
+        aContent: String, bContent: String, overlapNum: Long, overlapFract: Double, mode: String = "both"
     ) {
         val gq = Genome["to1"].toQuery()
         val bedFormat = BedFormat.from("bed3", ',')
@@ -294,92 +296,93 @@ class IntersectionMetricsTest {
     }
 
     @Test
-      fun intersectionNumberTest_NoIntersection() {
-          doCheckIntersectionNumberAB(
-              """
+    fun intersectionNumberTest_NoIntersection() {
+        doCheckIntersectionNumberAB(
+            """
                   |chr1,5,10
               """.trimMargin(),
-              """
+            """
                   |chr1,10,12
               """.trimMargin(),
-              0
-          )
-      }
-      @Test
-      fun intersectionNumberTest_NoIntersection2() {
-          doCheckIntersectionNumberAB(
-              """
+            0
+        )
+    }
+
+    @Test
+    fun intersectionNumberTest_NoIntersection2() {
+        doCheckIntersectionNumberAB(
+            """
                   |chr1,9,10
               """.trimMargin(),
-              """
+            """
                   |chr1,8,9
               """.trimMargin(),
-              0
-          )
-      }
+            0
+        )
+    }
 
-      @Test
-      fun intersectionNumberTest_1bpSingle() {
-          doCheckIntersectionNumberAB(
-              """
+    @Test
+    fun intersectionNumberTest_1bpSingle() {
+        doCheckIntersectionNumberAB(
+            """
                   |chr1,5,10
               """.trimMargin(),
-              """
+            """
                   |chr1,9,12
               """.trimMargin(),
-              1
-          )
-      }
+            1
+        )
+    }
 
-      @Test
-      fun intersectionNumberTest_1bpSingle2() {
-          doCheckIntersectionNumberAB(
-              """
+    @Test
+    fun intersectionNumberTest_1bpSingle2() {
+        doCheckIntersectionNumberAB(
+            """
                   |chr1,9,10
               """.trimMargin(),
-              """
+            """
                   |chr1,9,10
               """.trimMargin(),
-              1
-          )
-      }
+            1
+        )
+    }
 
-      @Test
-      fun intersectionNumberTest_1bpMultiple_Merged() {
-          doCheckIntersectionNumberAB(
-              """
+    @Test
+    fun intersectionNumberTest_1bpMultiple_Merged() {
+        doCheckIntersectionNumberAB(
+            """
                   |chr1,5,10
                   |chr1,6,11
                   |chr1,20,21
               """.trimMargin(),
-              """
+            """
                   |chr1,9,12
                   |chr1,20,21
               """.trimMargin(),
-              2, "merged"
-          )
-      }
+            2, "merged"
+        )
+    }
 
-      @Test
-      fun intersectionNumberTest_1bpMultiple_Sorted() {
-          doCheckIntersectionNumberAB(
-              """
+    @Test
+    fun intersectionNumberTest_1bpMultiple_Sorted() {
+        doCheckIntersectionNumberAB(
+            """
                   |chr1,5,10
                   |chr1,6,11
                   |chr1,20,21
               """.trimMargin(),
-              """
+            """
                   |chr1,9,12
                   |chr1,20,21
               """.trimMargin(),
-              3, "sorted"
-          )
-      }
+            3, "sorted"
+        )
+    }
 
-      @Test
-      fun intersectionNumberTest_Other_Merged() {
-          doCheckIntersectionNumberAB(
-              """
+    @Test
+    fun intersectionNumberTest_Other_Merged() {
+        doCheckIntersectionNumberAB(
+            """
                   |chr1,5,15
                   |chr1,6,11
                   |chr1,18,21
@@ -387,20 +390,20 @@ class IntersectionMetricsTest {
                   |chr1,23,24
                   |chr1,26,28
               """.trimMargin(),
-              """
+            """
                   |chr1,6,7
                   |chr1,9,12
                   |chr1,20,26
                   |chr1,30,36
               """.trimMargin(),
-              4, "merged"
-          )
-      }
+            4, "merged"
+        )
+    }
 
-      @Test
-      fun intersectionNumberTest_Other_Sorted() {
-          doCheckIntersectionNumberAB(
-              """
+    @Test
+    fun intersectionNumberTest_Other_Sorted() {
+        doCheckIntersectionNumberAB(
+            """
                   |chr1,5,15
                   |chr1,6,11
                   |chr1,18,21
@@ -408,15 +411,15 @@ class IntersectionMetricsTest {
                   |chr1,23,24
                   |chr1,26,28
               """.trimMargin(),
-              """
+            """
                   |chr1,6,7
                   |chr1,9,12
                   |chr1,20,26
                   |chr1,30,36
               """.trimMargin(),
-              7, "sorted"
-          )
-      }
+            7, "sorted"
+        )
+    }
 
     private fun doCheckIntersectionNumberAB(
         aContent: String, bContent: String, intersectionNum: Long, mode: String = "both"
@@ -460,7 +463,7 @@ class IntersectionMetricsTest {
         }
     }
 
-    fun assertEquals(expected: Double, actual:Double, eps: Double = 0.0001) {
+    fun assertEquals(expected: Double, actual: Double, eps: Double = 0.0001) {
         assertTrue(
             Precision.equals(expected, actual, eps),
             "Expected: $expected, but was $actual (precision: $eps)"

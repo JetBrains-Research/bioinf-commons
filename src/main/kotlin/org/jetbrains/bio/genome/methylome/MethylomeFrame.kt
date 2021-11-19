@@ -70,11 +70,11 @@ internal class MethylomeFrame {
      * Every methylome is also a data frame. Peel it and see for yourself.
      */
     internal fun peel(): DataFrame = DataFrame()
-            .with("offset", offsets)
-            .with("tag", cytosineContextTags)
-            .with("level", methylatedCounts / totalCounts)
-            .with("k", methylatedCounts)
-            .with("n", totalCounts)
+        .with("offset", offsets)
+        .with("tag", cytosineContextTags)
+        .with("level", methylatedCounts / totalCounts)
+        .with("k", methylatedCounts)
+        .with("n", totalCounts)
 
     private fun ensureCapacity(capacity: Int) {
         if (capacity > offsets.size) {
@@ -107,8 +107,9 @@ internal class MethylomeFrame {
     }
 
     override fun hashCode() = Objects.hash(
-            offsets.contentHashCode(),
-            cytosineContextTags.contentHashCode(),
-            methylatedCounts.contentHashCode(),
-            totalCounts.contentHashCode())
+        offsets.contentHashCode(),
+        cytosineContextTags.contentHashCode(),
+        methylatedCounts.contentHashCode(),
+        totalCounts.contentHashCode()
+    )
 }

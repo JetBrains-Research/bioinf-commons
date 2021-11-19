@@ -23,25 +23,25 @@ interface Fitter<out Model : ClassificationModel> {
      * @return guessed classification model.
      */
     fun guess(
-            preprocessed: Preprocessed<DataFrame>,
-            title: String, threshold: Double, maxIter: Int, attempt: Int
+        preprocessed: Preprocessed<DataFrame>,
+        title: String, threshold: Double, maxIter: Int, attempt: Int
     ): Model
 
     fun guess(
-            preprocessed: List<Preprocessed<DataFrame>>,
-            title: String, threshold: Double, maxIter: Int, attempt: Int
+        preprocessed: List<Preprocessed<DataFrame>>,
+        title: String, threshold: Double, maxIter: Int, attempt: Int
     ): Model = guess(preprocessed.first(), title, threshold, maxIter, attempt)
 
     fun fit(
-            preprocessed: Preprocessed<DataFrame>,
-            title: String, threshold: Double, maxIter: Int,
-            attempt: Int = 0
+        preprocessed: Preprocessed<DataFrame>,
+        title: String, threshold: Double, maxIter: Int,
+        attempt: Int = 0
     ): Model = fit(listOf(preprocessed), title, threshold, maxIter, attempt)
 
     fun fit(
-            preprocessed: List<Preprocessed<DataFrame>>,
-            title: String, threshold: Double, maxIter: Int,
-            attempt: Int = 0
+        preprocessed: List<Preprocessed<DataFrame>>,
+        title: String, threshold: Double, maxIter: Int,
+        attempt: Int = 0
     ): Model {
         require(threshold > 0) { "threshold $threshold must be >0" }
         require(maxIter > 0) { "maximum number of iterations $maxIter must be >0" }
@@ -58,15 +58,16 @@ interface Fitter<out Model : ClassificationModel> {
      * and picks the model producing the highest log-likelihood.
      */
     fun multiStarted(
-            multiStarts: Int = MULTISTARTS,
-            multiStartIter: Int = MULTISTART_ITERATIONS): Fitter<Model> = object : Fitter<Model> by this {
+        multiStarts: Int = MULTISTARTS,
+        multiStartIter: Int = MULTISTART_ITERATIONS
+    ): Fitter<Model> = object : Fitter<Model> by this {
         init {
             require(multiStarts > 1) { "number of starts $multiStarts must be >1" }
         }
 
         override fun fit(
-                preprocessed: Preprocessed<DataFrame>, title: String,
-                threshold: Double, maxIter: Int, attempt: Int
+            preprocessed: Preprocessed<DataFrame>, title: String,
+            threshold: Double, maxIter: Int, attempt: Int
         ): Model {
             require(attempt == 0) {
                 "cyclic multistart is not allowed"
@@ -77,7 +78,7 @@ interface Fitter<out Model : ClassificationModel> {
             val msModel = (0 until multiStarts).map {
                 LOG.info("Multistart ${it + 1}/$multiStarts: $title")
                 super.fit(preprocessed, "Multistart ${it + 1}/$multiStarts: $title", threshold, multiStartIter, it)
-            }.maxBy { it.logLikelihood(preprocessed) }!!
+            }.maxByOrNull { it.logLikelihood(preprocessed) }!!
             LOG.info("Multistart done: $title")
             MultitaskProgress.addTask(title, maxIter.toLong())
             msModel.fit(preprocessed, title, threshold, maxIter)
@@ -86,8 +87,8 @@ interface Fitter<out Model : ClassificationModel> {
         }
 
         override fun fit(
-                preprocessed: List<Preprocessed<DataFrame>>, title: String,
-                threshold: Double, maxIter: Int, attempt: Int
+            preprocessed: List<Preprocessed<DataFrame>>, title: String,
+            threshold: Double, maxIter: Int, attempt: Int
         ): Model {
             require(attempt == 0) {
                 "cyclic multistart is not allowed"
@@ -98,7 +99,7 @@ interface Fitter<out Model : ClassificationModel> {
             val msModel = (0 until multiStarts).map {
                 LOG.info("Multistart ${it + 1}/$multiStarts: $title")
                 super.fit(preprocessed, "Multistart ${it + 1}/$multiStarts: $title", threshold, multiStartIter, it)
-            }.maxBy { m -> preprocessed.map { m.logLikelihood(it) }.sum() }!!
+            }.maxByOrNull { m -> preprocessed.map { m.logLikelihood(it) }.sum() }!!
             LOG.info("Multistart done: $title")
             MultitaskProgress.addTask(title, maxIter.toLong())
             msModel.fit(preprocessed, title, threshold, maxIter)

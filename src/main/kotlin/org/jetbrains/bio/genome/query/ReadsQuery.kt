@@ -23,11 +23,11 @@ import java.nio.file.Path
  * [logFragmentSize] controls whether log messages regarding fragment size are generated.
  */
 class ReadsQuery(
-        val genomeQuery: GenomeQuery,
-        val path: Path,
-        val unique: Boolean = true,
-        val fragment: Fragment = AutoFragment,
-        val logFragmentSize: Boolean = true
+    val genomeQuery: GenomeQuery,
+    val path: Path,
+    val unique: Boolean = true,
+    val fragment: Fragment = AutoFragment,
+    val logFragmentSize: Boolean = true
 ) : CachingInputQuery<Coverage>() {
 
     override fun getUncached(): Coverage = coverage()
@@ -89,13 +89,15 @@ class ReadsQuery(
         }
         val genomeSize = genomeQuery.get().map { it.length.toLong() }.sum()
         if (libraryDepth < genomeSize * MIN_DEPTH_THRESHOLD_PERCENT / 100.0) {
-            LOG.warn("Library: ${path.name}, Depth: ${"%,d".format(libraryDepth)} is less than " +
-                    "$MIN_DEPTH_THRESHOLD_PERCENT% x ${"%,d".format(genomeSize)} of genome ${genomeQuery.id}")
+            LOG.warn(
+                "Library: ${path.name}, Depth: ${"%,d".format(libraryDepth)} is less than " +
+                        "$MIN_DEPTH_THRESHOLD_PERCENT% x ${"%,d".format(genomeSize)} of genome ${genomeQuery.id}"
+            )
         }
         return coverage
     }
 
-    fun npzPath() = Configuration.cachePath /  "coverage_${fileId}${path.sha}.npz"
+    fun npzPath() = Configuration.cachePath / "coverage_${fileId}${path.sha}.npz"
 
     private val idStem = path.stemGz +
             (if (unique) "_unique" else "")
@@ -119,10 +121,11 @@ class ReadsQuery(
  * we want to _ignore_ the ".bed.gz" extension case but _preserve_ the stem case.
  * The current trick with string truncation does exactly that.
  */
-val Path.stemGz: String get() {
-    return when {
-        name.toLowerCase().endsWith(".bed.gz") ->
-            name.substring(0, name.length - ".bed.gz".length)
-        else -> stem
+val Path.stemGz: String
+    get() {
+        return when {
+            name.lowercase().endsWith(".bed.gz") ->
+                name.substring(0, name.length - ".bed.gz".length)
+            else -> stem
+        }
     }
-}

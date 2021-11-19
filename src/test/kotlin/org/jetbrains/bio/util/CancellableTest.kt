@@ -22,33 +22,39 @@ class CancellableTest {
 
     private val incorrectCallable = Callable<Int> { throw RuntimeException("WOOT") }
 
-    @Test fun notReady() {
+    @Test
+    fun notReady() {
         assertFalse(CancellableTask(intCallable).isDone)
     }
 
-    @Test(expected = CancellationException::class) fun getAfterCancel() {
+    @Test(expected = CancellationException::class)
+    fun getAfterCancel() {
         val task = CancellableTask(incorrectCallable)
         task.cancel()
         task.get()
     }
 
-    @Test fun cancelledWaitAndGet() {
+    @Test
+    fun cancelledWaitAndGet() {
         val task = CancellableTask(intCallable)
         Thread { task.cancel() }.start()
         assertNull(task.waitAndGet())
     }
 
-    @Test fun testWaitAndGet() {
+    @Test
+    fun testWaitAndGet() {
         assertEquals(42, CancellableTask(intCallable).apply { execute() }.waitAndGet()!!.toInt())
     }
 
-    @Test(expected = RuntimeException::class) fun runtimeExceptionGet() {
+    @Test(expected = RuntimeException::class)
+    fun runtimeExceptionGet() {
         val cancellableTask = CancellableTask(incorrectCallable)
         Thread.sleep(200)
         cancellableTask.get()
     }
 
-    @Test(expected = RuntimeException::class) fun runtimeExceptionWait() {
+    @Test(expected = RuntimeException::class)
+    fun runtimeExceptionWait() {
         CancellableTask(incorrectCallable).apply { execute() }.waitAndGet()
     }
 }

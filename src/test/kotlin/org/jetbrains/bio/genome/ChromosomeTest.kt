@@ -5,18 +5,21 @@ import kotlin.test.assertEquals
 import kotlin.test.assertSame
 
 class ChromosomeTest {
-    @Test fun reuseInvoke() {
+    @Test
+    fun reuseInvoke() {
         assertSame(Chromosome(Genome["to1"], "chr1"), Chromosome(Genome["to1"], "chr1"))
         assertSame(Chromosome(Genome["to1"], "chr1"), Chromosome(Genome["to1"], "chr1"))
         assertSame(Chromosome(Genome["to1"], "1"), Chromosome(Genome["to1"], "chr1"))
     }
 
-    @Test fun reuseGson() {
+    @Test
+    fun reuseGson() {
         val chromosome = Chromosome(Genome["to1"], "chr1")
         assertSame(with(Chromosome.ADAPTER) { fromJson(toJson(chromosome)) }, chromosome)
     }
 
-    @Test fun canonicalName() {
+    @Test
+    fun canonicalName() {
         assertEquals("chr1", Chromosome(Genome["to1"], "chr1").name)
         assertEquals("chr1", Chromosome(Genome["to1"], "1").name)
     }

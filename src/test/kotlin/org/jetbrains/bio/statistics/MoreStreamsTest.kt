@@ -19,18 +19,26 @@ class MoreStreamsTest {
     @Suppress("EmptyRange")
     @Test
     fun chunkedStreamEmpty() {
-        assertEquals(emptyList(),
-                (1..0).chunked().iterator().asSequence().toList())
-        assertEquals(emptyList(),
-                (1..0).chunked(8).iterator().asSequence().toList())
+        assertEquals(
+            emptyList(),
+            (1..0).chunked().iterator().asSequence().toList()
+        )
+        assertEquals(
+            emptyList(),
+            (1..0).chunked(8).iterator().asSequence().toList()
+        )
     }
 
     @Test
     fun chunkedStreamSingleton() {
-        assertEquals(listOf(Chunk(0, 1)),
-                (0..0).chunked().iterator().asSequence().toList())
-        assertEquals(listOf(Chunk(0, 1)),
-                (0..0).chunked(8).iterator().asSequence().toList())
+        assertEquals(
+            listOf(Chunk(0, 1)),
+            (0..0).chunked().iterator().asSequence().toList()
+        )
+        assertEquals(
+            listOf(Chunk(0, 1)),
+            (0..0).chunked(8).iterator().asSequence().toList()
+        )
     }
 
     @Test
@@ -73,8 +81,10 @@ class MoreStreamsTest {
         }.reduce(emptySet()) { a, b -> Sets.union(a, b) }
 
         if (ForkJoinPool.getCommonPoolParallelism() > 1) {
-            assertEquals(ForkJoinPool.getCommonPoolParallelism() + 1, // + main thread
-                    threadsInvolved.size)
+            assertEquals(
+                ForkJoinPool.getCommonPoolParallelism() + 1, // + main thread
+                threadsInvolved.size
+            )
         }
     }
 }

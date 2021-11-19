@@ -67,7 +67,8 @@ inline fun <T> byObj(label: String, crossinline p: (T) -> Boolean) = RowPredicat
 
 inline fun byString(label: String, crossinline p: (String) -> Boolean) = byObj(label, p)
 
-inline fun predicate(crossinline rowPredicate: DataFrame.(Int) -> Boolean) = RowPredicateFactory { df -> IntPredicate { row -> df.rowPredicate(row) } }
+inline fun predicate(crossinline rowPredicate: DataFrame.(Int) -> Boolean) =
+    RowPredicateFactory { df -> IntPredicate { row -> df.rowPredicate(row) } }
 
 fun truePredicate() = RowPredicateFactory { _ -> IntPredicate { _ -> true } }
 

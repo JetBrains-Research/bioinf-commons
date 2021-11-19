@@ -34,7 +34,6 @@ class GenomeQueryTest {
     }
 
 
-
     @Test
     fun testOnlySameGenome() {
         withTempDirectory("foo") { dir ->
@@ -78,8 +77,8 @@ class GenomeQueryTest {
             assertNotNull(genomeQuery[chromosome.name.substringAfter("chr")])
             assertTrue(chromosome.name in genomeQuery)
             assertNotNull(genomeQuery[chromosome.name])
-            assertTrue(chromosome.name.toLowerCase() in genomeQuery)
-            assertNotNull(genomeQuery[chromosome.name.toLowerCase()])
+            assertTrue(chromosome.name.lowercase() in genomeQuery)
+            assertNotNull(genomeQuery[chromosome.name.lowercase()])
         }
     }
 

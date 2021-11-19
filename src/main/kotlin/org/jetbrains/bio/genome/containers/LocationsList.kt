@@ -11,7 +11,6 @@ import org.jetbrains.bio.viktor.KahanSum
 import java.io.IOException
 import java.io.Reader
 import java.nio.file.Path
-import java.util.*
 
 abstract class LocationsList<T : RangesList> : GenomeStrandMapLike<List<Location>> {
     abstract val rangeLists: GenomeStrandMap<T>
@@ -20,10 +19,7 @@ abstract class LocationsList<T : RangesList> : GenomeStrandMapLike<List<Location
 
     /** The number of locations in this list. */
     val size: Int
-        get() = genomeQuery.get().sumBy {
-            (rangeLists[it, Strand.PLUS].size +
-                    rangeLists[it, Strand.MINUS].size)
-        }
+        get() = genomeQuery.get().sumOf { (rangeLists[it, Strand.PLUS].size + rangeLists[it, Strand.MINUS].size) }
 
     abstract fun apply(
         other: LocationsList<out RangesList>,
@@ -82,13 +78,13 @@ abstract class LocationsList<T : RangesList> : GenomeStrandMapLike<List<Location
     }
 
     /**
-        * 'inline' is important here otherwise each method usage will
-        * create new instance of anonymous 'metric' class
-        */
-       inline fun calcAdditiveMetricDouble(
-           other: RangesList, otherChromosome: Chromosome, otherStrand: Strand,
-           metric: (RangesList, RangesList) -> Double
-       ): Double {
+     * 'inline' is important here otherwise each method usage will
+     * create new instance of anonymous 'metric' class
+     */
+    inline fun calcAdditiveMetricDouble(
+        other: RangesList, otherChromosome: Chromosome, otherStrand: Strand,
+        metric: (RangesList, RangesList) -> Double
+    ): Double {
 
         if (!rangeLists.contains(otherChromosome, otherStrand)) {
             return 0.0

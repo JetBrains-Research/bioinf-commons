@@ -24,10 +24,12 @@ enum class Alternative {
  * of all the tables with probability less than or equal to that of
  * the observed table.
  */
-class FisherExactTest(private val N: Int,
-                      private val K: Int,
-                      private val n: Int,
-                      private val k: Int) {
+class FisherExactTest(
+    private val N: Int,
+    private val K: Int,
+    private val n: Int,
+    private val k: Int
+) {
 
     /**
      * Support of the Hypergeometric distribution with parameters
@@ -80,9 +82,12 @@ class FisherExactTest(private val N: Int,
          *   -----
          *   c | d
          */
-        @JvmStatic fun forTable(a: Int, b: Int, c: Int, d: Int): FisherExactTest {
-            return FisherExactTest(N = a + b + c + d, K = a + b,
-                    n = a + c, k = a)
+        @JvmStatic
+        fun forTable(a: Int, b: Int, c: Int, d: Int): FisherExactTest {
+            return FisherExactTest(
+                N = a + b + c + d, K = a + b,
+                n = a + c, k = a
+            )
         }
     }
 }
@@ -91,9 +96,11 @@ class FisherExactTest(private val N: Int,
 // [HypergeometricDistribution#logProbability] because of the
 // tabulated factorial.
 private fun hypergeometricProbability(N: Int, K: Int, n: Int, k: Int): Double {
-    return Math.exp(MoreMath.binomialCoefficientLog(K, k)
-                    + MoreMath.binomialCoefficientLog(N - K, n - k)
-                    - MoreMath.binomialCoefficientLog(N, n))
+    return Math.exp(
+        MoreMath.binomialCoefficientLog(K, k)
+                + MoreMath.binomialCoefficientLog(N - K, n - k)
+                - MoreMath.binomialCoefficientLog(N, n)
+    )
 }
 
 object Multiple {

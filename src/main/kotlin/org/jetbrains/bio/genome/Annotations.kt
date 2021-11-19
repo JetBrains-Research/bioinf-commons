@@ -32,15 +32,17 @@ import java.nio.file.StandardOpenOption
  */
 internal fun <T> cache(): Cache<Genome, ListMultimap<Chromosome, T>> {
     return CacheBuilder.newBuilder()
-            .softValues()
-            .initialCapacity(1)
-            .build<Genome, ListMultimap<Chromosome, T>>()
+        .softValues()
+        .initialCapacity(1)
+        .build<Genome, ListMultimap<Chromosome, T>>()
 }
 
-data class Repeat(val name: String,
-                  override val location: Location,
-                  val repeatClass: String,
-                  val family: String) : LocationAware
+data class Repeat(
+    val name: String,
+    override val location: Location,
+    val repeatClass: String,
+    val family: String
+) : LocationAware
 
 /**
  * A registry for repetitive genomic elements.
@@ -69,10 +71,11 @@ object Repeats {
     }
 
     private val FORMAT = CSVFormat.TDF.withHeader(
-            "bin", "sw_score", "mismatches", "deletions", "insertions",
-            "chrom", "genomic_start", "genomic_end", "genomic_left",
-            "strand", "name", "class", "family", "repeat_start",
-            "repeat_end", "repeat_left", "id")
+        "bin", "sw_score", "mismatches", "deletions", "insertions",
+        "chrom", "genomic_start", "genomic_end", "genomic_left",
+        "strand", "name", "class", "family", "repeat_start",
+        "repeat_end", "repeat_left", "id"
+    )
 
     internal fun all(genome: Genome) = CACHE.get(genome) {
         repeatsPath(genome)?.let { read(genome, it) } ?: ArrayListMultimap.create()
@@ -89,9 +92,11 @@ object Repeats {
                 val startOffset = row["genomic_start"].toInt()
                 val endOffset = row["genomic_end"].toInt()
                 val location = Location(startOffset, endOffset, chromosome, strand)
-                val repeat = Repeat(row["name"], location,
-                        row["class"].toLowerCase(),
-                        row["family"].toLowerCase())
+                val repeat = Repeat(
+                    row["name"], location,
+                    row["class"].lowercase(),
+                    row["family"].lowercase()
+                )
                 builder.put(chromosome, repeat)
             }
         }
@@ -103,10 +108,12 @@ object Repeats {
 /**
  * Chromosome Cytoband element.
  */
-data class CytoBand(val name: String,
-                    val gieStain: String,
-                    override val location: Location) :
-        Comparable<CytoBand>, LocationAware {
+data class CytoBand(
+    val name: String,
+    val gieStain: String,
+    override val location: Location
+) :
+    Comparable<CytoBand>, LocationAware {
 
     override fun compareTo(other: CytoBand) = location.compareTo(other.location)
 
@@ -122,12 +129,12 @@ object CytoBands {
     internal const val FILE_NAME = "cytoBand.txt.gz"
 
     internal val FORMAT = CSVFormat.TDF
-            .withHeader("chrom", "start_offset", "end_offset", "name", "gie_stain")
+        .withHeader("chrom", "start_offset", "end_offset", "name", "gie_stain")
 
     internal fun all(genome: Genome): ListMultimap<Chromosome, CytoBand> {
         return CACHE.get(genome) {
             val path = genome.cytobandsPath
-            if (path == null ) {
+            if (path == null) {
                 ArrayListMultimap.create()
             } else {
                 path.checkOrRecalculate("CytoBands") { output ->
@@ -171,7 +178,7 @@ object CytoBands {
  * @author Roman Chernyatchik
  */
 class Gap(val name: String, override val location: Location) :
-        Comparable<Gap>, LocationAware {
+    Comparable<Gap>, LocationAware {
 
     val isCentromere: Boolean get() = name == "centromere"
 
@@ -188,8 +195,9 @@ object Gaps {
     internal const val FILE_NAME = "gap.txt.gz"
 
     internal val FORMAT = CSVFormat.TDF.withHeader(
-            "bin", "chrom", "start_offset", "end_offset", "ix", "n",
-            "size", "type", "bridge")
+        "bin", "chrom", "start_offset", "end_offset", "ix", "n",
+        "size", "type", "bridge"
+    )
 
     private const val CENTROMERES_FILE_NAME = "centromeres.txt.gz"
 
@@ -216,9 +224,10 @@ object Gaps {
             for (row in csvParser) {
                 val chromosome = chromosomes[row["chrom"]] ?: continue
                 val location = Location(
-                        row["start_offset"].toInt(), row["end_offset"].toInt(),
-                        chromosome, Strand.PLUS)
-                builder.put(chromosome, Gap(row["type"].toLowerCase(), location))
+                    row["start_offset"].toInt(), row["end_offset"].toInt(),
+                    chromosome, Strand.PLUS
+                )
+                builder.put(chromosome, Gap(row["type"].lowercase(), location))
             }
         }
 
@@ -243,15 +252,17 @@ object Gaps {
                 // separate file. Obviously, the format of the file doesn't
                 // match the one of 'gap.txt.gz', so we fake the left
                 // out columns below.
-                val centromeresPath =  gapsPath.parent / CENTROMERES_FILE_NAME
+                val centromeresPath = gapsPath.parent / CENTROMERES_FILE_NAME
                 try {
                     config.centromeresUrl.downloadTo(centromeresPath)
                     centromeresPath.bufferedReader().useLines { centromeres ->
-                        gapsPath.bufferedWriter(StandardOpenOption.WRITE,
-                                StandardOpenOption.APPEND).use { target ->
+                        gapsPath.bufferedWriter(
+                            StandardOpenOption.WRITE,
+                            StandardOpenOption.APPEND
+                        ).use { target ->
                             for (line in centromeres) {
                                 val leftout = Joiner.on('\t')
-                                        .join("", -1, -1, "centromere", "no")
+                                    .join("", -1, -1, "centromere", "no")
                                 target.write(line.trimEnd() + leftout + '\n')
                             }
                             target.close()
@@ -273,17 +284,18 @@ object Gaps {
  * @author Roman Chernyatchik
  */
 data class CpGIsland(
-        /** Number of CpG dinucleotides within the island.  */
-        val CpGNumber: Int,
-        /** Number of C and G nucleotides within the island.  */
-        val GCNumber: Int,
-        /**
-         * Ratio of observed CpG to expected CpG counts within the island,
-         * where the expected number of CpGs is calculated as
-         * `numC * numG / length`.
-         */
-        val observedToExpectedRatio: Double,
-        override val location: Location) : LocationAware, Comparable<CpGIsland> {
+    /** Number of CpG dinucleotides within the island.  */
+    val CpGNumber: Int,
+    /** Number of C and G nucleotides within the island.  */
+    val GCNumber: Int,
+    /**
+     * Ratio of observed CpG to expected CpG counts within the island,
+     * where the expected number of CpGs is calculated as
+     * `numC * numG / length`.
+     */
+    val observedToExpectedRatio: Double,
+    override val location: Location
+) : LocationAware, Comparable<CpGIsland> {
 
     override fun compareTo(other: CpGIsland) = location.compareTo(other.location)
 }
@@ -323,15 +335,17 @@ object CpGIslands {
     }
 
     private fun read(
-            genome: Genome,
-            islandsPath: Path,
-            ucscAnnLegacyFormat: Boolean
+        genome: Genome,
+        islandsPath: Path,
+        ucscAnnLegacyFormat: Boolean
     ): ListMultimap<Chromosome, CpGIsland> {
         val builder = ImmutableListMultimap.builder<Chromosome, CpGIsland>()
         val chromosomes = genome.chromosomeNamesMap
 
-        val headers = arrayOf("chrom", "start_offset", "end_offset", "name", "length",
-                "cpg_num", "gc_num", "per_cpg", "per_gc", "obs_exp")
+        val headers = arrayOf(
+            "chrom", "start_offset", "end_offset", "name", "length",
+            "cpg_num", "gc_num", "per_cpg", "per_gc", "obs_exp"
+        )
 
         val csvFormat = if (ucscAnnLegacyFormat) {
             //Builds missing `bin` column in the annotations
@@ -344,11 +358,13 @@ object CpGIslands {
             for (row in csvParser) {
                 val chromosome = chromosomes[row["chrom"]] ?: continue
                 val location = Location(
-                        row["start_offset"].toInt(), row["end_offset"].toInt(),
-                        chromosome)
+                    row["start_offset"].toInt(), row["end_offset"].toInt(),
+                    chromosome
+                )
                 val island = CpGIsland(
-                        row["cpg_num"].toInt(), row["gc_num"].toInt(),
-                        row["obs_exp"].toDouble(), location)
+                    row["cpg_num"].toInt(), row["gc_num"].toInt(),
+                    row["obs_exp"].toDouble(), location
+                )
                 builder.put(chromosome, island)
             }
         }

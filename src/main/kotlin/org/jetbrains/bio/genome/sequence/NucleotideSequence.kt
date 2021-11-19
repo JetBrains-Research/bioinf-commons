@@ -55,7 +55,7 @@ fun CharSequence.asNucleotideSequence(): NucleotideSequence {
  * @author Sergei Lebedev
  */
 internal data class WrappedCharSequence(val wrapped: CharSequence) : NucleotideSequence {
-    override fun charAt(pos: Int) = wrapped[pos].toLowerCase()
+    override fun charAt(pos: Int) = wrapped[pos].lowercaseChar()
 
     override val length: Int get() = wrapped.length
 

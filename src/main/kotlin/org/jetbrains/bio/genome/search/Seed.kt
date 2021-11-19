@@ -20,18 +20,18 @@ data class Seed(val text: String, val length: Int, val start: Int) {
      * Encodes all the possible alternatives of seed [org.jetbrains.bio.genome.NucleotideAlternative] as
      * as [NucleotideSequence]
      */
-    public fun getAlternatives(): Stream<NucleotideSequence> {
+    fun getAlternatives(): Stream<NucleotideSequence> {
         val alternatives = IntStream.range(start, start + length)
             .map { nucleotideAlternatives[it].alternativesCount }
             .reduce(Int::times).asInt
         return IntStream.range(0, alternatives).mapToObj<NucleotideSequence> {
             val bytes = ByteArray(length)
             var acc = it
-            for (i in 0..length - 1) {
+            for (i in 0 until length) {
                 val n = nucleotideAlternatives[start + i]
-                val count = n.alternativesCount;
+                val count = n.alternativesCount
                 bytes[i] = n.alternatives[acc % count]
-                acc /= count;
+                acc /= count
             }
 
             object : NucleotideSequence {

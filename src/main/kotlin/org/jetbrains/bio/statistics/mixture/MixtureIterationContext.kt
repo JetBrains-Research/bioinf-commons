@@ -11,7 +11,7 @@ import org.jetbrains.bio.viktor.F64Array
  * @since 04/12/14
  */
 abstract class MixtureIterationContext(numStates: Int, df: DataFrame) :
-        IterationContext(numStates, df) {
+    IterationContext(numStates, df) {
 
     // Note(lebedev): for Bayesian models all quantities bellow are expected
     // values under the variational posterior distribution.

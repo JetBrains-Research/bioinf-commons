@@ -13,12 +13,12 @@ import java.nio.file.Path
  * @author Roman.Chernyatchik
  */
 abstract class MethylomeQuery protected constructor(
-        val genomeQuery: GenomeQuery,
-        protected val dataSetId: String,
-        val cellId: String,
-        private vararg val properties: String)
-:
-        CachingInputQuery<Methylome>() {
+    val genomeQuery: GenomeQuery,
+    protected val dataSetId: String,
+    val cellId: String,
+    private vararg val properties: String
+) :
+    CachingInputQuery<Methylome>() {
 
     /** Reads a methylome using an **unrestricted** i.e. full [GenomeQuery]. */
     @Throws(IOException::class)
@@ -31,13 +31,14 @@ abstract class MethylomeQuery protected constructor(
          * At the moment only HDF5 and BAM files are supported.
          * @minBasePhred Min Phred quality threshold: '0' not filtration, '20' eRRBS guidelines recommendation
          */
-        fun forFile(genomeQuery: GenomeQuery,
-                    cellId: String,
-                    path: Path,
-                    dataSetId: String = "File",
-                    verboseDescription: Boolean = false,
-                    minBasePhred: Byte = 20): MethylomeQuery
-                = FileMethylomeQuery(genomeQuery, cellId, path, dataSetId, verboseDescription, minBasePhred)
+        fun forFile(
+            genomeQuery: GenomeQuery,
+            cellId: String,
+            path: Path,
+            dataSetId: String = "File",
+            verboseDescription: Boolean = false,
+            minBasePhred: Byte = 20
+        ): MethylomeQuery = FileMethylomeQuery(genomeQuery, cellId, path, dataSetId, verboseDescription, minBasePhred)
     }
 
     override fun getUncached(): Methylome {
@@ -49,23 +50,26 @@ abstract class MethylomeQuery protected constructor(
         return Methylome.lazy(genomeQuery, binaryPath)
     }
 
-    override val id: String get() = "${dataSetId}_${genomeQuery.build}_$cellId" + Joiner.on('_').join(properties).let {
-        if (it.isNotBlank()) "_$it" else ""
-    }
+    override val id: String
+        get() = "${dataSetId}_${genomeQuery.build}_$cellId" + Joiner.on('_').join(properties).let {
+            if (it.isNotBlank()) "_$it" else ""
+        }
 
-    override val description: String get() {
-        val propDesc = if (properties.isEmpty()) "" else "(${Joiner.on('_').join(properties)})"
-        return "Methylome, dataset $dataSetId$propDesc for $cellId cells line genome ${genomeQuery.description}"
-    }
+    override val description: String
+        get() {
+            val propDesc = if (properties.isEmpty()) "" else "(${Joiner.on('_').join(properties)})"
+            return "Methylome, dataset $dataSetId$propDesc for $cellId cells line genome ${genomeQuery.description}"
+        }
 }
 
-private class FileMethylomeQuery(genomeQuery: GenomeQuery, cellId: String,
-                                 private val path: Path,
-                                 dataSetId: String,
-                                 private val verboseDescription: Boolean,
-                                 private val minBasePhred: Byte)
-:
-        MethylomeQuery(genomeQuery, dataSetId, cellId, path.stem) {
+private class FileMethylomeQuery(
+    genomeQuery: GenomeQuery, cellId: String,
+    private val path: Path,
+    dataSetId: String,
+    private val verboseDescription: Boolean,
+    private val minBasePhred: Byte
+) :
+    MethylomeQuery(genomeQuery, dataSetId, cellId, path.stem) {
 
     override fun getUncached() = when (path.extension) {
         "npz" -> Methylome.lazy(genomeQuery, path)
@@ -83,11 +87,12 @@ private class FileMethylomeQuery(genomeQuery: GenomeQuery, cellId: String,
     // contains cell ID and genome build.
     override val id: String get() = path.stem + if (minBasePhred == 0.toByte()) "" else ".$minBasePhred" + path.sha
 
-    override val description: String get() {
-        return if (verboseDescription) {
-            path.name
-        } else {
-            "Methylome for ${genomeQuery.description}: $cellId, dataset $dataSetId(${path.name})"
+    override val description: String
+        get() {
+            return if (verboseDescription) {
+                path.name
+            } else {
+                "Methylome for ${genomeQuery.description}: $cellId, dataset $dataSetId(${path.name})"
+            }
         }
-    }
 }

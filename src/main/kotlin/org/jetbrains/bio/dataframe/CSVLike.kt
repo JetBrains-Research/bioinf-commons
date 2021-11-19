@@ -53,8 +53,10 @@ class CSVLike(val format: CSVFormat) : DataFrameMapper() {
                     try {
                         column.load(i, value)
                     } catch (e: Exception) {
-                        throw IllegalArgumentException("Wrong type: $i-th arg (column: ${column.label}) value " +
-                                "$value is expected to be of type ${column.typeName()}")
+                        throw IllegalArgumentException(
+                            "Wrong type: $i-th arg (column: ${column.label}) value " +
+                                    "$value is expected to be of type ${column.typeName()}"
+                        )
                     }
                 }
                 progress.report()
@@ -66,11 +68,13 @@ class CSVLike(val format: CSVFormat) : DataFrameMapper() {
 
     override fun save(path: Path, df: DataFrame) = save(path.bufferedWriter(), df, true, true)
 
-    fun save(out: Appendable,
-             df: DataFrame,
-             header: Boolean = true,
-             typed: Boolean = true,
-             comments: Array<String>? = null) {
+    fun save(
+        out: Appendable,
+        df: DataFrame,
+        header: Boolean = true,
+        typed: Boolean = true,
+        comments: Array<String>? = null
+    ) {
 
         val typesSeparator = ";${format.delimiter}"
         format.print(out).use { csvPrinter ->

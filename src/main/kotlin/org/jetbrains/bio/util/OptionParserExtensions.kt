@@ -18,14 +18,14 @@ operator fun OptionSet.contains(option: String): Boolean = has(option)
 /**
  * @param args Cmdline arguments
  * @param description Tool description
- * @param acceptNonOptionArguments Pass true in order to allow positional arguments 
+ * @param acceptNonOptionArguments Pass true in order to allow positional arguments
  * @param block Additional cmdline args description
  */
 fun OptionParser.parse(
-        args: Array<String>,
-        description: String? = null,
-        acceptNonOptionArguments : Boolean = false,
-        block: (OptionSet) -> Unit
+    args: Array<String>,
+    description: String? = null,
+    acceptNonOptionArguments: Boolean = false,
+    block: (OptionSet) -> Unit
 ) {
     try {
         formatHelpWith(object : HelpFormatter {
@@ -33,13 +33,15 @@ fun OptionParser.parse(
             // so in terminal-less mode we wont show warnings during normal usage
             val formatter: BuiltinHelpFormatter by lazy {
                 BuiltinHelpFormatter(
-                        maxOf(80, try {
+                    maxOf(
+                        80, try {
                             TerminalBuilder.terminal().width
                         } catch (e: Exception) {
                             System.err.println("Warning: Cannot define terminal width: ${e.message}")
                             0
-                        }),
-                        2
+                        }
+                    ),
+                    2
                 )
             }
 
@@ -153,7 +155,7 @@ abstract class PathConverter : ValueConverter<Path> {
                 if (path.notExists) {
                     throw ValueConversionException("Path $path does not exists")
                 }
-                if (ext != null && path.extension.toLowerCase() != ext.toLowerCase()) {
+                if (ext != null && path.extension.lowercase() != ext.lowercase()) {
                     throw ValueConversionException("Expected *.$ext file, but was ${path.fileName}")
                 }
             }
@@ -188,7 +190,7 @@ abstract class PathConverter : ValueConverter<Path> {
         fun noCheck(ext: String? = null): PathConverter = object : PathConverter() {
             @Throws(ValueConversionException::class)
             override fun check(path: Path) {
-                if (ext != null && path.extension.toLowerCase() != ext.toLowerCase()) {
+                if (ext != null && path.extension.lowercase() != ext.lowercase()) {
                     throw ValueConversionException("Expected *.$ext file, but was ${path.fileName}")
                 }
             }
@@ -200,32 +202,33 @@ abstract class PathConverter : ValueConverter<Path> {
                 if (path.exists) {
                     throw ValueConversionException("Path $path already exist")
                 }
-                if (ext != null && path.extension.toLowerCase() != ext.toLowerCase()) {
+                if (ext != null && path.extension.lowercase() != ext.lowercase()) {
                     throw ValueConversionException("Expected *.$ext file, but was ${path.fileName}")
                 }
             }
         }
 
-        fun bedtoolsValidFile(ext: String? = null, minBedSpecFields: Int=3): PathConverter = object : PathConverter() {
-            @Throws(ValueConversionException::class)
-            override fun check(path: Path) {
-                if (path.notExists) {
-                    throw ValueConversionException("Path $path does not exist")
-                }
-                if (ext != null && path.extension.toLowerCase() != ext.toLowerCase()) {
-                    throw ValueConversionException("Expected *.$ext file, but was ${path.fileName}")
-                }
+        fun bedtoolsValidFile(ext: String? = null, minBedSpecFields: Int = 3): PathConverter =
+            object : PathConverter() {
+                @Throws(ValueConversionException::class)
+                override fun check(path: Path) {
+                    if (path.notExists) {
+                        throw ValueConversionException("Path $path does not exist")
+                    }
+                    if (ext != null && path.extension.lowercase() != ext.lowercase()) {
+                        throw ValueConversionException("Expected *.$ext file, but was ${path.fileName}")
+                    }
 
-                val bedFormat = BedFormat.auto(path)
-                if (bedFormat.delimiter != '\t') {
-                    throw ValueConversionException("Expected TAB separated file, but separator is [${bedFormat.delimiter}]")
-                }
+                    val bedFormat = BedFormat.auto(path)
+                    if (bedFormat.delimiter != '\t') {
+                        throw ValueConversionException("Expected TAB separated file, but separator is [${bedFormat.delimiter}]")
+                    }
 
-                if (bedFormat.fieldsNumber < minBedSpecFields) {
-                    throw ValueConversionException("Expected at least first $minBedSpecFields BED fields, but format is [${bedFormat.fmtStr}]")
+                    if (bedFormat.fieldsNumber < minBedSpecFields) {
+                        throw ValueConversionException("Expected at least first $minBedSpecFields BED fields, but format is [${bedFormat.fmtStr}]")
+                    }
                 }
             }
-        }
 
     }
 }

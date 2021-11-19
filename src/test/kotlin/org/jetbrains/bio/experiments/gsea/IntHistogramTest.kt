@@ -10,11 +10,11 @@ import kotlin.test.assertTrue
 class IntHistogramTest {
     @Test
     fun countValues() {
-       Assert.assertEquals(0, IntHistogram.create(intArrayOf()).countValues())
-       Assert.assertEquals(1, IntHistogram.create(intArrayOf(2)).countValues())
-       Assert.assertEquals(8, IntHistogram.create(intArrayOf(3, 4, 5, 5, 5, 6, 7, 3)).countValues())
+        Assert.assertEquals(0, IntHistogram.create(intArrayOf()).countValues())
+        Assert.assertEquals(1, IntHistogram.create(intArrayOf(2)).countValues())
+        Assert.assertEquals(8, IntHistogram.create(intArrayOf(3, 4, 5, 5, 5, 6, 7, 3)).countValues())
     }
-    
+
     @Test
     fun mean() {
         doCheckMean(intArrayOf())
@@ -60,7 +60,7 @@ class IntHistogramTest {
         )
     }
 
-    fun assertEquals(expected: Double, actual:Double, eps: Double = 0.0001) {
+    fun assertEquals(expected: Double, actual: Double, eps: Double = 0.0001) {
         assertTrue(
             Precision.equals(expected, actual, eps),
             "Expected: $expected, but was $actual (precision: $eps)"
@@ -78,6 +78,7 @@ class IntHistogramTest {
             assertEquals(expected, actual)
         }
     }
+
     private fun doCheckMedian(data: IntArray, expected: Int) {
         val metricHist = IntHistogram.create(data)
         val n = metricHist.countValues()

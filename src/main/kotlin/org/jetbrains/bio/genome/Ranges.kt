@@ -19,10 +19,11 @@ import kotlin.math.min
  * @author Oleg Shpynov
  */
 data class Range(
-        /** 0-based start offset (inclusive). */
-        val startOffset: Int,
-        /** 0-based end offset (exclusive). */
-        val endOffset: Int) : Comparable<Range> {
+    /** 0-based start offset (inclusive). */
+    val startOffset: Int,
+    /** 0-based end offset (exclusive). */
+    val endOffset: Int
+) : Comparable<Range> {
 
     init {
         require(startOffset <= endOffset) { "invalid range $this" }
@@ -39,24 +40,30 @@ data class Range(
 
     infix fun intersection(other: Range): Range {
         return if (this intersects other) {
-            Range(max(startOffset, other.startOffset),
-                    min(endOffset, other.endOffset))
+            Range(
+                max(startOffset, other.startOffset),
+                min(endOffset, other.endOffset)
+            )
         } else {
             EMPTY
         }
     }
 
     infix fun union(other: Range): Range {
-        return Range(min(startOffset, other.startOffset),
-                max(endOffset, other.endOffset))
+        return Range(
+            min(startOffset, other.startOffset),
+            max(endOffset, other.endOffset)
+        )
     }
 
     infix fun distanceTo(other: Range): Int {
         return if (intersects(other))
             0
         else
-            min(abs(startOffset - other.endOffset),
-                    abs(endOffset - other.startOffset))
+            min(
+                abs(startOffset - other.endOffset),
+                abs(endOffset - other.startOffset)
+            )
     }
 
     fun on(chromosome: Chromosome) = ChromosomeRange(startOffset, endOffset, chromosome)
@@ -78,17 +85,19 @@ data class Range(
 
         val n = IntMath.divide(length(), width, RoundingMode.CEILING)
         return IntStream.range(0, n).mapToObj { i ->
-            Range(startOffset + i * width,
-                    min(endOffset, startOffset + (i + 1) * width))
+            Range(
+                startOffset + i * width,
+                min(endOffset, startOffset + (i + 1) * width)
+            )
         }
     }
 
     override fun toString() = "[$startOffset, $endOffset)"
 
     override fun compareTo(other: Range) = ComparisonChain.start()
-            .compare(startOffset, other.startOffset)
-            .compare(endOffset, other.endOffset)
-            .result()
+        .compare(startOffset, other.startOffset)
+        .compare(endOffset, other.endOffset)
+        .result()
 
     companion object {
         /** An empty range. */
@@ -112,18 +121,18 @@ data class Range(
 
             override fun write(out: JsonWriter, range: Range) {
                 out.beginArray()
-                        .value(range.startOffset)
-                        .value(range.endOffset)
-                        .endArray()
+                    .value(range.startOffset)
+                    .value(range.endOffset)
+                    .endArray()
             }
         }.nullSafe()
     }
 }
 
 data class ChromosomeRange(
-        val startOffset: Int,
-        val endOffset: Int,
-        val chromosome: Chromosome
+    val startOffset: Int,
+    val endOffset: Int,
+    val chromosome: Chromosome
 ) : LocationAware, Comparable<ChromosomeRange> {
 
     init {
@@ -139,19 +148,21 @@ data class ChromosomeRange(
     fun toRange() = Range(startOffset, endOffset)
 
     override fun compareTo(other: ChromosomeRange) = ComparisonChain.start()
-            // sort by chr name, start, end offset
-            .compare(chromosome.name, other.chromosome.name)
-            .compare(startOffset, other.startOffset)
-            .compare(endOffset, other.endOffset)
-            .result()
+        // sort by chr name, start, end offset
+        .compare(chromosome.name, other.chromosome.name)
+        .compare(startOffset, other.startOffset)
+        .compare(endOffset, other.endOffset)
+        .result()
 
     override fun toString() = "${chromosome.name}:[$startOffset, $endOffset)"
 }
 
-data class Location(val startOffset: Int, val endOffset: Int,
-                    val chromosome: Chromosome,
-                    val strand: Strand = Strand.PLUS) :
-        LocationAware, Comparable<Location> {
+data class Location(
+    val startOffset: Int, val endOffset: Int,
+    val chromosome: Chromosome,
+    val strand: Strand = Strand.PLUS
+) :
+    LocationAware, Comparable<Location> {
 
     init {
         require(startOffset <= endOffset) { "invalid location $this" }
@@ -192,12 +203,12 @@ data class Location(val startOffset: Int, val endOffset: Int,
     override fun toString() = "${chromosome.name}:$strand[$startOffset, $endOffset)"
 
     override fun compareTo(other: Location) = ComparisonChain.start()
-            // sort locs by chr name, strand, start, end offset
-            .compare(chromosome.name, other.chromosome.name)
-            .compare(strand, other.strand)
-            .compare(startOffset, other.startOffset)
-            .compare(endOffset, other.endOffset)
-            .result()
+        // sort locs by chr name, strand, start, end offset
+        .compare(chromosome.name, other.chromosome.name)
+        .compare(strand, other.strand)
+        .compare(startOffset, other.startOffset)
+        .compare(endOffset, other.endOffset)
+        .result()
 
     companion object {
         internal val ADAPTER = object : TypeAdapter<Location>() {
@@ -213,13 +224,13 @@ data class Location(val startOffset: Int, val endOffset: Int,
 
             override fun write(out: JsonWriter, location: Location) {
                 out.beginArray()
-                        .value(location.startOffset)
-                        .value(location.endOffset)
+                    .value(location.startOffset)
+                    .value(location.endOffset)
 
                 Chromosome.ADAPTER.write(out, location.chromosome)
 
                 out.value(location.strand.char.toString())
-                        .endArray()
+                    .endArray()
             }
         }.nullSafe()
 
@@ -237,8 +248,10 @@ data class Location(val startOffset: Int, val endOffset: Int,
          * Returns absolute position of offset relative to 5' bound. Differs
          * from `startOffset + relativeOffset` in case of [Strand.MINUS]
          */
-        fun get5Bound(startOffset: Int, endOffset: Int, strand: Strand,
-                      relativeOffset: Int = 0): Int {
+        fun get5Bound(
+            startOffset: Int, endOffset: Int, strand: Strand,
+            relativeOffset: Int = 0
+        ): Int {
             return if (strand.isPlus()) {
                 startOffset + relativeOffset
             } else {
@@ -250,8 +263,10 @@ data class Location(val startOffset: Int, val endOffset: Int,
          * Returns absolute position of offset relative to 3' bound. Differs
          * from `getEndOffset + relativeOffset` in case of [Strand.MINUS].
          */
-        fun get3Bound(startOffset: Int, endOffset: Int, strand: Strand,
-                      relativeOffset: Int = 0): Int {
+        fun get3Bound(
+            startOffset: Int, endOffset: Int, strand: Strand,
+            relativeOffset: Int = 0
+        ): Int {
             return if (strand.isPlus()) {
                 endOffset - 1 + relativeOffset
             } else {
@@ -277,15 +292,19 @@ data class Location(val startOffset: Int, val endOffset: Int,
 enum class RelativePosition {
     FIVE_PRIME {
         override fun of(location: Location, relativeStartOffset: Int, relativeEndOffset: Int): Location {
-            return bracket(location, location.get5Bound(relativeStartOffset),
-                    location.get5Bound(relativeEndOffset - 1))
+            return bracket(
+                location, location.get5Bound(relativeStartOffset),
+                location.get5Bound(relativeEndOffset - 1)
+            )
         }
     },
 
     THREE_PRIME {
         override fun of(location: Location, relativeStartOffset: Int, relativeEndOffset: Int): Location {
-            return bracket(location, location.get3Bound(relativeStartOffset),
-                    location.get3Bound(relativeEndOffset - 1))
+            return bracket(
+                location, location.get3Bound(relativeStartOffset),
+                location.get3Bound(relativeEndOffset - 1)
+            )
         }
     },
 
@@ -294,8 +313,10 @@ enum class RelativePosition {
             return if (relativeStartOffset == 0 && relativeEndOffset == 0) {
                 location  // Don't allocate new location in this case
             } else {
-                bracket(location, location.get5Bound(relativeStartOffset),
-                        location.get3Bound(relativeEndOffset - 1))
+                bracket(
+                    location, location.get5Bound(relativeStartOffset),
+                    location.get3Bound(relativeEndOffset - 1)
+                )
             }
         }
     };
@@ -313,11 +334,15 @@ enum class RelativePosition {
      */
     protected fun bracket(location: Location, newStartOffset: Int, newEndOffset: Int): Location {
         return with(location) {
-            val boundedStartOffset = min(max(0, min(newStartOffset, newEndOffset)),
-                    chromosome.length)
+            val boundedStartOffset = min(
+                max(0, min(newStartOffset, newEndOffset)),
+                chromosome.length
+            )
             // XXX do we even need to use boundedStartOffset here?
-            val boundedEndOffset = min(Ints.max(boundedStartOffset, newStartOffset, newEndOffset) + 1,
-                    chromosome.length)
+            val boundedEndOffset = min(
+                Ints.max(boundedStartOffset, newStartOffset, newEndOffset) + 1,
+                chromosome.length
+            )
             Location(boundedStartOffset, boundedEndOffset, chromosome, strand)
         }
     }

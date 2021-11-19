@@ -110,8 +110,8 @@ class BitterSet(private val universe: Int) : BitSet() {
         inline operator fun invoke(universe: Int, block: (Int) -> Boolean): BitterSet {
             return BitterSet(universe).apply {
                 0.until(universe)
-                        .filter { block(it) }
-                        .forEach(::set)
+                    .filter { block(it) }
+                    .forEach(::set)
             }
         }
     }
@@ -122,7 +122,8 @@ fun BooleanArray.toBitterSet() = let { arr ->
 }
 
 data class BitRange(
-        /** 0-based start index (inclusive). */
-        val fromIndex: Int,
-        /** 0-based end index (exclusive). */
-        val toIndex: Int)
+    /** 0-based start index (inclusive). */
+    val fromIndex: Int,
+    /** 0-based end index (exclusive). */
+    val toIndex: Int
+)

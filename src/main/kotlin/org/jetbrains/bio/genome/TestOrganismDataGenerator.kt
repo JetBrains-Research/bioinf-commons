@@ -131,7 +131,7 @@ object TestOrganismDataGenerator {
                 var currentEnd = 0
                 var geneNumber = 0
                 while (length - currentEnd > 6e4) {
-                    val geneSymbol = "simgene.$name.$geneNumber".toUpperCase()
+                    val geneSymbol = "simgene.$name.$geneNumber".uppercase()
                     val currentStart = currentEnd + 10000 + r.nextInt(40000)
                     val currentLength = 100 + min(length - currentStart - 10000, 10000)
                     val strand = if (r.nextBoolean()) Strand.PLUS else Strand.MINUS
@@ -338,7 +338,7 @@ object TestOrganismDataGenerator {
             val sequence = chromosome.sequence
             // Generate 35-bp FASTQ reads with 0 to 2 mismatches
             val outputStream = DataOutputStream(
-                Files.newOutputStream(genome.chromSizesPath.parent!! / "sa"/ "${chromosome.name}.fastq")
+                Files.newOutputStream(genome.chromSizesPath.parent!! / "sa" / "${chromosome.name}.fastq")
             )
             var j = 0
             while (j < 1e3) {
@@ -350,6 +350,7 @@ object TestOrganismDataGenerator {
         }
     }
 
+    @Suppress("SameParameterValue")
     @Throws(IOException::class)
     private fun writeFastq(
         file: DataOutputStream,
@@ -372,15 +373,14 @@ object TestOrganismDataGenerator {
         val mismatches = random.ints().map { i -> abs(i % length) }.distinct().limit(maxMismatchCount.toLong())
         mismatches.forEach { mismatchPos -> readCharArray[mismatchPos] = alphabet[random.nextInt(alphabet.size)] }
 
-        read = String(readCharArray).toUpperCase()
-        val header = "TESTDATA." + number + " TAKENFROM:" + pos + ':' + strand + ':' +
-                maxMismatchCount + " length=" + length + '\n'
+        read = String(readCharArray).uppercase()
+        val header = "TESTDATA.$number TAKENFROM:$pos:$strand:$maxMismatchCount length=$length\n"
         file.writeBytes("@$header")
         file.writeBytes(read + '\n')
         file.writeBytes("+$header")
         for (i in 0 until length) {
-            file.writeByte('B'.toInt())
+            file.writeByte('B'.code)
         }
-        file.writeByte('\n'.toInt())
+        file.writeByte('\n'.code)
     }
 }

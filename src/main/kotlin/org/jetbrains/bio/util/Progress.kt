@@ -19,12 +19,12 @@ import kotlin.math.max
  * @author Oleg Shpynov
  */
 abstract class Progress protected constructor(
-        /** Title to be displayed. */
-        protected val title: String,
-        /** The amount of time between progress reports. */
-        private val periodNanos: Long,
-        /** Report into log file or stderr. Progress is often reported to stderr and stdout is kept clean */
-        private val reportToStderr: Boolean
+    /** Title to be displayed. */
+    protected val title: String,
+    /** The amount of time between progress reports. */
+    private val periodNanos: Long,
+    /** Report into log file or stderr. Progress is often reported to stderr and stdout is kept clean */
+    private val reportToStderr: Boolean
 ) {
     private val startTime = System.nanoTime()
     private var lastDuration = AtomicLong(-periodNanos)
@@ -79,21 +79,21 @@ abstract class Progress protected constructor(
          *  locus length on update. Items number in such cases is too big and useless for user.
          */
         fun bounded(
-                totalItems: Long,
-                reportToStderr: Boolean=false,
-                percentsOnly: Boolean=false
+            totalItems: Long,
+            reportToStderr: Boolean = false,
+            percentsOnly: Boolean = false
         ): Progress = Bounded(
-                title,
-                period.second.toNanos(period.first.toLong()),
-                totalItems,
-                reportToStderr = reportToStderr,
-                percentsOnly = percentsOnly
+            title,
+            period.second.toNanos(period.first.toLong()),
+            totalItems,
+            reportToStderr = reportToStderr,
+            percentsOnly = percentsOnly
         )
 
-        fun unbounded(reportToStderr: Boolean=false): Progress = Unbounded(
-                title,
-                period.second.toNanos(period.first.toLong()),
-                reportToStderr = reportToStderr
+        fun unbounded(reportToStderr: Boolean = false): Progress = Unbounded(
+            title,
+            period.second.toNanos(period.first.toLong()),
+            reportToStderr = reportToStderr
         )
     }
 
@@ -149,10 +149,12 @@ abstract class Progress protected constructor(
          * it's best to avoid extra calls, therefore this method performs checks
          * AND returns duration.
          */
-        fun getDuration(startTime: Long,
-                        lastDuration: AtomicLong,
-                        periodNanos: Long,
-                        allowSorterPeriod: Boolean = false): Long {
+        fun getDuration(
+            startTime: Long,
+            lastDuration: AtomicLong,
+            periodNanos: Long,
+            allowSorterPeriod: Boolean = false
+        ): Long {
             val lastDurationValue = lastDuration.get()
             val duration = System.nanoTime() - startTime
             if (duration < periodNanos + lastDurationValue && !allowSorterPeriod) {
@@ -168,11 +170,11 @@ abstract class Progress protected constructor(
 }
 
 private class Bounded(
-        title: String?,
-        timeOutNanos: Long,
-        private val totalItems: Long,
-        reportToStderr: Boolean,
-        private val percentsOnly: Boolean
+    title: String?,
+    timeOutNanos: Long,
+    private val totalItems: Long,
+    reportToStderr: Boolean,
+    private val percentsOnly: Boolean
 ) : Progress(title ?: "Progress", timeOutNanos, reportToStderr = reportToStderr) {
 
     override fun processedItems() = totalItems
@@ -236,9 +238,9 @@ private class Bounded(
 }
 
 private class Unbounded(
-        title: String?,
-        timeOutNanos: Long,
-        reportToStderr: Boolean
+    title: String?,
+    timeOutNanos: Long,
+    reportToStderr: Boolean
 ) : Progress(title ?: "Processed items", timeOutNanos, reportToStderr = reportToStderr) {
 
     override fun processedItems() = accumulator.get()
@@ -312,8 +314,8 @@ fun asTime(nanos: Long): String {
     }
     val duration = nanos / NANOSECONDS.convert(1, unit)
     val subDuration = max(
-            0,
-            (nanos - duration * NANOSECONDS.convert(1, unit)) / NANOSECONDS.convert(1, subUnit)
+        0,
+        (nanos - duration * NANOSECONDS.convert(1, unit)) / NANOSECONDS.convert(1, subUnit)
     )
     return when {
         subDuration != 0L -> "%d %s %d %s".format(duration, unit.abbreviate(), subDuration, subUnit.abbreviate())

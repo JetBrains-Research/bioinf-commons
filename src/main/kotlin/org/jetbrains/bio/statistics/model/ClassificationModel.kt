@@ -7,11 +7,11 @@ import org.jetbrains.bio.statistics.Preprocessed
 import org.jetbrains.bio.statistics.gson.F64ArrayTypeAdapter
 import org.jetbrains.bio.statistics.gson.GSONUtil
 import org.jetbrains.bio.statistics.gson.NotDirectlyDeserializable
-import org.jetbrains.bio.util.Logs
 import org.jetbrains.bio.util.bufferedReader
 import org.jetbrains.bio.util.bufferedWriter
 import org.jetbrains.bio.util.createDirectories
 import org.jetbrains.bio.viktor.F64Array
+import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.nio.file.Path
 
@@ -21,7 +21,11 @@ import java.nio.file.Path
  * @author Sergei Lebedev
  * @since 26/08/13
  */
+private val LOG = LoggerFactory.getLogger(ClassificationModel::class.java)
+
 interface ClassificationModel {
+
+
     /**
      * Returns the number of free parameters for the model
      */
@@ -38,7 +42,7 @@ interface ClassificationModel {
     fun fit(preprocessed: Preprocessed<DataFrame>, title: String, threshold: Double, maxIter: Int)
 
     fun fit(preprocessed: List<Preprocessed<DataFrame>>, title: String, threshold: Double, maxIter: Int) =
-            fit(preprocessed.first(), title, threshold, maxIter)
+        fit(preprocessed.first(), title, threshold, maxIter)
 
     /**
      * Assigns state labels to a given sample (assumes the model is
@@ -83,8 +87,7 @@ interface ClassificationModel {
             path.bufferedWriter().use { gson.toJson(this, it) }
         } catch (e: StackOverflowError) {
             // Don't log exception, error message will be lost (removed from output) due to stacktrace size
-            Logs.getRootLogger().error(
-                    "Serialization StackOverflowError. Model ${javaClass.name}, path = ${path.toAbsolutePath()}")
+            LOG.error("Serialization StackOverflowError. Model ${javaClass.name}, path = ${path.toAbsolutePath()}")
             throw e
         }
     }
@@ -119,16 +122,16 @@ interface ClassificationModel {
          * JSON. It is specialized for serializing models.
          */
         private fun createGson() = GsonBuilder()
-                .setPrettyPrinting()
-                .setFieldNamingStrategy(GSONUtil.NO_MY_UNDESCORE_NAMING_STRATEGY)
-                .registerTypeAdapter(F64Array::class.java, F64ArrayTypeAdapter)
-                .registerTypeAdapterFactory(NotDirectlyDeserializable.ADAPTER_FACTORY)
-                .registerTypeAdapterFactory(
-                        GSONUtil.classSpecificFactory(ClassificationModel::class.java) { gson, factory ->
-                            GSONUtil.classAndVersionAdapter(gson, factory, "model.class.fqn", "model.class.format")
-                        })
-                .serializeSpecialFloatingPointValues()
-                .create()
+            .setPrettyPrinting()
+            .setFieldNamingStrategy(GSONUtil.NO_MY_UNDESCORE_NAMING_STRATEGY)
+            .registerTypeAdapter(F64Array::class.java, F64ArrayTypeAdapter)
+            .registerTypeAdapterFactory(NotDirectlyDeserializable.ADAPTER_FACTORY)
+            .registerTypeAdapterFactory(
+                GSONUtil.classSpecificFactory(ClassificationModel::class.java) { gson, factory ->
+                    GSONUtil.classAndVersionAdapter(gson, factory, "model.class.fqn", "model.class.format")
+                })
+            .serializeSpecialFloatingPointValues()
+            .create()
 
     }
 }

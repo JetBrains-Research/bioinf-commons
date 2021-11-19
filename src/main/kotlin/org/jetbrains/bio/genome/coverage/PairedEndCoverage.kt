@@ -25,21 +25,21 @@ import java.nio.file.Path
  * This coverage will always be perfectly strand-asymmetric, residing on plus strand entirely.
  */
 class PairedEndCoverage private constructor(
-        override val genomeQuery: GenomeQuery,
-        val averageInsertSize: Int,
-        internal val data: GenomeMap<TIntList>
-): Coverage {
+    override val genomeQuery: GenomeQuery,
+    val averageInsertSize: Int,
+    internal val data: GenomeMap<TIntList>
+) : Coverage {
 
     /**
      * Returns the number of tags covered by a given [location].
      */
     override fun getCoverage(location: Location) = location.strand.choose(
-            ifPlus = { getTags(location.toChromosomeRange()).size },
-            ifMinus = { 0 }
+        ifPlus = { getTags(location.toChromosomeRange()).size },
+        ifMinus = { 0 }
     )
 
     override fun getBothStrandsCoverage(chromosomeRange: ChromosomeRange): Int =
-            getTags(chromosomeRange).size
+        getTags(chromosomeRange).size
 
     /**
      * Returns a sorted array of tags covered by a given [chromosomeRange].
@@ -49,7 +49,8 @@ class PairedEndCoverage private constructor(
         val index = data.binarySearchLeft(chromosomeRange.startOffset)
         var size = 0
         while (index + size < data.size() &&
-                data[index + size] < chromosomeRange.endOffset) {
+            data[index + size] < chromosomeRange.endOffset
+        ) {
             size++
         }
 
@@ -74,11 +75,11 @@ class PairedEndCoverage private constructor(
     }
 
     override fun toString() = MoreObjects.toStringHelper(this)
-            .addValue(genomeQuery).toString()
+        .addValue(genomeQuery).toString()
 
     class Builder(
-            val genomeQuery: GenomeQuery,
-            val data: GenomeMap<TIntList> = genomeMap(genomeQuery) { TIntArrayList() }
+        val genomeQuery: GenomeQuery,
+        val data: GenomeMap<TIntList> = genomeMap(genomeQuery) { TIntArrayList() }
     ) {
 
         private var readPairsCount = 0L
@@ -94,8 +95,8 @@ class PairedEndCoverage private constructor(
          * [length] is the length of the read.
          */
         fun process(
-                chromosome: Chromosome,
-                pos: Int, pnext: Int, length: Int
+            chromosome: Chromosome,
+            pos: Int, pnext: Int, length: Int
         ): Builder {
             val insertSize = pos + length - pnext
             data[chromosome].add(pnext + insertSize / 2)
@@ -127,9 +128,9 @@ class PairedEndCoverage private constructor(
                 0
             }
             return PairedEndCoverage(
-                    genomeQuery,
-                    averageInsertSize = averageInsertSize,
-                    data = data
+                genomeQuery,
+                averageInsertSize = averageInsertSize,
+                data = data
             )
         }
     }
@@ -143,8 +144,8 @@ class PairedEndCoverage private constructor(
         fun builder(genomeQuery: GenomeQuery) = Builder(genomeQuery)
 
         internal fun load(
-                npzReader: NpzFile.Reader,
-                genomeQuery: GenomeQuery
+            npzReader: NpzFile.Reader,
+            genomeQuery: GenomeQuery
         ): PairedEndCoverage {
             check(npzReader[Coverage.PAIRED_FIELD].asBooleanArray().single()) {
                 "${npzReader.path} attempting to read paired-end coverage from single-end cache file"
@@ -157,8 +158,8 @@ class PairedEndCoverage private constructor(
                 }
             } catch (e: IllegalStateException) {
                 throw IllegalStateException(
-                        "${npzReader.path} paired-end coverage version is missing",
-                        e
+                    "${npzReader.path} paired-end coverage version is missing",
+                    e
                 )
             }
             val averageInsertSize = npzReader[AVERAGE_INSERT_SIZE_FIELD].asIntArray().single()
@@ -169,12 +170,12 @@ class PairedEndCoverage private constructor(
                     data[chromosome] = TIntArrayList.wrap(npyArray.asIntArray())
                 } catch (e: IllegalStateException) {
                     throw IllegalStateException(
-                            "Cache file ${npzReader.path} doesn't contain ${chromosome.name}.\n" +
-                                    "It's likely that chrom.sizes file used for its creation differs " +
-                                    "from the one being used to read it now.\n" +
-                                    "If problem persists, delete the cache file ${npzReader.path} " +
-                                    "and Span will recreate it with correct settings.",
-                            e
+                        "Cache file ${npzReader.path} doesn't contain ${chromosome.name}.\n" +
+                                "It's likely that chrom.sizes file used for its creation differs " +
+                                "from the one being used to read it now.\n" +
+                                "If problem persists, delete the cache file ${npzReader.path} " +
+                                "and Span will recreate it with correct settings.",
+                        e
                     )
                 }
             }

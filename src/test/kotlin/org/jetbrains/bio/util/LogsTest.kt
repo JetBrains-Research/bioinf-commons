@@ -16,11 +16,11 @@ class LogsTest {
     fun getMessageRuntime() {
         val original = RuntimeException("MESSAGE")
         assertEquals(
-                """ERROR MESSAGE
+            """ERROR MESSAGE
 org.jetbrains.bio.util.LogsTest""",
-                Logs.getMessage(RuntimeException(original), includeStackTrace = true)
-                        .replaceAfter("org.jetbrains.bio.util.LogsTest", "")
-                        .replace("\r", "")
+            Logs.getMessage(RuntimeException(original), includeStackTrace = true)
+                .replaceAfter("org.jetbrains.bio.util.LogsTest", "")
+                .replace("\r", "")
         )
     }
 
@@ -28,11 +28,11 @@ org.jetbrains.bio.util.LogsTest""",
     fun getMessageExecution() {
         val original = RuntimeException()
         assertEquals(
-                """ERROR
+            """ERROR
 org.jetbrains.bio.util.LogsTest""",
-                Logs.getMessage(ExecutionException(original), includeStackTrace = true)
-                        .replaceAfter("org.jetbrains.bio.util.LogsTest", "")
-                        .replace("\r", "")
+            Logs.getMessage(ExecutionException(original), includeStackTrace = true)
+                .replaceAfter("org.jetbrains.bio.util.LogsTest", "")
+                .replace("\r", "")
         )
     }
 
@@ -45,11 +45,11 @@ org.jetbrains.bio.util.LogsTest""",
     @Test
     fun testNull() {
         assertEquals(
-                """ERROR NullPointerException
+            """ERROR NullPointerException
 org.jetbrains.bio.util.LogsTest""",
-                Logs.getMessage(NullPointerException(), includeStackTrace = true)
-                        .replaceAfter("org.jetbrains.bio.util.LogsTest", "")
-                        .replace("\r", "")
+            Logs.getMessage(NullPointerException(), includeStackTrace = true)
+                .replaceAfter("org.jetbrains.bio.util.LogsTest", "")
+                .replace("\r", "")
         )
     }
 
@@ -60,8 +60,8 @@ org.jetbrains.bio.util.LogsTest""",
             LOG.info("foobar")
         }
         assertIn(
-                Regex("\\[.* \\d\\d:\\d\\d:\\d\\d] foobar\n"),
-                out.replace("\r", "")
+            Regex("\\[.* \\d\\d:\\d\\d:\\d\\d] foobar\n"),
+            out.replace("\r", "")
         )
     }
 
@@ -72,8 +72,8 @@ org.jetbrains.bio.util.LogsTest""",
             LOG.debug("foobar")
         }
         assertIn(
-                Regex("\\[.* \\d\\d:\\d\\d:\\d\\d] DEBUG LogsTest foobar\n"),
-                out.replace("\r", "")
+            Regex("\\[.* \\d\\d:\\d\\d:\\d\\d] DEBUG LogsTest foobar\n"),
+            out.replace("\r", "")
         )
     }
 

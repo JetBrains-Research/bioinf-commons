@@ -28,8 +28,10 @@ class Fdr(private val alpha: Double) : Predictor {
          * Constructs null membership log-probabilities and passes them to
          * [control].
          */
-        fun <State> control(logMemberships: Map<State, F64Array>,
-                            nullStates: Set<State>, alpha: Double): BitterSet {
+        fun <State> control(
+            logMemberships: Map<State, F64Array>,
+            nullStates: Set<State>, alpha: Double
+        ): BitterSet {
             return control(NullHypothesis.of(nullStates).apply(logMemberships), alpha)
         }
 

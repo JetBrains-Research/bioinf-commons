@@ -8,8 +8,10 @@ import org.jetbrains.bio.dataframe.DataFrame
  * @author Sergei Lebedev
  * @since 13/10/14
  */
-abstract class IterationContext(protected val numStates: Int,
-                                protected val df: DataFrame) {
+abstract class IterationContext(
+    protected val numStates: Int,
+    protected val df: DataFrame
+) {
     open fun iterate() {
         refill()
         expect()

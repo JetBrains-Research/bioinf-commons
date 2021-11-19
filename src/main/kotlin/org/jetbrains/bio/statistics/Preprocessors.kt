@@ -30,8 +30,10 @@ interface Preprocessor {
     }
 
     companion object {
-        inline operator fun invoke(crossinline
-                                   block: (DataFrame) -> Preprocessed<DataFrame>): Preprocessor {
+        inline operator fun invoke(
+            crossinline
+            block: (DataFrame) -> Preprocessed<DataFrame>
+        ): Preprocessor {
             return object : Preprocessor {
                 override fun apply(sample: DataFrame): Preprocessed<DataFrame> = block(sample)
             }
@@ -67,8 +69,10 @@ object Preprocessors {
      * columns of the data frame and stores the result in `toField`.
      */
     @JvmStatic
-    fun binomialCoefficientLog(nField: String, kField: String,
-                               toField: String): Preprocessor {
+    fun binomialCoefficientLog(
+        nField: String, kField: String,
+        toField: String
+    ): Preprocessor {
         return Preprocessor { df ->
             val rowsNumber = df.rowsNumber
             val logbcs = DoubleArray(rowsNumber)

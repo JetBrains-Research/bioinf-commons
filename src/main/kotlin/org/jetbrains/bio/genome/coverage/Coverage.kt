@@ -19,6 +19,7 @@ import java.nio.file.Path
 interface Coverage {
 
     val genomeQuery: GenomeQuery
+
     /**
      * Returns the number of tags inside a given [location].
      */
@@ -29,8 +30,8 @@ interface Coverage {
      * (i.e. on both strands).
      */
     fun getBothStrandsCoverage(chromosomeRange: ChromosomeRange): Int =
-            getCoverage(chromosomeRange.on(Strand.PLUS)) +
-                    getCoverage(chromosomeRange.on(Strand.MINUS))
+        getCoverage(chromosomeRange.on(Strand.PLUS)) +
+                getCoverage(chromosomeRange.on(Strand.MINUS))
 
     val depth: Long
 
@@ -46,9 +47,9 @@ interface Coverage {
 
         @Throws(IOException::class)
         internal fun load(
-                inputPath: Path,
-                genomeQuery: GenomeQuery,
-                fragment: Fragment = AutoFragment
+            inputPath: Path,
+            genomeQuery: GenomeQuery,
+            fragment: Fragment = AutoFragment
         ): Coverage {
             return NpzFile.read(inputPath).use { reader ->
                 val version = reader[VERSION_FIELD].asIntArray().single()

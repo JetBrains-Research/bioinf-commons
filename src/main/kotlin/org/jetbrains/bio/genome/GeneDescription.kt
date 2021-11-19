@@ -18,9 +18,9 @@ import java.util.*
  */
 object GeneDescription {
     private val CACHE: Cache<Genome, Map<String, String>> = CacheBuilder.newBuilder()
-            .softValues()
-            .initialCapacity(1)
-            .build<Genome, Map<String, String>>()
+        .softValues()
+        .initialCapacity(1)
+        .build<Genome, Map<String, String>>()
 
     fun getDescription(transcript: Transcript): String? {
         val genome: Genome = transcript.chromosome.genome
@@ -33,9 +33,9 @@ object GeneDescription {
             descriptionPath.checkOrRecalculate("Genes") { output ->
                 val pairs = downloadAnnotation(genome).toList()
                 DataFrame()
-                        .with("name", pairs.map { it.first }.toTypedArray())
-                        .with("description", pairs.map { it.second }.toTypedArray())
-                        .save(output.path)
+                    .with("name", pairs.map { it.first }.toTypedArray())
+                    .with("description", pairs.map { it.second }.toTypedArray())
+                    .save(output.path)
             }
 
             load(descriptionPath)
@@ -82,7 +82,8 @@ object GeneDescription {
 
 
 private inline fun <T> PeekingIterator<T>.nextBlock(
-        into: ArrayList<T>, transform: (T) -> Any) {
+    into: ArrayList<T>, transform: (T) -> Any
+) {
     into.clear()
     do {
         into.add(next())

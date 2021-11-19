@@ -28,13 +28,13 @@ class PairedEndCoverageTest {
     @Test
     fun testSimpleTagsCoverage() {
         val coverage = PairedEndCoverage.builder(genomeQuery)
-                .process(
-                    chromosome1, 90, 0, 10
-                ).process(
-                    chromosome1, 80, 5, 20
-                ).process(
-                    chromosome1, 89, 9, 11
-                ).build(unique = false)
+            .process(
+                chromosome1, 90, 0, 10
+            ).process(
+                chromosome1, 80, 5, 20
+            ).process(
+                chromosome1, 89, 9, 11
+            ).build(unique = false)
         assertEquals(
             3,
             coverage.getCoverage(Location(45, 55, chromosome1, Strand.PLUS))
@@ -52,13 +52,13 @@ class PairedEndCoverageTest {
     @Test
     fun testStartIndex() {
         val coverage = PairedEndCoverage.builder(genomeQuery)
-                .process(
-                    chromosome1, 90, 0, 10
-                ).process(
-                    chromosome1, 80, 5, 20
-                ).process(
-                    chromosome1, 89, 9, 11
-                ).build(unique = false)
+            .process(
+                chromosome1, 90, 0, 10
+            ).process(
+                chromosome1, 80, 5, 20
+            ).process(
+                chromosome1, 89, 9, 11
+            ).build(unique = false)
         assertEquals(
             2,
             coverage.getCoverage(Location(51, 55, chromosome1, Strand.PLUS))
@@ -68,13 +68,13 @@ class PairedEndCoverageTest {
     @Test
     fun testSortingTagsCoverage() {
         val coverage = PairedEndCoverage.builder(genomeQuery)
-                .process(
-                    chromosome1, 89, 9, 11
-                ).process(
-                    chromosome1, 80, 5, 20
-                ).process(
-                    chromosome1, 90, 0, 10
-                ).build(unique = false)
+            .process(
+                chromosome1, 89, 9, 11
+            ).process(
+                chromosome1, 80, 5, 20
+            ).process(
+                chromosome1, 90, 0, 10
+            ).build(unique = false)
         assertEquals(
             3,
             coverage.getCoverage(Location(45, 55, chromosome1, Strand.PLUS))
@@ -88,25 +88,25 @@ class PairedEndCoverageTest {
     @Test
     fun testMultiplePointsTagsCoverage() {
         val coverage = PairedEndCoverage.builder(genomeQuery)
-                .process(
-                    chromosome1, 90, 0, 10
-                ).process(
-                    chromosome1, 80, 5, 20
-                ).process(
-                    chromosome1, 89, 9, 11
-                ).process(
-                    chromosome1, 90, 0, 10
-                ).process(
-                    chromosome1, 80, 5, 20
-                ).process(
-                    chromosome1, 89, 9, 11
-                ).process(
-                    chromosome1, 90, 0, 10
-                ).process(
-                    chromosome1, 80, 5, 20
-                ).process(
-                    chromosome1, 89, 9, 11
-                ).build(unique = false)
+            .process(
+                chromosome1, 90, 0, 10
+            ).process(
+                chromosome1, 80, 5, 20
+            ).process(
+                chromosome1, 89, 9, 11
+            ).process(
+                chromosome1, 90, 0, 10
+            ).process(
+                chromosome1, 80, 5, 20
+            ).process(
+                chromosome1, 89, 9, 11
+            ).process(
+                chromosome1, 90, 0, 10
+            ).process(
+                chromosome1, 80, 5, 20
+            ).process(
+                chromosome1, 89, 9, 11
+            ).build(unique = false)
         assertEquals(
             9,
             coverage.getCoverage(Location(45, 55, chromosome1, Strand.PLUS))
@@ -120,9 +120,9 @@ class PairedEndCoverageTest {
     @Test
     fun testWrongOutOfBoundsLeftTagsCoverage() {
         val coverage = PairedEndCoverage.builder(genomeQuery)
-                .process(
-                    chromosome1, 90, 0, 10
-                ).build(unique = false)
+            .process(
+                chromosome1, 90, 0, 10
+            ).build(unique = false)
         assertEquals(
             0,
             coverage.getCoverage(Location(55, 65, chromosome1, Strand.PLUS))
@@ -132,9 +132,9 @@ class PairedEndCoverageTest {
     @Test
     fun testWrongOutOfBoundsRightTagsCoverage() {
         val coverage = PairedEndCoverage.builder(genomeQuery)
-                .process(
-                    chromosome1, 90, 0, 10
-                ).build(unique = false)
+            .process(
+                chromosome1, 90, 0, 10
+            ).build(unique = false)
         assertEquals(
             0,
             coverage.getCoverage(Location(35, 45, chromosome1, Strand.PLUS))
@@ -144,8 +144,8 @@ class PairedEndCoverageTest {
     @Test
     fun testGetTagsSimple() {
         val coverage = PairedEndCoverage.builder(genomeQuery)
-                .putAll(chromosome1, 5, 13, 23, 1, 111, 7, 4, 5, 50)
-                .build(unique = false)
+            .putAll(chromosome1, 5, 13, 23, 1, 111, 7, 4, 5, 50)
+            .build(unique = false)
 
         Assert.assertArrayEquals(
             intArrayOf(5, 5, 7, 13, 23),
@@ -165,8 +165,8 @@ class PairedEndCoverageTest {
     fun testGetEqualTags() {
         val tags = intArrayOf(5, 5, 5, 5, 5, 5, 5, 5, 5)
         val coverage = PairedEndCoverage.builder(genomeQuery)
-                .putAll(chromosome1, *tags)
-                .build(unique = false)
+            .putAll(chromosome1, *tags)
+            .build(unique = false)
 
         Assert.assertArrayEquals(
             tags,
@@ -250,8 +250,8 @@ class PairedEndCoverageTest {
 }
 
 internal fun PairedEndCoverage.Builder.putAll(
-        chromosome: Chromosome,
-        vararg offsets: Int
+    chromosome: Chromosome,
+    vararg offsets: Int
 ): PairedEndCoverage.Builder {
     data[chromosome].addAll(offsets)
     return this

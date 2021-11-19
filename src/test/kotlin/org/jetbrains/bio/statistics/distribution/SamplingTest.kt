@@ -12,11 +12,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class SamplingTest {
-    @Before fun setUp() {
+    @Before
+    fun setUp() {
         Sampling.RANDOM_DATA_GENERATOR.reSeed(42)
     }
 
-    @Test fun testSampleCombination() {
+    @Test
+    fun testSampleCombination() {
         val r = Random()
 
         val n = r.nextInt(6) + 10     // n \in [10, 15]
@@ -37,7 +39,8 @@ class SamplingTest {
         }
     }
 
-    @Test fun testSampleGamma() {
+    @Test
+    fun testSampleGamma() {
         // Edge case: shape = 0.
         assertEquals(0.0, Sampling.sampleGamma(0.0, 10.0))
     }

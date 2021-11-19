@@ -42,8 +42,10 @@ object Tests {
     )
 
     fun assertIs(actual: Any, expected: Class<out Any>) {
-        assertTrue(expected.isInstance(actual),
-            "Expected ${expected.simpleName}, got ${actual::class.java.simpleName}.")
+        assertTrue(
+            expected.isInstance(actual),
+            "Expected ${expected.simpleName}, got ${actual::class.java.simpleName}."
+        )
     }
 
     fun assertMatches(output: String, regex: Regex) = assertTrue(

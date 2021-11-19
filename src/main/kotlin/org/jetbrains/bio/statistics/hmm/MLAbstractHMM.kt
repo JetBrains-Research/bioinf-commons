@@ -19,10 +19,11 @@ import org.jetbrains.bio.viktor._I
  * @author Sergei Lebedev
  * @since 15/08/13
  */
-abstract class MLAbstractHMM(protected val numStates: Int,
-                             priorProbabilities: F64Array,
-                             transitionProbabilities: F64Array)
-    : ClassificationModel {
+abstract class MLAbstractHMM(
+    protected val numStates: Int,
+    priorProbabilities: F64Array,
+    transitionProbabilities: F64Array
+) : ClassificationModel {
 
     init {
         require(numStates > 1) { "expected at least two states" }
@@ -58,8 +59,10 @@ abstract class MLAbstractHMM(protected val numStates: Int,
      * @param threshold convergence threshold.
      * @param maxIter an upper bound on EM iterations.
      */
-    override fun fit(preprocessed: Preprocessed<DataFrame>, title: String,
-                     threshold: Double, maxIter: Int) {
+    override fun fit(
+        preprocessed: Preprocessed<DataFrame>, title: String,
+        threshold: Double, maxIter: Int
+    ) {
         val df = preprocessed.get()
         val context = context(df)
         val monitor = MLMonitor(title, threshold, maxIter)
@@ -76,8 +79,10 @@ abstract class MLAbstractHMM(protected val numStates: Int,
         }
     }
 
-    override fun fit(preprocessed: List<Preprocessed<DataFrame>>, title: String,
-                     threshold: Double, maxIter: Int) {
+    override fun fit(
+        preprocessed: List<Preprocessed<DataFrame>>, title: String,
+        threshold: Double, maxIter: Int
+    ) {
         val dfs = preprocessed.map { it.get() }
         val contexts = dfs.map { context(it) }
         val monitor = MLMonitor(title, threshold, maxIter)
@@ -110,9 +115,11 @@ abstract class MLAbstractHMM(protected val numStates: Int,
         val df = preprocessed.get()
         val context = context(df)
         context.iterate()
-        return HMMInternals.viterbi(df, numStates, context.logPriorProbabilities,
-                context.logTransitionProbabilities,
-                context.logObservationProbabilities)
+        return HMMInternals.viterbi(
+            df, numStates, context.logPriorProbabilities,
+            context.logTransitionProbabilities,
+            context.logObservationProbabilities
+        )
     }
 
     override fun logLikelihood(preprocessed: Preprocessed<DataFrame>): Double {
@@ -138,7 +145,7 @@ abstract class MLAbstractHMM(protected val numStates: Int,
                 }
 
                 logForwardProbabilities[t % 2, i] =
-                        workBuffer.logSumExp() + logProbability(i, df, t)
+                    workBuffer.logSumExp() + logProbability(i, df, t)
             }
         }
 
@@ -196,7 +203,8 @@ abstract class MLAbstractHMM(protected val numStates: Int,
         for (context in contexts) {
             for (i in 0 until numStates) {
                 logPriorProbabilities[i] = MoreMath.logAddExp(
-                        logPriorProbabilities[i], context.logGammas[i, 0])
+                    logPriorProbabilities[i], context.logGammas[i, 0]
+                )
             }
         }
 
@@ -208,7 +216,7 @@ abstract class MLAbstractHMM(protected val numStates: Int,
         }
 
         val df = DataFrame.rowBind(dfs.toTypedArray())
-        val numColumns = contexts.sumBy { it.logGammas.shape[1] }
+        val numColumns = contexts.sumOf { it.logGammas.shape[1] }
         val logGammas = F64Array(numStates, numColumns)
 
         var column = 0
@@ -252,13 +260,15 @@ abstract class MLAbstractHMM(protected val numStates: Int,
 
     protected fun toStringHelper(): MoreObjects.ToStringHelper {
         return MoreObjects.toStringHelper(this)
-                .add("priorProbabilities", priorProbabilities)
-                .add("transitionProbabilities", transitionProbabilities)
+            .add("priorProbabilities", priorProbabilities)
+            .add("transitionProbabilities", transitionProbabilities)
     }
 
     inner class MLAbstractHMMIterationContext(df: DataFrame) :
-            HMMIterationContext(numStates, logPriorProbabilities,
-                    logTransitionProbabilities, df) {
+        HMMIterationContext(
+            numStates, logPriorProbabilities,
+            logTransitionProbabilities, df
+        ) {
 
         override fun refill() {
             (0 until numStates).forking { i ->

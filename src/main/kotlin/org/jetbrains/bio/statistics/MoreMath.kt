@@ -26,13 +26,15 @@ object MoreMath {
      *
      * assuming a >= b.
      */
-    @JvmStatic fun logAddExp(a: Double, b: Double) = a logAddExp b
+    @JvmStatic
+    fun logAddExp(a: Double, b: Double) = a logAddExp b
 
     /**
      * Computes log |exp(x) - exp(y)| faster and more precise than
      * direct computation, safe from overflow.
      */
-    @JvmStatic fun logAbsDiffExp(x: Double, y: Double): Double {
+    @JvmStatic
+    fun logAbsDiffExp(x: Double, y: Double): Double {
         return if (x.isInfinite() && y.isInfinite()) {
             /* both corresponding values are zero, as is the difference */
             Double.NEGATIVE_INFINITY
@@ -43,6 +45,7 @@ object MoreMath {
 
     private val LOG_FACTORIAL_1 = DoubleArray(1024)
     private val LOG_FACTORIAL_16 = DoubleArray(1024)
+
     init {
         for (i in 0..1023) {
             LOG_FACTORIAL_1[i] = CombinatoricsUtils.factorialLog(i);
@@ -57,7 +60,8 @@ object MoreMath {
      * for most adequate arguments; delegates to [Gamma.logGamma] for
      * others.
      */
-    @JvmStatic fun factorialLog(i: Int): Double {
+    @JvmStatic
+    fun factorialLog(i: Int): Double {
         if (i < 0) {
             throw NotPositiveException(i)
         }
@@ -86,7 +90,8 @@ object MoreMath {
     /**
      * Computes C(n, k) using tabulated [factorialLog].
      */
-    @JvmStatic fun binomialCoefficientLog(n: Int, k: Int): Double {
+    @JvmStatic
+    fun binomialCoefficientLog(n: Int, k: Int): Double {
         return factorialLog(n) - factorialLog(k) - factorialLog(n - k)
     }
 }

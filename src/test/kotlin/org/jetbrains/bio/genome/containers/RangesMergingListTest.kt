@@ -256,11 +256,11 @@ class RangesMergingListTest {
         )
         checkComplement(
             listOf(Range(3, 6), Range(14, 16), Range(40, 90)),
-            listOf(Range(0, 3),Range(6, 14), Range(16, 40), Range(90, 100))
+            listOf(Range(0, 3), Range(6, 14), Range(16, 40), Range(90, 100))
         )
         checkComplement(
             listOf(Range(1, 2), Range(4, 6), Range(10, 99)),
-            listOf(Range(0, 1),Range(2, 4), Range(6, 10), Range(99, 100))
+            listOf(Range(0, 1), Range(2, 4), Range(6, 10), Range(99, 100))
         )
         checkComplement(
             listOf(Range(0, 2), Range(4, 6), Range(10, 100)),

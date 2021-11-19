@@ -74,7 +74,8 @@ enum class NucleotideAlternative(vararg nucleotides: Nucleotide) {
     }
 
     companion object {
-        @JvmStatic fun fromChar(c: Char) = when (c) {
+        @JvmStatic
+        fun fromChar(c: Char) = when (c) {
             'a', 'A' -> A
             't', 'T' -> T
             'c', 'C' -> C

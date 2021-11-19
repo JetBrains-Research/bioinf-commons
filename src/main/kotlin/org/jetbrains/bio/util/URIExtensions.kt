@@ -26,7 +26,7 @@ private val SUPPORTED_URL_PROTOCOLS = listOf("http", "https", "ftp")
 fun URI.isSupportedURL() = this.scheme in SUPPORTED_URL_PROTOCOLS
 
 fun URI.toPath(): Path {
-    require(isFile()) { "Cannot convert URL to path: $this"}
+    require(isFile()) { "Cannot convert URL to path: $this" }
     return (if (scheme == null) Paths.get(toString()) else Paths.get(this)).normalize()
 }
 
@@ -46,12 +46,12 @@ fun URI.shortName() = when {
 private val URL_REGEXP = Pattern.compile("^[a-z]{3,10}:/(/){0,2}[a-z0-9].*$")
 fun String.toUri(): URI {
     // 'file:/' urls:
-    val lc = toLowerCase()
+    val lc = lowercase()
     if (lc.startsWith("file:/")) {
         // e.g. user defined yaml config, let's replace spaces at least
         return URI.create(this.replace(" ", "%20"))
     }
-    
+
     val isURL = URL_REGEXP.matcher(lc).matches()
     return if (!isURL) {
         this.toPath().toUri()
@@ -72,7 +72,7 @@ fun URI.checkAccessible() {
         // in order to do fast check do:
         val url = this.toURL()
 
-        val (urlAccessible, details) = if (url.protocol.toLowerCase().startsWith("http")) {
+        val (urlAccessible, details) = if (url.protocol.lowercase().startsWith("http")) {
             // http or https
             var conn: HttpURLConnection? = null
             try {
@@ -113,21 +113,21 @@ fun URI.checkAccessible() {
 }
 
 fun URI.isAccessible() = if (isFile()) {
-        toPath().isAccessible()
-    } else {
-        // If ftp url isn't accessible socket timeout while reading takes long time
-        // in order to do fast check do:
-        var accessible = isSupportedURL() && RemoteURLHelper(this.toURL()).exists()
-        if (accessible) {
-            try {
-                // try to read one byte from url
-                SeekableStreamFactory.getInstance().getStreamFor(this.toString()).use { it.read() }
-            } catch (e: Exception) {
-                accessible = false
-            }
+    toPath().isAccessible()
+} else {
+    // If ftp url isn't accessible socket timeout while reading takes long time
+    // in order to do fast check do:
+    var accessible = isSupportedURL() && RemoteURLHelper(this.toURL()).exists()
+    if (accessible) {
+        try {
+            // try to read one byte from url
+            SeekableStreamFactory.getInstance().getStreamFor(this.toString()).use { it.read() }
+        } catch (e: Exception) {
+            accessible = false
         }
-        accessible
     }
+    accessible
+}
 
 fun URI.asByteSource() = if (isFile()) {
     Files.asByteSource(toPath().toFile())!!
@@ -138,13 +138,13 @@ fun URI.asByteSource() = if (isFile()) {
 fun URI.extension(): String = path.substringAfterLast(".")
 
 fun URI.hasExt(vararg extensions: String): Boolean {
-    val suffixes = extensions.map { ".${it.toLowerCase()}" }
+    val suffixes = extensions.map { ".${it.lowercase()}" }
 
     // try path part, e.g.:
     //    file:///mnt/stripe/foo.bed
     //    https://github.com/PetrTsurinov/BigBedTest/blob/master/ENCFF575VMI.bigBed?raw=true
     //    https://github.com/PetrTsurinov/BigBedTest/blob/master/ENCFF575VMI.bigBed
-    val path = path.toLowerCase().replace("%2e", ".")
+    val path = path.lowercase().replace("%2e", ".")
     val pathHasExt = suffixes.any { suffix -> path.endsWith(suffix) }
     if (pathHasExt || isFile()) {
         return pathHasExt
@@ -153,7 +153,7 @@ fun URI.hasExt(vararg extensions: String): Boolean {
     // try whole query, e.g:
     //   https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE63874&format=file&file=GSE63874%5FNa%5FK2%5Fall%5Fminus%5Fcov%2Etdf
     // Just decode '.' or use full solution: URLDecoder.decode(urlValue, "UTF-8")
-    val url = toString().toLowerCase().replace("%2e", ".")
+    val url = toString().lowercase().replace("%2e", ".")
     return suffixes.any { suffix -> url.endsWith(suffix) }
 }
 
@@ -162,7 +162,7 @@ fun URI.stream() = when {
     else -> asByteSource().openBufferedStream().streamFor(this.path)
 }
 
-fun URI.reader()  = when {
+fun URI.reader() = when {
     isFile() -> toPath().bufferedReader()
     else -> InputStreamReader(asByteSource().openBufferedStream().streamFor(this.path), Charsets.UTF_8).buffered()
 }

@@ -12,9 +12,11 @@ import java.util.stream.Stream
  * The chromosome searcher which allows searching with a fixed number of mismatches allowed.
  * @author: Alexey Dievsky
  */
-class ChromosomeSearcher(private val searcher: Searcher,
-                         private val mismatches: Int,
-                         private val chromosome: Chromosome) {
+class ChromosomeSearcher(
+    private val searcher: Searcher,
+    private val mismatches: Int,
+    private val chromosome: Chromosome
+) {
 
     companion object {
         const val UNIQUE = -3
@@ -79,7 +81,8 @@ class ChromosomeSearcher(private val searcher: Searcher,
             return NOT_UNIQUE
         }
         if (positive != NOT_FOUND && negative == NOT_FOUND ||
-            negative != NOT_FOUND && positive == NOT_FOUND) {
+            negative != NOT_FOUND && positive == NOT_FOUND
+        ) {
             return UNIQUE
         }
         return NOT_FOUND

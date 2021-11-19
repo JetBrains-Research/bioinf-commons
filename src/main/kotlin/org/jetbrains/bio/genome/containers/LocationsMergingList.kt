@@ -12,8 +12,8 @@ import java.nio.file.Path
  * A location-based friend of [RangesMergingList].
  */
 class LocationsMergingList private constructor(
-        override val rangeLists: GenomeStrandMap<RangesMergingList>)
-    : LocationsList<RangesMergingList>() {
+    override val rangeLists: GenomeStrandMap<RangesMergingList>
+) : LocationsList<RangesMergingList>() {
 
     /**
      * Performs element-wise union on locations in the two lists.
@@ -33,10 +33,10 @@ class LocationsMergingList private constructor(
     })
 
     fun apply(
-            op: (RangesMergingList, Chromosome, Strand) -> RangesMergingList
-        ) = LocationsMergingList(genomeStrandMap(genomeQuery) { chromosome, strand ->
-            op(rangeLists[chromosome, strand], chromosome, strand)
-        })
+        op: (RangesMergingList, Chromosome, Strand) -> RangesMergingList
+    ) = LocationsMergingList(genomeStrandMap(genomeQuery) { chromosome, strand ->
+        op(rangeLists[chromosome, strand], chromosome, strand)
+    })
 
 
     fun intersects(location: Location): Boolean = intersect(location).isNotEmpty()
@@ -54,9 +54,9 @@ class LocationsMergingList private constructor(
     }
 
     fun includes(location: Location): Boolean {
-         val rangeList = rangeLists[location.chromosome, location.strand]
-         return rangeList.includesRange(location.toRange())
-     }
+        val rangeList = rangeLists[location.chromosome, location.strand]
+        return rangeList.includesRange(location.toRange())
+    }
 
     fun intersectBothStrands(location: Location): List<Range> =
         intersect(location) + intersect(location.opposite())
@@ -69,7 +69,7 @@ class LocationsMergingList private constructor(
         return builder.build()
     }
 
-    class Builder(gq: GenomeQuery): LocationsListBuilder<LocationsMergingList>(gq) {
+    class Builder(gq: GenomeQuery) : LocationsListBuilder<LocationsMergingList>(gq) {
         override fun build() = LocationsMergingList(genomeStrandMap(genomeQuery) { chromosome, strand ->
             ranges[chromosome, strand].toRangeMergingList()
         })
@@ -118,9 +118,9 @@ class LocationsMergingList private constructor(
  */
 operator fun Location.minus(locations: List<Location>): List<Location> {
     val ranges = locations.asSequence()
-            .filter { it.strand == strand && it.chromosome == chromosome }
-            .map { it.toRange() }
-            .toList()
+        .filter { it.strand == strand && it.chromosome == chromosome }
+        .map { it.toRange() }
+        .toList()
 
     return if (ranges.isEmpty()) {
         listOf(this)
@@ -130,13 +130,14 @@ operator fun Location.minus(locations: List<Location>): List<Location> {
 }
 
 fun locationList(genomeQuery: GenomeQuery, vararg locations: Location): LocationsMergingList =
-        locationList(genomeQuery, locations.asList())
+    locationList(genomeQuery, locations.asList())
 
 fun locationList(genomeQuery: GenomeQuery, locations: Iterable<Location>): LocationsMergingList =
-        LocationsMergingList.create(genomeQuery, locations)
+    LocationsMergingList.create(genomeQuery, locations)
 
 private fun <T> GenomeStrandMap<T>.apply(
-        other: GenomeStrandMap<T>, op: (T, T) -> T): GenomeStrandMap<T> {
+    other: GenomeStrandMap<T>, op: (T, T) -> T
+): GenomeStrandMap<T> {
     require(genomeQuery == other.genomeQuery)
     return genomeStrandMap(genomeQuery) { chromosome, strand ->
         op(get(chromosome, strand), other[chromosome, strand])

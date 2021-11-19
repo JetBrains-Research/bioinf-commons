@@ -13,11 +13,13 @@ import java.util.concurrent.ForkJoinTask
  * @author Sergei Lebedev
  * @since 09/10/14
  */
-abstract class HMMIterationContext(numStates: Int,
-                                   val logPriorProbabilities: F64Array,
-                                   val logTransitionProbabilities: F64Array,
-                                   df: DataFrame) :
-        IterationContext(numStates, df) {
+abstract class HMMIterationContext(
+    numStates: Int,
+    val logPriorProbabilities: F64Array,
+    val logTransitionProbabilities: F64Array,
+    df: DataFrame
+) :
+    IterationContext(numStates, df) {
 
     private val numObservations = df.rowsNumber
 
@@ -28,7 +30,7 @@ abstract class HMMIterationContext(numStates: Int,
     val logForwardProbabilities: F64Array = F64Array(numObservations, numStates)
     val logBackwardProbabilities: F64Array = F64Array(numObservations, numStates)
     val logObservationProbabilities: F64Array =
-            F64Array(numObservations, numStates)  // filled.
+        F64Array(numObservations, numStates)  // filled.
 
     /**
      * Computes expectations of the latent indicator variables.
@@ -38,20 +40,26 @@ abstract class HMMIterationContext(numStates: Int,
      */
     override fun expect() {
         ForkJoinTask.invokeAll(
-                ForkJoinTask.adapt {
-                    HMMInternals.logForward(df, numStates, logPriorProbabilities,
-                            logTransitionProbabilities,
-                            logObservationProbabilities,
-                            logForwardProbabilities)
-                },
-                ForkJoinTask.adapt {
-                    HMMInternals.logBackward(df, numStates, logTransitionProbabilities,
-                            logObservationProbabilities,
-                            logBackwardProbabilities)
-                })
+            ForkJoinTask.adapt {
+                HMMInternals.logForward(
+                    df, numStates, logPriorProbabilities,
+                    logTransitionProbabilities,
+                    logObservationProbabilities,
+                    logForwardProbabilities
+                )
+            },
+            ForkJoinTask.adapt {
+                HMMInternals.logBackward(
+                    df, numStates, logTransitionProbabilities,
+                    logObservationProbabilities,
+                    logBackwardProbabilities
+                )
+            })
 
-        val negativeInfinity = F64Array.full(numStates, numStates,
-                init = Double.NEGATIVE_INFINITY)
+        val negativeInfinity = F64Array.full(
+            numStates, numStates,
+            init = Double.NEGATIVE_INFINITY
+        )
         val s = (1 until df.rowsNumber).chunked().map { chunk ->
             val localLogXiSums = negativeInfinity.copy()
             val logXit = negativeInfinity.copy()
@@ -88,8 +96,10 @@ abstract class HMMIterationContext(numStates: Int,
     // This is ad-hoc. Please inline.
     fun calculateLogForwardProbabilities(): F64Array {
         refill()
-        HMMInternals.logForward(df, numStates, logPriorProbabilities, logTransitionProbabilities,
-                logObservationProbabilities, logForwardProbabilities)
+        HMMInternals.logForward(
+            df, numStates, logPriorProbabilities, logTransitionProbabilities,
+            logObservationProbabilities, logForwardProbabilities
+        )
         return logForwardProbabilities
     }
 }

@@ -13,21 +13,21 @@ import org.slf4j.LoggerFactory
  */
 object GeneResolver {
     /** A mapping of UPPERCASE "gene names" to genes for a specific organism.  */
-    private val TRANSCRIPTS_MAPS_CACHE
-            = Maps.newConcurrentMap<Pair<Genome, GeneAliasType>, ListMultimap<String, Transcript>>()
+    private val TRANSCRIPTS_MAPS_CACHE =
+        Maps.newConcurrentMap<Pair<Genome, GeneAliasType>, ListMultimap<String, Transcript>>()
 
     private val LOG = LoggerFactory.getLogger(GeneResolver::class.java)
 
     fun getAnyGene(genome: Genome, anyAlias: String): Gene? {
         val geneIds = matching(genome, anyAlias).asSequence()
-                .map { it.ensemblGeneId }
-                .distinct().toList()
+            .map { it.ensemblGeneId }
+            .distinct().toList()
 
         if (geneIds.size > 1) {
             LOG.warn("$anyAlias resolved to ${geneIds.size} genes: ${geneIds.joinToString(",")}")
         }
 
-        return genome.genes.find { it.ensemblGeneId in geneIds}
+        return genome.genes.find { it.ensemblGeneId in geneIds }
     }
 
 
@@ -72,12 +72,12 @@ object GeneResolver {
 
     private fun matching(genome: Genome, anyAlias: String): Sequence<Transcript> {
         return GeneAliasType.values().asSequence()
-                .flatMap { aliasType -> matching(genome, anyAlias, aliasType) }
+            .flatMap { aliasType -> matching(genome, anyAlias, aliasType) }
     }
 
     private fun matching(genome: Genome, alias: String, aliasType: GeneAliasType): Sequence<Transcript> {
         val genesMap = transcriptsMapFor(genome, aliasType)
-        return genesMap[alias.toUpperCase()].asSequence()
+        return genesMap[alias.uppercase()].asSequence()
     }
 
     private fun transcriptsMapFor(genome: Genome, aliasType: GeneAliasType): ListMultimap<String, Transcript> {
@@ -89,7 +89,7 @@ object GeneResolver {
             for (transcript in genome.transcripts) {
                 val name = transcript.names[aliasType] ?: ""
                 if (name.isNotEmpty()) {
-                    transcriptsMap.put(name.toUpperCase(), transcript)
+                    transcriptsMap.put(name.uppercase(), transcript)
                 }
             }
 

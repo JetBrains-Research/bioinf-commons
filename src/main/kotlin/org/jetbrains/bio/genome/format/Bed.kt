@@ -41,8 +41,8 @@ import java.nio.file.Path
  * @author Sergei Lebedev
  */
 data class BedFormat(
-        val fieldsNumber: Byte = 6,
-        val delimiter: Char = '\t'
+    val fieldsNumber: Byte = 6,
+    val delimiter: Char = '\t'
 ) {
 
     val fmtStr: String
@@ -62,16 +62,17 @@ data class BedFormat(
     }
 
     fun <T> parse(reader: Reader, src: String = "unknown source", f: (BedParser) -> T) = parse(
-            reader.buffered(), src, f
+        reader.buffered(), src, f
     )
 
     fun <T> parse(path: Path, f: (BedParser) -> T) = parse(
-            path.bufferedReader(), path.toAbsolutePath().toString(), f
+        path.bufferedReader(), path.toAbsolutePath().toString(), f
     )
 
     fun parseLocations(path: Path, genome: Genome) = parse(
-            path.bufferedReader(),
-            path.toAbsolutePath().toString()) {
+        path.bufferedReader(),
+        path.toAbsolutePath().toString()
+    ) {
         it.map { entry ->
             entry.unpack(
                 minOf(fieldsNumber, (BedField.STRAND.field.index + 1).toByte()), false, delimiter
@@ -80,7 +81,7 @@ data class BedFormat(
     }
 
     private fun <T> parse(reader: BufferedReader, src: String, f: (BedParser) -> T) =
-            BedParser(reader, src, delimiter).use { f(it) }
+        BedParser(reader, src, delimiter).use { f(it) }
 
     fun print(path: Path) = print(path.bufferedWriter())
 
@@ -123,7 +124,7 @@ data class BedFormat(
                 if (sep != -1) {
                     val fmtStr = s.substring(1, sep)
                     val delimiterStr = s.substring(sep + 1, s.length - 1).trim()
-                    if (delimiterStr.length == 3 && delimiterStr.first() == '\'' && delimiterStr.last() == '\'' ) {
+                    if (delimiterStr.length == 3 && delimiterStr.first() == '\'' && delimiterStr.last() == '\'') {
                         return from(fmtStr, delimiterStr[1])
                     }
                 }
@@ -135,7 +136,7 @@ data class BedFormat(
          * @param fmtStr: E.g. bed9 or bed6+3
          */
         fun parseFormatString(fmtStr: String): Byte {
-            var s = fmtStr.toLowerCase()
+            var s = fmtStr.lowercase()
             check(s.startsWith("bed")) {
                 "Format name is required to start with 'bed' prefix, e.g. bed3, bed6+ or bed3+6, but was: $fmtStr"
             }
@@ -202,43 +203,44 @@ data class BedFormat(
 
         fun auto(path: Path) = auto(path.toUri())
         fun auto(text: String, source: String?, defaultDelimiter: Char = '\t') = auto(
-                text.byteInputStream(), detectDelimiter(text, defaultDelimiter), source
+            text.byteInputStream(), detectDelimiter(text, defaultDelimiter), source
         )
+
         fun auto(source: URI) = source.stream().use { stream ->
             auto(stream, detectDelimiter(source), source.presentablePath())
         }
 
         private fun auto(stream: InputStream, delimiter: Char, source: String?) =
-                stream.bufferedReader().use { reader ->
-                    var format = from("bed3", delimiter)
-                    var headerCandidateMet = false
-                    while (true) {
-                        val line = reader.readLine() ?: break
+            stream.bufferedReader().use { reader ->
+                var format = from("bed3", delimiter)
+                var headerCandidateMet = false
+                while (true) {
+                    val line = reader.readLine() ?: break
 
-                        if (NON_DATA_LINE_PATTERN.matches(line)) {
-                            continue
-                        }
-
-                        // Try to parse 1st line, if failed it could be header
-                        // with 'start' 'end' fields instead of integer offsets,
-                        // so try again with 2nd line, if fails again => throw an
-                        // error
-                        format = try {
-                            detectFormatFromLine(delimiter, line, source)
-                        } catch (e: IllegalArgumentException) {
-                            if (!headerCandidateMet) {
-                                headerCandidateMet = true
-                                // try again with next line
-                                continue
-                            } else {
-                                // give up
-                                throw e
-                            }
-                        }
-                        break
+                    if (NON_DATA_LINE_PATTERN.matches(line)) {
+                        continue
                     }
-                    format
+
+                    // Try to parse 1st line, if failed it could be header
+                    // with 'start' 'end' fields instead of integer offsets,
+                    // so try again with 2nd line, if fails again => throw an
+                    // error
+                    format = try {
+                        detectFormatFromLine(delimiter, line, source)
+                    } catch (e: IllegalArgumentException) {
+                        if (!headerCandidateMet) {
+                            headerCandidateMet = true
+                            // try again with next line
+                            continue
+                        } else {
+                            // give up
+                            throw e
+                        }
+                    }
+                    break
                 }
+                format
+            }
 
         private fun detectFormatFromLine(delimiter: Char, line: String, source: String?): BedFormat {
             val chunks = Splitter.on(delimiter).trimResults().omitEmptyStrings().split(line).toList()
@@ -273,10 +275,12 @@ data class BedFormat(
                     when (field) {
                         BedField.BLOCK_COUNT -> blockCount = value as Int
                         BedField.BLOCK_STARTS, BedField.BLOCK_SIZES -> {
-                            check(when (value) {
-                                null -> blockCount == 0
-                                else -> blockCount <= (value as IntArray).size
-                            })
+                            check(
+                                when (value) {
+                                    null -> blockCount == 0
+                                    else -> blockCount <= (value as IntArray).size
+                                }
+                            )
                         }
                     }
 
@@ -326,10 +330,10 @@ data class BedFormat(
  * with [stringency] == [STRICT], since the parser will throw on any line that fails to parse.
  */
 class BedParser(
-        internal val reader: BufferedReader,
-        private val source: String,
-        val separator: Char
-): Iterable<BedEntry>, AutoCloseable {
+    internal val reader: BufferedReader,
+    private val source: String,
+    val separator: Char
+) : Iterable<BedEntry>, AutoCloseable {
 
     private val splitter = Splitter.on(separator).limit(4).trimResults().omitEmptyStrings()
 
@@ -373,7 +377,7 @@ class BedParser(
                     }
                 }
             }
-        // this statement is normally unreachable
+            // this statement is normally unreachable
         } while (true)
     }
 
@@ -396,8 +400,8 @@ class BedParser(
         val chunks = splitter.splitToList(line)
         return try {
             BedEntry(
-                    chunks[0], chunks[1].toInt(), chunks[2].toInt(),
-                    if (chunks.size == 3) "" else chunks[3]
+                chunks[0], chunks[1].toInt(), chunks[2].toInt(),
+                if (chunks.size == 3) "" else chunks[3]
             )
         } catch (e: Exception) {
             throw IllegalArgumentException("invalid BED: '$line'", e)
@@ -596,11 +600,11 @@ enum class BedField(val field: AbstractBedField<Any?>) {
 }
 
 fun Location.toBedEntry() = ExtendedBedEntry(
-        chromosome.name, startOffset, endOffset, strand = strand.char
+    chromosome.name, startOffset, endOffset, strand = strand.char
 )
 
 fun ExtendedBedEntry.toLocation(genome: Genome) =
-        Location(start, end, Chromosome(genome, chrom), strand.toStrand())
+    Location(start, end, Chromosome(genome, chrom), strand.toStrand())
 
 fun LocationsMergingList.saveWithUniqueNames(bedPath: Path) {
     val printer = BedFormat().print(bedPath)
@@ -631,13 +635,13 @@ fun String.splitToInts(size: Int): IntArray {
 }
 
 fun BedEntry.unpack(format: BedFormat, omitEmptyStrings: Boolean = false) =
-        unpack(format.fieldsNumber, true, format.delimiter, omitEmptyStrings)
+    unpack(format.fieldsNumber, true, format.delimiter, omitEmptyStrings)
 
 /**
  * Only unpack regular BED fields, omit any extra ones.
  */
 fun BedEntry.unpackRegularFields(format: BedFormat, omitEmptyStrings: Boolean = false) =
-        unpack(format.fieldsNumber, false, format.delimiter, omitEmptyStrings)
+    unpack(format.fieldsNumber, false, format.delimiter, omitEmptyStrings)
 
 interface BedProvider {
     val bedSource: URI

@@ -8,9 +8,11 @@ import java.util.concurrent.CancellationException
 /**
  *  Measures the running time of a given possibly impure [block].
  */
-fun <R> Logger.time(level: Level = Level.DEBUG,
-                    message: String = "",
-                    block: () -> R): R {
+fun <R> Logger.time(
+    level: Level = Level.DEBUG,
+    message: String = "",
+    block: () -> R
+): R {
     log(level, "$message...")
     val stopwatch = Stopwatch.createStarted()
 

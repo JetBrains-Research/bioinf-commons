@@ -22,7 +22,7 @@ object Tar {
             }
         }
     }
-    
+
     fun decompress(input: InputStream, folder: File, skipExisting: Boolean = false) {
         folder.mkdirs()
         TarArchiveInputStream(input).use { fin ->

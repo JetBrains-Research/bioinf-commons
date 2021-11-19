@@ -11,8 +11,8 @@ data class Cell private constructor(val name: String, val description: String) {
         private val CACHE = Maps.newConcurrentMap<String, Cell>()
 
         operator fun invoke(name: String, description: String = "N/A"): Cell =
-                CACHE.computeIfAbsent(name.toLowerCase()) {
-                    Cell(name, description)
-                }
+            CACHE.computeIfAbsent(name.lowercase()) {
+                Cell(name, description)
+            }
     }
 }

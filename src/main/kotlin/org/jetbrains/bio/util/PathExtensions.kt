@@ -17,7 +17,6 @@ import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import java.nio.file.attribute.BasicFileAttributes
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
-import java.util.*
 import java.util.zip.*
 
 private val LOG = LoggerFactory.getLogger("org.jetbrains.bio.util.PathExtensions")
@@ -33,11 +32,11 @@ const val HASH_PREFIX = '#'
 val String.sha: String get() = HASH_PREFIX + Hashing.sha1().hashString(this, Charsets.UTF_8).toString().substring(0, 5)
 
 fun String.toPath(): Path =
-        // Windows case URI.getPath() returns path in such a format /C:/path/to/file
-        if (isWindows() && this.startsWith(":/", 2)) {
-            Paths.get(this.substring(1, this.length))
-        } else
-            Paths.get(this)
+    // Windows case URI.getPath() returns path in such a format /C:/path/to/file
+    if (isWindows() && this.startsWith(":/", 2)) {
+        Paths.get(this.substring(1, this.length))
+    } else
+        Paths.get(this)
 
 fun Path.resolve(vararg chunks: String): Path {
     return arrayOf(toString(), *chunks).toPath()
@@ -78,9 +77,10 @@ val Path.isRegularFile: Boolean get() = Files.isRegularFile(this)
 val Path.name: String get() = fileName.toString()
 
 /** Returns the name of the file or directory without extension. */
-val Path.stem: String get() {
-    return name.substringBeforeLast(".$extension")
-}
+val Path.stem: String
+    get() {
+        return name.substringBeforeLast(".$extension")
+    }
 
 /**
  * Returns the extension of this path (not including the dot), or
@@ -91,18 +91,19 @@ val Path.extension: String get() = toFile().extension
 
 /** Prepare string to form correct path. */
 fun String.escape() = replace("[^a-zA-Z0-9_\\.]".toRegex(), "_")
-        .replace("_{2,}".toRegex(), "_")
-        .replace("^_|_$".toRegex(), "")
-        .replace("_\\.".toRegex(), ".")
-        .toLowerCase()
+    .replace("_{2,}".toRegex(), "_")
+    .replace("^_|_$".toRegex(), "")
+    .replace("_\\.".toRegex(), ".")
+    .lowercase()
 
 /** Creates a 5 digit-letter hash string for file full path */
 val Path.sha: String get() = this.toAbsolutePath().toString().sha
 
 /** File size pretty-printer. */
-data class FileSize (
-        /** Size in bytes as returned by [Files.size]. */
-        val bytes: Long) : Comparable<FileSize> {
+data class FileSize(
+    /** Size in bytes as returned by [Files.size]. */
+    val bytes: Long
+) : Comparable<FileSize> {
 
     init {
         require(bytes == -1L || bytes >= 0) { "size must be >=0 or -1, but was: $bytes" }
@@ -205,8 +206,8 @@ fun Path.glob(pattern: String): List<Path> {
     check(isDirectory) { "$this is not a directory" }
 
     val matcher = "${toAbsolutePath()}${File.separatorChar}$pattern"
-            .let { if (isWindows()) it.replace("\\", "\\\\") else it }
-            .toPathMatcher()
+        .let { if (isWindows()) it.replace("\\", "\\\\") else it }
+        .toPathMatcher()
     val matched = ArrayList<Path>()
     walkFileTree(object : SimpleFileVisitor<Path>() {
         override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
@@ -221,7 +222,7 @@ fun Path.glob(pattern: String): List<Path> {
     return matched
 }
 
-fun isWindows() = System.getProperty("os.name")?.toLowerCase()?.contains("windows") ?: false
+fun isWindows() = System.getProperty("os.name")?.lowercase()?.contains("windows") ?: false
 
 fun Path.createDirectories(): Path {
     if (notExists) {
@@ -273,7 +274,7 @@ fun Path.copy(target: Path, vararg options: StandardCopyOption) {
  * Checks if [chunk] is in path
  */
 fun Path.hasChunk(chunk: String): Boolean =
-        chunk.toLowerCase() in fileName.toString().toLowerCase().split('_', '.')
+    chunk.lowercase() in fileName.toString().lowercase().split('_', '.')
 
 fun <T> Path.useLines(consumer: (Sequence<String>) -> T): T = Files.newBufferedReader(this).useLines(consumer)
 
@@ -303,11 +304,13 @@ fun Path.write(buf: ByteArray, vararg options: StandardOpenOption): Path {
 
  */
 @JvmOverloads
-fun Path.checkOrRecalculate(label: String = "",
-                            isDirectory: Boolean = false,
-                            ignoreEmptyFile: Boolean = false,
-                            timestamp: Long = 0,
-                            recalculate: (PathWrapper) -> Unit): Path {
+fun Path.checkOrRecalculate(
+    label: String = "",
+    isDirectory: Boolean = false,
+    ignoreEmptyFile: Boolean = false,
+    timestamp: Long = 0,
+    recalculate: (PathWrapper) -> Unit
+): Path {
     val target = toAbsolutePath().normalize()
     return LockManager.synchronized(target) {
         val prefix = if (label.isNotEmpty()) "$label: " else ""
@@ -364,8 +367,10 @@ data class PathWrapper(val path: Path)
  *
  * For some reason you'll get no error on linux, but error is quite expected and reasonable.
  */
-inline fun <T> withTempFile(prefix: String, suffix: String, dir: Path? = null,
-                            block: (Path) -> T): T {
+inline fun <T> withTempFile(
+    prefix: String, suffix: String, dir: Path? = null,
+    block: (Path) -> T
+): T {
     val tempFile = if (dir == null) {
         Files.createTempFile(prefix, suffix)
     } else {
@@ -379,9 +384,11 @@ inline fun <T> withTempFile(prefix: String, suffix: String, dir: Path? = null,
     }
 }
 
-inline fun <T> withTempDirectory(prefix: String,
-                                 dir: Path? = null,
-                                 block: (Path) -> T): T {
+inline fun <T> withTempDirectory(
+    prefix: String,
+    dir: Path? = null,
+    block: (Path) -> T
+): T {
     val tempDir = if (dir == null) {
         Files.createTempDirectory(prefix)
     } else {
@@ -400,10 +407,10 @@ inline fun <T> withTempDirectory(prefix: String,
  * Returns a buffered input stream for this path.
  */
 fun Path.inputStream(vararg options: OpenOption) =
-        Files.newInputStream(this, *options).buffered().streamFor(name)
+    Files.newInputStream(this, *options).buffered().streamFor(name)
 
 fun InputStream.streamFor(path: String) = path.let {
-    val lcPath = it.toLowerCase()
+    val lcPath = it.lowercase()
     val parentStream = when {
         IOMonitor.debugMode && this !is IOMonitorInputStream -> IOMonitorInputStream(this)
         else -> this
@@ -424,7 +431,7 @@ fun Path.bufferedReader(vararg options: OpenOption) = inputStream(*options).buff
  */
 fun Path.outputStream(vararg options: OpenOption): OutputStream {
     val outputStream = Files.newOutputStream(this, *options).buffered()
-    return when (extension.toLowerCase()) {
+    return when (extension.lowercase()) {
         "gz" -> GZIPOutputStream(outputStream)
         "zip" -> ZipOutputStream(outputStream).apply {
             // Without this line ZIP file will be corrupted.

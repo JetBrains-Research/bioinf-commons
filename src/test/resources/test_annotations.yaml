@@ -57,7 +57,7 @@ genomes:
     repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/rmsk.txt.gz
     cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/cytoBand.txt.gz
     gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/gap.txt.gz
-    centromeres:  http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/centromeres.txt.gz
+    centromeres: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/centromeres.txt.gz
     cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/cpgIslandExt.txt.gz
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.2bit
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes

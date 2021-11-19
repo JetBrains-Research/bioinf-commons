@@ -18,10 +18,12 @@ import java.util.concurrent.ThreadLocalRandom
  * @param maxRetries number of attempts to generate regions satisfying all conditions.
  */
 
-fun shuffleChromosomeRanges(genomeQuery: GenomeQuery,
-                            regions: List<ChromosomeRange>,
-                            background: List<ChromosomeRange>? = null,
-                            maxRetries: Int = 100): List<ChromosomeRange> {
+fun shuffleChromosomeRanges(
+    genomeQuery: GenomeQuery,
+    regions: List<ChromosomeRange>,
+    background: List<ChromosomeRange>? = null,
+    maxRetries: Int = 100
+): List<ChromosomeRange> {
     val lengths = regions.map { it.length() }.toIntArray()
 
     val backgroundRegions = background ?: genomeQuery.get().map {
@@ -57,11 +59,13 @@ private fun hasIntersection(regionsMap: GenomeMap<MutableList<Range>>, chromosom
     return false
 }
 
-private fun tryShuffle(genomeQuery: GenomeQuery,
-                       background: List<ChromosomeRange>,
-                       lengths: IntArray,
-                       prefixSum: LongArray,
-                       maximalReTries: Int = 100): List<ChromosomeRange>? {
+private fun tryShuffle(
+    genomeQuery: GenomeQuery,
+    background: List<ChromosomeRange>,
+    lengths: IntArray,
+    prefixSum: LongArray,
+    maximalReTries: Int = 100
+): List<ChromosomeRange>? {
     val maskedGenomeMap = genomeMap<MutableList<Range>>(genomeQuery) {
         ArrayList()
     }

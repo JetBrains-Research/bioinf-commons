@@ -10,8 +10,11 @@ import java.util.stream.Stream
  * @see org.jetbrains.bio.genome.sequence.NucleotideAlternative
  */
 object Pattern {
-    @JvmStatic fun matches(sequence: NucleotideSequence, seed: Seed, position: Int,
-                           mismatches: Int): Boolean {
+    @JvmStatic
+    fun matches(
+        sequence: NucleotideSequence, seed: Seed, position: Int,
+        mismatches: Int
+    ): Boolean {
         val length = seed.nucleotideAlternatives.size
         if (position < 0 || position + length >= sequence.length) {
             return false
@@ -47,7 +50,8 @@ object Pattern {
      * The seeds should be non-intersecting and their number should be
      * strictly greater than the maximum mismatch count allowed.
      */
-    @JvmStatic fun getSeeds(text: String, mismatches: Int): Stream<Seed> {
+    @JvmStatic
+    fun getSeeds(text: String, mismatches: Int): Stream<Seed> {
         val seed = 1f * text.length / (mismatches + 1)
         return IntStream.range(0, mismatches + 1).mapToObj { i ->
             val seedStart = (i * seed).toInt();

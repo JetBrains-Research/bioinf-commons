@@ -10,7 +10,6 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.LinkedHashMap
 
 /**
  * Generic genome information. Used to define [Genome].
@@ -87,10 +86,10 @@ object AnnotationsConfigLoader {
      * Ensure annotations config loaded, use [AnnotationsConfigLoader.init]
      */
     val builds: Set<String>
-    get() {
-        require(initialized) { "Annotations config not initialized, call [AnnotationsConfig.init] first" }
-        return pathAndConfig!!.second.keys
-    }
+        get() {
+            require(initialized) { "Annotations config not initialized, call [AnnotationsConfig.init] first" }
+            return pathAndConfig!!.second.keys
+        }
 
 
     operator fun get(build: String): GenomeAnnotationsConfig {

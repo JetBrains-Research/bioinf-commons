@@ -10,15 +10,17 @@ import java.util.*
  *
  * @author Sergei Lebedev
  */
-open class BinaryLut(private val index: IntArray,
-                     /** The number of bits to use for LUT indexing. */
-                     private val bits: Int,
-                     /**
-                      * The last LUT boundary. Keys larger than this should
-                      * have the `toIndex` equal to the total number of
-                      * elements indexed.
-                      */
-                     private val end: Int) {
+open class BinaryLut(
+    private val index: IntArray,
+    /** The number of bits to use for LUT indexing. */
+    private val bits: Int,
+    /**
+     * The last LUT boundary. Keys larger than this should
+     * have the `toIndex` equal to the total number of
+     * elements indexed.
+     */
+    private val end: Int
+) {
 
     open fun binarySearch(data: IntArray, key: Int): Int {
         if (key < 0) return -1 // a negative key is strictly less than any data element
@@ -89,12 +91,16 @@ open class BinaryLut(private val index: IntArray,
         if (idx >= 0) {
             low = run {
                 var i = idx - 1
-                while (i >= 0 && data[i] == key) { i-- }
+                while (i >= 0 && data[i] == key) {
+                    i--
+                }
                 i
             }
             high = run {
                 var i = idx + 1
-                while (i < data.size && data[i] == key) { i++ }
+                while (i < data.size && data[i] == key) {
+                    i++
+                }
                 i
             }
         } else {
@@ -104,12 +110,16 @@ open class BinaryLut(private val index: IntArray,
         if (low < 0) {
             low = 0
         } else {
-            while (low > 0 && data[low] == data[low - 1]) { low-- }
+            while (low > 0 && data[low] == data[low - 1]) {
+                low--
+            }
         }
         if (high == data.size) {
             high = data.size - 1
         } else {
-            while (high < data.size - 1 && data[high] == data[high + 1]) { high++ }
+            while (high < data.size - 1 && data[high] == data[high + 1]) {
+                high++
+            }
         }
         return low to high
     }
@@ -125,12 +135,16 @@ open class BinaryLut(private val index: IntArray,
         val idx = binarySearch(data, key)
         val left = run {
             var i = if (idx >= 0) idx else idx.inv() - 1
-            while (i >= 0 && !predicate(i)) { i-- }
+            while (i >= 0 && !predicate(i)) {
+                i--
+            }
             i
         }
         val right = run {
             var i = if (idx >= 0) idx else idx.inv()
-            while (i < data.size && !predicate(i)) { i++ }
+            while (i < data.size && !predicate(i)) {
+                i++
+            }
             i
         }
         if (left == -1 && right == data.size) return emptyList()
@@ -171,12 +185,16 @@ open class BinaryLut(private val index: IntArray,
         val idxRight = binarySearch(data, key + right)
         val low = run {
             var i = if (idxLeft >= 0) idxLeft else idxLeft.inv()
-            while (i > 0 && data[i - 1] == key - left) { i-- }
+            while (i > 0 && data[i - 1] == key - left) {
+                i--
+            }
             i
         }
         val high = run {
             var i = if (idxRight >= 0) idxRight else idxRight.inv() - 1
-            while (i < data.size - 1 && data[i + 1] == key + right) { i++ }
+            while (i < data.size - 1 && data[i + 1] == key + right) {
+                i++
+            }
             i
         }
         return if (low <= high) {

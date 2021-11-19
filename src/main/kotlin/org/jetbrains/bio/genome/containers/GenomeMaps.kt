@@ -4,7 +4,6 @@ import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Strand
 import org.jetbrains.bio.util.await
-import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 
@@ -16,9 +15,9 @@ import java.util.concurrent.ConcurrentHashMap
  * called in a separate thread.
  */
 fun <T> genomeMap(
-        genomeQuery: GenomeQuery,
-        parallel: Boolean = false,
-        init: (Chromosome) -> T
+    genomeQuery: GenomeQuery,
+    parallel: Boolean = false,
+    init: (Chromosome) -> T
 ) = GenomeMap(genomeQuery, parallel, init)
 
 /**
@@ -29,9 +28,9 @@ fun <T> genomeMap(
  * called in a separate thread.
  */
 fun <T> genomeStrandMap(
-        genomeQuery: GenomeQuery,
-        parallel: Boolean = false,
-        init: (Chromosome, Strand) -> T
+    genomeQuery: GenomeQuery,
+    parallel: Boolean = false,
+    init: (Chromosome, Strand) -> T
 ) = GenomeStrandMap(genomeQuery, parallel, init)
 
 /**
@@ -42,9 +41,9 @@ fun <T> genomeStrandMap(
  * @author Sergei Lebedev
  */
 class GenomeMap<T> internal constructor(
-        val genomeQuery: GenomeQuery,
-        parallel: Boolean,
-        f: (Chromosome) -> T
+    val genomeQuery: GenomeQuery,
+    parallel: Boolean,
+    f: (Chromosome) -> T
 ) {
 
     private val data: ConcurrentHashMap<String, T> = ConcurrentHashMap()
@@ -58,7 +57,7 @@ class GenomeMap<T> internal constructor(
     }
 
     operator fun contains(chromosome: Chromosome) =
-            chromosome.genome.build == genomeQuery.build && chromosome.name in data.keys
+        chromosome.genome.build == genomeQuery.build && chromosome.name in data.keys
 
 
     operator fun get(chromosome: Chromosome): T {
@@ -107,11 +106,11 @@ interface GenomeStrandMapLike<T> : Iterable<T> {
 
     operator fun get(chromosome: Chromosome, strand: Strand): T
 
-    override fun iterator(): Iterator<T> = genomeQuery.get().flatMap {  chromosome ->
+    override fun iterator(): Iterator<T> = genomeQuery.get().flatMap { chromosome ->
         Strand.values().map { strand -> this[chromosome, strand] }
     }.iterator()
 
-    fun entries(): Iterable<Triple<Chromosome, Strand, T>> = genomeQuery.get().flatMap {  chromosome ->
+    fun entries(): Iterable<Triple<Chromosome, Strand, T>> = genomeQuery.get().flatMap { chromosome ->
         Strand.values().map { strand ->
             Triple(chromosome, strand, this[chromosome, strand])
         }
@@ -127,10 +126,10 @@ interface GenomeStrandMapLike<T> : Iterable<T> {
  * @author Sergei Lebedev
  */
 class GenomeStrandMap<T> internal constructor(
-        override val genomeQuery: GenomeQuery,
-        parallel: Boolean,
-        f: (Chromosome, Strand) -> T)
-    : GenomeStrandMapLike<T> {
+    override val genomeQuery: GenomeQuery,
+    parallel: Boolean,
+    f: (Chromosome, Strand) -> T
+) : GenomeStrandMapLike<T> {
 
     private val data: ConcurrentHashMap<Pair<String, Strand>, T> = ConcurrentHashMap()
 
@@ -145,7 +144,7 @@ class GenomeStrandMap<T> internal constructor(
     }
 
     fun contains(chromosome: Chromosome, strand: Strand) =
-            chromosome.genome.build == genomeQuery.build && chromosome.name to strand in data.keys
+        chromosome.genome.build == genomeQuery.build && chromosome.name to strand in data.keys
 
     override operator fun get(chromosome: Chromosome, strand: Strand): T {
         if (!contains(chromosome, strand)) {

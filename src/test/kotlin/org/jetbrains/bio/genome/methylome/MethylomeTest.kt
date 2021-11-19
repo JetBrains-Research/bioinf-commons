@@ -23,7 +23,8 @@ class MethylomeTest {
 
     private val genomeQuery = GenomeQuery(Genome["to1"])
 
-    @Test fun testLazy() {
+    @Test
+    fun testLazy() {
         val builder = Methylome.builder(genomeQuery)
         val chromosome = genomeQuery.get().first()
         val strand = Strand.PLUS
@@ -36,11 +37,13 @@ class MethylomeTest {
         }
     }
 
-    @Test fun testReadWriteEmpty() {
+    @Test
+    fun testReadWriteEmpty() {
         assertSerializedCorrectly(Methylome.builder(genomeQuery).build())
     }
 
-    @Test fun testReadWriteSingleton() {
+    @Test
+    fun testReadWriteSingleton() {
         val builder = Methylome.builder(genomeQuery)
         val chromosome = genomeQuery.get().first()
         val strand = Strand.PLUS
@@ -48,7 +51,8 @@ class MethylomeTest {
         assertSerializedCorrectly(builder.build())
     }
 
-    @Test fun testReadPartialInternal() {
+    @Test
+    fun testReadPartialInternal() {
         val builder = Methylome.builder(genomeQuery)
         val chromosomes = genomeQuery.get()
         val numInfos = IntMath.pow(2, 16)
@@ -59,8 +63,10 @@ class MethylomeTest {
         for (i in 0..numInfos - 1) {
             val chromosome = chromosomes.get(r.nextInt(chromosomes.size))
             val strand = if (r.nextBoolean()) Strand.PLUS else Strand.MINUS
-            builder.add(chromosome, strand, r.nextInt(100500), CytosineContext.CG,
-                        dC.sample(), dT.sample())
+            builder.add(
+                chromosome, strand, r.nextInt(100500), CytosineContext.CG,
+                dC.sample(), dT.sample()
+            )
         }
 
         val methylome = builder.build()
@@ -71,10 +77,13 @@ class MethylomeTest {
 
             for (chromosome in chromosomes) {
                 val methylome1 = Methylome.lazy(
-                        GenomeQuery(genomeQuery.genome, chromosome.name), path)
+                    GenomeQuery(genomeQuery.genome, chromosome.name), path
+                )
                 assertEquals(methylome.getCombined(chromosome).size, methylome1.size)
-                assertEquals(methylome.getCombined(chromosome),
-                             methylome1.getCombined(chromosome))
+                assertEquals(
+                    methylome.getCombined(chromosome),
+                    methylome1.getCombined(chromosome)
+                )
             }
         }
     }
@@ -131,16 +140,16 @@ class MethylomeTest {
         withTempFile("methylome", ".npz") { path ->
             methylome0.save(path)
             val methylome1 = Methylome.lazy(genomeQuery, path)
-            
+
             assertTrue(methylome1.stranded)
 
             val df = methylome1[chromosome, Strand.PLUS].peel()
             Assert.assertEquals(
-                    "# Integer;\tByte;\tFloat;\tShort;\tShort\n" +
-                            "offset\ttag\tlevel\tk\tn\n" +
-                            "42\t0\t0.75\t15\t20\n" +
-                            "100\t1\t0.05\t1\t20\n",
-                    df.dumpHead(df.rowsNumber).replace("\r", "")
+                "# Integer;\tByte;\tFloat;\tShort;\tShort\n" +
+                        "offset\ttag\tlevel\tk\tn\n" +
+                        "42\t0\t0.75\t15\t20\n" +
+                        "100\t1\t0.05\t1\t20\n",
+                df.dumpHead(df.rowsNumber).replace("\r", "")
             )
         }
     }

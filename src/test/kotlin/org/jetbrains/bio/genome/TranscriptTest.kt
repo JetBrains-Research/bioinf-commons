@@ -11,7 +11,8 @@ class TranscriptTest {
     private val chromosome = Chromosome(Genome["to1"], "chr1")
     private val RANDOM = Random(1234)
 
-    @Test fun exonsIntronsSorted() {
+    @Test
+    fun exonsIntronsSorted() {
         val transcripts = chromosome.transcripts.filter { it.exons.size > 1 }
         val ordering = Ordering.natural<Location>()
 
@@ -24,13 +25,20 @@ class TranscriptTest {
         assertTrue(ordering.isOrdered(transcriptMinus.introns), "Introns aren't ordered")
     }
 
-    @Test fun equalsHashCode() {
-        val gene1 = Transcript("foo", "foo_gene", "symbol1",
-                Location(0, 100, chromosome, Strand.PLUS), null, -1, listOf())
-        val gene2 = Transcript("foo", "foo_gene", "symbol2",
-                Location(0, 200, chromosome, Strand.PLUS),  null, -1, listOf())
-        val gene3 = Transcript("foo2", "foo_gene", "symbol3",
-                Location(0, 300, chromosome, Strand.PLUS),  null, -1, listOf())
+    @Test
+    fun equalsHashCode() {
+        val gene1 = Transcript(
+            "foo", "foo_gene", "symbol1",
+            Location(0, 100, chromosome, Strand.PLUS), null, -1, listOf()
+        )
+        val gene2 = Transcript(
+            "foo", "foo_gene", "symbol2",
+            Location(0, 200, chromosome, Strand.PLUS), null, -1, listOf()
+        )
+        val gene3 = Transcript(
+            "foo2", "foo_gene", "symbol3",
+            Location(0, 300, chromosome, Strand.PLUS), null, -1, listOf()
+        )
 
         assertEquals(gene1.hashCode(), gene2.hashCode())
         assertNotEquals(gene1.hashCode(), gene3.hashCode())
@@ -72,8 +80,10 @@ class TranscriptTest {
     @Test
     fun associatedTranscriptsStart() {
         val result = Transcripts.associatedTranscriptsSingle(Location(0, 1, chromosome), limit = chromosome.length)
-        assertEquals(result.size, 1, "Expected a single transcript to be associated with the chromosome start, " +
-                "but got ${result.size} transcripts")
+        assertEquals(
+            result.size, 1, "Expected a single transcript to be associated with the chromosome start, " +
+                    "but got ${result.size} transcripts"
+        )
         assertEquals(chromosome.transcripts.first(), result.first())
     }
 
@@ -83,8 +93,10 @@ class TranscriptTest {
     @Test
     fun associatedTranscripts2Start() {
         val result = Transcripts.associatedTranscriptsTwo(Location(0, 1, chromosome), limit = chromosome.length)
-        assertEquals(result.size, 1, "Expected a single transcript to be associated with the chromosome start, " +
-                "but got ${result.size} transcripts")
+        assertEquals(
+            result.size, 1, "Expected a single transcript to be associated with the chromosome start, " +
+                    "but got ${result.size} transcripts"
+        )
         assertEquals(chromosome.transcripts.first(), result.first())
     }
 
@@ -93,10 +105,14 @@ class TranscriptTest {
      */
     @Test
     fun associatedTranscriptsEnd() {
-        val result = Transcripts.associatedTranscriptsSingle(Location(chromosome.length - 1, chromosome.length, chromosome),
-                limit = chromosome.length)
-        assertEquals(result.size, 1, "Expected a single transcript to be associated with the chromosome end, " +
-                "but got ${result.size} transcripts")
+        val result = Transcripts.associatedTranscriptsSingle(
+            Location(chromosome.length - 1, chromosome.length, chromosome),
+            limit = chromosome.length
+        )
+        assertEquals(
+            result.size, 1, "Expected a single transcript to be associated with the chromosome end, " +
+                    "but got ${result.size} transcripts"
+        )
         assertEquals(chromosome.transcripts.last(), result.first())
     }
 
@@ -105,10 +121,14 @@ class TranscriptTest {
      */
     @Test
     fun associatedTranscripts2End() {
-        val result = Transcripts.associatedTranscriptsTwo(Location(chromosome.length - 1, chromosome.length, chromosome),
-                limit = chromosome.length)
-        assertEquals(result.size, 1, "Expected a single transcript to be associated with the chromosome end, " +
-                "but got ${result.size} transcripts")
+        val result = Transcripts.associatedTranscriptsTwo(
+            Location(chromosome.length - 1, chromosome.length, chromosome),
+            limit = chromosome.length
+        )
+        assertEquals(
+            result.size, 1, "Expected a single transcript to be associated with the chromosome end, " +
+                    "but got ${result.size} transcripts"
+        )
         assertEquals(chromosome.transcripts.last(), result.first())
     }
 
@@ -146,11 +166,14 @@ class TranscriptTest {
                 val midpoint = (firstTSS + secondTSS) / 2
                 val location = Location(midpoint, midpoint + 1, chromosome)
                 val associatedTranscripts = Transcripts.associatedTranscriptsSingle(location, limit = chromosome.length)
-                assertEquals(2, associatedTranscripts.size,
-                        "Expected to get both TSS equidistant to $midpoint, but got ${associatedTranscripts.size}")
+                assertEquals(
+                    2, associatedTranscripts.size,
+                    "Expected to get both TSS equidistant to $midpoint, but got ${associatedTranscripts.size}"
+                )
                 assertEquals(arrayListOf(transcripts[i], transcripts[i + 1]), associatedTranscripts,
-                        "Expected ${transcripts[i].ensemblId} and ${transcripts[i + 1].ensemblId}, but got " +
-                                "${associatedTranscripts.map { it.ensemblId }}")
+                    "Expected ${transcripts[i].ensemblId} and ${transcripts[i + 1].ensemblId}, but got " +
+                            "${associatedTranscripts.map { it.ensemblId }}"
+                )
                 doTestAssociatedTranscriptsSingle(location)
             }
         }
@@ -165,11 +188,14 @@ class TranscriptTest {
             val midpoint = (firstTSS + secondTSS) / 2
             val location = Location(midpoint, midpoint + 1, chromosome)
             val associatedTranscripts = Transcripts.associatedTranscriptsTwo(location, limit = chromosome.length)
-            assertEquals(2, associatedTranscripts.size,
-                    "Expected to get both TSS framing $midpoint, but got ${associatedTranscripts.size}")
+            assertEquals(
+                2, associatedTranscripts.size,
+                "Expected to get both TSS framing $midpoint, but got ${associatedTranscripts.size}"
+            )
             assertEquals(arrayListOf(transcripts[i], transcripts[i + 1]), associatedTranscripts,
-                    "Expected ${transcripts[i].ensemblId} and ${transcripts[i + 1].ensemblId}, but got " +
-                            "${associatedTranscripts.map { it.ensemblId }}")
+                "Expected ${transcripts[i].ensemblId} and ${transcripts[i + 1].ensemblId}, but got " +
+                        "${associatedTranscripts.map { it.ensemblId }}"
+            )
             doTestAssociatedTranscriptsTwo(location)
         }
     }
@@ -180,12 +206,14 @@ class TranscriptTest {
 
         val transcripts = chromosome.transcripts
         val dists = transcripts.map { Transcripts.greatDistance(it, location) }
-        val minDist = dists.min()!!
+        val minDist = dists.minOrNull()!!
 
         val candidates = dists.mapIndexed { i, d -> if (d == minDist) transcripts[i] else null }.filterNotNull().toSet()
 
-        assert(actual.toSet() == candidates) { "Actual transcripts (${actual.map { it.ensemblId }}) " +
-                "not equal to expected ones (${candidates.map { it.ensemblId }})" }
+        assert(actual.toSet() == candidates) {
+            "Actual transcripts (${actual.map { it.ensemblId }}) " +
+                    "not equal to expected ones (${candidates.map { it.ensemblId }})"
+        }
     }
 
     fun doTestAssociatedTranscriptsTwo(location: Location) {
@@ -194,18 +222,21 @@ class TranscriptTest {
 
         val transcripts = chromosome.transcripts
         val dists = transcripts.map { Transcripts.signedGreatDistance(it, location) }
-        val leftDist = dists.filter { it < 0 }.max() ?: 0
-        val rightDist = dists.filter { it > 0 }.min() ?: 0
+        val leftDist = dists.filter { it < 0 }.maxOrNull() ?: 0
+        val rightDist = dists.filter { it > 0 }.minOrNull() ?: 0
 
-        val candidates = dists.mapIndexed { i, d -> if (d in leftDist..rightDist) transcripts[i] else null }.filterNotNull().toSet()
+        val candidates =
+            dists.mapIndexed { i, d -> if (d in leftDist..rightDist) transcripts[i] else null }.filterNotNull().toSet()
 
-        assert(actual.toSet() == candidates) { "Actual transcripts (${actual.map { it.ensemblId }}) " +
-                "not equal to expected ones (${candidates.map { it.ensemblId }})" }
+        assert(actual.toSet() == candidates) {
+            "Actual transcripts (${actual.map { it.ensemblId }}) " +
+                    "not equal to expected ones (${candidates.map { it.ensemblId }})"
+        }
     }
 
 
-    internal fun regulatoryDomainBasal(t: Transcript): Location
-            = RelativePosition.FIVE_PRIME.of(t.location, -5000, 1001)
+    internal fun regulatoryDomainBasal(t: Transcript): Location =
+        RelativePosition.FIVE_PRIME.of(t.location, -5000, 1001)
 
     val regulatoryDomainsExt: List<Location> by lazy {
         val transcripts = chromosome.transcripts
@@ -217,12 +248,16 @@ class TranscriptTest {
     internal fun regulatoryDomainExt(i: Int): Location {
         val transcripts = chromosome.transcripts
         val basal = regulatoryDomainBasal(transcripts[i])
-        val start = Math.min(transcripts.map { regulatoryDomainBasal(it).endOffset }
-                .filter { it < basal.endOffset }.max() ?: chromosome.range.startOffset,
-                basal.startOffset)
-        val end = Math.max(transcripts.map { regulatoryDomainBasal(it).startOffset }
-                .filter { it > basal.startOffset }.min() ?: chromosome.range.endOffset,
-                basal.endOffset)
+        val start = Math.min(
+            transcripts.map { regulatoryDomainBasal(it).endOffset }
+                .filter { it < basal.endOffset }.maxOrNull() ?: chromosome.range.startOffset,
+            basal.startOffset
+        )
+        val end = Math.max(
+            transcripts.map { regulatoryDomainBasal(it).startOffset }
+                .filter { it > basal.startOffset }.minOrNull() ?: chromosome.range.endOffset,
+            basal.endOffset
+        )
         return Location(start, end, chromosome, transcripts[i].strand)
     }
 
@@ -233,98 +268,127 @@ class TranscriptTest {
         val transcripts = chromosome.transcripts
         val midpoint = (location.startOffset + location.endOffset) / 2
         val candidates = transcripts.filterIndexed { i, _ ->
-            regulatoryDomainsExt[i].let { midpoint in it.startOffset until it.endOffset }}.toSet()
-        assert(actual.toSet() == candidates) { "Actual transcripts (${actual.map { it.ensemblId }}) " +
-                "not equal to expected ones (${candidates.map { it.ensemblId }})" }
+            regulatoryDomainsExt[i].let { midpoint in it.startOffset until it.endOffset }
+        }.toSet()
+        assert(actual.toSet() == candidates) {
+            "Actual transcripts (${actual.map { it.ensemblId }}) " +
+                    "not equal to expected ones (${candidates.map { it.ensemblId }})"
+        }
     }
 
     @Test
     fun utr5() {
         // PLUS:
-        var t = Transcript("1", "2", "3",
-                           Location(10, 100, chromosome, Strand.PLUS),
-                           Range(20, 80), 83,
-                           listOf(Range(12, 15), Range(18, 25), Range(70, 90)))
+        var t = Transcript(
+            "1", "2", "3",
+            Location(10, 100, chromosome, Strand.PLUS),
+            Range(20, 80), 83,
+            listOf(Range(12, 15), Range(18, 25), Range(70, 90))
+        )
         assertEquals(listOf(Range(12, 15), Range(18, 20)), t.utr5.map(Location::toRange))
 
-        t = Transcript("1", "2", "3",
-                           Location(10, 100, chromosome, Strand.PLUS),
-                           Range(20, 80), 83,
-                           listOf(Range(10, 15), Range(18, 20), Range(20, 30), Range(70, 90)))
+        t = Transcript(
+            "1", "2", "3",
+            Location(10, 100, chromosome, Strand.PLUS),
+            Range(20, 80), 83,
+            listOf(Range(10, 15), Range(18, 20), Range(20, 30), Range(70, 90))
+        )
         assertEquals(listOf(Range(10, 15), Range(18, 20)), t.utr5.map(Location::toRange))
-        
-        t = Transcript("1", "2", "3",
-                           Location(10, 100, chromosome, Strand.PLUS),
-                           Range(20, 80), 83,
-                           listOf(Range(20, 30), Range(70, 90)))
+
+        t = Transcript(
+            "1", "2", "3",
+            Location(10, 100, chromosome, Strand.PLUS),
+            Range(20, 80), 83,
+            listOf(Range(20, 30), Range(70, 90))
+        )
         assertEquals(listOf(), t.utr5)
 
         // MINUS:
-        t = Transcript("1", "2", "3",
-                           Location(10, 100, chromosome, Strand.MINUS),
-                           Range(21, 81), 17,
-                           listOf(Range(18, 25), Range(70, 90), Range(92, 95)))
+        t = Transcript(
+            "1", "2", "3",
+            Location(10, 100, chromosome, Strand.MINUS),
+            Range(21, 81), 17,
+            listOf(Range(18, 25), Range(70, 90), Range(92, 95))
+        )
         assertEquals(listOf(Range(81, 90), Range(92, 95)), t.utr5.map(Location::toRange))
 
-        t = Transcript("1", "2", "3",
-                           Location(10, 100, chromosome, Strand.MINUS),
-                           Range(21, 81), 17,
-                           listOf(Range(18, 80), Range(83, 90), Range(92, 95)))
+        t = Transcript(
+            "1", "2", "3",
+            Location(10, 100, chromosome, Strand.MINUS),
+            Range(21, 81), 17,
+            listOf(Range(18, 80), Range(83, 90), Range(92, 95))
+        )
         assertEquals(listOf(Range(83, 90), Range(92, 95)), t.utr5.map(Location::toRange))
 
-        t = Transcript("1", "2", "3",
-                           Location(10, 100, chromosome, Strand.MINUS),
-                           Range(21, 81), 17,
-                           listOf(Range(18, 80)))
+        t = Transcript(
+            "1", "2", "3",
+            Location(10, 100, chromosome, Strand.MINUS),
+            Range(21, 81), 17,
+            listOf(Range(18, 80))
+        )
         assertEquals(listOf(), t.utr5.map(Location::toRange))
     }
 
     @Test
     fun utr3() {
         // PLUS:
-        var t = Transcript("1", "2", "3",
-                           Location(10, 100, chromosome, Strand.PLUS),
-                           Range(20, 80), 83,
-                           listOf(Range(18, 25), Range(70, 90), Range(92, 95)))
+        var t = Transcript(
+            "1", "2", "3",
+            Location(10, 100, chromosome, Strand.PLUS),
+            Range(20, 80), 83,
+            listOf(Range(18, 25), Range(70, 90), Range(92, 95))
+        )
         assertEquals(listOf(Range(83, 90), Range(92, 95)), t.utr3.map(Location::toRange))
 
-        t = Transcript("1", "2", "3",
-                       Location(10, 100, chromosome, Strand.PLUS),
-                       Range(20, 80), 85,
-                       listOf(Range(18, 81), Range(83, 90), Range(92, 95)))
+        t = Transcript(
+            "1", "2", "3",
+            Location(10, 100, chromosome, Strand.PLUS),
+            Range(20, 80), 85,
+            listOf(Range(18, 81), Range(83, 90), Range(92, 95))
+        )
         //stop codon is: 80,83,84
         assertEquals(listOf(Range(85, 90), Range(92, 95)), t.utr3.map(Location::toRange))
 
-        t = Transcript("1", "2", "3",
-                       Location(10, 100, chromosome, Strand.PLUS),
-                       Range(20, 80), 83,
-                       listOf(Range(28, 40), Range(43, 80)))
+        t = Transcript(
+            "1", "2", "3",
+            Location(10, 100, chromosome, Strand.PLUS),
+            Range(20, 80), 83,
+            listOf(Range(28, 40), Range(43, 80))
+        )
         assertEquals(listOf(), t.utr3.map(Location::toRange))
 
         // MINUS:
-        t = Transcript("1", "2", "3",
-                       Location(10, 100, chromosome, Strand.MINUS),
-                       Range(21, 81), 17,
-                       listOf(Range(12, 15), Range(17, 25), Range(70, 90)))
+        t = Transcript(
+            "1", "2", "3",
+            Location(10, 100, chromosome, Strand.MINUS),
+            Range(21, 81), 17,
+            listOf(Range(12, 15), Range(17, 25), Range(70, 90))
+        )
         assertEquals(listOf(Range(12, 15), Range(17, 18)), t.utr3.map(Location::toRange))
 
-        t = Transcript("1", "2", "3",
-                       Location(10, 100, chromosome, Strand.MINUS),
-                       Range(21, 81),  17,
-                       listOf(Range(12, 15), Range(18, 25), Range(70, 90)))
+        t = Transcript(
+            "1", "2", "3",
+            Location(10, 100, chromosome, Strand.MINUS),
+            Range(21, 81), 17,
+            listOf(Range(12, 15), Range(18, 25), Range(70, 90))
+        )
         assertEquals(listOf(Range(12, 15)), t.utr3.map(Location::toRange))
 
-        t = Transcript("1", "2", "3",
-                       Location(10, 100, chromosome, Strand.MINUS),
-                       Range(21, 81), 15,
-                       listOf(Range(10, 15), Range(16, 18), Range(20, 30), Range(70, 90)))
+        t = Transcript(
+            "1", "2", "3",
+            Location(10, 100, chromosome, Strand.MINUS),
+            Range(21, 81), 15,
+            listOf(Range(10, 15), Range(16, 18), Range(20, 30), Range(70, 90))
+        )
         // stop codon is: 20,17,16
-         assertEquals(listOf(Range(10, 15)), t.utr3.map(Location::toRange))
+        assertEquals(listOf(Range(10, 15)), t.utr3.map(Location::toRange))
 
-        t = Transcript("1", "2", "3",
-                       Location(10, 100, chromosome, Strand.MINUS),
-                       Range(21, 81), 17,
-                       listOf(Range(18, 30), Range(70, 90)))
+        t = Transcript(
+            "1", "2", "3",
+            Location(10, 100, chromosome, Strand.MINUS),
+            Range(21, 81), 17,
+            listOf(Range(18, 30), Range(70, 90))
+        )
         assertEquals(listOf(), t.utr3)
 
     }
@@ -335,11 +399,11 @@ class TranscriptTest {
         // (e.g. if Transcript was changed, but to wasn't re-created)
 
         val chr = Chromosome(Genome["to1"], "chr1")
-        var t = chr.transcripts.stream().filter { it.ensemblId == "ENSTSIMGENE.CHR1.0"}.findFirst().get()
+        var t = chr.transcripts.stream().filter { it.ensemblId == "ENSTSIMGENE.CHR1.0" }.findFirst().get()
         assertTrue(!t.isCoding, "ENSTSIMGENE.CHR1.0 should be non-coding")
         assertNull(t.cdsRange, "CDS of a non-coding gene should be null")
 
-        t = chr.transcripts.stream().filter { it.ensemblId == "ENSTSIMGENE.CHR1.1"}.findFirst().get()
+        t = chr.transcripts.stream().filter { it.ensemblId == "ENSTSIMGENE.CHR1.1" }.findFirst().get()
         assertTrue(t.isCoding, "ENSTSIMGENE.CHR1.1 should be coding")
         assertNotNull(t.cdsRange, "CDS of a coding gene shouldn't be null")
     }
@@ -355,13 +419,13 @@ class TranscriptTest {
         // XXX json files for normal genomes are bundled annotations.tar.gz
         // do not change this test data without updating files in annotations.tar.gz
         assertEquals(
-                "genes.gtf.json.gz",
-                Transcripts.cachedTranscriptsJsonPath(gtf).name
+            "genes.gtf.json.gz",
+            Transcripts.cachedTranscriptsJsonPath(gtf).name
         )
 
         assertEquals(
-                "foo/Homo_sapiens.GRCh37.87.gtf.json.gz".toPath(),
-                Transcripts.cachedTranscriptsJsonPath("foo/Homo_sapiens.GRCh37.87.gtf.gz".toPath())
+            "foo/Homo_sapiens.GRCh37.87.gtf.json.gz".toPath(),
+            Transcripts.cachedTranscriptsJsonPath("foo/Homo_sapiens.GRCh37.87.gtf.gz".toPath())
         )
     }
 }

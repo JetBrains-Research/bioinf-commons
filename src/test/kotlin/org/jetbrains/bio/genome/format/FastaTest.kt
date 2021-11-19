@@ -8,7 +8,8 @@ import java.util.stream.Collectors
 import kotlin.test.assertEquals
 
 class FastaTest {
-    @Test fun testWriteOne() {
+    @Test
+    fun testWriteOne() {
         withTempFile("sample", ".fa") { path ->
             val record = FastaRecord("description", "ACGT")
             listOf(record).write(path)
@@ -23,11 +24,14 @@ class FastaTest {
         }
     }
 
-    @Test fun testWriteRead() {
+    @Test
+    fun testWriteRead() {
         val r = Random()
         val records = (0..2).map {
-            FastaRecord("sequence$it",
-                        r.nextString("ACGT", r.nextInt(20 - 1) + 1))
+            FastaRecord(
+                "sequence$it",
+                r.nextString("ACGT", r.nextInt(20 - 1) + 1)
+            )
         }
 
         withTempFile("random", ".fa.gz") { path ->
@@ -39,6 +43,6 @@ class FastaTest {
 
 fun Random.nextString(alphabet: String, length: Int): String {
     return ints(length.toLong(), 0, alphabet.length)
-            .mapToObj { alphabet[it].toString() }
-            .collect(Collectors.joining())
+        .mapToObj { alphabet[it].toString() }
+        .collect(Collectors.joining())
 }

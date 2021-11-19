@@ -113,13 +113,16 @@ class ChromosomeSearcherTest : TestCase() {
             var mismatchCount = 0
             for (i in FIXED_PATTERN.indices) {
                 if (!NucleotideAlternative
-                        .fromChar(pattern!![i].toUpperCase())
-                        .match(Nucleotide.valueOf(matchingSeq[i].toString().toUpperCase()).byte))
+                        .fromChar(pattern!![i])
+                        .match(Nucleotide.valueOf(matchingSeq[i].toString().uppercase()).byte)
+                )
                     ++mismatchCount
             }
 //            println("Found pattern: " + matchingSeq + " at " + match.startOffset + ' ' + match.strand)
-            assertTrue("testCorrectness(): mismatch count exceeds maximum allowed value: $mismatchCount",
-                mismatchCount <= MAX_MISMATCH)
+            assertTrue(
+                "testCorrectness(): mismatch count exceeds maximum allowed value: $mismatchCount",
+                mismatchCount <= MAX_MISMATCH
+            )
         }
     }
 
@@ -147,8 +150,8 @@ class ChromosomeSearcherTest : TestCase() {
             return
         }
         assertTrue("testSpecificity(): the pattern was not found at the expected position",
-            searcher!!.find(pattern!!).anyMatch {
-                    match -> match.startOffset == chomosomePos && match.strand === strand
+            searcher!!.find(pattern!!).anyMatch { match ->
+                match.startOffset == chomosomePos && match.strand === strand
             })
     }
 
@@ -201,11 +204,15 @@ class ChromosomeSearcherTest : TestCase() {
             val location = this.searcher!!.findUnique(pattern)
             if (location != null) {
 //                println("Found $pattern at $location")
-                assertEquals(pattern,
-                    chromosome.sequence.substring(location.startOffset, location.endOffset, location.strand))
+                assertEquals(
+                    pattern,
+                    chromosome.sequence.substring(location.startOffset, location.endOffset, location.strand)
+                )
 
-                assertEquals(1L, searcher.find(pattern.asNucleotideSequence()).count() +
-                        searcher.find(SequenceUtil.reverseComplement(pattern).asNucleotideSequence()).count())
+                assertEquals(
+                    1L, searcher.find(pattern.asNucleotideSequence()).count() +
+                            searcher.find(SequenceUtil.reverseComplement(pattern).asNucleotideSequence()).count()
+                )
             }
         }
     }

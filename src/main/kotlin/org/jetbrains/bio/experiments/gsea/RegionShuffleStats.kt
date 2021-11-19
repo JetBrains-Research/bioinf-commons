@@ -31,10 +31,9 @@ import kotlin.math.sqrt
 
 /**
  * @param genome Genome
- * @param srcRegionsPath Source regions, their length will be used for simulations
- * @param backgroundRegions Simulated regions will be taken from background
  * @param simulationsNumber Simulations number
- * @param maxRetries Max retries if cannot shuffle region from background
+ * @param chunkSize Size of chunk
+ * @param maxRetries Max retries when cannot shuffle region from background
  *
  * Loci file path will be added to background
  */
@@ -125,8 +124,10 @@ class RegionShuffleStats(
             val end = minOf(simulationsNumber, (chunkId + 1) * chunkSize)
             val simulationsInChunk = end - start
 
-            LOG.info("Simulations: Chunk [${chunkId + 1} of $nChunks], simulations " +
-                    "${start.formatLongNumber()}..${end.formatLongNumber()} of ${simulationsNumber.formatLongNumber()}")
+            LOG.info(
+                "Simulations: Chunk [${chunkId + 1} of $nChunks], simulations " +
+                        "${start.formatLongNumber()}..${end.formatLongNumber()} of ${simulationsNumber.formatLongNumber()}"
+            )
 
             val sampledRegions: List<List<LocationsList<out RangesList>>> =
                 sampleRegions(simulationsInChunk, intersectionFilter, sourceLoci, bgLociList, parallelismLevel())
@@ -374,6 +375,7 @@ class RegionShuffleStats(
 
         return allowedSourceLoci to allowedBgList
     }
+
     private fun calcMetric(
         sampledLoci: LocationsList<out RangesList>,
         lociToTest: LocationsList<out RangesList>,

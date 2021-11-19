@@ -26,8 +26,8 @@ class LocationsSortedList private constructor(
         val b = other.rangeLists[chromosome, strand]
         op(a, b).toRangeSortedList()
     })
-    
-    class Builder(gq: GenomeQuery): LocationsListBuilder<LocationsSortedList>(gq) {
+
+    class Builder(gq: GenomeQuery) : LocationsListBuilder<LocationsSortedList>(gq) {
         override fun build() = LocationsSortedList(genomeStrandMap(genomeQuery) { chromosome, strand ->
             ranges[chromosome, strand].toRangeSortedList()
         })

@@ -10,7 +10,8 @@ import kotlin.test.assertTrue
  */
 class ParseTest {
 
-    @Test fun testTokens() {
+    @Test
+    fun testTokens() {
         val tokenizer = Tokenizer(" { 1 , 10 , 1 } ", setOf(Lexeme("{"), Lexeme(","), Lexeme("}")))
         val lexemes = arrayListOf<String>()
         while (!tokenizer.atEnd()) {
@@ -20,7 +21,8 @@ class ParseTest {
         assertEquals("{;1;,;10;,;1;}", lexemes.joinToString(";"))
     }
 
-    @Test fun testLookahead() {
+    @Test
+    fun testLookahead() {
         val tokenizer = Tokenizer("{ 1, 10, 1 }", setOf(Lexeme("{"), Lexeme(","), Lexeme("}")))
         tokenizer.next()
         tokenizer.lookahead(Match(Lexeme("XXX"), 1, 3))
@@ -30,24 +32,28 @@ class ParseTest {
     }
 
 
-    @Test fun testParseInt() {
+    @Test
+    fun testParseInt() {
         val tokenizer = Tokenizer("123456", emptySet())
         assertEquals(123456, tokenizer.parseInt())
         assertTrue(tokenizer.atEnd())
     }
 
-    @Test fun testParseIntWhitespaces() {
+    @Test
+    fun testParseIntWhitespaces() {
         val tokenizer = Tokenizer("\t123456 ", emptySet())
         assertEquals(123456, tokenizer.parseInt())
         assertTrue(tokenizer.atEnd())
     }
 
-    @Test fun testParseDouble() {
+    @Test
+    fun testParseDouble() {
         val tokenizer = Tokenizer("123456.5", emptySet())
         assertEquals(123456.5, tokenizer.parseDouble())
     }
 
-    @Test fun testRegex() {
+    @Test
+    fun testRegex() {
         val delimiter = RegexLexeme("[_;,]|\\.\\.")
         val tokenizer = Tokenizer("1 _ 2 ; 3 , 4 .. 5", setOf(delimiter))
         assertEquals(1, tokenizer.parseInt())

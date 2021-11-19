@@ -9,7 +9,8 @@ import kotlin.math.round
 import kotlin.test.assertEquals
 
 class IntersectionInfoTest {
-    @Test fun saveToCsv() {
+    @Test
+    fun saveToCsv() {
         val info = generateTestData(3, 2)
         val outputPath = File.createTempFile("intersection_df", ".csv").toPath()
         info.saveToCSV(outputPath)
@@ -23,10 +24,12 @@ class IntersectionInfoTest {
                 |row_2,2,0.67,0.83
                 |
             """.trimMargin(),
-            outputContent)
+            outputContent
+        )
     }
 
-    @Test fun dumpToString_2x3() {
+    @Test
+    fun dumpToString_2x3() {
         assertEquals(
             """
                 |a_names,a_merged_loci_count,col_0,col_1,col_2
@@ -39,7 +42,8 @@ class IntersectionInfoTest {
         )
     }
 
-    @Test fun dumpToString_2x2() {
+    @Test
+    fun dumpToString_2x2() {
         Assert.assertEquals(
             """
                 |a_names,a_merged_loci_count,col_0,col_1
@@ -52,7 +56,8 @@ class IntersectionInfoTest {
         )
     }
 
-    @Test fun dumpToString_3x2() {
+    @Test
+    fun dumpToString_3x2() {
         Assert.assertEquals(
             """
                 |a_names,a_merged_loci_count,col_0,col_1
@@ -66,7 +71,8 @@ class IntersectionInfoTest {
         )
     }
 
-    @Test fun loadFromToCsv() {
+    @Test
+    fun loadFromToCsv() {
         val expectedInfo = generateTestData(3, 2)
 
         val outputPath = File.createTempFile("intersection_df", ".csv").toPath()

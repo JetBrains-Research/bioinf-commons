@@ -57,7 +57,7 @@ class Tokenizer(val text: String, private val keywords: Set<Lexeme>) {
         if (atEnd()) {
             return null
         }
-        val keyword = keywords.mapNotNull { it.locate(text, tokenOffset) }.min()
+        val keyword = keywords.mapNotNull { it.locate(text, tokenOffset) }.minOrNull()
         // No more keywords
         if (keyword == null) {
             // Trailing whitespace
@@ -116,7 +116,7 @@ class Tokenizer(val text: String, private val keywords: Set<Lexeme>) {
     }
 
     override fun toString(): String =
-            "Text: $text; Offset: $tokenOffset; Text at offset: ${text.substring(tokenOffset)}; Match: $match"
+        "Text: $text; Offset: $tokenOffset; Text at offset: ${text.substring(tokenOffset)}; Match: $match"
 
 }
 

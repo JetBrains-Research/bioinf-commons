@@ -73,13 +73,13 @@ aux:
 
         /** Loads configuration from [Reader]. */
         fun load(reader: Reader, id: String): DataConfig =
-                createMapper().readValue(reader, DataConfig::class.java).apply {
-                    this.id = id
-                    // Check genome correctness
-                    genomeQuery
-                    // Force lazy loading to check structure correctness
-                    tracksMap
-                }
+            createMapper().readValue(reader, DataConfig::class.java).apply {
+                this.id = id
+                // Check genome correctness
+                genomeQuery
+                // Force lazy loading to check structure correctness
+                tracksMap
+            }
 
 
         /** Loads configuration from a YAML file with id as file name. */
@@ -170,12 +170,12 @@ aux:
     fun auxDataTypes() = aux.keys.distinct()
 
     fun getCellIds(dataType: DataType): Collection<Cell> =
-            tracksMap.keys.filter { it.dataType.toDataType() == dataType }.map(Key::cellId).distinct()
+        tracksMap.keys.filter { it.dataType.toDataType() == dataType }.map(Key::cellId).distinct()
 
     data class Key(val dataType: String, val cellId: Cell)
 
     operator fun <T> get(dataType: String, key: ReplicateDataKey<T>): T =
-            key.parse(aux[dataType]?.get(key.name))
+        key.parse(aux[dataType]?.get(key.name))
 
 }
 

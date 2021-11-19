@@ -4,9 +4,11 @@ import org.jetbrains.bio.util.name
 import java.nio.file.Path
 
 
-class FastqReads(val id: String,
-                 val reads1: List<Path>,
-                 val reads2: List<Path>? = null) {
+class FastqReads(
+    val id: String,
+    val reads1: List<Path>,
+    val reads2: List<Path>? = null
+) {
     init {
         require(reads1.isNotEmpty()) { "no data" }
         require(reads2 == null || reads1.size == reads2.size)

@@ -12,12 +12,13 @@ import java.util.stream.StreamSupport
 data class Chunk(val lo: Int, val hi: Int)
 
 private data class ChunkSpliterator(
-        /** Start index (inclusive). */
-        private var from: Int,
-        /** End index (exclusive). */
-        private val to: Int,
-        /** Maximum number of elements in a chunk. */
-        private val chunkSize: Int) : Spliterator<Chunk> {
+    /** Start index (inclusive). */
+    private var from: Int,
+    /** End index (exclusive). */
+    private val to: Int,
+    /** Maximum number of elements in a chunk. */
+    private val chunkSize: Int
+) : Spliterator<Chunk> {
 
     override fun tryAdvance(action: Consumer<in Chunk>): Boolean {
         if (from >= to) {

@@ -1,10 +1,13 @@
-package org.jetbrains.bio.dataframe
+package org.jetbrains.bio.util
 
+import org.jetbrains.bio.dataframe.argSort
+import org.jetbrains.bio.dataframe.reorder
 import org.junit.Assert
 import org.junit.Test
 
 class ArrayExtensionsTest {
-    @Test fun testSortedReorder() {
+    @Test
+    fun testSortedReorder() {
         val values = intArrayOf(42, 2, -1, 0, 4, 2);
         val indices = values.argSort();
         Assert.assertArrayEquals(intArrayOf(2, 3, 1, 5, 4, 0), indices);

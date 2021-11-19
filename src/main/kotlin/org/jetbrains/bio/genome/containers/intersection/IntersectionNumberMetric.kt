@@ -6,7 +6,7 @@ import org.jetbrains.bio.genome.containers.RangesList
 /**
  * ~ bedtools intersect -wa -a .. -b .. | wc -l
  */
-class IntersectionNumberMetric (val aSetFlankedBothSides: Int = 0) : RegionsMetric {
+class IntersectionNumberMetric(val aSetFlankedBothSides: Int = 0) : RegionsMetric {
     override val column =
         "intersection_number" + if (aSetFlankedBothSides == 0) "" else "_flnk_$aSetFlankedBothSides"
 
