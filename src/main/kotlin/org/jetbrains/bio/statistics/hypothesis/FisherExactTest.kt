@@ -1,12 +1,9 @@
 package org.jetbrains.bio.statistics.hypothesis
 
 import org.jetbrains.bio.statistics.MoreMath
-import org.jetbrains.bio.viktor.F64Array
-import org.jetbrains.bio.viktor.argSort
-
-enum class Alternative {
-    LESS, GREATER, TWO_SIDED
-}
+import kotlin.math.exp
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Hypergeometric distribution describes the number of successes k
@@ -35,7 +32,7 @@ class FisherExactTest(
      * Support of the Hypergeometric distribution with parameters
      * [N], [K] and [n].
      */
-    private val support: IntRange get() = Math.max(0, n - (N - K))..Math.min(n, K)
+    private val support: IntRange get() = max(0, n - (N - K))..min(n, K)
 
     init {
         require(N >= 0) { "N must be >= 0 (N = $N)" }
@@ -50,7 +47,7 @@ class FisherExactTest(
         return when (alternative) {
             Alternative.LESS -> {
                 var acc = 0.0
-                for (x in support.start..Math.min(k, K)) {
+                for (x in support.first..min(k, K)) {
                     acc += hypergeometricProbability(N, K, n, x)
                 }
 
@@ -89,44 +86,17 @@ class FisherExactTest(
                 n = a + c, k = a
             )
         }
-    }
-}
 
-// This is up to 30x faster then calling
-// [HypergeometricDistribution#logProbability] because of the
-// tabulated factorial.
-private fun hypergeometricProbability(N: Int, K: Int, n: Int, k: Int): Double {
-    return Math.exp(
-        MoreMath.binomialCoefficientLog(K, k)
-                + MoreMath.binomialCoefficientLog(N - K, n - k)
-                - MoreMath.binomialCoefficientLog(N, n)
-    )
-}
-
-object Multiple {
-    /**
-     * Applies Benjamini-Hochberg correction to the P-values.
-     *
-     * See https://en.wikipedia.org/wiki/False_discovery_rate.
-     */
-    fun adjust(ps: F64Array): F64Array {
-        val m = ps.size
-        val sorted = ps.argSort(reverse = true)
-        val original = IntArray(m)
-        for (k in 0 until m) {
-            original[sorted[k]] = k
+        /**
+         * This is up to 30x faster than calling [HypergeometricDistribution#logProbability]
+         * because of tabulated factorial
+         */
+        private fun hypergeometricProbability(N: Int, K: Int, n: Int, k: Int): Double {
+            return exp(
+                MoreMath.binomialCoefficientLog(K, k)
+                        + MoreMath.binomialCoefficientLog(N - K, n - k)
+                        - MoreMath.binomialCoefficientLog(N, n)
+            )
         }
-
-        val adjusted = F64Array(m)
-        for (k in 0 until m) {
-            adjusted[k] = Math.min(1.0, ps[sorted[k]] * m / (m - k))
-        }
-
-        for (k in 1 until m) {
-            adjusted[k] = Math.min(adjusted[k], adjusted[k - 1])
-        }
-
-        adjusted.reorder(original)
-        return adjusted
     }
 }

@@ -7,10 +7,6 @@ import org.jetbrains.bio.viktor.logAddExp
 import kotlin.math.ln
 import kotlin.math.min
 
-interface Predictor {
-    fun predict(logNullMemberships: F64Array): BitterSet
-}
-
 /**
  * Procedures for estimating and controlling FDR for predictions for [ClassificationModel]
  *
@@ -85,6 +81,9 @@ class Fdr(private val alpha: Double) : Predictor {
             return qvalues
         }
 
+        /**
+         * Almost the same as [BenjaminiHochberg], but inplace
+         */
         fun logQValidate(logNullMemberships: F64Array): F64Array {
             val length = logNullMemberships.size
 

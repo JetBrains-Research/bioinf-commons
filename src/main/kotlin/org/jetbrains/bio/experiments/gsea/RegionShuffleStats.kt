@@ -13,7 +13,7 @@ import org.jetbrains.bio.genome.containers.RangesList
 import org.jetbrains.bio.genome.containers.intersection.RegionsMetric
 import org.jetbrains.bio.genome.format.BedFormat
 import org.jetbrains.bio.genome.sampling.shuffleChromosomeRanges
-import org.jetbrains.bio.statistics.hypothesis.Multiple
+import org.jetbrains.bio.statistics.hypothesis.BenjaminiHochberg
 import org.jetbrains.bio.util.Progress
 import org.jetbrains.bio.util.createDirectories
 import org.jetbrains.bio.util.div
@@ -225,7 +225,7 @@ class RegionShuffleStats(
             sampledSetsMetricVar.add(metricSd * metricSd)
         }
         val pValues = pValuesList.toDoubleArray()
-        val qValues = Multiple.adjust(pValues.asF64Array()).toDoubleArray()
+        val qValues = BenjaminiHochberg.adjust(pValues.asF64Array()).toDoubleArray()
 
         return DataFrame()
             .with("name", regionLabels.toTypedArray())
