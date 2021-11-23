@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory
  * A fitter encapsulates the initialization logic for the classification model.
  *
  * @author Sergei Lebedev
+ * @author Oleg Shpynov
  * @since 17/06/14
  */
 interface Fitter<out Model : ClassificationModel> {
@@ -80,6 +81,7 @@ interface Fitter<out Model : ClassificationModel> {
                 super.fit(preprocessed, "Multistart ${it + 1}/$multiStarts: $title", threshold, multiStartIter, it)
             }.maxByOrNull { it.logLikelihood(preprocessed) }!!
             LOG.info("Multistart done: $title")
+
             MultitaskProgress.addTask(title, maxIter.toLong())
             msModel.fit(preprocessed, title, threshold, maxIter)
             MultitaskProgress.finishTask(title)
@@ -99,8 +101,9 @@ interface Fitter<out Model : ClassificationModel> {
             val msModel = (0 until multiStarts).map {
                 LOG.info("Multistart ${it + 1}/$multiStarts: $title")
                 super.fit(preprocessed, "Multistart ${it + 1}/$multiStarts: $title", threshold, multiStartIter, it)
-            }.maxByOrNull { m -> preprocessed.map { m.logLikelihood(it) }.sum() }!!
+            }.maxByOrNull { m -> preprocessed.sumOf { m.logLikelihood(it) } }!!
             LOG.info("Multistart done: $title")
+
             MultitaskProgress.addTask(title, maxIter.toLong())
             msModel.fit(preprocessed, title, threshold, maxIter)
             MultitaskProgress.finishTask(title)
@@ -111,9 +114,9 @@ interface Fitter<out Model : ClassificationModel> {
     companion object {
         private val LOG = LoggerFactory.getLogger(ClassificationModel::class.java)
         const val TITLE = "unknown"
-        const val THRESHOLD = 0.1
-        const val MAX_ITERATIONS = 100
+        const val THRESHOLD = 1.0
+        const val MAX_ITERATIONS = 30
         const val MULTISTARTS = 5
-        const val MULTISTART_ITERATIONS = 5
+        const val MULTISTART_ITERATIONS = 3
     }
 }

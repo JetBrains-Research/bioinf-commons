@@ -25,6 +25,7 @@ import java.util.function.IntPredicate
  * serialization impossible.
  *
  * @author Alexey Dievsky
+ * @author Oleg Shpynov
  * @date 01/04/15
  */
 abstract class MLFreeHMM(
@@ -51,9 +52,9 @@ abstract class MLFreeHMM(
         var res = DataFrame()
         for (d in 0 until numDimensions) {
             val column = IntArray(numObservations)
-            res = res.with("d" + d, column)
+            res = res.with("d$d", column)
             for (i in 0 until numStates) {
-                getEmissionScheme(i, d).sample(res, d, IntPredicate { states[it] == i })
+                getEmissionScheme(i, d).sample(res, d) { states[it] == i }
             }
         }
         return res.with("state", states)

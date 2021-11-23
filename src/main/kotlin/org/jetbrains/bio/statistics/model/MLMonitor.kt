@@ -3,35 +3,8 @@ package org.jetbrains.bio.statistics.model
 import gnu.trove.list.array.TDoubleArrayList
 import org.apache.commons.math3.exception.NotANumberException
 import org.apache.commons.math3.util.Precision
-import org.jetbrains.bio.util.log
-import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
-
-/**
- * A common class for model monitors.
- *
- * @author Sergei Lebedev
- * @since 05/09/14
- */
-abstract class ConvergenceMonitor(
-    protected val title: String,
-    protected val threshold: Double,
-    protected val maxIter: Int,
-    private val level: Level
-) {
-    init {
-        require(maxIter > 1) { "maximum number of iterations must be greater than one" }
-        require(threshold >= 0) { "threshold must be >= 0" }
-    }
-
-    fun finish(model: ClassificationModel) = log(model)
-
-    protected fun log(obj: Any) = LOG.log(level, "{$title} $obj")
-
-    companion object {
-        private val LOG = LoggerFactory.getLogger(ConvergenceMonitor::class.java)
-    }
-}
+import kotlin.math.abs
 
 
 /**
@@ -41,12 +14,10 @@ abstract class ConvergenceMonitor(
  * than [threshold] or if we've reached [maxIter].
  *
  * @author Sergei Lebedev
+ * @author Oleg Shpynov
  * @since 03/09/14
  */
-class MLMonitor(
-    title: String, threshold: Double, maxIter: Int,
-    level: Level = Level.DEBUG
-) :
+class MLMonitor(title: String, threshold: Double, maxIter: Int, level: Level = Level.DEBUG) :
     ConvergenceMonitor(title, threshold, maxIter, level) {
 
     private val logLikelihoods = TDoubleArrayList(maxIter)
@@ -72,6 +43,6 @@ class MLMonitor(
         val status = if (Precision.compareTo(curr, prev, threshold) < 0) " *" else ""
         log("iteration: %03d  LL: %.6f%s".format(iter, curr, status))
 
-        return Math.abs(curr - prev) < threshold
+        return abs(curr - prev) < threshold
     }
 }

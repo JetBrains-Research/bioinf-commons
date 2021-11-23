@@ -9,7 +9,7 @@ object BenjaminiHochberg {
     /**
      * Applies Benjamini-Hochberg correction to the P-values.
      *
-     * See [Fdr.qvalidate] for inplace version.
+     * See [Fdr.qvalidate] for inplace log version.
      */
     fun adjust(ps: F64Array): F64Array {
         val m = ps.size

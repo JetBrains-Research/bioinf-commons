@@ -18,7 +18,9 @@ import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.stream.DoubleStream
 import kotlin.math.abs
+import kotlin.math.exp
 import kotlin.math.ln
+import kotlin.math.pow
 
 /**
  * Implementation of a Negative Binomial distribution.
@@ -66,14 +68,14 @@ class NegativeBinomialDistribution(
         fLog1MinusPMinusLogGammaF = if (failures.isInfinite())
             0.0
         else
-            failures * Math.log(1.0 - probabilityOfSuccess) - Gamma.logGamma(failures)
+            failures * ln(1.0 - probabilityOfSuccess) - Gamma.logGamma(failures)
         oneMinusPToFDivideByGammaF = if (failures.isInfinite())
             0.0
         else
-            Math.pow(1 - probabilityOfSuccess, failures) / Gamma.gamma(failures)
-        logP = Math.log(probabilityOfSuccess)
-        logMean = if (mean == 0.0) Double.NEGATIVE_INFINITY else Math.log(mean)
-        expMinusMean = Math.exp(-mean)
+            (1 - probabilityOfSuccess).pow(failures) / Gamma.gamma(failures)
+        logP = ln(probabilityOfSuccess)
+        logMean = if (mean == 0.0) Double.NEGATIVE_INFINITY else ln(mean)
+        expMinusMean = exp(-mean)
     }
 
     override fun probability(k: Int): Double {
@@ -84,9 +86,9 @@ class NegativeBinomialDistribution(
             return if (k == 0) 1.0 else 0.0
         }
         return if (failures.isInfinite()) {
-            Math.pow(mean, k.toDouble()) * expMinusMean / CombinatoricsUtils.factorialDouble(k)
+            mean.pow(k.toDouble()) * expMinusMean / CombinatoricsUtils.factorialDouble(k)
         } else Gamma.gamma(k + failures) / CombinatoricsUtils.factorialDouble(k) *
-                oneMinusPToFDivideByGammaF * Math.pow(probabilityOfSuccess, k.toDouble())
+                oneMinusPToFDivideByGammaF * probabilityOfSuccess.pow(k.toDouble())
     }
 
     override fun logProbability(k: Int): Double {
@@ -202,15 +204,15 @@ class NegativeBinomialDistribution(
             if (mean == 0.0) {
                 return Double.NaN
             }
-            val logMean = Math.log(mean)
+            val logMean = ln(mean)
             var aInv = 1 / prevA
             var a = prevA
 
             for (i in 0..99) {
-                aInv += (meanLog - logMean + Math.log(a) - Gamma.digamma(a)) * aInv * aInv / (aInv - Gamma.trigamma(a))
+                aInv += (meanLog - logMean + ln(a) - Gamma.digamma(a)) * aInv * aInv / (aInv - Gamma.trigamma(a))
 
                 val aNext = 1 / aInv
-                if (Math.abs(a - aNext) < 1E-6 * a) {
+                if (abs(a - aNext) < 1E-6 * a) {
                     return aNext
                 }
                 a = aNext
@@ -324,8 +326,7 @@ class NegativeBinomialDistribution(
                     .sum()
 
                 val aNext = a - fDeriv / fSecDeriv
-                if (Math.abs(a - aNext) < 1E-4) {
-                    println(aNext)
+                if (abs(a - aNext) < 1E-4) {
                     return aNext
                 }
                 a = aNext
@@ -336,7 +337,7 @@ class NegativeBinomialDistribution(
         fun estimateFailuresUsingMoments(mean: Double, variance: Double): Double {
             val p1 = if (Precision.equals(variance, 0.0)) 1.0 else mean / variance
             val p0 = 1 - p1
-            if (p0 < 0.0001) {
+            if (p0 < 1e-6) {
                 LOG.debug(
                     "Failures = ${Double.POSITIVE_INFINITY} for negative binomial distribution: " +
                             "mean = $mean is greater than variance = $variance"
@@ -344,6 +345,10 @@ class NegativeBinomialDistribution(
                 return Double.POSITIVE_INFINITY
             }
             return mean * p1 / p0
+        }
+
+        fun estimateVariance(mean: Double, failures: Double): Double {
+            return mean + mean * mean / failures
         }
     }
 }
