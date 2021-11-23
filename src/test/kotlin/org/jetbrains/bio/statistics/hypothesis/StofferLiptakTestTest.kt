@@ -1,9 +1,17 @@
 package org.jetbrains.bio.statistics.hypothesis
 
+import org.jetbrains.bio.statistics.hypothesis.StofferLiptakTest.Companion.NORMAL
 import org.junit.Assert
 import org.junit.Test
 
 class StofferLiptakTestTest {
+
+    @Test
+    fun testNormalInverseCumulative() {
+        Assert.assertTrue(NORMAL.inverseCumulativeProbability(1.0 - StofferLiptakTest.EPSILON).isFinite())
+        Assert.assertFalse(NORMAL.inverseCumulativeProbability(1.0 - StofferLiptakTest.EPSILON * 0.5).isFinite())
+    }
+
     @Test
     fun testCorrelations() {
         val  correlations = StofferLiptakTest.computeCorrelations(doubleArrayOf(0.0, 0.1, 0.2, 0.3, 0.4), 20)
@@ -21,8 +29,8 @@ class StofferLiptakTestTest {
     @Test
     fun testZScore() {
         val stofferLiptakTest = StofferLiptakTest(doubleArrayOf(1e-12, 1e-10, 1e-8, 1e-6, 1e-4, 1e-2, 0.1, 0.2, 0.3))
-        Assert.assertEquals(7.650730905155645, stofferLiptakTest.zscore(0.0), 1e-6)
-        Assert.assertEquals(-7.650730905155645, stofferLiptakTest.zscore(1.0), 1e-6)
+        Assert.assertEquals(8.209536151601387, stofferLiptakTest.zscore(0.0), 1e-6)
+        Assert.assertEquals(-8.209536151601387, stofferLiptakTest.zscore(1.0), 1e-6)
         Assert.assertEquals(1.6448536269514724, stofferLiptakTest.zscore(0.05), 1e-6)
     }
 

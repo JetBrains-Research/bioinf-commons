@@ -64,10 +64,10 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
 
     companion object {
         /**
-         * EPSILON is used to limit min pvalue, otherwise [zscore] inverseCumulativeProbability returns +Inf
+         * EPSILON - min pvalue threshold, so that [zscore] inverseCumulativeProbability doesn't return +Inf
          */
-        private const val EPSILON: Double = 1e-14
-        private val NORMAL = NormalDistribution()
+        internal const val EPSILON: Double = 9e-17
+        internal val NORMAL = NormalDistribution()
 
         /**
          * Maximum distance to compute correlations between p-values for Stoffer-Liptak test
