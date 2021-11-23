@@ -115,8 +115,8 @@ interface Fitter<out Model : ClassificationModel> {
         private val LOG = LoggerFactory.getLogger(ClassificationModel::class.java)
         const val TITLE = "unknown"
         const val THRESHOLD = 1.0
-        const val MAX_ITERATIONS = 30
+        const val MAX_ITERATIONS = 20
         const val MULTISTARTS = 5
-        const val MULTISTART_ITERATIONS = 3
+        const val MULTISTART_ITERATIONS = 2
     }
 }
