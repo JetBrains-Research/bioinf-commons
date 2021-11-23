@@ -3,7 +3,6 @@ package org.jetbrains.bio.statistics.hypothesis
 import org.apache.commons.math3.distribution.NormalDistribution
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation
 import org.jetbrains.bio.viktor.KahanSum
-import org.slf4j.LoggerFactory
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sqrt
@@ -45,8 +44,8 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
             }
         }
         val testStat = zSum.result() / sqrt(n + 2.0 * correctionSum.result())
-        check (!testStat.isNaN()) {
-           "Nan during combining pvalues ${pValues.joinToString(",") { it.toString() }}"
+        check(!testStat.isNaN()) {
+            "Nan during combining pvalues ${pValues.joinToString(",") { it.toString() }}"
         }
         // cumulativeProbability may return 1.0 in case of big testStat values
         return max(EPSILON, 1.0 - NORMAL.cumulativeProbability(testStat))
@@ -64,8 +63,6 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
     }
 
     companion object {
-        private val LOG = LoggerFactory.getLogger(StofferLiptakTest::class.java)
-
         /**
          * EPSILON is used to limit min pvalue, otherwise [zscore] inverseCumulativeProbability returns +Inf
          */
@@ -79,12 +76,11 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
 
         internal fun computeCorrelations(pValues: DoubleArray, maxCorrelationDistance: Int): DoubleArray {
             val distanceCorrelations = DoubleArray(min(pValues.size / 2, maxCorrelationDistance) + 1)
-            LOG.debug("Compute pvalues correlation for distances in 1 until ${distanceCorrelations.size - 1}")
             val shifted = DoubleArray(pValues.size)
             for (i in 1 until distanceCorrelations.size) {
                 System.arraycopy(pValues, i, shifted, 0, pValues.size - i - 1)
                 var correlation = 0.0
-                if (!pValues.all { it  == 0.0 } && !shifted.all { it == 0.0 }) {
+                if (!pValues.all { it == 0.0 } && !shifted.all { it == 0.0 }) {
                     correlation = PearsonsCorrelation().correlation(pValues, shifted)
                 }
                 check(!correlation.isNaN() && correlation.isFinite()) {
@@ -92,7 +88,6 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
                 }
                 distanceCorrelations[i] = correlation
             }
-            LOG.debug("Done computing correlations matrix")
             return distanceCorrelations
         }
 
