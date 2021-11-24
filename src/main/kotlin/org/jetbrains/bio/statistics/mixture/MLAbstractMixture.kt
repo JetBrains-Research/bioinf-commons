@@ -41,6 +41,7 @@ abstract class MLAbstractMixture(protected val numComponents: Int, weights: F64A
             MultitaskProgress.reportTask(title)
             if (monitor.monitor(logLikelihood)) {
                 monitor.finish(this)
+                MultitaskProgress.finishTask(title)
                 break
             }
 
