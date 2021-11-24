@@ -7,7 +7,6 @@ import org.jetbrains.bio.genome.coverage.Fragment
 import org.jetbrains.bio.genome.query.ReadsQuery
 import org.jetbrains.bio.util.isAccessible
 import org.jetbrains.bio.util.size
-import org.slf4j.LoggerFactory
 import java.net.URI
 import java.nio.file.Path
 import java.util.stream.Collectors
@@ -28,8 +27,6 @@ object PeaksInfo {
     val CT_MEDIAN_LEN = TrackAboutLongColumnType("Median length")
     val CT_FRIP = TrackAboutDoubleColumnType("FRIP")
 
-    private val LOG = LoggerFactory.getLogger(PeaksInfo::class.java)
-
     fun compute(
         genomeQuery: GenomeQuery,
         peaksStream: Stream<Location>,
@@ -41,7 +38,7 @@ object PeaksInfo {
         val peaksLengths = peaks.map { it.length().toDouble() }.toDoubleArray()
         val peaksCount = peaksLengths.count()
         val peaksLenSum = peaksLengths.sum()
-        val coverage = peaksLenSum / genomeQuery.get().map { it.length.toLong() }.sum()
+        val coverage = peaksLenSum / genomeQuery.get().sumOf { it.length.toLong() }
 
         val result = arrayListOf<TrackAboutMetricValue<*>>()
         if (src != null) {
@@ -71,13 +68,11 @@ object PeaksInfo {
     }
 
     private fun frip(genomeQuery: GenomeQuery, peakLocations: List<Location>, coverages: List<Coverage>): Double {
-        val frip = coverages.map { coverage ->
-            1.0 * peakLocations.map { coverage.getBothStrandsCoverage(it.toChromosomeRange()).toLong() }.sum() /
-                    genomeQuery.get().map {
+        return coverages.map { coverage ->
+            1.0 * peakLocations.sumOf { coverage.getBothStrandsCoverage(it.toChromosomeRange()).toLong() } /
+                    genomeQuery.get().sumOf {
                         coverage.getBothStrandsCoverage(ChromosomeRange(0, it.length, it)).toLong()
-                    }.sum()
+                    }
         }.average()
-        LOG.debug("Frip: $frip")
-        return frip
     }
 }
