@@ -3,6 +3,7 @@ package org.jetbrains.bio.statistics.hypothesis
 import org.apache.commons.math3.distribution.NormalDistribution
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation
 import org.jetbrains.bio.viktor.KahanSum
+import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sqrt
@@ -43,7 +44,11 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
                 correctionSum.feed(distanceCorrelations[distance])
             }
         }
-        val testStat = zSum.result() / sqrt(n + 2.0 * correctionSum.result())
+        val fullCorrection = n + 2.0 * correctionSum.result()
+        check(fullCorrection > 0) {
+            "Negative correction value for sqrt $fullCorrection"
+        }
+        val testStat = zSum.result() / sqrt(fullCorrection)
         check(!testStat.isNaN()) {
             "Nan during combining pvalues ${pValues.joinToString(",") { it.toString() }}"
         }
@@ -79,6 +84,7 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
             val shifted = DoubleArray(pValues.size)
             for (i in 1 until distanceCorrelations.size) {
                 System.arraycopy(pValues, i, shifted, 0, pValues.size - i - 1)
+                Arrays.fill(shifted, pValues.size - i - 1, shifted.size, 0.0)
                 var correlation = 0.0
                 if (!pValues.all { it == 0.0 } && !shifted.all { it == 0.0 }) {
                     correlation = PearsonsCorrelation().correlation(pValues, shifted)
