@@ -16,7 +16,7 @@ class StofferLiptakTestTest {
     fun testCorrelations() {
         val correlations = StofferLiptakTest.computeCorrelations(doubleArrayOf(0.0, 0.1, 0.2, 0.3, 0.4), 20)
         Assert.assertEquals(3, correlations.size)
-        Assert.assertTrue(doubleArrayOf(0.0, -0.48507125007266605, -0.7826237921249264) contentEquals correlations)
+        Assert.assertTrue(doubleArrayOf(0.0, 1.0, 1.0) contentEquals correlations)
     }
 
     @Test
@@ -41,20 +41,20 @@ class StofferLiptakTestTest {
         Assert.assertEquals(1e-6, stofferLiptakTest.combine(doubleArrayOf(1e-6)), 1e-6)
         Assert.assertEquals(0.004272487313437656, stofferLiptakTest.combine(doubleArrayOf(1e-6, 1e-4)), 1e-6)
         Assert.assertEquals(0.1824166413929258, stofferLiptakTest.combine(doubleArrayOf(1e-2, 0.1)), 1e-6)
-        Assert.assertEquals(4.988280790652055E-7, stofferLiptakTest.combine(doubleArrayOf(1e-8, 1e-6, 1e-4)), 1e-6)
+        Assert.assertEquals(5.961866446146935E-5, stofferLiptakTest.combine(doubleArrayOf(1e-8, 1e-6, 1e-4)), 1e-6)
         Assert.assertEquals(
-            3.207676690930583E-8, stofferLiptakTest.combine(doubleArrayOf(1e-10, 1e-8, 1e-6, 1e-4)), 1e-6
+            2.351597618743817E-6, stofferLiptakTest.combine(doubleArrayOf(1e-10, 1e-8, 1e-6, 1e-4)), 1e-6
         )
         Assert.assertEquals(
-            1.1102230246251565E-16, stofferLiptakTest.combine(doubleArrayOf(1e-10, 1e-8, 1e-10, 1e-4)), 1e-12
+            1.6964616000869626E-7, stofferLiptakTest.combine(doubleArrayOf(1e-10, 1e-8, 1e-10, 1e-4)), 1e-12
         )
         Assert.assertEquals(
-            1.0E-14, stofferLiptakTest.combine(doubleArrayOf(1e-12, 1e-10, 1e-8, 1e-10, 1e-4)), 1e-12
+            1.5173603373774824E-8, stofferLiptakTest.combine(doubleArrayOf(1e-12, 1e-10, 1e-8, 1e-10, 1e-4)), 1e-12
         )
     }
 
     @Test
-    fun testCombineNot32() {
+    fun testNegativePCorrelations() {
         // See https://github.com/JetBrains-Research/span/issues/32
         val pValues = doubleArrayOf(
             4.536832820715596E-24,

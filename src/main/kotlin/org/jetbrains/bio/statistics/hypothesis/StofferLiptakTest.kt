@@ -44,13 +44,11 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
                 correctionSum.feed(distanceCorrelations[distance])
             }
         }
-        val fullCorrection = n + 2.0 * correctionSum.result()
-        check(fullCorrection > 0) {
-            "Negative correction value for sqrt $fullCorrection"
-        }
-        val testStat = zSum.result() / sqrt(fullCorrection)
+        // Test assumes positive correlation between p-values
+        val testStat = zSum.result() / sqrt(n + 2.0 * max(0.0, correctionSum.result()))
         check(!testStat.isNaN()) {
-            "Nan during combining pvalues ${pValues.joinToString(",") { it.toString() }}"
+            "Nan during combining pvalues sum(z)=${zSum.result()} sum(corr)=${correctionSum.result()} " +
+                    "pvalues=${pValues.joinToString(",") { it.toString() }}"
         }
         // cumulativeProbability may return 1.0 in case of big testStat values
         return max(EPSILON, 1.0 - NORMAL.cumulativeProbability(testStat))
@@ -81,13 +79,15 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
 
         internal fun computeCorrelations(pValues: DoubleArray, maxCorrelationDistance: Int): DoubleArray {
             val distanceCorrelations = DoubleArray(min(pValues.size / 2, maxCorrelationDistance) + 1)
-            val shifted = DoubleArray(pValues.size)
             for (i in 1 until distanceCorrelations.size) {
+                val original = DoubleArray(pValues.size - i - 1)
+                System.arraycopy(pValues, 0, original, 0, pValues.size - i - 1)
+                val shifted = DoubleArray(pValues.size - i - 1)
                 System.arraycopy(pValues, i, shifted, 0, pValues.size - i - 1)
                 Arrays.fill(shifted, pValues.size - i - 1, shifted.size, 0.0)
                 var correlation = 0.0
-                if (!pValues.all { it == 0.0 } && !shifted.all { it == 0.0 }) {
-                    correlation = PearsonsCorrelation().correlation(pValues, shifted)
+                if (!original.all { it == 0.0 } && !shifted.all { it == 0.0 }) {
+                    correlation = PearsonsCorrelation().correlation(original, shifted)
                 }
                 check(!correlation.isNaN() && correlation.isFinite()) {
                     "Wrong correlation between pvalues"
@@ -96,6 +96,5 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
             }
             return distanceCorrelations
         }
-
     }
 }
