@@ -158,7 +158,7 @@ object MultitaskProgress {
             val processed = processedItems.toLong()
             val total = totalItems.get()
             val processedPercent = (processed * 100.0 / total).toLong()
-            if (processedPercent != progressPercent || (finishEvent && processedPercent != 100L)) {
+            if (processedPercent != progressPercent || finishEvent) {
                 progressPercent = processedPercent
                 if (processed < total || finishEvent) {
                     progressBar?.setState(processed, total)
@@ -167,9 +167,13 @@ object MultitaskProgress {
                         .format(processed * 100.0 / total, processed, total)
 
                     val throughputPart = if (processed > 1) {
-                        val eta = asTime((duration.toDouble() * total / processed).toLong() - duration)
                         val avgThroughput = asThroughput(processed, duration)
-                        ", Throughput: $avgThroughput, ETA: $eta"
+                        if (finishEvent) {
+                            ", Throughput: $avgThroughput"
+                        } else {
+                            val eta = asTime((duration.toDouble() * total / processed).toLong() - duration)
+                            ", Throughput: $avgThroughput, ETA: $eta"
+                        }
                     } else {
                         ""
                     }

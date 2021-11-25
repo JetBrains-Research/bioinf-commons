@@ -138,7 +138,7 @@ data class ProgressPart(
             ("Processed items: ((?:\\d+,)*\\d+), " +
                     "Elapsed time: (\\d+)(?:\\.\\d+)? ([\\wμ?]+)").toRegex()
 
-        /** Converts (duration, unit) pair to seconds. */
+        /** Converts (duration, unit) pair to second. */
         private fun Pair<Long, String>.toSeconds(): Int {
             val unit = when (second) {
                 "\u03bcs", "?s" -> TimeUnit.MICROSECONDS
@@ -208,7 +208,7 @@ class SequentialProgressTest : ProgressTest() {
     @Retry
     @Test
     fun testBasic() {
-        // Test is suppose to check that we output not on each update, but only on some
+        // Test is supposed to check that we output not on each update, but only on some
         // updates depending on period setting
         // Initial test failed occasionally because 100 times * 100 ms != 10s, could be 12, 14 or 17s
         // so let's report every 1 second instead of 100ms, but 10 points instead of 1 point.
@@ -229,7 +229,7 @@ class SequentialProgressTest : ProgressTest() {
         )
 
         val expPartsRange = 10..12
-        val expPartsRangeStr = "[${expPartsRange.start}..${expPartsRange.endInclusive}]"
+        val expPartsRangeStr = "[${expPartsRange.first}..${expPartsRange.last}]"
         assertTrue(
             logStrings.size in expPartsRange,
             "Timer progress lines count is expected to be $expPartsRangeStr, but was ${logStrings.size}"
@@ -241,7 +241,7 @@ class SequentialProgressTest : ProgressTest() {
 
         val elapsedSecs = parts.last().elapsedSeconds
         val expElapsedRange = 10..11
-        val expElapsedRangeStr = "[${expElapsedRange.start}..${expElapsedRange.endInclusive}]"
+        val expElapsedRangeStr = "[${expElapsedRange.first}..${expElapsedRange.last}]"
         assertTrue(
             elapsedSecs in expElapsedRange,
             "Elapsed times expected to be $expElapsedRangeStr sec, " +
@@ -263,7 +263,7 @@ class SequentialProgressTest : ProgressTest() {
 
     @Test
     fun testBasicIncremental() {
-        // Test is suppose to check that we output not on each update, but only on some
+        // Test is supposed to check that we output not on each update, but only on some
         // updates depending on period setting
         // Initial test failed occasionally because 100 times * 100 ms != 10s, could be 12, 14 or 17s
         // so let's report every 1 second instead of 100ms, but 10 points instead of 1 point.
@@ -271,9 +271,9 @@ class SequentialProgressTest : ProgressTest() {
         val progress = Progress { period = 1 to TimeUnit.SECONDS }.bounded(100)
         for (i in 0 until 10) {
             // incremental
-            (0 until 5).forEach { progress.report() }
+            (0 until 5).forEach { _ -> progress.report() }
             Thread.sleep(1000)
-            (0 until 5).forEach { progress.report() }
+            (0 until 5).forEach { _ -> progress.report() }
             Thread.sleep(20)
         }
         progress.done()
@@ -285,7 +285,7 @@ class SequentialProgressTest : ProgressTest() {
         )
 
         val expPartsRange = 10..12
-        val expPartsRangeStr = "[${expPartsRange.start}..${expPartsRange.endInclusive}]"
+        val expPartsRangeStr = "[${expPartsRange.first}..${expPartsRange.last}]"
         assertTrue(
             logStrings.size in expPartsRange,
             "Timer progress lines count is expected to be $expPartsRangeStr," +
@@ -300,7 +300,7 @@ class SequentialProgressTest : ProgressTest() {
 
         val elapsedSecs = parts.last().elapsedSeconds
         val expElapsedRange = 10..11
-        val expElapsedRangeStr = "[${expElapsedRange.start}..${expElapsedRange.endInclusive}]"
+        val expElapsedRangeStr = "[${expElapsedRange.first}..${expElapsedRange.last}]"
         assertTrue(
             elapsedSecs in expElapsedRange,
             "Elapsed times expected to be $expElapsedRangeStr sec, but was $elapsedSecs"
@@ -329,8 +329,8 @@ class ParallelProgressTest : ProgressTest() {
             Callable<Void> {
                 var lastTime = System.nanoTime()
                 while (lastTime < endTime) {
-                    // busy wait here, woo-hoo
                     while (System.nanoTime() - lastTime < WAIT_NANOS) {
+                        // busy wait here, woo-hoo
                     }
                     adder.add(1)
                     progress.report()
@@ -374,8 +374,8 @@ class ParallelProgressTest : ProgressTest() {
             Callable<Void> {
                 var lastTime = System.nanoTime()
                 while (lastTime < endTime) {
-                    // busy wait here, woo-hoo
                     while (System.nanoTime() - lastTime < WAIT_NANOS) {
+                        // busy wait here, woo-hoo
                     }
                     adder.add(1)
                     progress.report()
