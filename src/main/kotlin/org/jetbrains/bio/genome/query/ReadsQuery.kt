@@ -7,6 +7,7 @@ import org.jetbrains.bio.genome.format.isPaired
 import org.jetbrains.bio.genome.format.processPairedReads
 import org.jetbrains.bio.genome.format.processReads
 import org.jetbrains.bio.util.*
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
@@ -109,23 +110,8 @@ class ReadsQuery(
     private val fileId = idStem + (if (fragment is FixedFragment) "_raw" else "")
 
     companion object {
-        val LOG = LoggerFactory.getLogger(ReadsQuery::class.java)
+        val LOG: Logger = LoggerFactory.getLogger(ReadsQuery::class.java)
 
         private const val MIN_DEPTH_THRESHOLD_PERCENT = 0.1
     }
 }
-
-/**
- * One might be tempted to use [substringBeforeLast] here.
- * However, this method can't fulfill the following requirements:
- * we want to _ignore_ the ".bed.gz" extension case but _preserve_ the stem case.
- * The current trick with string truncation does exactly that.
- */
-val Path.stemGz: String
-    get() {
-        return when {
-            name.lowercase().endsWith(".bed.gz") ->
-                name.substring(0, name.length - ".bed.gz".length)
-            else -> stem
-        }
-    }

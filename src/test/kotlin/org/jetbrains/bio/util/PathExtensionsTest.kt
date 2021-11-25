@@ -353,6 +353,19 @@ class CheckOrRecalculateTest {
         }
     }
 
+    @Test
+    fun testStemGz() {
+        withTempFile("foo", ".bam") {
+            assertFalse(it.stemGz.endsWith(".bam"))
+        }
+        withTempFile("foo", ".bed.gz") {
+            assertFalse(it.stemGz.endsWith(".bed"))
+        }
+        withTempFile("foo", ".BED.GZ") {
+            assertFalse(it.stemGz.lowercase().endsWith(".bed"))
+        }
+    }
+
     @Test(expected = IllegalStateException::class)
     fun ignoredOutputPath() {
         withTempDirectory("annotations") {
@@ -364,8 +377,8 @@ class CheckOrRecalculateTest {
 
     @Test
     fun accessedOutputPath() {
-        withTempDirectory("annotations") {
-            (it / "foo.txt").checkOrRecalculate("") {
+        withTempDirectory("annotations") { dir ->
+            (dir / "foo.txt").checkOrRecalculate("") {
                 it.path.write(byteArrayOf(1, 2, 3))
             }
         }

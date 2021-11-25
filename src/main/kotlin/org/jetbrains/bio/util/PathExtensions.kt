@@ -42,10 +42,10 @@ fun Path.resolve(vararg chunks: String): Path {
     return arrayOf(toString(), *chunks).toPath()
 }
 
-operator fun Path.div(other: String) = div(other.toPath())
-operator fun Path.div(other: Path) = resolve(other)
-operator fun String.div(other: String) = div(other.toPath())
-operator fun String.div(other: Path) = toPath() / other
+operator fun Path.div(other: String): Path = div(other.toPath())
+operator fun Path.div(other: Path): Path = resolve(other)
+operator fun String.div(other: String): Path = div(other.toPath())
+operator fun String.div(other: Path): Path = toPath() / other
 
 /** Check exists and readable. */
 fun Path.checkAccessible() {
@@ -80,6 +80,16 @@ val Path.name: String get() = fileName.toString()
 val Path.stem: String
     get() {
         return name.substringBeforeLast(".$extension")
+    }
+
+/** Returns the name of the file or directory without extension.gz. */
+val Path.stemGz: String
+    get() {
+        return when {
+            Regex(".*\\.[a-z0-9_]+\\.gz", RegexOption.IGNORE_CASE).matches(name) ->
+                name.substringBeforeLast('.').substringBeforeLast('.')
+            else -> stem
+        }
     }
 
 /**

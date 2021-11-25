@@ -38,19 +38,6 @@ class ReadsQueryTest {
     private val PAIRED_END_BAM_INFERRED_FRAGMENT = 139
 
     @Test
-    fun testStemGz() {
-        withTempFile("foo", ".bam") {
-            assertFalse(it.stemGz.endsWith(".bam"))
-        }
-        withTempFile("foo", ".bed.gz") {
-            assertFalse(it.stemGz.endsWith(".bed"))
-        }
-        withTempFile("foo", ".BED.GZ") {
-            assertFalse(it.stemGz.lowercase().endsWith(".bed"))
-        }
-    }
-
-    @Test
     fun testCoverageId() {
         withTempDirectory("foo") {
             val treatment = (it / "OD7_k4me1_hg19.bed.gz").apply { touch() }
