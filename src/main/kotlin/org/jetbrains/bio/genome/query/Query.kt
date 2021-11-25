@@ -21,7 +21,7 @@ interface Query<I, O> : Function<I, O> {
     val description: String get() = id
 }
 
-/** An query which caches the result of [apply]. */
+/** A query which caches the result of [apply]. */
 abstract class CachingQuery<I : Any, O> : Query<I, O> {
 
     abstract fun getUncached(input: I): O
