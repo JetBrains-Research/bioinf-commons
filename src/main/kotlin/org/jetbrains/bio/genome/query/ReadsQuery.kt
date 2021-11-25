@@ -100,8 +100,7 @@ class ReadsQuery(
 
     fun npzPath() = Configuration.cachePath / "coverage_${fileId}${path.sha}.npz"
 
-    private val idStem = path.stemGz +
-            (if (unique) "_unique" else "")
+    private val idStem = path.stemGz + (if (unique) "_unique" else "")
 
     override val id: String
         get() = idStem + (if (fragment is FixedFragment) "_$fragment" else "")
