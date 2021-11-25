@@ -18,7 +18,7 @@ import kotlin.test.assertEquals
 class ClassificationModelTest {
     @Rule
     @JvmField
-    val thrown = ExpectedException.none()
+    val thrown: ExpectedException = ExpectedException.none()
 
     @Before
     fun setUp() {
@@ -29,12 +29,13 @@ class ClassificationModelTest {
     fun testSave() = withTempFile("model", ".json") { path ->
         Boo(1).save(path)
         assertEquals(
-            "{\n  \"b\": \"bbb\",\n" +
-                    "  \"value\": 1,\n" +
-                    "  \"name\": \"bboo\",\n" +
-                    "  \"model.class.fqn\": \"org.jetbrains.bio.statistics.model.Boo\",\n" +
-                    "  \"model.class.format\": 222\n}",
-            path.read()
+            """{
+  "value": 1,
+  "b": "bbb",
+  "name": "bboo",
+  "model.class.fqn": "org.jetbrains.bio.statistics.model.Boo",
+  "model.class.format": 222
+}""", path.read()
         )
     }
 
@@ -67,10 +68,12 @@ class ClassificationModelTest {
         val nanBoo = NanBoo()
         nanBoo.save(path)
         assertEquals(
-            "{\n  \"value\": NaN,\n  " +
-                    "\"name\": \"NaN-boo\",\n  " +
-                    "\"model.class.fqn\": \"org.jetbrains.bio.statistics.model.NanBoo\",\n  " +
-                    "\"model.class.format\": 0\n}",
+            """{
+  "value": NaN,
+  "name": "NaN-boo",
+  "model.class.fqn": "org.jetbrains.bio.statistics.model.NanBoo",
+  "model.class.format": 0
+}""",
             path.read()
         )
 
@@ -168,7 +171,7 @@ class NanBoo : AbstractBoo("NaN-boo") {
         if (this === other) return true
         if (other !is NanBoo) return false
 
-        return java.lang.Double.compare(other.value, value) == 0
+        return other.value.compareTo(value) == 0
 
     }
 
@@ -177,7 +180,6 @@ class NanBoo : AbstractBoo("NaN-boo") {
     companion object {
         @Suppress("unused")
         @Transient
-        @JvmField
-        val VERSION = 0
+        const val VERSION = 0
     }
 }
