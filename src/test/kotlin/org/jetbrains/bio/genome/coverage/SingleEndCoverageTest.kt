@@ -5,6 +5,7 @@ import kotlinx.support.jdk7.use
 import org.jetbrains.bio.Tests.assertIn
 import org.jetbrains.bio.Tests.assertNotIn
 import org.jetbrains.bio.genome.*
+import org.jetbrains.bio.genome.coverage.FragmentSize.detectFragmentSize
 import org.jetbrains.bio.genome.format.BedFormat
 import org.jetbrains.bio.genome.format.processReads
 import org.jetbrains.bio.genome.format.toBedEntry
@@ -255,38 +256,6 @@ class SingleEndCoverageTest {
         }
     }
 
-    @Test
-    fun testDetectFragmentSize() {
-        withTempFile("track", ".bed") { trackPath ->
-            val bedFormat = BedFormat()
-            bedFormat.print(trackPath).use { bedPrinter ->
-                bedPrinter.print(Location(0, 50, chromosome1, Strand.PLUS).toBedEntry())
-                bedPrinter.print(Location(0, 50, chromosome1, Strand.PLUS).toBedEntry())
-                bedPrinter.print(Location(0, 50, chromosome1, Strand.PLUS).toBedEntry())
-                bedPrinter.print(Location(10, 60, chromosome1, Strand.PLUS).toBedEntry())
-                bedPrinter.print(Location(20, 70, chromosome1, Strand.PLUS).toBedEntry())
-                bedPrinter.print(Location(51, 101, chromosome1, Strand.MINUS).toBedEntry())
-                bedPrinter.print(Location(51, 101, chromosome1, Strand.MINUS).toBedEntry())
-                bedPrinter.print(Location(51, 101, chromosome1, Strand.MINUS).toBedEntry())
-                bedPrinter.print(Location(111, 161, chromosome1, Strand.MINUS).toBedEntry())
-                bedPrinter.print(Location(121, 171, chromosome1, Strand.MINUS).toBedEntry())
-            }
-
-            val builder = SingleEndCoverage.builder(genomeQuery).apply {
-                processReads(genomeQuery, trackPath) {
-                    this.process(it)
-                }
-            }
-            // this is required to sort the builder data
-            builder.build(false)
-            // the fragment detection method should ignore duplicate tags,
-            // so 100 is a wrong answer!
-            assertEquals(
-                150,
-                SingleEndCoverage.detectFragmentSize(builder.data, 20.0)
-            )
-        }
-    }
 
     companion object {
         internal var genomeQuery: GenomeQuery = GenomeQuery(Genome["to1"])
