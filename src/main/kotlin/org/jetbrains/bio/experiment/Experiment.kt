@@ -10,7 +10,7 @@ import java.nio.file.Path
 /**
  * Experiment is a named computation procedure with description and fixed location.
  * Main entry point is [run] method.
- * Any experiment class should implements method [doCalculations], which is being executed.
+ * Any experiment class should implement method [doCalculations], which is being executed.
  *
  * @author Oleg Shpynov
  */
