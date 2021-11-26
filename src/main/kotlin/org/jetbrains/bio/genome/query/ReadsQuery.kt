@@ -21,14 +21,14 @@ import java.nio.file.Path
  * If null, the imputed value is used.
  * If the coverage is paired-end, any value of [fragment] is ignored.
  *
- * [logFragmentSize] controls whether log messages regarding fragment size are generated.
+ * [showLibraryInfo] controls whether log messages regarding fragment size are generated.
  */
 class ReadsQuery(
     val genomeQuery: GenomeQuery,
     val path: Path,
     val unique: Boolean = true,
     val fragment: Fragment = AutoFragment,
-    val logFragmentSize: Boolean = true
+    val showLibraryInfo: Boolean = true,
 ) : CachingInputQuery<Coverage>() {
 
     override fun getUncached(): Coverage = coverage()
@@ -63,39 +63,44 @@ class ReadsQuery(
             }
         }
         val coverage = Coverage.load(npz, genomeQuery, fragment)
-        val libraryDepth = coverage.depth
-        if (logFragmentSize) {
-            val logMessage = "Library: ${path.name}, Depth: ${"%,d".format(libraryDepth)}, " + when (coverage) {
-                is SingleEndCoverage -> "Reads: single-ended, " + when {
-                    coverage.actualFragment != coverage.detectedFragment ->
-                        "Fragment size: ${coverage.actualFragment} bp " +
-                                "(overrides cross-correlation " +
-                                "estimate ${coverage.detectedFragment})"
-                    fragment is AutoFragment ->
-                        "Fragment size: ${coverage.detectedFragment} bp " +
-                                "(cross-correlation estimate)"
-                    else ->
-                        "Fragment size: ${coverage.detectedFragment} bp " +
-                                "(user input is equal to cross-correlation estimate)"
-                }
-                is PairedEndCoverage -> "Reads: paired-ended, " + if (fragment is FixedFragment) {
-                    "Fragment size: ${coverage.averageInsertSize} bp (average; inferred from read pairs; " +
-                            "user input $fragment is ignored)"
-                } else {
-                    "Fragment size: ${coverage.averageInsertSize} bp (average; inferred from read pairs)"
-                }
-                else -> throw IllegalArgumentException("Unknown library type: ${coverage::class.java}")
-            }
-            LOG.info(logMessage)
+        if (showLibraryInfo) {
+            showLibraryInfo(coverage)
         }
-        val genomeSize = genomeQuery.get().map { it.length.toLong() }.sum()
+        return coverage
+    }
+
+    private fun showLibraryInfo(coverage: Coverage) {
+        val libraryDepth = coverage.depth
+        val information = "Library: ${path.name}, Depth: ${"%,d".format(libraryDepth)}, " +
+                when (coverage) {
+                    is SingleEndCoverage -> "Reads: single-ended, " + when {
+                        coverage.actualFragment != coverage.detectedFragment ->
+                            "Fragment size: ${coverage.actualFragment} bp " +
+                                    "(overrides cross-correlation " +
+                                    "estimate ${coverage.detectedFragment})"
+                        fragment is AutoFragment ->
+                            "Fragment size: ${coverage.detectedFragment} bp " +
+                                    "(cross-correlation estimate)"
+                        else ->
+                            "Fragment size: ${coverage.detectedFragment} bp " +
+                                    "(user input is equal to cross-correlation estimate)"
+                    }
+                    is PairedEndCoverage -> "Reads: paired-ended, " + if (fragment is FixedFragment) {
+                        "Fragment size: ${coverage.averageInsertSize} bp (average; inferred from read pairs; " +
+                                "user input $fragment is ignored)"
+                    } else {
+                        "Fragment size: ${coverage.averageInsertSize} bp (average; inferred from read pairs)"
+                    }
+                    else -> throw IllegalArgumentException("Unknown library type: ${coverage::class.java}")
+                }
+        LOG.info(information)
+        val genomeSize = genomeQuery.get().sumOf { it.length.toLong() }
         if (libraryDepth < genomeSize * MIN_DEPTH_THRESHOLD_PERCENT / 100.0) {
             LOG.warn(
                 "Library: ${path.name}, Depth: ${"%,d".format(libraryDepth)} is less than " +
                         "$MIN_DEPTH_THRESHOLD_PERCENT% x ${"%,d".format(genomeSize)} of genome ${genomeQuery.id}"
             )
         }
-        return coverage
     }
 
     fun npzPath() = Configuration.cachePath / "coverage_${fileId}${path.sha}.npz"

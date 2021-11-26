@@ -12,7 +12,6 @@ import org.jetbrains.bio.genome.format.processPairedReads
 import org.jetbrains.bio.util.*
 import org.junit.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 
 /**
  * @author Oleg Shpynov
