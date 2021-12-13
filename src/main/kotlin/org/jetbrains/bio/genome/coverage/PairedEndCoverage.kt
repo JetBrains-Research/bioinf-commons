@@ -145,22 +145,19 @@ class PairedEndCoverage private constructor(
 
         internal fun load(
             npzReader: NpzFile.Reader,
+            path: Path,
             genomeQuery: GenomeQuery
         ): PairedEndCoverage {
             check(npzReader[Coverage.PAIRED_FIELD].asBooleanArray().single()) {
-                "${npzReader.path} attempting to read paired-end coverage from single-end cache file"
+                "$path attempting to read paired-end coverage from single-end cache file"
             }
             try {
                 val version = npzReader[PAIRED_VERSION_FIELD].asIntArray().single()
                 check(version == PAIRED_VERSION) {
-                    "${npzReader.path} paired-end coverage version is $version " +
-                            "instead of $PAIRED_VERSION"
+                    "$path paired-end coverage version is $version instead of $PAIRED_VERSION"
                 }
             } catch (e: IllegalStateException) {
-                throw IllegalStateException(
-                    "${npzReader.path} paired-end coverage version is missing",
-                    e
-                )
+                throw IllegalStateException("$path paired-end coverage version is missing", e)
             }
             val averageInsertSize = npzReader[AVERAGE_INSERT_SIZE_FIELD].asIntArray().single()
             val data: GenomeMap<TIntList> = genomeMap(genomeQuery) { TIntArrayList() }
@@ -170,10 +167,10 @@ class PairedEndCoverage private constructor(
                     data[chromosome] = TIntArrayList.wrap(npyArray.asIntArray())
                 } catch (e: IllegalStateException) {
                     throw IllegalStateException(
-                        "Cache file ${npzReader.path} doesn't contain ${chromosome.name}.\n" +
+                        "Cache file $path doesn't contain ${chromosome.name}.\n" +
                                 "It's likely that chrom.sizes file used for its creation differs " +
                                 "from the one being used to read it now.\n" +
-                                "If problem persists, delete the cache file ${npzReader.path} " +
+                                "If problem persists, delete the cache file $path " +
                                 "and Span will recreate it with correct settings.",
                         e
                     )

@@ -59,9 +59,9 @@ interface Coverage {
 
                 val paired = reader[PAIRED_FIELD].asBooleanArray().single()
                 if (paired) {
-                    PairedEndCoverage.load(reader, genomeQuery)
+                    PairedEndCoverage.load(reader, inputPath, genomeQuery)
                 } else {
-                    SingleEndCoverage.load(reader, genomeQuery).withFragment(fragment)
+                    SingleEndCoverage.load(reader, inputPath, genomeQuery).withFragment(fragment)
                 }
             }
         }

@@ -153,10 +153,11 @@ class SingleEndCoverage private constructor(
 
         internal fun load(
             npzReader: NpzFile.Reader,
+            path: Path,
             genomeQuery: GenomeQuery
         ): SingleEndCoverage {
             check(!npzReader[Coverage.PAIRED_FIELD].asBooleanArray().single()) {
-                "${npzReader.path} attempting to read single-end coverage from paired-end cache file"
+                "$path attempting to read single-end coverage from paired-end cache file"
             }
             val detectedFragment = npzReader[FRAGMENT_FIELD].asIntArray().single()
             val data: GenomeStrandMap<TIntList> = genomeStrandMap(genomeQuery) { _, _ ->
@@ -170,10 +171,10 @@ class SingleEndCoverage private constructor(
                         data[chromosome, strand] = TIntArrayList.wrap(npyArray.asIntArray())
                     } catch (e: IllegalStateException) {
                         throw IllegalStateException(
-                            "Cache file ${npzReader.path} doesn't contain $key.\n" +
+                            "Cache file $path doesn't contain $key.\n" +
                                     "It's likely that chrom.sizes file used for its creation differs " +
                                     "from the one being used to read it now.\n" +
-                                    "If problem persists, delete the cache file ${npzReader.path} " +
+                                    "If problem persists, delete the cache file $path " +
                                     "and Span will recreate it with correct settings.",
                             e
                         )
