@@ -85,12 +85,11 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
                 val shifted = DoubleArray(pValues.size - i - 1)
                 System.arraycopy(pValues, i, shifted, 0, pValues.size - i - 1)
                 Arrays.fill(shifted, pValues.size - i - 1, shifted.size, 0.0)
-                var correlation = 0.0
-                if (!original.all { it == 0.0 } && !shifted.all { it == 0.0 }) {
-                    correlation = PearsonsCorrelation().correlation(original, shifted)
-                }
-                check(!correlation.isNaN() && correlation.isFinite()) {
-                    "Wrong correlation between pvalues"
+                var correlation = PearsonsCorrelation().correlation(original, shifted)
+                // Safeguard against NaN from Pearson correlation for zero or small vectors,
+                // See example at: https://github.com/JetBrains-Research/span/issues/34
+                if (correlation.isNaN() || !correlation.isFinite()) {
+                   correlation = 0.0
                 }
                 distanceCorrelations[i] = correlation
             }
