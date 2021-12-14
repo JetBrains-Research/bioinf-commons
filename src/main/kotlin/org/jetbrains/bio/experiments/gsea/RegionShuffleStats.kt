@@ -252,7 +252,7 @@ class RegionShuffleStats(
         var countBelow = 0 // count when random regions metric value is above given value
 
         val metricHist = IntHistogram()
-        chunk.forEachIndexed { i, ll ->
+        chunk.forEach { ll ->
             val v = calcMetric(ll, lociToTest, aSetIsLoi, metric)
             require(v < Int.MAX_VALUE) {
                 "Long values not supported, please fire a ticket. Got: $v >= ${Int.MAX_VALUE}"

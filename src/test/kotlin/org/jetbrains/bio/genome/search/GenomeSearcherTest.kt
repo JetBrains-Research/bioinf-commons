@@ -58,7 +58,7 @@ class GenomeSearcherTest {
 //                println("Performing testSpecificity with $mismatches mismatch(es).")
                 val genomeSearcher = GenomeSearcher(genomeQuery, mismatches)
                 for (fastqRecord in FastqReader(fastqPath.toFile())) {
-                    val header = fastqRecord.readHeader
+                    val header = fastqRecord.readName
                     val (pos, strand, expectedMismatches) = header.toTestCase()
                     if (expectedMismatches <= mismatches) {
                         val pattern = fastqRecord.readString

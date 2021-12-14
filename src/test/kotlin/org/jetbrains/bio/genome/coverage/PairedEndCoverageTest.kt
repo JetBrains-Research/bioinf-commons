@@ -232,7 +232,7 @@ class PairedEndCoverageTest {
 
         private fun generateCoverage(gq: GenomeQuery = genomeQuery): PairedEndCoverage {
             val builder = PairedEndCoverage.builder(gq)
-            gq.get().forEachIndexed { j, chromosome ->
+            gq.get().forEach { chromosome ->
                 for (i in 0..99) {
                     // generate some valid values
                     val leftmost = 8 * i + 1

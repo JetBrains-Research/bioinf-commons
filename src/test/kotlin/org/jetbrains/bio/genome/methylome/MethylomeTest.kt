@@ -1,9 +1,6 @@
 package org.jetbrains.bio.genome.methylome
 
 import com.google.common.math.IntMath
-import junit.framework.Assert
-import junit.framework.Assert.assertFalse
-import junit.framework.Assert.assertTrue
 import org.apache.commons.math3.distribution.BinomialDistribution
 import org.jetbrains.bio.dataframe.dumpHead
 import org.jetbrains.bio.genome.Genome
@@ -15,6 +12,8 @@ import org.junit.Test
 import org.junit.rules.ExpectedException
 import java.util.*
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class MethylomeTest {
     @Rule
@@ -144,7 +143,7 @@ class MethylomeTest {
             assertTrue(methylome1.stranded)
 
             val df = methylome1[chromosome, Strand.PLUS].peel()
-            Assert.assertEquals(
+            assertEquals(
                 "# Integer;\tByte;\tFloat;\tShort;\tShort\n" +
                         "offset\ttag\tlevel\tk\tn\n" +
                         "42\t0\t0.75\t15\t20\n" +
