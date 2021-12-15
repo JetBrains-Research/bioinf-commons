@@ -69,6 +69,8 @@ class Fdr(private val alpha: Double) : Predictor {
         /**
          * Estimates Q-values from given posterior error probabilities.
          *
+         * Procedure is similar to [BenjaminiHochberg] but for log PEPs.
+         *
          * References:
          *
          * Storey & Tibshirani, "Statistical significance for genomewide studies", PNAS, 2003.
@@ -76,40 +78,27 @@ class Fdr(private val alpha: Double) : Predictor {
          *               bisulfite next-generation sequencing", Bioinformatics, 2014.
          */
         fun qvalidate(logNullMemberships: F64Array): F64Array {
-            val qvalues = logQValidate(logNullMemberships)
-            qvalues.expInPlace()
-            return qvalues
-        }
-
-        /**
-         * Almost the same as [BenjaminiHochberg], but inplace
-         */
-        fun logQValidate(logNullMemberships: F64Array): F64Array {
-            val length = logNullMemberships.size
-
+            val m = logNullMemberships.size
             // Sort PEPs in ascending order and remember the inverse
             // permutation, so that we can return Q-values in the order
             // corresponding to the original PEPs.
             val sorted = logNullMemberships.argSort()
-            val original = IntArray(length)
-            for (t in 0 until length) {
-                original[sorted[t]] = t
+            val original = IntArray(m)
+            for (k in 0 until m) {
+                original[sorted[k]] = k
             }
-
             val qvalues = logNullMemberships.copy()
             qvalues.reorder(sorted)
-
             var acc = Double.NEGATIVE_INFINITY
-            for (t in 0 until length) {
-                acc = acc logAddExp qvalues[t]
-                qvalues[t] = acc - ln((t + 1).toDouble())
+            for (k in 0 until m) {
+                acc = acc logAddExp qvalues[k]
+                qvalues[k] = acc - ln((k + 1).toDouble())
             }
-
-            for (t in length - 2 downTo 0) {
-                qvalues[t] = min(qvalues[t], qvalues[t + 1])
+            for (k in m - 2 downTo 0) {
+                qvalues[k] = min(qvalues[k], qvalues[k + 1])
             }
-
             qvalues.reorder(original)
+            qvalues.expInPlace()
             return qvalues
         }
     }

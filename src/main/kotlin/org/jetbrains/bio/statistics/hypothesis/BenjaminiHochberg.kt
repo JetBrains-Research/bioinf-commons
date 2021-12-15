@@ -9,26 +9,30 @@ object BenjaminiHochberg {
     /**
      * Applies Benjamini-Hochberg correction to the P-values.
      *
-     * See [Fdr.qvalidate] for inplace log version.
+     * See [Fdr.qvalidate] for log version for posterior error probabilities.
      */
     fun adjust(ps: F64Array): F64Array {
         val m = ps.size
+
+        // Sort Ps in ascending order and remember the inverse
+        // permutation, so that we can return Q-values in the order
+        // corresponding to the original Ps.
         val sorted = ps.argSort(reverse = true)
         val original = IntArray(m)
         for (k in 0 until m) {
             original[sorted[k]] = k
         }
 
-        val adjusted = F64Array(m)
+        val qvalues  = F64Array(m)
         for (k in 0 until m) {
-            adjusted[k] = min(1.0, ps[sorted[k]] * m / (m - k))
+            qvalues[k] = min(1.0, ps[sorted[k]] * m / (m - k))
         }
 
         for (k in 1 until m) {
-            adjusted[k] = min(adjusted[k], adjusted[k - 1])
+            qvalues[k] = min(qvalues[k], qvalues[k - 1])
         }
 
-        adjusted.reorder(original)
-        return adjusted
+        qvalues.reorder(original)
+        return qvalues
     }
 }
