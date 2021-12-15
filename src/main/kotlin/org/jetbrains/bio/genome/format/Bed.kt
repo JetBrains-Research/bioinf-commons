@@ -271,7 +271,6 @@ data class BedFormat(
                 try {
                     val value = field.field.read(chunks[ci])
 
-                    @Suppress("NON_EXHAUSTIVE_WHEN")
                     when (field) {
                         BedField.BLOCK_COUNT -> blockCount = value as Int
                         BedField.BLOCK_STARTS, BedField.BLOCK_SIZES -> {
@@ -281,6 +280,9 @@ data class BedFormat(
                                     else -> blockCount <= (value as IntArray).size
                                 }
                             )
+                        }
+                        else -> {
+                            // Ignore
                         }
                     }
 
