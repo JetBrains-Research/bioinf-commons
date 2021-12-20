@@ -116,7 +116,7 @@ class BitterSetTest {
 class AggregateTest(private val expected: List<BitRange>, private val bits: IntArray, private val gap: Int) {
     @Test
     fun aggregate() {
-        val actual = BitterSet((bits.maxOrNull() ?: 0) + 1) { it in bits }
+        val actual = bits.toBitterSet()
         assertEquals(expected, actual.aggregate(gap))
     }
 
@@ -135,6 +135,27 @@ class AggregateTest(private val expected: List<BitRange>, private val bits: IntA
             arrayOf(listOf(BitRange(1, 18), BitRange(30, 41)), intArrayOf(1, 2, 3, 4, 10, 15, 17, 30, 35, 40), 5),
             arrayOf(listOf(BitRange(1, 3), BitRange(4, 6)), intArrayOf(1, 2, 4, 5), 0),
             arrayOf(listOf(BitRange(1, 6)), intArrayOf(1, 2, 4, 5), 1)
+        )
+    }
+}
+
+@RunWith(Parameterized::class)
+class FindConsequentTest(private val expected: List<BitRange>, private val bits: IntArray, private val range: BitRange) {
+    @Test
+    fun findConsequent() {
+        val actual = bits.toBitterSet()
+        assertEquals(expected, actual.findConsequentBlocks(range))
+    }
+
+    companion object {
+        @JvmStatic
+        @Parameters
+        fun `data`(): Collection<Array<out Any>> = listOf(
+            arrayOf(listOf(BitRange(1, 4)), intArrayOf(1, 2, 3), BitRange(1, 4)),
+            arrayOf(
+                listOf(BitRange(1, 4), BitRange(5, 7), BitRange(10, 11), BitRange(15, 16)),
+                intArrayOf(1, 2, 3, 5, 6, 10, 15), BitRange(1, 16)
+            )
         )
     }
 }

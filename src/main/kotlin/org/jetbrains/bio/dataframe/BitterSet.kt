@@ -89,6 +89,22 @@ class BitterSet(private val universe: Int) : BitSet() {
         return ranges
     }
 
+    /**
+     * Returns a list of consequent bit blocks from aggregated range.
+     * See [aggregated] for details about aggregation bins with gap.
+     */
+    fun findConsequentBlocks(aggregated: BitRange): List<BitRange> {
+        check(get(aggregated.fromIndex) && get(aggregated.toIndex - 1)) { "Assuming true indexes" }
+        var index = aggregated.fromIndex
+        val result = arrayListOf<BitRange>()
+        while (index != -1 && index < aggregated.toIndex) {
+            val next = nextClearBit(index + 1)
+            result.add(BitRange(index, min(next, aggregated.toIndex)))
+            index = nextSetBit(next)
+        }
+        return result
+    }
+
     override fun equals(other: Any?) = when {
         this === other -> true
         other !is BitterSet -> false
@@ -120,6 +136,9 @@ class BitterSet(private val universe: Int) : BitSet() {
 fun BooleanArray.toBitterSet() = let { arr ->
     BitterSet(arr.size) { i -> arr[i] }
 }
+
+fun IntArray.toBitterSet() =
+    BitterSet((maxOrNull() ?: 0) + 1) { it in this }
 
 data class BitRange(
     /** 0-based start index (inclusive). */
