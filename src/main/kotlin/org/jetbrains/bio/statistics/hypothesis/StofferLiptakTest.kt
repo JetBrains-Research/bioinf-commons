@@ -2,6 +2,7 @@ package org.jetbrains.bio.statistics.hypothesis
 
 import org.apache.commons.math3.distribution.NormalDistribution
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation
+import org.apache.commons.math3.util.Precision
 import org.jetbrains.bio.viktor.KahanSum
 import java.util.*
 import kotlin.math.max
@@ -45,7 +46,7 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
             }
         }
         // Test assumes positive correlation between p-values
-        val testStat = zSum.result() / sqrt(n + 2.0 * max(0.0, correctionSum.result()))
+        val testStat = zSum.result() / sqrt(max(1.0, n + 2.0 * correctionSum.result()))
         check(!testStat.isNaN()) {
             "Nan during combining pvalues sum(z)=${zSum.result()} sum(corr)=${correctionSum.result()} " +
                     "pvalues=${pValues.joinToString(",") { it.toString() }}"
@@ -75,7 +76,7 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
         /**
          * Maximum distance to compute correlations between p-values for Stoffer-Liptak test
          */
-        const val MAX_CORRELATION_DISTANCE = 100
+        const val MAX_CORRELATION_DISTANCE = 50
 
         internal fun computeCorrelations(pValues: DoubleArray, maxCorrelationDistance: Int): DoubleArray {
             val distanceCorrelations = DoubleArray(min(pValues.size / 2, maxCorrelationDistance) + 1)
@@ -93,6 +94,10 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
                 // See example at: https://github.com/JetBrains-Research/span/issues/34
                 if (correlation.isNaN() || !correlation.isFinite()) {
                    correlation = 0.0
+                }
+                // Stop computing correlation after small one
+                if (Precision.equals(correlation, 0.0, 1e-6)) {
+                    break
                 }
                 distanceCorrelations[i] = correlation
             }

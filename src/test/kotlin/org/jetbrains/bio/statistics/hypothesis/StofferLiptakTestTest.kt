@@ -41,6 +41,7 @@ class StofferLiptakTestTest {
         Assert.assertEquals(1e-6, stofferLiptakTest.combine(doubleArrayOf(1e-6)), 1e-6)
         Assert.assertEquals(0.004272487313437656, stofferLiptakTest.combine(doubleArrayOf(1e-6, 1e-4)), 1e-6)
         Assert.assertEquals(0.1824166413929258, stofferLiptakTest.combine(doubleArrayOf(1e-2, 0.1)), 1e-6)
+        // Improving relaxed pvalue 1e-4
         Assert.assertEquals(5.961866446146935E-5, stofferLiptakTest.combine(doubleArrayOf(1e-8, 1e-6, 1e-4)), 1e-6)
         Assert.assertEquals(
             2.351597618743817E-6, stofferLiptakTest.combine(doubleArrayOf(1e-10, 1e-8, 1e-6, 1e-4)), 1e-6
@@ -48,9 +49,9 @@ class StofferLiptakTestTest {
         Assert.assertEquals(
             1.6964616000869626E-7, stofferLiptakTest.combine(doubleArrayOf(1e-10, 1e-8, 1e-10, 1e-4)), 1e-12
         )
-        Assert.assertEquals(
-            1.5173603373774824E-8, stofferLiptakTest.combine(doubleArrayOf(1e-12, 1e-10, 1e-8, 1e-10, 1e-4)), 1e-12
-        )
+        // Case when combining is much worse
+        Assert.assertEquals(0.010885145722788425,
+            stofferLiptakTest.combine(doubleArrayOf(9.61429557064954E-8, 5.878646086208946E-4)), 1e-6)
     }
 
     @Test
