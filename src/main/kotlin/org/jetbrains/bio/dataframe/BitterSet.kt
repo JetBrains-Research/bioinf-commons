@@ -94,8 +94,10 @@ class BitterSet(private val universe: Int) : BitSet() {
      * See [aggregated] for details about aggregation bins with gap.
      */
     fun findConsequentBlocks(aggregated: BitRange): List<BitRange> {
-        check(get(aggregated.fromIndex) && get(aggregated.toIndex - 1)) { "Assuming true indexes" }
         var index = aggregated.fromIndex
+        if (!get(index)) {
+            index = nextSetBit(index)
+        }
         val result = arrayListOf<BitRange>()
         while (index != -1 && index < aggregated.toIndex) {
             val next = nextClearBit(index + 1)

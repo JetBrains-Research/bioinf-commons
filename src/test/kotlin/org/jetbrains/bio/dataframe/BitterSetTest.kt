@@ -152,6 +152,7 @@ class FindConsequentTest(private val expected: List<BitRange>, private val bits:
         @Parameters
         fun `data`(): Collection<Array<out Any>> = listOf(
             arrayOf(listOf(BitRange(1, 4)), intArrayOf(1, 2, 3), BitRange(1, 4)),
+            arrayOf(listOf(BitRange(1, 4)), intArrayOf(1, 2, 3), BitRange(0, 10)),
             arrayOf(
                 listOf(BitRange(1, 4), BitRange(5, 7), BitRange(10, 11), BitRange(15, 16)),
                 intArrayOf(1, 2, 3, 5, 6, 10, 15), BitRange(1, 16)
