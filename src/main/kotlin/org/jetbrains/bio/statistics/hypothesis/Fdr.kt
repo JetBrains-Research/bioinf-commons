@@ -77,7 +77,7 @@ class Fdr(private val alpha: Double) : Predictor {
          * Cheng & Zhu, "A classification approach to DNA methylation profiling with
          *               bisulfite next-generation sequencing", Bioinformatics, 2014.
          */
-        fun qvalidate(logNullMemberships: F64Array): F64Array {
+        fun qvalidate(logNullMemberships: F64Array, logResults: Boolean = false): F64Array {
             val m = logNullMemberships.size
             // Sort PEPs in ascending order and remember the inverse
             // permutation, so that we can return Q-values in the order
@@ -98,7 +98,9 @@ class Fdr(private val alpha: Double) : Predictor {
                 qvalues[k] = min(qvalues[k], qvalues[k + 1])
             }
             qvalues.reorder(original)
-            qvalues.expInPlace()
+            if (!logResults) {
+                qvalues.expInPlace()
+            }
             return qvalues
         }
     }
