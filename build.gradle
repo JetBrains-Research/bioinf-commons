@@ -22,12 +22,14 @@ targetCompatibility = sourceCompatibility
 compileKotlin { kotlinOptions.jvmTarget = sourceCompatibility }
 compileTestKotlin { kotlinOptions.jvmTarget = sourceCompatibility }
 
-repositories {
-    maven { url("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2") }
-    maven { url("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2") }
+if (rootProject == project) {
+    repositories {
+        maven { url("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2") }
+        maven { url("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2") }
 
-    // In case of issues with cache redirector:
-    // mavenCentral()
+        // In case of issues with cache redirector:
+        // mavenCentral()
+    }
 }
 
 dependencies {
