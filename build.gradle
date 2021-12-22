@@ -1,12 +1,11 @@
 buildscript {
-    ext.kotlin_version = "1.5.31"
+    ext.kotlin_version = "1.6.10"
 
     repositories {
-        maven { url "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2" }
-        maven { url "https://cache-redirector.jetbrains.com/jcenter.bintray.com" }
+        maven { url("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2") }
 
         // In case of issues with cache redirector:
-        // jcenter()
+        // mavenCentral()
     }
 
     dependencies {
@@ -23,38 +22,38 @@ compileKotlin { kotlinOptions.jvmTarget = sourceCompatibility }
 compileTestKotlin { kotlinOptions.jvmTarget = sourceCompatibility }
 
 repositories {
-    jcenter()
+    // mavenCentral()
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-    compile "org.jetbrains.kotlinx:kotlinx-support-jdk8:0.1"
+    compile("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
+    compile("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version")
+    compile("org.jetbrains.kotlinx:kotlinx-support-jdk8:0.1")
 
     // Logging dependencies
     compile("ch.qos.logback:logback-classic:1.2.3")
     compile("ch.qos.logback:logback-core:1.2.3")
-    compile "org.slf4j:slf4j-api:1.7.25"
+    compile("org.slf4j:slf4j-api:1.7.25")
 
-    compile "com.google.guava:guava:23.6.1-jre"
-    compile "org.apache.commons:commons-csv:1.4"
-    compile "com.google.code.gson:gson:2.7"
-    compile "net.sf.jopt-simple:jopt-simple:5.0.4"
-    compile "commons-net:commons-net:3.5"
-    compile "org.apache.httpcomponents:httpclient:4.5.6"
-    compile "org.jgrapht:jgrapht-core:0.9.2"
-    compile "com.fasterxml.jackson.core:jackson-databind:2.8.11"
-    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.8.11"
-    compile "com.github.samtools:htsjdk:2.10.1"
-    compile "com.github.broadinstitute:picard:2.18.26"
-    compile "org.jline:jline-terminal:3.10.0"
-    compile "com.carrotsearch:jsuffixarrays:0.1.0"
+    compile("com.google.guava:guava:23.6.1-jre")
+    compile("org.apache.commons:commons-csv:1.4")
+    compile("com.google.code.gson:gson:2.7")
+    compile("net.sf.jopt-simple:jopt-simple:5.0.4")
+    compile("commons-net:commons-net:3.5")
+    compile("org.apache.httpcomponents:httpclient:4.5.6")
+    compile("org.jgrapht:jgrapht-core:0.9.2")
+    compile("com.fasterxml.jackson.core:jackson-databind:2.8.11")
+    compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.8.11")
+    compile("com.github.samtools:htsjdk:2.10.1")
+    compile("com.github.broadinstitute:picard:2.18.26")
+    compile("org.jline:jline-terminal:3.10.0")
+    compile("com.carrotsearch:jsuffixarrays:0.1.0")
 
-    compile "org.jetbrains.bio:big:0.9.0"
-    compile "org.jetbrains.bio:viktor:1.0.0"
+    compile("org.jetbrains.bio:big:0.9.0")
+    compile("org.jetbrains.bio:viktor:1.2.0")
 
-    testCompile "junit:junit:4.12"
-    testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
+    testCompile("junit:junit:4.12")
+    testCompile("org.jetbrains.kotlin:kotlin-test:$kotlin_version")
 }
 
 private String settingsFolder(final String propertyName, final String folderName) {
