@@ -172,7 +172,7 @@ class SingleEndCoverageTest {
                 val message = e.message
                 assertNotNull(message)
                 assertIn(
-                    "Cache file $coveragePath doesn't contain ${chromosome2.name}",
+                    "File $coveragePath doesn't contain data for ${PairedEndCoverageTest.chromosome2.name}.",
                     message
                 )
             }

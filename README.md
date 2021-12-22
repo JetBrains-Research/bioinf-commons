@@ -24,18 +24,9 @@ Contents
 * `org.jetbrains.bio.statistics` - Statistics utilities including distributions mixtures, hmms and hypothesis testing
 * `org.jetbrains.bio.util` - Cancellable computations, progress reporters, logging utilities, and other utils
 
-Installation
-------------
+Tests
+-----
 
-The latest version of `bioinf-commons` is available on [jCenter](https://bintray.com/bintray/jcenter). If you're using
-Gradle just add the following to your `build.gradle`:
-
-```gradle
-repositories {
-    jcenter()
-}
-
-dependencies {
-    compile 'org.jetbrains.bio:bioinf-commons:0.0.9'
-}
-```
+   ```bash
+   $ ./gradlew clean test --no-daemon --max-workers 1
+   ```

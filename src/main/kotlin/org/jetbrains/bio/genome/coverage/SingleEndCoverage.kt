@@ -169,15 +169,10 @@ class SingleEndCoverage private constructor(
                     try {
                         val npyArray = npzReader[key]
                         data[chromosome, strand] = TIntArrayList.wrap(npyArray.asIntArray())
+                    } catch (e: NullPointerException) { // JDK11 doesn't throw ISE in case of missing zip entry
+                        throw IllegalStateException("File $path doesn't contain data for ${chromosome.name}.", e)
                     } catch (e: IllegalStateException) {
-                        throw IllegalStateException(
-                            "Cache file $path doesn't contain $key.\n" +
-                                    "It's likely that chrom.sizes file used for its creation differs " +
-                                    "from the one being used to read it now.\n" +
-                                    "If problem persists, delete the cache file $path " +
-                                    "and Span will recreate it with correct settings.",
-                            e
-                        )
+                        throw IllegalStateException("File $path doesn't contain data for ${chromosome.name}.", e)
                     }
                 }
             }
