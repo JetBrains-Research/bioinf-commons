@@ -118,7 +118,7 @@ interface ClassificationModel {
         }
 
         /**
-         * XXX please do not use this instance for serializing arbitrary objects to
+         * Please do not use this instance for serializing arbitrary objects to
          * JSON. It is specialized for serializing models.
          */
         private fun createGson() = GsonBuilder()
