@@ -1,6 +1,8 @@
 package org.jetbrains.bio
 
 import com.google.common.annotations.VisibleForTesting
+import org.jetbrains.bio.gse.EnrichmentInRegions
+import org.jetbrains.bio.gse.OverlapRegionsWithEachLoci
 import org.jetbrains.bio.util.Logs
 import org.slf4j.event.Level
 
@@ -74,13 +76,13 @@ object BioinfToolsCLA {
         LOCI_ENRICHMENT_IN_REGIONS(
             "enrichmentInRegions",
             "Loci of interest enrichment in region sets compared to similar simulated loci.", { args ->
-                org.jetbrains.bio.experiments.gsea.EnrichmentInRegions.main(args)
+                EnrichmentInRegions.main(args)
             }),
 
         OVERLAP_REGIONS_WITH_EACH_LOCI(
             "overlapPerLocus",
             "For each locus from loci and of regions calculate: overlap(regions, i-th locus location)", { args ->
-                org.jetbrains.bio.experiments.gsea.OverlapRegionsWithEachLoci.main(args)
+                OverlapRegionsWithEachLoci.main(args)
             });
 
         operator fun invoke(args: Array<String>) = f(args)

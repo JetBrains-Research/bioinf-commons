@@ -1,7 +1,8 @@
-package org.jetbrains.bio.experiments.gsea
+package org.jetbrains.bio.gsea
 
 import org.apache.commons.math3.stat.StatUtils
 import org.apache.commons.math3.util.Precision
+import org.jetbrains.bio.gse.IntHistogram
 import org.junit.Assert
 import org.junit.Test
 import kotlin.math.sqrt

@@ -1,4 +1,4 @@
-package org.jetbrains.bio.experiments.gsea
+package org.jetbrains.bio.gse
 
 import joptsimple.OptionParser
 import org.jetbrains.bio.BioinfToolsCLA
