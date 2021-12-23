@@ -80,11 +80,9 @@ interface ClassificationModel {
      * @param path to the resulting JSON file.
      */
     fun save(path: Path) {
-        val gson = createGson()
-
         path.parent.createDirectories()
         try {
-            path.bufferedWriter().use { gson.toJson(this, it) }
+            path.bufferedWriter().use { GSON.toJson(this, it) }
         } catch (e: StackOverflowError) {
             // Don't log exception, error message will be lost (removed from output) due to stacktrace size
             LOG.error("Serialization StackOverflowError. Model ${javaClass.name}, path = ${path.toAbsolutePath()}")
@@ -108,9 +106,8 @@ interface ClassificationModel {
         @Suppress("unchecked_cast")
         @Throws(IOException::class, JsonParseException::class)
         fun <M : ClassificationModel> load(path: Path): M {
-            val gson = createGson()
             return path.bufferedReader().use {
-                val model = gson.fromJson(it, ClassificationModel::class.java) as M?
+                val model = GSON.fromJson(it, ClassificationModel::class.java) as M?
                 checkNotNull(model) {
                     "failed to load model from $path"
                 }
@@ -121,9 +118,9 @@ interface ClassificationModel {
          * Please do not use this instance for serializing arbitrary objects to
          * JSON. It is specialized for serializing models.
          */
-        private fun createGson() = GsonBuilder()
+        private val GSON = GsonBuilder()
             .setPrettyPrinting()
-            .setFieldNamingStrategy(GSONUtil.NO_MY_UNDESCORE_NAMING_STRATEGY)
+            .setFieldNamingStrategy(GSONUtil.NO_MY_UNDERSCORE_NAMING_STRATEGY)
             .registerTypeAdapter(F64Array::class.java, F64ArrayTypeAdapter)
             .registerTypeAdapterFactory(NotDirectlyDeserializable.ADAPTER_FACTORY)
             .registerTypeAdapterFactory(

@@ -20,7 +20,7 @@ object GSONUtil {
      * This naming strategy converts 'myFooBar' field into 'foo_bar'.
      */
     @JvmField
-    val NO_MY_UNDESCORE_NAMING_STRATEGY = FieldNamingStrategy { f ->
+    val NO_MY_UNDERSCORE_NAMING_STRATEGY = FieldNamingStrategy { f ->
         CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, f.name).replace("my_", "")
     }
 

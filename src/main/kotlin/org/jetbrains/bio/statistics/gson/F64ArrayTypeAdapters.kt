@@ -17,7 +17,7 @@ import java.lang.reflect.Type
  */
 private inline fun <reified T> fromJsonFallback(json: JsonElement): T {
     return GsonBuilder()
-        .setFieldNamingStrategy(GSONUtil.NO_MY_UNDESCORE_NAMING_STRATEGY)
+        .setFieldNamingStrategy(GSONUtil.NO_MY_UNDERSCORE_NAMING_STRATEGY)
         .create()
         .fromJson(json, object : TypeToken<T>() {}.type)
 }

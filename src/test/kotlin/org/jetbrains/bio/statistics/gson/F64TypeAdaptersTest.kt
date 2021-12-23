@@ -7,7 +7,7 @@ import org.junit.Test
 import kotlin.test.assertEquals
 
 private val GSON_BUILDER = GsonBuilder()
-    .setFieldNamingStrategy(GSONUtil.NO_MY_UNDESCORE_NAMING_STRATEGY)
+    .setFieldNamingStrategy(GSONUtil.NO_MY_UNDERSCORE_NAMING_STRATEGY)
 
 class F64ArrayTypeAdapterTest {
     @Test
