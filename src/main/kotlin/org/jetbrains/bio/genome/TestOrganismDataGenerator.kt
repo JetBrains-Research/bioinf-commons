@@ -12,16 +12,13 @@ import org.jetbrains.bio.genome.format.write
 import org.jetbrains.bio.genome.search.sa.SuffixArray
 import org.jetbrains.bio.genome.sequence.Nucleotide
 import org.jetbrains.bio.genome.sequence.NucleotideSequence
-import org.jetbrains.bio.util.bufferedWriter
-import org.jetbrains.bio.util.createDirectories
-import org.jetbrains.bio.util.div
-import org.jetbrains.bio.util.withTempFile
+import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
 import java.io.DataOutputStream
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.ThreadLocalRandom
 import java.util.stream.Collectors
 import kotlin.math.abs
 import kotlin.math.min
@@ -30,6 +27,10 @@ import kotlin.math.min
 @Suppress("unused")
 object TestOrganismDataGenerator {
     private val LOG = LoggerFactory.getLogger(TestOrganismDataGenerator::class.java)
+
+    private val RANDOM = Random().apply {
+        setSeed(42)
+    }
 
     private val CHROMOSOMES_SIZES = mapOf(
         "chr1" to IntMath.pow(10, 7),
@@ -50,28 +51,51 @@ object TestOrganismDataGenerator {
         val dataPath = Configuration.genomesPath / Genome.TEST_ORGANISM_BUILD
         // Ensure data path initialized
         dataPath.createDirectories()
-        LOG.info("Generating test organism into $dataPath")
 
-        LOG.info("Generating chrom.sizes")
+        LOG.info("Check files...")
         val build = Genome.TEST_ORGANISM_BUILD
-        val chromSizesPath = Configuration.genomesPath / build / "$build.chrom.sizes"
+        val genomePath = Configuration.genomesPath / build
+        val chromSizesPath = genomePath / "$build.chrom.sizes"
+        val genome = Genome[Genome.TEST_ORGANISM_BUILD]
+        val twoBitPath = genome.twoBitPath(downloadIfMissing = false)
+        val genesGtfPath = genome.genesGtfPath(downloadIfMissing = false)
+        val gapsPath = genome.gapsPath
+        val cytobandsPath = genome.cytobandsPath!!
+        val repeatsPath = genome.repeatsPath!!
+        val cpgIslandsPath = genome.cpgIslandsPath!!
+        val mappabilityPath = genomePath / "mapability.bigWig"
+        val saPath = genomePath / "sa"
+        if (genomePath.exists && chromSizesPath.exists && twoBitPath.exists &&
+            genesGtfPath.exists && gapsPath.exists && cytobandsPath.exists &&
+            repeatsPath.exists && cpgIslandsPath.exists && mappabilityPath.exists && saPath.exists
+        ) {
+            LOG.info("All files present. Nothing to generate.")
+            return
+        }
+
+        LOG.info("Generating genome $build files...")
+        generateChromSizes(chromSizesPath)
+        generateSequence(genome, twoBitPath)
+        generateTranscripts(genome, genesGtfPath)
+        generateCentromere(genome, gapsPath)
+        generateCytobands(genome, cytobandsPath)
+        generateRepeats(repeatsPath)
+        generateCGI(cpgIslandsPath)
+        generateMapability(genome, mappabilityPath)
+        generateSA(genome, saPath)
+        LOG.info("Done")
+    }
+
+    /**
+     * Creates genome.chrom.sizes file.
+     */
+    private fun generateChromSizes(chromSizesPath: Path) {
+        LOG.info("Generating chrom.sizes path")
         CSVFormat.TDF.print(chromSizesPath.bufferedWriter()).use { csvPrinter ->
             CHROMOSOMES_SIZES.forEach { (name, size) ->
                 csvPrinter.printRecord(name, size.toString())
             }
         }
-
-        LOG.info("Generating other files")
-        val genome = Genome[Genome.TEST_ORGANISM_BUILD]
-        generateSequence(genome)
-        generateTranscripts(genome)
-        generateCentromere(genome)
-        generateCytobands(genome)
-        generateRepeats(genome)
-        generateCGI(genome)
-        generateMapability(genome)
-        generateSA(genome)
-        LOG.info("Done")
     }
 
     /**
@@ -81,22 +105,21 @@ object TestOrganismDataGenerator {
      *                on a chromosome.
      * @param maxGapLength maximum gap length.
      */
-    private fun generateSequence(genome: Genome, maxGaps: Int = 10, maxGapLength: Int = 100) {
+    private fun generateSequence(genome: Genome, twoBitPath: Path, maxGaps: Int = 10, maxGapLength: Int = 100) {
         LOG.info("Generating FASTA sequence")
         withTempFile(genome.build, ".fa") { fastaPath ->
-            val r = ThreadLocalRandom.current()
             CHROMOSOMES_SIZES.map { (name, length) ->
-                val sequence = r.ints(length.toLong(), 0, Nucleotide.ALPHABET.size)
+                val sequence = RANDOM.ints(length.toLong(), 0, Nucleotide.ALPHABET.size)
                     .mapToObj { Nucleotide.ALPHABET[it].toString() }
                     .collect(Collectors.joining())
                     .toCharArray()
 
-                val numGaps = min(r.nextInt(maxGaps + 1), 3)
+                val numGaps = min(RANDOM.nextInt(maxGaps + 1), 3)
                 for (i in 0 until numGaps) {
                     // We could do better here by generating non-overlapping
                     // ranges, but it's not worth the effort.
-                    val gapLength = r.nextInt(maxGapLength) + 1
-                    val gapOffset = r.nextInt(length - gapLength)
+                    val gapLength = RANDOM.nextInt(maxGapLength) + 1
+                    val gapOffset = RANDOM.nextInt(length - gapLength)
                     (gapOffset until gapOffset + gapLength).forEach {
                         sequence[it] = 'n'
                     }
@@ -106,7 +129,7 @@ object TestOrganismDataGenerator {
             }.write(fastaPath)
 
             LOG.info("Converting FASTA sequence to 2bit")
-            TwoBitWriter.convert(fastaPath, genome.twoBitPath(false))
+            TwoBitWriter.convert(fastaPath, twoBitPath)
         }
     }
 
@@ -115,12 +138,10 @@ object TestOrganismDataGenerator {
      *
      * @see Transcripts
      */
-    private fun generateTranscripts(genome: Genome) {
+    private fun generateTranscripts(genome: Genome, genesGtfPath: Path) {
         LOG.info("Generating transcript annotations")
 
-        val r = ThreadLocalRandom.current()
-
-        genome.genesGtfPath(false).bufferedWriter().use { w ->
+        genesGtfPath.bufferedWriter().use { w ->
 
             val transcripts = arrayListOf<Transcript>()
 
@@ -132,9 +153,9 @@ object TestOrganismDataGenerator {
                 var geneNumber = 0
                 while (length - currentEnd > 6e4) {
                     val geneSymbol = "simgene.$name.$geneNumber".uppercase()
-                    val currentStart = currentEnd + 10000 + r.nextInt(40000)
+                    val currentStart = currentEnd + 10000 + RANDOM.nextInt(40000)
                     val currentLength = 100 + min(length - currentStart - 10000, 10000)
-                    val strand = if (r.nextBoolean()) Strand.PLUS else Strand.MINUS
+                    val strand = if (RANDOM.nextBoolean()) Strand.PLUS else Strand.MINUS
                     val transcript = generateTranscript(
                         geneNumber, geneSymbol, chromosome, strand,
                         currentStart, currentLength
@@ -160,25 +181,24 @@ object TestOrganismDataGenerator {
 
         val minExonLength = 3
         val minIntronLength = 2
-        val r = ThreadLocalRandom.current()
-        val exonCount = 1 + r.nextInt(8)
-        val leftFlankingIntron = r.nextBoolean()
-        val rightFlankingIntron = r.nextBoolean()
+        val exonCount = 1 + RANDOM.nextInt(8)
+        val leftFlankingIntron = RANDOM.nextBoolean()
+        val rightFlankingIntron = RANDOM.nextBoolean()
         val exonStarts = ArrayList<Int>(exonCount)
         val exonEnds = ArrayList<Int>(exonCount)
         var lengthPool = (length - minExonLength * exonCount - minIntronLength * (exonCount - 1)
                 - (if (leftFlankingIntron) minIntronLength else 0)
                 - if (rightFlankingIntron) minIntronLength else 0)
-        exonStarts.add(0, if (leftFlankingIntron) offset + minIntronLength + r.nextInt(lengthPool) else offset)
+        exonStarts.add(0, if (leftFlankingIntron) offset + minIntronLength + RANDOM.nextInt(lengthPool) else offset)
         if (leftFlankingIntron) {
             val intronLen = exonStarts[0] - offset
             lengthPool -= intronLen - minIntronLength // length pool already takes in consideration min lengths
         }
         for (i in 0 until exonCount - 1) {
-            exonEnds.add(i, exonStarts[i] + minExonLength + r.nextInt(lengthPool))
+            exonEnds.add(i, exonStarts[i] + minExonLength + RANDOM.nextInt(lengthPool))
             val exonLen = exonEnds[i] - exonStarts[i]
             lengthPool -= exonLen - minExonLength // length pool already takes in consideration min lengths
-            exonStarts.add(i + 1, exonEnds[i] + minIntronLength + r.nextInt(lengthPool))
+            exonStarts.add(i + 1, exonEnds[i] + minIntronLength + RANDOM.nextInt(lengthPool))
             val intronLen = exonStarts[i + 1] - exonEnds[i]
             lengthPool -= intronLen - minIntronLength
         }
@@ -186,7 +206,7 @@ object TestOrganismDataGenerator {
         exonEnds.add(
             exonCount - 1,
             if (rightFlankingIntron)
-                exonStarts[exonCount - 1] + minExonLength + r.nextInt(lengthPool)
+                exonStarts[exonCount - 1] + minExonLength + RANDOM.nextInt(lengthPool)
             else
                 offset + length
         )
@@ -194,12 +214,12 @@ object TestOrganismDataGenerator {
         val exonRanges = (0 until exonCount).map { Range(exonStarts[it], exonEnds[it]) }.sorted()
 
         val mRNALength = exonEnds.sum() - exonStarts.sum()
-        val cdsLength = if (geneNumber % 5 == 0 || mRNALength < 3) 0 else r.nextInt(mRNALength / 3) * 3
+        val cdsLength = if (geneNumber % 5 == 0 || mRNALength < 3) 0 else RANDOM.nextInt(mRNALength / 3) * 3
 
         val cdsRange: Range?
         val utr3End5: Int
         if (cdsLength != 0) {
-            var cdsRelativeStartOffset = r.nextInt(mRNALength - cdsLength)
+            var cdsRelativeStartOffset = RANDOM.nextInt(mRNALength - cdsLength)
             var cdsStartExon = 0
             while (cdsRelativeStartOffset >= exonEnds[cdsStartExon] - exonStarts[cdsStartExon]) {
                 cdsRelativeStartOffset -= exonEnds[cdsStartExon] - exonStarts[cdsStartExon]
@@ -236,9 +256,9 @@ object TestOrganismDataGenerator {
      *
      * @see Gaps
      */
-    private fun generateCentromere(genome: Genome) {
+    private fun generateCentromere(genome: Genome, gapsPath: Path) {
         LOG.info("Generating centromere annotations")
-        genome.gapsPath.bufferedWriter().use {
+        gapsPath.bufferedWriter().use {
             val printer = Gaps.FORMAT.print(it)
             for (chromosome in genome.chromosomes) {
                 printer.printRecord(
@@ -257,9 +277,9 @@ object TestOrganismDataGenerator {
      *
      * @see CytoBands
      */
-    private fun generateCytobands(genome: Genome) {
+    private fun generateCytobands(genome: Genome, cytobandsPath: Path) {
         LOG.info("Generating cytoband annotations")
-        genome.cytobandsPath!!.bufferedWriter().use {
+        cytobandsPath.bufferedWriter().use {
             val printer = CytoBands.FORMAT.print(it)
             for ((i, chromosome) in genome.chromosomes.withIndex()) {
                 printer.printRecord(
@@ -278,9 +298,9 @@ object TestOrganismDataGenerator {
      *
      * @see Repeats
      */
-    private fun generateRepeats(genome: Genome) {
+    private fun generateRepeats(repeatsPath: Path) {
         LOG.info("Generating repeat annotations (stub)")
-        genome.repeatsPath!!.bufferedWriter().use { w ->
+        repeatsPath.bufferedWriter().use { w ->
             // This is the first line from mm9 annotations.
             w.write(
                 "607\t687\t174\t0\t0\tchr1\t3000001\t3000156\t-194195276\t-" +
@@ -294,9 +314,9 @@ object TestOrganismDataGenerator {
      *
      * @see Repeats
      */
-    private fun generateCGI(genome: Genome) {
+    private fun generateCGI(cpgIslandsPath: Path) {
         LOG.info("Generating repeat annotations (stub)")
-        genome.cpgIslandsPath!!.bufferedWriter().use { w ->
+        cpgIslandsPath.bufferedWriter().use { w ->
             // This is the first line from hg19 annotations.
             w.write(
                 """
@@ -315,30 +335,28 @@ object TestOrganismDataGenerator {
      * We only generate mapability for chrX.
      * This is done to test that the genome mean substitution for no-data chromosome works correctly.
      */
-    private fun generateMapability(genome: Genome) {
+    private fun generateMapability(genome: Genome, mappabilityPath: Path) {
         LOG.info("Generating mapability bigWig")
-        val path = genome.chromSizesPath.parent / "mapability.bigWig"
         val gq = genome.toQuery()
         val chrX = gq["chrX"]!!
-        val random = ThreadLocalRandom.current()
         val section = FixedStepSection(
             chrX.name,
             start = 0,
             values = TFloatArrayList(
-                (0 until chrX.length).map { if (random.nextInt(5) == 4) 0.0f else 1.0f }.toFloatArray()
+                (0 until chrX.length).map { if (RANDOM.nextInt(5) == 4) 0.0f else 1.0f }.toFloatArray()
             )
         )
-        BigWigFile.write(listOf(section), gq.get().map { it.name to it.length }, path)
+        BigWigFile.write(listOf(section), gq.get().map { it.name to it.length }, mappabilityPath)
     }
 
-    private fun generateSA(genome: Genome) {
+    private fun generateSA(genome: Genome, saPath: Path) {
         LOG.info("Processing SA indexes and FASTQ mismatched reads")
         for (chromosome in genome.chromosomes) {
             SuffixArray.create(chromosome)
             val sequence = chromosome.sequence
             // Generate 35-bp FASTQ reads with 0 to 2 mismatches
             val outputStream = DataOutputStream(
-                Files.newOutputStream(genome.chromSizesPath.parent!! / "sa" / "${chromosome.name}.fastq")
+                Files.newOutputStream(saPath / "${chromosome.name}.fastq")
             )
             var j = 0
             while (j < 1e3) {
@@ -359,19 +377,18 @@ object TestOrganismDataGenerator {
         length: Int,
         maxMismatchCount: Int
     ) {
-        val random = Random()
-        val strand = if (random.nextBoolean()) Strand.PLUS else Strand.MINUS
+        val strand = if (RANDOM.nextBoolean()) Strand.PLUS else Strand.MINUS
         var pos: Int
         var read: String
         do {
-            pos = random.nextInt(sequence.length - length)
+            pos = RANDOM.nextInt(sequence.length - length)
             read = sequence.substring(pos, pos + length, strand)
         } while (read.indexOf('n') != -1)
 
         val alphabet = Nucleotide.ALPHABET
         val readCharArray = read.toCharArray()
-        val mismatches = random.ints().map { i -> abs(i % length) }.distinct().limit(maxMismatchCount.toLong())
-        mismatches.forEach { mismatchPos -> readCharArray[mismatchPos] = alphabet[random.nextInt(alphabet.size)] }
+        val mismatches = RANDOM.ints().map { i -> abs(i % length) }.distinct().limit(maxMismatchCount.toLong())
+        mismatches.forEach { mismatchPos -> readCharArray[mismatchPos] = alphabet[RANDOM.nextInt(alphabet.size)] }
 
         read = String(readCharArray).uppercase()
         val header = "TESTDATA.$number TAKENFROM:$pos:$strand:$maxMismatchCount length=$length\n"

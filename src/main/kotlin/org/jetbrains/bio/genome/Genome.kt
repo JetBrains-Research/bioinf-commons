@@ -64,9 +64,9 @@ class Genome private constructor(
 ) {
     val chromSizesPath by lazy { ensureNotNull(chromSizesPath, "Chromosomes Sizes") }
     val gapsPath by lazy { ensureNotNull(gapsPath, "Gaps") }
-    fun twoBitPath(downloadIfMissed: Boolean = true) =
+    fun twoBitPath(downloadIfMissing: Boolean = true) =
         ensureNotNull(twoBitPath, "Genome *.2bit Sequence").also { twoBitPath ->
-            if (downloadIfMissed) {
+            if (downloadIfMissing) {
                 twoBitPath.checkOrRecalculate { output ->
                     val config = annotationsConfig
                     requireNotNull(config) {
@@ -119,9 +119,9 @@ class Genome private constructor(
     /**
      * Ensure *.gtf file exists and download it if necessary
      */
-    fun genesGtfPath(downloadIfMissed: Boolean = true) =
+    fun genesGtfPath(downloadIfMissing: Boolean = true) =
         ensureNotNull(genesGTFPath, "Genes GTF Annotations").also { genesGTFPath ->
-            if (downloadIfMissed) {
+            if (downloadIfMissing) {
                 genesGTFPath.checkOrRecalculate("Genes") { output ->
                     val config = annotationsConfig
                     requireNotNull(config) {
