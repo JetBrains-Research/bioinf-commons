@@ -265,7 +265,6 @@ object Gaps {
                                     .join("", -1, -1, "centromere", "no")
                                 target.write(line.trimEnd() + leftout + '\n')
                             }
-                            target.close()
                         }
                     }
                 } catch (e: Exception) {

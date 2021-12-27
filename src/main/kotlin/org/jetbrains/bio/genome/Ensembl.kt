@@ -15,24 +15,24 @@ object Ensembl {
 
     fun convertGTF(genome: Genome, inputStream: BufferedReader, outputPath: Path) {
         val mapping = genome.chromosomeNamesMap
-        val writer = outputPath.bufferedWriter()
-        for (line in inputStream.lines()) {
-            if (line.startsWith("#")) {
-                writer.write(line)
-                writer.newLine()
-            } else {
-                val parts = line.split("\t").toMutableList()
-                val name = parts[0]
-                parts[0] = mapping[name]?.name ?: when {
-                    name.startsWith("chr") -> name
-                    else -> "chr$name"
+        outputPath.bufferedWriter().use { writer ->
+            for (line in inputStream.lines()) {
+                if (line.startsWith("#")) {
+                    writer.write(line)
+                    writer.newLine()
+                } else {
+                    val parts = line.split("\t").toMutableList()
+                    val name = parts[0]
+                    parts[0] = mapping[name]?.name ?: when {
+                        name.startsWith("chr") -> name
+                        else -> "chr$name"
+                    }
+                    writer.write(parts.joinToString(separator = "\t"))
+                    writer.newLine()
                 }
-                writer.write(parts.joinToString(separator = "\t"))
-                writer.newLine()
-            }
 
+            }
         }
-        writer.close()
     }
 }
 

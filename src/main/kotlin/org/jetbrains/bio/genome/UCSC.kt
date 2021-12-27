@@ -80,11 +80,9 @@ private fun String.downloadFtp(outputPath: Path) {
     ftpClient.enterLocalPassiveMode()
     ftpClient.setFileType(FTPClient.BINARY_FILE_TYPE)
 
-    val output = FileOutputStream(outputPath.toFile())
-
-    ftpClient.retrieveFile(ftpPath, output)
-
-    output.close()
+    FileOutputStream(outputPath.toFile()).use { output ->
+        ftpClient.retrieveFile(ftpPath, output)
+    }
 
     ftpClient.logout()
     ftpClient.disconnect()

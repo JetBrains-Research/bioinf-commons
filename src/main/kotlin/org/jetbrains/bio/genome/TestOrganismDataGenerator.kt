@@ -355,16 +355,16 @@ object TestOrganismDataGenerator {
             SuffixArray.create(chromosome)
             val sequence = chromosome.sequence
             // Generate 35-bp FASTQ reads with 0 to 2 mismatches
-            val outputStream = DataOutputStream(
+            DataOutputStream(
                 Files.newOutputStream(saPath / "${chromosome.name}.fastq")
-            )
-            var j = 0
-            while (j < 1e3) {
-                writeFastq(outputStream, j, sequence, 35, j % 3)
-                j++
+            ).use { outputStream ->
+                var j = 0
+                while (j < 1e3) {
+                    writeFastq(outputStream, j, sequence, 35, j % 3)
+                    j++
+                }
+                outputStream.flush()
             }
-            outputStream.flush()
-            outputStream.close()
         }
     }
 

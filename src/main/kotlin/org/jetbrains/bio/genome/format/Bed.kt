@@ -609,19 +609,19 @@ fun ExtendedBedEntry.toLocation(genome: Genome) =
     Location(start, end, Chromosome(genome, chrom), strand.toStrand())
 
 fun LocationsMergingList.saveWithUniqueNames(bedPath: Path) {
-    val printer = BedFormat().print(bedPath)
-    var i = 0
-    locationIterator().forEach { (start, end, chr) ->
-        printer.print(ExtendedBedEntry(chr.name, start, end, "$i", strand = '+'))
-        i++
+    BedFormat().print(bedPath).use { printer ->
+        var i = 0
+        locationIterator().forEach { (start, end, chr) ->
+            printer.print(ExtendedBedEntry(chr.name, start, end, "$i", strand = '+'))
+            i++
+        }
     }
-    printer.close()
 }
 
 fun String.splitToInts(size: Int): IntArray {
     val s = Splitter.on(',').split(this).toList()
 
-    // actual fields my be less that size, but not vice versa
+    // actual fields may be less that size, but not vice versa
     check(s.isNotEmpty() == (size != 0))
 
     val actualSize = if (size < 0) s.size else size

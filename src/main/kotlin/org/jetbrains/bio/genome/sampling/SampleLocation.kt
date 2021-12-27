@@ -1,5 +1,6 @@
 package org.jetbrains.bio.genome.sampling
 
+import kotlinx.support.jdk7.use
 import org.jetbrains.bio.big.ExtendedBedEntry
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.GenomeQuery
@@ -25,25 +26,25 @@ private const val SAMPLE_ATTEMPTS_THRESHOLD = 1000
  */
 fun randomizeBedRegions(bedFilePath: Path, genomeQuery: GenomeQuery): Path {
     val randomBedPath = Files.createTempFile("randomRegions", ".bed")
-    val printer = BedFormat().print(randomBedPath)
-
-    BedFormat.auto(bedFilePath).parse(bedFilePath) {
-        it.distinct().filter { it.chrom in genomeQuery }
-            .map { it.chrom to (it.end - it.start) }
-            .groupBy { it.first }
-            .mapValues { it.value.map { p -> p.second } }
-            .toList().parallelStream()
-            .map {
-                val chr = Chromosome(genomeQuery.genome, it.first)
-                sampleLocations(chr, it.second, 0, chr.length, false, Strand.PLUS)
-            }
-            .sequential() // required here, otherwise flatMap().forEach() seems to look concurrently
-            .flatMap { it.stream() }
-            .forEach { (start, end, chr, strand) ->
-                printer.print(ExtendedBedEntry(chr.name, start, end, strand = strand.char))
-            }
+    BedFormat().print(randomBedPath).use { printer ->
+        BedFormat.auto(bedFilePath).parse(bedFilePath) { bedParser ->
+            bedParser.distinct()
+                .filter { it.chrom in genomeQuery }
+                .map { it.chrom to (it.end - it.start) }
+                .groupBy { it.first }
+                .mapValues { it.value.map { p -> p.second } }
+                .toList().parallelStream()
+                .map {
+                    val chr = Chromosome(genomeQuery.genome, it.first)
+                    sampleLocations(chr, it.second, 0, chr.length, false, Strand.PLUS)
+                }
+                .sequential() // required here, otherwise flatMap().forEach() seems to look concurrently
+                .flatMap { it.stream() }
+                .forEach { (start, end, chr, strand) ->
+                    printer.print(ExtendedBedEntry(chr.name, start, end, strand = strand.char))
+                }
+        }
     }
-    printer.close()
     return randomBedPath
 }
 
