@@ -299,7 +299,7 @@ class SequentialProgressTest : ProgressTest() {
         assertEquals(100, parts.last().itemsDone)
 
         val elapsedSecs = parts.last().elapsedSeconds
-        val expElapsedRange = 10..11
+        val expElapsedRange = 10..15
         val expElapsedRangeStr = "[${expElapsedRange.first}..${expElapsedRange.last}]"
         assertTrue(
             elapsedSecs in expElapsedRange,
