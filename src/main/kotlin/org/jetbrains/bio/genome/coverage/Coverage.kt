@@ -49,7 +49,8 @@ interface Coverage {
         internal fun load(
             inputPath: Path,
             genomeQuery: GenomeQuery,
-            fragment: Fragment = AutoFragment
+            fragment: Fragment = AutoFragment,
+            failOnMissingChromosomes: Boolean = false
         ): Coverage {
             return NpzFile.read(inputPath).use { reader ->
                 val version = reader[VERSION_FIELD].asIntArray().single()
@@ -59,9 +60,9 @@ interface Coverage {
 
                 val paired = reader[PAIRED_FIELD].asBooleanArray().single()
                 if (paired) {
-                    PairedEndCoverage.load(reader, inputPath, genomeQuery)
+                    PairedEndCoverage.load(reader, inputPath, genomeQuery, failOnMissingChromosomes)
                 } else {
-                    SingleEndCoverage.load(reader, inputPath, genomeQuery).withFragment(fragment)
+                    SingleEndCoverage.load(reader, inputPath, genomeQuery, failOnMissingChromosomes).withFragment(fragment)
                 }
             }
         }

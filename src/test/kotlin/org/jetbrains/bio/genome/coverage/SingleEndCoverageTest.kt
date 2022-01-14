@@ -5,7 +5,6 @@ import kotlinx.support.jdk7.use
 import org.jetbrains.bio.Tests.assertIn
 import org.jetbrains.bio.Tests.assertNotIn
 import org.jetbrains.bio.genome.*
-import org.jetbrains.bio.genome.coverage.FragmentSize.detectFragmentSize
 import org.jetbrains.bio.genome.format.BedFormat
 import org.jetbrains.bio.genome.format.processReads
 import org.jetbrains.bio.genome.format.toBedEntry
@@ -166,7 +165,7 @@ class SingleEndCoverageTest {
         withTempFile("coverage", ".cov") { coveragePath ->
             coverage.save(coveragePath)
             try {
-                Coverage.load(coveragePath, genomeQuery)
+                Coverage.load(coveragePath, genomeQuery, failOnMissingChromosomes = true)
                 fail("Loading partial coverage with full genome completed successfully.")
             } catch (e: IllegalStateException) {
                 val message = e.message

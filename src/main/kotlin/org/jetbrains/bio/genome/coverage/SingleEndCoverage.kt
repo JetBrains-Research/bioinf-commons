@@ -12,6 +12,7 @@ import org.jetbrains.bio.genome.containers.GenomeStrandMap
 import org.jetbrains.bio.genome.containers.genomeStrandMap
 import org.jetbrains.bio.genome.coverage.FragmentSize.detectFragmentSize
 import org.jetbrains.bio.npy.NpzFile
+import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.nio.file.Path
 
@@ -148,13 +149,15 @@ class SingleEndCoverage private constructor(
     companion object {
 
         const val FRAGMENT_FIELD = "fragment"
+        private val LOG = LoggerFactory.getLogger(SingleEndCoverage::class.java)
 
         fun builder(genomeQuery: GenomeQuery) = Builder(genomeQuery)
 
         internal fun load(
             npzReader: NpzFile.Reader,
             path: Path,
-            genomeQuery: GenomeQuery
+            genomeQuery: GenomeQuery,
+            failOnMissingChromosomes: Boolean
         ): SingleEndCoverage {
             check(!npzReader[Coverage.PAIRED_FIELD].asBooleanArray().single()) {
                 "$path attempting to read single-end coverage from paired-end cache file"
@@ -170,9 +173,17 @@ class SingleEndCoverage private constructor(
                         val npyArray = npzReader[key]
                         data[chromosome, strand] = TIntArrayList.wrap(npyArray.asIntArray())
                     } catch (e: NullPointerException) { // JDK11 doesn't throw ISE in case of missing zip entry
-                        throw IllegalStateException("File $path doesn't contain data for ${chromosome.name}.", e)
+                        val msg = "File $path doesn't contain data for ${chromosome.name}."
+                        LOG.debug(msg)
+                        if (failOnMissingChromosomes) {
+                            throw java.lang.IllegalStateException(msg, e)
+                        }
                     } catch (e: IllegalStateException) {
-                        throw IllegalStateException("File $path doesn't contain data for ${chromosome.name}.", e)
+                        val msg = "File $path doesn't contain data for ${chromosome.name}."
+                        LOG.debug(msg)
+                        if (failOnMissingChromosomes) {
+                            throw java.lang.IllegalStateException(msg, e)
+                        }
                     }
                 }
             }

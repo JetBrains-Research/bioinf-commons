@@ -12,6 +12,7 @@ import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.containers.GenomeMap
 import org.jetbrains.bio.genome.containers.genomeMap
 import org.jetbrains.bio.npy.NpzFile
+import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.nio.file.Path
 
@@ -141,12 +142,15 @@ class PairedEndCoverage private constructor(
         const val PAIRED_VERSION_FIELD = "paired_version"
         const val AVERAGE_INSERT_SIZE_FIELD = "average_insert_size"
 
+        private val LOG = LoggerFactory.getLogger(PairedEndCoverage::class.java)
+
         fun builder(genomeQuery: GenomeQuery) = Builder(genomeQuery)
 
         internal fun load(
             npzReader: NpzFile.Reader,
             path: Path,
-            genomeQuery: GenomeQuery
+            genomeQuery: GenomeQuery,
+            failOnMissingChromosomes: Boolean
         ): PairedEndCoverage {
             check(npzReader[Coverage.PAIRED_FIELD].asBooleanArray().single()) {
                 "$path attempting to read paired-end coverage from single-end cache file"
@@ -166,9 +170,17 @@ class PairedEndCoverage private constructor(
                     val npyArray = npzReader[chromosome.name]
                     data[chromosome] = TIntArrayList.wrap(npyArray.asIntArray())
                 } catch (e: NullPointerException) { // JDK11 doesn't throw ISE in case of missing zip entry
-                    throw IllegalStateException("File $path doesn't contain data for ${chromosome.name}.", e)
+                    val msg = "File $path doesn't contain data for ${chromosome.name}."
+                    LOG.debug(msg)
+                    if (failOnMissingChromosomes) {
+                        throw java.lang.IllegalStateException(msg, e)
+                    }
                 } catch (e: IllegalStateException) {
-                    throw IllegalStateException("File $path doesn't contain data for ${chromosome.name}.", e)
+                    val msg = "File $path doesn't contain data for ${chromosome.name}."
+                    LOG.debug(msg)
+                    if (failOnMissingChromosomes) {
+                        throw java.lang.IllegalStateException(msg, e)
+                    }
                 }
             }
             return PairedEndCoverage(genomeQuery, averageInsertSize, data = data)
