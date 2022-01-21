@@ -30,3 +30,10 @@ Tests
    ```bash
    $ ./gradlew clean test --no-daemon --max-workers 1
    ```
+
+Usages
+------
+Used in the following projects: 
+* [SPAN](https://github.com/JetBrains-Research/span) Semi-supervised Peak Analyzer
+* [FARM](https://github.com/JetBrains-Research/fishbone) hierarchical association rule mining and visualization method
+
