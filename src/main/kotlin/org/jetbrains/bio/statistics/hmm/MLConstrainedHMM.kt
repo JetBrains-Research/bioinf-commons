@@ -60,11 +60,11 @@ abstract class MLConstrainedHMM(
 
     protected abstract fun getEmissionScheme(e: Int): EmissionScheme
 
-    override fun logProbability(i: Int, df: DataFrame, t: Int): Double {
+    override fun logProbability(state: Int, df: DataFrame, observation: Int): Double {
         var res = 0.0
-        val dimensionEmissionMap = stateDimensionEmissionMap[i]
+        val dimensionEmissionMap = stateDimensionEmissionMap[state]
         for (d in 0 until numDimensions) {
-            res += getEmissionScheme(dimensionEmissionMap[d]).logProbability(df, t, d)
+            res += getEmissionScheme(dimensionEmissionMap[d]).logProbability(df, observation, d)
         }
 
         return res

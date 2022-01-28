@@ -3,6 +3,7 @@ package org.jetbrains.bio.statistics.hmm
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor._I
+import kotlin.math.ln
 
 /**
  * Generic algorithms for fitting HMMs.
@@ -36,21 +37,21 @@ object HMMInternals {
         logForwardProbabilities: F64Array
     ) {
         val numObservations = df.rowsNumber
-        for (i in 0 until numStates) {
-            logForwardProbabilities[0, i] = logPriorProbabilities[i] +
-                    logObservationProbabilities[0, i]
+        for (state in 0 until numStates) {
+            logForwardProbabilities[0, state] = logPriorProbabilities[state] +
+                    logObservationProbabilities[0, state]
         }
 
         val workBuffer = F64Array(numStates)
-        for (t in 1 until numObservations) {
-            for (i in 0 until numStates) {
-                logForwardProbabilities.V[t - 1].copyTo(workBuffer)
+        for (observation in 1 until numObservations) {
+            for (state in 0 until numStates) {
+                logForwardProbabilities.V[observation - 1].copyTo(workBuffer)
                 for (j in 0 until numStates) {
-                    workBuffer[j] += logTransitionProbabilities[j, i]
+                    workBuffer[j] += logTransitionProbabilities[j, state]
                 }
 
-                logForwardProbabilities[t, i] =
-                    workBuffer.logSumExp() + logObservationProbabilities[t, i]
+                logForwardProbabilities[observation, state] =
+                    workBuffer.logSumExp() + logObservationProbabilities[observation, state]
             }
         }
     }
@@ -79,19 +80,19 @@ object HMMInternals {
         logBackwardProbabilities: F64Array
     ) {
         val numObservations = df.rowsNumber
-        logBackwardProbabilities.V[numObservations - 1] = Math.log(1.0)
+        logBackwardProbabilities.V[numObservations - 1] = ln(1.0)
 
-        var t = numObservations - 2
-        while (t >= 0) {
-            for (i in 0 until numStates) {
-                val workBuffer = logObservationProbabilities.V[t + 1] +
-                        logBackwardProbabilities.V[t + 1] +
-                        logTransitionProbabilities.V[i]
+        var observation = numObservations - 2
+        while (observation >= 0) {
+            for (state in 0 until numStates) {
+                val workBuffer = logObservationProbabilities.V[observation + 1] +
+                        logBackwardProbabilities.V[observation + 1] +
+                        logTransitionProbabilities.V[state]
 
-                logBackwardProbabilities[t, i] = workBuffer.logSumExp()
+                logBackwardProbabilities[observation, state] = workBuffer.logSumExp()
             }
 
-            t--
+            observation--
         }
     }
 
@@ -122,11 +123,12 @@ object HMMInternals {
         logGammas: F64Array
     ) {
         val rowsNumber = df.rowsNumber
-        for (t in 0 until rowsNumber) {
-            val workBuffer = logForwardProbabilities.V[t] +
-                    logBackwardProbabilities.V[t]
+        for (observation in 0 until rowsNumber) {
+            val workBuffer =
+                logForwardProbabilities.V[observation] +
+                    logBackwardProbabilities.V[observation]
             workBuffer.logRescale()
-            workBuffer.copyTo(logGammas.V[_I, t])
+            workBuffer.copyTo(logGammas.V[_I, observation])
         }
     }
 
@@ -153,18 +155,19 @@ object HMMInternals {
     ): IntArray {
         val numObservations = df.rowsNumber
         val vs = F64Array(numObservations, numStates)
-        for (i in 0 until numStates) {
-            vs[0, i] = logPriorProbabilities[i] + logObservationProbabilities[0, i]
+        for (state in 0 until numStates) {
+            vs[0, state] = logPriorProbabilities[state] + logObservationProbabilities[0, state]
         }
 
         val workBuffer = F64Array(numStates)
-        for (t in 1 until numObservations) {
-            for (i in 0 until numStates) {
-                for (j in 0 until numStates) {
-                    workBuffer[j] = vs[t - 1, j] + logTransitionProbabilities[j, i]
+        for (observation in 1 until numObservations) {
+            for (nextState in 0 until numStates) {
+                for (priorState in 0 until numStates) {
+                    workBuffer[priorState] =
+                        vs[observation - 1, priorState] + logTransitionProbabilities[priorState, nextState]
                 }
 
-                vs[t, i] = workBuffer.max() + logObservationProbabilities[t, i]
+                vs[observation, nextState] = workBuffer.max() + logObservationProbabilities[observation, nextState]
             }
         }
 
@@ -172,15 +175,15 @@ object HMMInternals {
         var whereFrom = vs.V[numObservations - 1].argMax()
         states[numObservations - 1] = whereFrom
 
-        var t = numObservations - 2
-        while (t >= 0) {
-            for (i in 0 until numStates) {
-                workBuffer[i] = vs[t, i] + logTransitionProbabilities[i, whereFrom]
+        var observation = numObservations - 2
+        while (observation >= 0) {
+            for (state in 0 until numStates) {
+                workBuffer[state] = vs[observation, state] + logTransitionProbabilities[state, whereFrom]
             }
 
             whereFrom = workBuffer.argMax()
-            states[t] = whereFrom
-            t--
+            states[observation] = whereFrom
+            observation--
         }
 
         return states

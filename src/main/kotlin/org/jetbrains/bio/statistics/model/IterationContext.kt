@@ -17,7 +17,7 @@ abstract class IterationContext(
         expect()
     }
 
-    protected abstract fun expect()
+    abstract fun expect()
 
     /**
      * Prepares "refilled" fields for the next iteration.

@@ -29,8 +29,7 @@ abstract class HMMIterationContext(
     val logGammas: F64Array = F64Array(numStates, numObservations)
     val logForwardProbabilities: F64Array = F64Array(numObservations, numStates)
     val logBackwardProbabilities: F64Array = F64Array(numObservations, numStates)
-    val logObservationProbabilities: F64Array =
-        F64Array(numObservations, numStates)  // filled.
+    val logObservationProbabilities: F64Array = F64Array(numObservations, numStates)  // filled.
 
     /**
      * Computes expectations of the latent indicator variables.
@@ -64,13 +63,13 @@ abstract class HMMIterationContext(
             val localLogXiSums = negativeInfinity.copy()
             val logXit = negativeInfinity.copy()
 
-            for (t in chunk.lo until chunk.hi) {
-                for (i in 0 until numStates) {
-                    for (j in 0 until numStates) {
-                        logXit[i, j] = logForwardProbabilities[t - 1, i] +
-                                logTransitionProbabilities[i, j] +
-                                logObservationProbabilities[t, j] +
-                                logBackwardProbabilities[t, j]
+            for (s in chunk.lo until chunk.hi) {
+                for (priorState in 0 until numStates) {
+                    for (nextState in 0 until numStates) {
+                        logXit[priorState, nextState] = logForwardProbabilities[s - 1, priorState] +
+                                logTransitionProbabilities[priorState, nextState] +
+                                logObservationProbabilities[s, nextState] +
+                                logBackwardProbabilities[s, nextState]
                     }
                 }
 

@@ -10,7 +10,7 @@ class ConstantIntegerEmissionScheme(private val emission: Int) : IntegerEmission
     override fun sampler(): IntSupplier = IntSupplier { emission }
 
     override fun logProbability(value: Int): Double {
-        return if ((value == emission)) 0.0 else Double.NEGATIVE_INFINITY
+        return if (value == emission) 0.0 else Double.NEGATIVE_INFINITY
     }
 
     override fun update(sample: IntArray, weights: F64Array) {

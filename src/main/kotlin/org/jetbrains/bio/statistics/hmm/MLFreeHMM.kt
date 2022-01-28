@@ -4,7 +4,6 @@ import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.statistics.emission.EmissionScheme
 import org.jetbrains.bio.statistics.stochastic
 import org.jetbrains.bio.viktor.F64Array
-import java.util.function.IntPredicate
 
 /**
  * A hidden Markov model with multidimensional integer-valued
@@ -39,9 +38,9 @@ abstract class MLFreeHMM(
 
     override fun degreesOfFreedom(): Int {
         var res = super.degreesOfFreedom()
-        for (i in 0 until numStates) {
-            for (d in 0 until numDimensions) {
-                res += getEmissionScheme(i, d).degreesOfFreedom
+        for (state in 0 until numStates) {
+            for (dimension in 0 until numDimensions) {
+                res += getEmissionScheme(state, dimension).degreesOfFreedom
             }
         }
         return res
@@ -50,20 +49,20 @@ abstract class MLFreeHMM(
     fun sample(numObservations: Int): DataFrame {
         val states = sampleStates(numObservations)
         var res = DataFrame()
-        for (d in 0 until numDimensions) {
+        for (dimension in 0 until numDimensions) {
             val column = IntArray(numObservations)
-            res = res.with("d$d", column)
-            for (i in 0 until numStates) {
-                getEmissionScheme(i, d).sample(res, d) { states[it] == i }
+            res = res.with("d$dimension", column)
+            for (state in 0 until numStates) {
+                getEmissionScheme(state, dimension).sample(res, dimension) { states[it] == state }
             }
         }
         return res.with("state", states)
     }
 
-    override fun logProbability(i: Int, df: DataFrame, t: Int): Double {
+    override fun logProbability(state: Int, df: DataFrame, observation: Int): Double {
         var res = 0.0
         for (d in 0 until numDimensions) {
-            res += getEmissionScheme(i, d).logProbability(df, t, d)
+            res += getEmissionScheme(state, d).logProbability(df, observation, d)
         }
         return res
     }

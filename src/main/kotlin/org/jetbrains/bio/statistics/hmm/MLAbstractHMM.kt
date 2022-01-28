@@ -133,21 +133,22 @@ abstract class MLAbstractHMM(
     private fun logLikelihoodInPlace(preprocessed: Preprocessed<DataFrame>): Double {
         val df = preprocessed.get()
         val logForwardProbabilities = F64Array(2, numStates)
-        for (i in 0 until numStates) {
-            logForwardProbabilities[0, i] = logPriorProbabilities[i] + logProbability(i, df, 0)
+        for (state in 0 until numStates) {
+            logForwardProbabilities[0, state] = logPriorProbabilities[state] + logProbability(state, df, 0)
         }
 
         val numObservations = df.rowsNumber
         val workBuffer = F64Array(numStates)
-        for (t in 1 until numObservations) {
-            for (i in 0 until numStates) {
-                for (j in 0 until numStates) {
-                    workBuffer[j] = logForwardProbabilities[(t - 1) % 2, j] +
-                            logTransitionProbabilities[j, i]
+        for (observation in 1 until numObservations) {
+            for (nextState in 0 until numStates) {
+                for (priorState in 0 until numStates) {
+                    workBuffer[priorState] =
+                        logForwardProbabilities[(observation - 1) % 2, priorState] +
+                            logTransitionProbabilities[priorState, nextState]
                 }
 
-                logForwardProbabilities[t % 2, i] =
-                    workBuffer.logSumExp() + logProbability(i, df, t)
+                logForwardProbabilities[observation % 2, nextState] =
+                    workBuffer.logSumExp() + logProbability(nextState, df, observation)
             }
         }
 
@@ -159,8 +160,8 @@ abstract class MLAbstractHMM(
     }
 
     protected fun sampleStates(numObservations: Int): IntArray {
-        val distributions = Array(numStates) { i ->
-            CategoricalDistribution(transitionProbabilities.V[i])
+        val distributions = Array(numStates) { state ->
+            CategoricalDistribution(transitionProbabilities.V[state])
         }
 
         var state = CategoricalDistribution(priorProbabilities).sample()
@@ -173,7 +174,7 @@ abstract class MLAbstractHMM(
         return states
     }
 
-    protected abstract fun logProbability(i: Int, df: DataFrame, t: Int): Double
+    protected abstract fun logProbability(state: Int, df: DataFrame, observation: Int): Double
 
     private fun updateParameters(df: DataFrame, logXiSums: F64Array, logGammas: F64Array) {
         for (i in 0 until numStates) {
@@ -198,14 +199,14 @@ abstract class MLAbstractHMM(
             logXiSums.logAddExpAssign(context.logXiSums)
         }
 
-        for (i in 0 until numStates) {
-            logPriorProbabilities[i] = java.lang.Double.NEGATIVE_INFINITY
+        for (state in 0 until numStates) {
+            logPriorProbabilities[state] = java.lang.Double.NEGATIVE_INFINITY
         }
 
         for (context in contexts) {
-            for (i in 0 until numStates) {
-                logPriorProbabilities[i] = MoreMath.logAddExp(
-                    logPriorProbabilities[i], context.logGammas[i, 0]
+            for (state in 0 until numStates) {
+                logPriorProbabilities[state] = MoreMath.logAddExp(
+                    logPriorProbabilities[state], context.logGammas[state, 0]
                 )
             }
         }
@@ -273,10 +274,10 @@ abstract class MLAbstractHMM(
         ) {
 
         override fun refill() {
-            (0 until numStates).forking { i ->
+            (0 until numStates).forking { state ->
                 val numObservations = df.rowsNumber
-                for (t in 0 until numObservations) {
-                    logObservationProbabilities[t, i] = logProbability(i, df, t)
+                for (observation in 0 until numObservations) {
+                    logObservationProbabilities[observation, state] = logProbability(state, df, observation)
                 }
             }
         }
