@@ -213,27 +213,26 @@ abstract class MLAbstractHMM(
 
         logPriorProbabilities.logRescale()
 
-        for (i in 0 until numStates) {
-            logTransitionProbabilities.V[i] = logXiSums.V[i]
-            logTransitionProbabilities.V[i].logRescale()
+        for (state in 0 until numStates) {
+            logTransitionProbabilities.V[state] = logXiSums.V[state]
+            logTransitionProbabilities.V[state].logRescale()
         }
 
         val df = DataFrame.rowBind(dfs.toTypedArray())
-        val numColumns = contexts.sumOf { it.logGammas.shape[1] }
-        val logGammas = F64Array(numStates, numColumns)
+        val numObservations = contexts.sumOf { it.logGammas.shape[1] }
+        val logGammas = F64Array(numStates, numObservations)
 
-        var column = 0
+        var observation = 0
         for (context in contexts) {
             val localLogGammas = context.logGammas
-            for (c in 0 until localLogGammas.shape[1]) {
-                for (row in 0 until numStates) {
-                    logGammas[row, column] = localLogGammas[row, c]
+            for (localObservation in 0 until localLogGammas.shape[1]) {
+                for (state in 0 until numStates) {
+                    logGammas[state, observation] = localLogGammas[state, localObservation]
                 }
-
-                column++
+                observation++
             }
         }
-
+        assert(observation == numObservations) { "Incomplete iterations contexts" }
 
         logGammas.expInPlace()
         updateParameters(df, logGammas)

@@ -69,8 +69,8 @@ abstract class MLFreeHMM(
 
     override fun updateParameters(df: DataFrame, gammas: F64Array) {
         for (d in 0 until numDimensions) {
-            for (i in 0 until numStates) {
-                getEmissionScheme(i, d).update(df, d, gammas.V[i])
+            for (state in 0 until numStates) {
+                getEmissionScheme(state, d).update(df, d, gammas.V[state])
             }
         }
     }
