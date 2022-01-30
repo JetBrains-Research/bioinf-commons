@@ -10,6 +10,7 @@ import org.jetbrains.bio.statistics.model.MLMonitor
 import org.jetbrains.bio.statistics.model.SamplingChain
 import org.jetbrains.bio.util.MultitaskProgress
 import org.jetbrains.bio.viktor.F64Array
+import kotlin.math.ln
 
 /**
  * A generic mixture model with parameters estimated via ML.
@@ -82,7 +83,7 @@ abstract class MLAbstractMixture(protected val numComponents: Int, weights: F64A
     protected open fun updateParameters(df: DataFrame, gammas: F64Array) {
         for (i in 0 until numComponents) {
             val rowView = gammas.V[i]
-            logWeights[i] = Math.log(rowView.sum()) - Math.log(rowView.size.toDouble())
+            logWeights[i] = ln(rowView.sum()) - ln(rowView.size.toDouble())
         }
     }
 
@@ -98,8 +99,9 @@ abstract class MLAbstractMixture(protected val numComponents: Int, weights: F64A
         override fun refill() {
             val numObservations = df.rowsNumber
             (0 until numComponents).forking { i ->
-                for (t in 0 until numObservations) {
-                    logJointProbabilities[t, i] = logProbability(i, df, t) + logWeights[i]
+                for (observation in 0 until numObservations) {
+                    logJointProbabilities[observation, i] =
+                        logProbability(i, df, observation) + logWeights[i]
                 }
             }
         }

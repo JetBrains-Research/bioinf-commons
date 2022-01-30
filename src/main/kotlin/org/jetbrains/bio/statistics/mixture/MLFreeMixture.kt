@@ -4,7 +4,6 @@ import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.statistics.emission.EmissionScheme
 import org.jetbrains.bio.statistics.stochastic
 import org.jetbrains.bio.viktor.F64Array
-import java.util.function.IntPredicate
 
 /**
  * @author Evgeny Kurbatsky
@@ -42,7 +41,7 @@ abstract class MLFreeMixture(
             val column = IntArray(numObservations)
             res = res.with("d$d", column)
             for (i in 0 until numComponents) {
-                getEmissionScheme(i, d).sample(res, d, IntPredicate { states[it] == i })
+                getEmissionScheme(i, d).sample(res, d) { states[it] == i }
             }
         }
         return res.with("state", states)
@@ -52,7 +51,7 @@ abstract class MLFreeMixture(
         val states = sampleStates(df.rowsNumber)
         for (t in 0 until numDimensions) {
             for (i in 0 until numComponents) {
-                getEmissionScheme(i, t).sample(df, d[t], IntPredicate { states[it] == i })
+                getEmissionScheme(i, t).sample(df, d[t]) { states[it] == i }
             }
 
         }
