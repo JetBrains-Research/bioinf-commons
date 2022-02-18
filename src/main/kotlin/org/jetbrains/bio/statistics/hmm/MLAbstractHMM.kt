@@ -57,15 +57,17 @@ abstract class MLAbstractHMM(
      * @param preprocessed a sample to fit a model to.
      * @param title human-readable title for the sample, e.g. `"chr1"`.
      * @param threshold convergence threshold.
-     * @param maxIter an upper bound on EM iterations.
+     * @param maxIterations an upper bound on EM iterations.
      */
     override fun fit(
-        preprocessed: Preprocessed<DataFrame>, title: String,
-        threshold: Double, maxIter: Int
+        preprocessed: Preprocessed<DataFrame>,
+        title: String,
+        threshold: Double,
+        maxIterations: Int
     ) {
         val df = preprocessed.get()
         val context = context(df)
-        val monitor = MLMonitor(title, threshold, maxIter)
+        val monitor = MLMonitor(title, threshold, maxIterations)
         while (true) {
             context.iterate()
             val logLikelihood = HMMInternals.logLikelihood(df, context.logForwardProbabilities)
@@ -82,11 +84,11 @@ abstract class MLAbstractHMM(
 
     override fun fit(
         preprocessed: List<Preprocessed<DataFrame>>, title: String,
-        threshold: Double, maxIter: Int
+        threshold: Double, maxIterations: Int
     ) {
         val dfs = preprocessed.map { it.get() }
         val contexts = dfs.map { context(it) }
-        val monitor = MLMonitor(title, threshold, maxIter)
+        val monitor = MLMonitor(title, threshold, maxIterations)
         while (true) {
             contexts.parallelStream().forEach(HMMIterationContext::iterate)
 

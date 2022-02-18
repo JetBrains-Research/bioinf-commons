@@ -37,12 +37,12 @@ interface ClassificationModel {
      * @param preprocessed a sample to fit a model to.
      * @param title human-readable title for the sample, e.g. `"chr1"`.
      * @param threshold convergence threshold.
-     * @param maxIter an upper bound on EM iterations.
+     * @param maxIterations an upper bound on EM iterations.
      */
-    fun fit(preprocessed: Preprocessed<DataFrame>, title: String, threshold: Double, maxIter: Int)
+    fun fit(preprocessed: Preprocessed<DataFrame>, title: String, threshold: Double, maxIterations: Int)
 
-    fun fit(preprocessed: List<Preprocessed<DataFrame>>, title: String, threshold: Double, maxIter: Int) =
-        fit(preprocessed.first(), title, threshold, maxIter)
+    fun fit(preprocessed: List<Preprocessed<DataFrame>>, title: String, threshold: Double, maxIterations: Int) =
+        fit(preprocessed.first(), title, threshold, maxIterations)
 
     /**
      * Assigns state labels to a given sample (assumes the model is

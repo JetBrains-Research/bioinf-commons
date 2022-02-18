@@ -31,11 +31,11 @@ abstract class MLAbstractMixture(protected val numComponents: Int, weights: F64A
 
     override fun fit(
         preprocessed: Preprocessed<DataFrame>, title: String,
-        threshold: Double, maxIter: Int
+        threshold: Double, maxIterations: Int
     ) {
         val df = preprocessed.get()
         val context = context(df)
-        val monitor = MLMonitor(title, threshold, maxIter)
+        val monitor = MLMonitor(title, threshold, maxIterations)
         while (true) {
             context.iterate()
             val logLikelihood = MixtureInternals.logLikelihood(df, context.logJointProbabilities)

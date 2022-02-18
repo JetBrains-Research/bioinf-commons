@@ -124,7 +124,7 @@ abstract class AbstractBoo(private val name: String) : ClassificationModel {
 
     override fun fit(
         preprocessed: Preprocessed<DataFrame>,
-        title: String, threshold: Double, maxIter: Int
+        title: String, threshold: Double, maxIterations: Int
     ) {
     }
 
