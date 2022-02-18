@@ -13,11 +13,11 @@ import org.slf4j.event.Level
 abstract class ConvergenceMonitor(
     protected val title: String,
     protected val threshold: Double,
-    protected val maxIter: Int,
+    protected val maxIterations: Int,
     private val level: Level
 ) {
     init {
-        require(maxIter > 1) { "maximum number of iterations must be greater than one" }
+        require(maxIterations > 1) { "maximum number of iterations must be greater than one" }
         require(threshold >= 0) { "threshold must be >= 0" }
     }
 
