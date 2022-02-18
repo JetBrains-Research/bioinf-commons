@@ -21,7 +21,7 @@ fun parallelismLevel(): Int {
 
 fun configureParallelism(parallelism: Int?) {
     if (parallelism != null) {
-        check(parallelism.toInt() > 0) {
+        require(parallelism.toInt() > 0) {
             "Parallelism level should be at least 1, got: $parallelism"
         }
         System.setProperty(PARALLELISM, parallelism.toString())

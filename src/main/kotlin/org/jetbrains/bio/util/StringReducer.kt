@@ -5,7 +5,7 @@ package org.jetbrains.bio.util
  */
 fun reduceIds(strings: List<String>, maxLength: Int = 100, predefinedSha: String? = null): String {
     val sha = predefinedSha ?: strings.joinToString("_").sha
-    check(maxLength > sha.length) { "Too short length required" }
+    require(maxLength > sha.length) { "Too short length required" }
     // Reduce possible sha in names and fix illegal symbols
     val ids = strings.map {
         it
