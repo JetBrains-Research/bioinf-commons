@@ -73,16 +73,18 @@ interface Fitter<out Model : ClassificationModel> {
             require(attempt == 0) {
                 "Cyclic multistart is not allowed"
             }
-            val mostLikelyModel = (0 until multiStarts).map {
+            val models = (0 until multiStarts).map {
                 LOG.info("Multistart ${it + 1}/$multiStarts: $title")
                 super.fit(preprocessed, "Multistart ${it + 1}/$multiStarts: $title", threshold, multiStartIter, it)
-            }.maxByOrNull { it.logLikelihood(preprocessed) }!!
-            LOG.info("Multistart done: $title")
+            }
+            val mostLikelyModel = models.indices.maxByOrNull { models[it].logLikelihood(preprocessed) }!!
+            LOG.info("Multistart done: $title, best model #${mostLikelyModel + 1}")
 
             MultitaskProgress.addTask(title, maxIterations.toLong())
-            mostLikelyModel.fit(preprocessed, title, threshold, maxIterations)
+            val result = models[mostLikelyModel]
+            result.fit(preprocessed, title, threshold, maxIterations)
             MultitaskProgress.finishTask(title)
-            return mostLikelyModel
+            return result
         }
 
         override fun fit(
@@ -92,16 +94,19 @@ interface Fitter<out Model : ClassificationModel> {
             require(attempt == 0) {
                 "Cyclic multistart is not allowed"
             }
-            val mostLikelyModel = (0 until multiStarts).map {
+            val models = (0 until multiStarts).map {
                 LOG.info("Multistart ${it + 1}/$multiStarts: $title")
                 super.fit(preprocessed, "Multistart ${it + 1}/$multiStarts: $title", threshold, multiStartIter, it)
-            }.maxByOrNull { m -> preprocessed.sumOf { m.logLikelihood(it) } }!!
-            LOG.info("Multistart done: $title")
+            }
+            val mostLikelyModel =
+                models.indices.maxByOrNull { index -> preprocessed.sumOf { models[index].logLikelihood(it) } }!!
+            LOG.info("Multistart done: $title, best model is #${mostLikelyModel + 1}")
 
             MultitaskProgress.addTask(title, maxIterations.toLong())
-            mostLikelyModel.fit(preprocessed, title, threshold, maxIterations)
+            val result = models[mostLikelyModel]
+            result.fit(preprocessed, title, threshold, maxIterations)
             MultitaskProgress.finishTask(title)
-            return mostLikelyModel
+            return result
         }
     }
 
