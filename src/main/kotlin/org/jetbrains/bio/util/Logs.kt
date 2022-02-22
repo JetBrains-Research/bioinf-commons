@@ -131,8 +131,8 @@ object Logs {
             name = "logFile ${path.fileName}"
             encoder = logEncoder
             file = path.toString()
-            // Recreate log file on start
-            setAppend(false)
+            // Don't recreate log file on start
+            setAppend(true)
         }
 
         val logFilePolicy = TimeBasedRollingPolicy<ILoggingEvent>()
