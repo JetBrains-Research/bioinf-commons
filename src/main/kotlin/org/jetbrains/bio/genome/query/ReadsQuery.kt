@@ -94,13 +94,6 @@ class ReadsQuery(
                     else -> throw IllegalArgumentException("Unknown library type: ${coverage::class.java}")
                 }
         LOG.info(information)
-        val genomeSize = genomeQuery.get().sumOf { it.length.toLong() }
-        if (libraryDepth < genomeSize * MIN_DEPTH_THRESHOLD_PERCENT / 100.0) {
-            LOG.warn(
-                "Library: ${path.name}, Depth: ${"%,d".format(libraryDepth)} is less than " +
-                        "$MIN_DEPTH_THRESHOLD_PERCENT% x ${"%,d".format(genomeSize)} of genome ${genomeQuery.id}"
-            )
-        }
     }
 
     fun npzPath() = Configuration.cachePath / "coverage_${fileId}${path.sha}.npz"
@@ -115,7 +108,5 @@ class ReadsQuery(
 
     companion object {
         val LOG: Logger = LoggerFactory.getLogger(ReadsQuery::class.java)
-
-        private const val MIN_DEPTH_THRESHOLD_PERCENT = 0.1
     }
 }

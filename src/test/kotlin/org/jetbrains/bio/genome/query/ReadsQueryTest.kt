@@ -121,20 +121,6 @@ class ReadsQueryTest {
         }
     }
 
-    @Test
-    fun testLowDepthWarning() {
-        withResource(ReadsQueryTest::class.java, "single_end.bam") { path ->
-            val genomeQuery = GenomeQuery(Genome["to1"])
-            val readsQuery = ReadsQuery(genomeQuery, path, false, fragment = FixedFragment(100))
-            val (out, err) = Logs.captureLoggingOutput { readsQuery.get() }
-            assertIn(
-                "Library: single_end.bam, Depth: ${"%,d".format(SINGLE_END_BAM_READS)}" +
-                        " is less than 0.1% x 13,010,000 of genome to1", out
-            )
-            assertEquals("", err)
-        }
-    }
-
     /**
      * Should be impossible to achieve via normal [ReadsQuery] invocation, so we use
      * internal [processPairedReads] method.
