@@ -15,7 +15,6 @@ class ConstantIntegerEmissionScheme(private val emission: Int) : IntegerEmission
 
     override fun update(sample: IntArray, weights: F64Array) {
         /* do nothing */
-        LOG.debug("skip")
     }
 
     companion object {
