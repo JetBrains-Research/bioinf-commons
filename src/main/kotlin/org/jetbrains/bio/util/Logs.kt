@@ -157,20 +157,20 @@ object Logs {
      * Clears redirection and recreates appender
      * regardless of whether [block] completed normally or threw.
      */
-    fun captureLoggingOutput(block: () -> Unit): Pair<String, String> {
+    fun captureLoggingOutput(level: Level = Level.INFO, block: () -> Unit): Pair<String, String> {
         val out = System.out
         val err = System.err
         val outStream = ByteArrayOutputStream()
         val errStream = ByteArrayOutputStream()
         System.setOut(PrintStream(outStream))
         System.setErr(PrintStream(errStream))
-        addConsoleAppender(Level.INFO)
+        addConsoleAppender(level)
         try {
             block()
         } finally {
             System.setOut(out)
             System.setErr(err)
-            addConsoleAppender(Level.INFO)
+            addConsoleAppender(level)
         }
         return String(outStream.toByteArray()) to String(errStream.toByteArray())
     }
