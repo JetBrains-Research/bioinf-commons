@@ -33,10 +33,36 @@ class ReadsQuery(
 
     override fun getUncached(): Coverage = coverage()
 
+
+    /**
+     * Unique id is formed
+     */
+    override val id: String
+        get() = idStem + (if (fragment is FixedFragment) "_$fragment" else "")
+
     override val description: String
         get() = "Path: $path, Unique: $unique, Fragment: $fragment"
 
+    /**
+     * Coverage is stored as Numpy array, with tags positions after optional fragment size shift
+     */
+    fun npzPath() =
+        Configuration.cachePath / "coverage_${
+            idStem + (if (fragment is FixedFragment) "_raw" else "")
+        }${path.sha}.npz"
+
+    /**
+     * Unique identifier for file and
+     */
+    private val idStem = path.stemGz + (if (unique) "_unique" else "")
+
+    /**
+     * @return true when preprocessed coverage file is available or it can be recomputed by raw file
+     */
+    fun isAccessible(): Boolean = npzPath().isAccessible() || path.isAccessible()
+
     fun coverage(): Coverage {
+        check(isAccessible()) { "Unable to load coverage, original reads and cache not available" }
         val npz = npzPath()
         npz.checkOrRecalculate("Coverage for ${path.name}") { (npzPath) ->
             val paired = isPaired(path)
@@ -95,16 +121,6 @@ class ReadsQuery(
                 }
         LOG.info(information)
     }
-
-    fun npzPath() = Configuration.cachePath / "coverage_${fileId}${path.sha}.npz"
-
-    private val idStem = path.stemGz + (if (unique) "_unique" else "")
-
-    override val id: String
-        get() = idStem + (if (fragment is FixedFragment) "_$fragment" else "")
-
-    // we don't need to store fragment size in the file name
-    private val fileId = idStem + (if (fragment is FixedFragment) "_raw" else "")
 
     companion object {
         val LOG: Logger = LoggerFactory.getLogger(ReadsQuery::class.java)
