@@ -9,6 +9,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.util.concurrent.ForkJoinPool
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class MoreStreamsTest {
 
@@ -76,15 +77,14 @@ class MoreStreamsTest {
     @Test
     fun chunkedStreamIsParallel() {
         val numObservations = IntMath.pow(2, 16)
-        val threadsInvolved = (0 until numObservations).chunked(4).map {
+        val chunked = (0 until numObservations).chunked(4)
+        val threadsInvolved = chunked.map {
             setOf(Thread.currentThread().id)
         }.reduce(emptySet()) { a, b -> Sets.union(a, b) }
-
+        // We cannot be 100% sure that all the available threads will be used,
+        // check range to increase chances
         if (ForkJoinPool.getCommonPoolParallelism() > 1) {
-            assertEquals(
-                ForkJoinPool.getCommonPoolParallelism() + 1, // + main thread
-                threadsInvolved.size
-            )
+            assertTrue(threadsInvolved.size in 2..ForkJoinPool.getCommonPoolParallelism() + 1) // + main thread
         }
     }
 }
