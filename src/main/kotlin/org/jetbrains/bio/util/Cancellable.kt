@@ -79,7 +79,9 @@ class CancellableTask<T>(private val callable: Callable<T>) {
     val isDone: Boolean get() = task != null && task!!.isDone
 
     fun cancel() {
-        LOG.trace("Cancelled $id from ${Thread.currentThread()}")
+        if (LOG.isTraceEnabled) {
+            LOG.trace("Cancelled $id from ${Thread.currentThread()}")
+        }
         cancelled = true
         if (cancellableState != null) {
             cancellableState!!.cancel()
@@ -94,7 +96,9 @@ class CancellableTask<T>(private val callable: Callable<T>) {
         if (cancelled) {
             return
         }
-        LOG.trace("Executed $id from ${Thread.currentThread()}")
+        if (LOG.isTraceEnabled) {
+            LOG.trace("Executed $id from ${Thread.currentThread()}")
+        }
         task = EXECUTOR.submit<T> {
             if (cancelled) {
                 // Do not start task if it is marked as cancelled.
@@ -137,11 +141,15 @@ class CancellableTask<T>(private val callable: Callable<T>) {
     fun waitAndGet(waitMillis: Long = 1000L): T? {
         while (true) {
             if (cancelled) {
-                LOG.trace("Cancelled $id")
+                if (LOG.isTraceEnabled) {
+                    LOG.trace("Cancelled $id")
+                }
                 return null
             }
             if (isDone) {
-                LOG.trace("Loaded task $id")
+                if (LOG.isTraceEnabled) {
+                    LOG.trace("Loaded task $id")
+                }
                 return get()
             }
 
