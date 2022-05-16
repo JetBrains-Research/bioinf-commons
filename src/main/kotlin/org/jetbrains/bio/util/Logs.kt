@@ -10,8 +10,10 @@ import ch.qos.logback.core.ConsoleAppender
 import ch.qos.logback.core.CoreConstants
 import ch.qos.logback.core.LayoutBase
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder
+import ch.qos.logback.core.rolling.FixedWindowRollingPolicy
 import ch.qos.logback.core.rolling.RollingFileAppender
-import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
+import ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy
+import ch.qos.logback.core.util.FileSize
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import java.io.ByteArrayOutputStream
@@ -131,17 +133,22 @@ object Logs {
             name = "logFile ${path.fileName}"
             encoder = logEncoder
             file = path.toString()
-            // Don't recreate log file on start
-            setAppend(true)
         }
 
-        val logFilePolicy = TimeBasedRollingPolicy<ILoggingEvent>()
-        logFilePolicy.context = loggerContext
-        logFilePolicy.setParent(logFileAppender)
-        logFilePolicy.fileNamePattern = "${path.parent}/${path.name}-%d{yyyy-MM-dd_HH}.${path.extension}"
+        val logFilePolicy = FixedWindowRollingPolicy().apply {
+            context = loggerContext
+            setParent(logFileAppender)
+            fileNamePattern = "${path.parent}/${path.stem}.%i.${path.extension}"
+        }
         logFilePolicy.start()
 
+        val triggeringPolicy = SizeBasedTriggeringPolicy<ILoggingEvent>().apply {
+            setMaxFileSize(FileSize.valueOf("5MB"))
+        }
+        triggeringPolicy.start()
+
         logFileAppender.rollingPolicy = logFilePolicy
+        logFileAppender.triggeringPolicy = triggeringPolicy
         logFileAppender.start()
 
         rootLogger.addAppender(logFileAppender)
