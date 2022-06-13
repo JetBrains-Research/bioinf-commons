@@ -1,15 +1,12 @@
 package org.jetbrains.bio.statistics
 
-import com.google.common.collect.Sets
 import com.google.common.math.IntMath
 import org.apache.commons.math3.distribution.PoissonDistribution
-import org.jetbrains.bio.Retry
 import org.jetbrains.bio.RetryRule
 import org.junit.Rule
 import org.junit.Test
 import java.util.concurrent.ForkJoinPool
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class MoreStreamsTest {
 
@@ -73,18 +70,4 @@ class MoreStreamsTest {
         assertEquals(acc, sum)
     }
 
-    @Retry
-    @Test
-    fun chunkedStreamIsParallel() {
-        val numObservations = IntMath.pow(2, 16)
-        val chunked = (0 until numObservations).chunked(4)
-        val threadsInvolved = chunked.map {
-            setOf(Thread.currentThread().id)
-        }.reduce(emptySet()) { a, b -> Sets.union(a, b) }
-        // We cannot be 100% sure that all the available threads will be used,
-        // check range to increase chances
-        if (ForkJoinPool.getCommonPoolParallelism() > 1) {
-            assertTrue(threadsInvolved.size in 2..ForkJoinPool.getCommonPoolParallelism() + 1) // + main thread
-        }
-    }
 }
