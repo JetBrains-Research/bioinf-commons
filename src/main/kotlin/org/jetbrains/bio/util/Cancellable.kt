@@ -166,7 +166,7 @@ class CancellableTask<T>(private val callable: Callable<T>) {
     companion object {
         private val LOG = LoggerFactory.getLogger(CancellableTask::class.java)
 
-        private val EXECUTOR = Executors.newWorkStealingPool(parallelismLevel())
+        private val EXECUTOR = Executors.newCachedThreadPool()
 
         private val TASK_COUNTER = AtomicInteger(0)
 
