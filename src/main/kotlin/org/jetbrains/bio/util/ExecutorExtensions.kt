@@ -1,5 +1,6 @@
 package org.jetbrains.bio.util
 
+import java.lang.Integer.max
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
@@ -45,7 +46,7 @@ fun ExecutorService.awaitAll(tasks: Iterable<Callable<*>>) {
 
 fun <T> List<Callable<T>>.await(parallel: Boolean) {
     if (parallel) {
-        val executor = Executors.newWorkStealingPool(min(size, parallelismLevel()))
+        val executor = Executors.newWorkStealingPool(max(size + 1, parallelismLevel()))
         executor.awaitAll(this)
         check(executor.shutdownNow().isEmpty())
     } else {
