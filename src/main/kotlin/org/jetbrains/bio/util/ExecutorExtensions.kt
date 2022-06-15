@@ -1,6 +1,5 @@
 package org.jetbrains.bio.util
 
-import java.lang.Integer.max
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
@@ -44,9 +43,14 @@ fun ExecutorService.awaitAll(tasks: Iterable<Callable<*>>) {
     }
 }
 
+/**
+ * We limit number of threads in the pool to obey requested parallelism level
+ * IMPORTANT: limited thread pool can cause deadlocks, e.g. when using countdown latch
+ * with number of tasks bigger than thread pool size.
+ */
 fun <T> List<Callable<T>>.await(parallel: Boolean) {
     if (parallel) {
-        val executor = Executors.newWorkStealingPool(max(size + 1, parallelismLevel()))
+        val executor = Executors.newWorkStealingPool(min(size, parallelismLevel()))
         executor.awaitAll(this)
         check(executor.shutdownNow().isEmpty())
     } else {
