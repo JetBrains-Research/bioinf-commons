@@ -37,6 +37,7 @@ fun Logger.log(level: Level, msg: String) {
         Level.INFO -> info(msg)
         Level.DEBUG -> debug(msg)
         Level.ERROR -> error(msg)
+        Level.TRACE -> trace(msg)
         else -> throw IllegalArgumentException("Unknown log level $level")
     }
 }
