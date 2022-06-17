@@ -11,11 +11,10 @@ import org.jetbrains.bio.genome.sequence.Nucleotide
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.atomic.AtomicLong
 
 class SamplingError(message: String) : Exception(message)
 
-private val RANDOM = XSRandom()
+private val RANDOM = Random()
 private const val SAMPLE_ATTEMPTS_THRESHOLD = 1000
 
 /**
@@ -60,7 +59,7 @@ fun sampleLocations(
     allowNs: Boolean = false,
     predefinedStrand: Strand? = null
 ): List<Location> {
-    if (rightBound - leftBound <= lengthList.maxOrNull() ?: 0) {
+    if (rightBound - leftBound <= (lengthList.maxOrNull() ?: 0)) {
         throw SamplingError("Not enough space for location length ${lengthList.maxOrNull()} within [$leftBound, $rightBound)")
     }
 
@@ -97,46 +96,4 @@ fun sampleLocations(
     }
 
     return locations
-}
-
-/**
- * Fast Random generator based on Xorshift.
- * See http://en.wikipedia.org/wiki/Xorshift
- *
- * This implementation is about 30% faster than the generator from java.util.random.
- * It's output passes the Dieharder test suite with no fail and only two announced weaknesses.
- *
- * Original code: http://demesos.blogspot.ru/2011/09/replacing-java-random-generator.html
-
- * @author Oleg Shpynov
- */
-class XSRandom(private var seed_: Long = seedUniquifier() xor System.nanoTime()) : Random() {
-
-    override fun next(nbits: Int): Int {
-        var x = seed_
-        x = x xor (x shl 21)
-        x = x xor x.ushr(35)
-        x = x xor (x shl 4)
-        seed_ = x
-        x = x and (1L shl nbits) - 1
-        return x.toInt()
-    }
-
-    companion object {
-        /**
-         * The latter 2 declarations are taken from class [java.util.Random]
-         * because of visibility reasons
-         */
-        private fun seedUniquifier(): Long {
-            // L'Ecuyer, "Tables of Linear Congruential Generators of Different Sizes and Good Lattice Structure", 1999
-            while (true) {
-                val current = seedUniquifier.get()
-                val next = current * 181783497276652981L
-                if (seedUniquifier.compareAndSet(current, next))
-                    return next
-            }
-        }
-
-        private val seedUniquifier = AtomicLong(8682522807148012L)
-    }
 }

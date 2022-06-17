@@ -19,7 +19,7 @@ class SamplingTest {
 
     @Test
     fun testSampleCombination() {
-        val r = Random()
+        val r = Sampling.RANDOM_DATA_GENERATOR.randomGenerator
 
         val n = r.nextInt(6) + 10     // n \in [10, 15]
         val k = n - r.nextInt(6) - 5  // k \in [5 , 10]
@@ -27,13 +27,13 @@ class SamplingTest {
         val numRuns = numPartitions * numPartitions
 
         val countsMap = TObjectIntHashMap<TIntList>()
-        for (i in 0..numRuns - 1) {
+        for (i in 0 until numRuns) {
             countsMap.adjustOrPutValue(TIntArrayList(Sampling.sampleCombination(n - 1, k - 1)), 1, 1)
         }
 
         val counts = TIntArrayList(countsMap.valueCollection())
         assertEquals(numPartitions, counts.size())
-        for (i in 0..numPartitions - 1) {
+        for (i in 0 until numPartitions) {
             val p = counts[i].toDouble() / numRuns
             assertTrue(FastMath.abs(p - 1.0 / numPartitions) <= 0.1)
         }
