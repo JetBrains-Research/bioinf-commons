@@ -35,5 +35,6 @@ Usages
 ------
 Used in the following projects: 
 * [SPAN](https://github.com/JetBrains-Research/span) Semi-supervised Peak Analyzer
+* [JBR](https://github.com/JetBrains-Research/span) JBR Genome Browser
 * [FARM](https://github.com/JetBrains-Research/fishbone) hierarchical association rule mining and visualization method
 
