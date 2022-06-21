@@ -18,6 +18,8 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.zip.*
+import kotlin.math.ln
+import kotlin.math.pow
 
 private val LOG = LoggerFactory.getLogger("org.jetbrains.bio.util.PathExtensions")
 
@@ -135,8 +137,8 @@ data class FileSize(
             return "0 b"
         }
 
-        val units = (Math.log(bytes.toDouble()) / Math.log(1024.0)).toInt()
-        val value = bytes / Math.pow(1024.0, units.toDouble())
+        val units = (ln(bytes.toDouble()) / ln(1024.0)).toInt()
+        val value = bytes / 1024.0.pow(units.toDouble())
         return "${FORMAT.format(value)} ${UNITS[units]}"
     }
 
@@ -321,8 +323,9 @@ fun Path.checkOrRecalculate(
     timestamp: Long = 0,
     recalculate: (PathWrapper) -> Unit
 ): Path {
-    val target = toAbsolutePath().normalize()
-    return LockManager.synchronized(target) {
+    // IMPORTANT: synchronize on interned path string!
+    val target = toAbsolutePath().normalize().toString().intern()
+    synchronized(target) {
         val prefix = if (label.isNotEmpty()) "$label: " else ""
         val ts = if (exists) toFile().lastModified() else -1
         if (exists && (size.isNotEmpty() || ignoreEmptyFile || isDirectory) && (ts > timestamp)) {
@@ -357,7 +360,7 @@ fun Path.checkOrRecalculate(
                 }
             }
         }
-        this@checkOrRecalculate
+        return this@checkOrRecalculate
     }
 }
 
@@ -370,8 +373,8 @@ data class PathWrapper(val path: Path)
 /**
  * Creates temp file, passes it to a given closure and deletes after the closure has been invoked.
  *
- * If you will open related temp file inside the closure and leave it opened, this method will fail to
- * delete temp file on windows with error like:
+ * If you open related temp file inside the closure and leave it opened, this method will fail to
+ * delete temp file on Windows with error like:
  *      java.nio.file.FileSystemException: ...tmp\track305430928875073443.bw: The process cannot access the
  *      file because it is being used by another process.
  *
