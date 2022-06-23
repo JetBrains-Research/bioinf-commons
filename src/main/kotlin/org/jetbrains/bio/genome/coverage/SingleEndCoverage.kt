@@ -174,13 +174,13 @@ class SingleEndCoverage private constructor(
                         data[chromosome, strand] = TIntArrayList.wrap(npyArray.asIntArray())
                     } catch (e: NullPointerException) { // JDK11 doesn't throw ISE in case of missing zip entry
                         val msg = "File $path doesn't contain data for ${chromosome.name}."
-                        LOG.debug(msg)
+                        LOG.trace(msg)
                         if (failOnMissingChromosomes) {
                             throw java.lang.IllegalStateException(msg, e)
                         }
                     } catch (e: IllegalStateException) {
                         val msg = "File $path doesn't contain data for ${chromosome.name}."
-                        LOG.debug(msg)
+                        LOG.trace(msg)
                         if (failOnMissingChromosomes) {
                             throw java.lang.IllegalStateException(msg, e)
                         }
