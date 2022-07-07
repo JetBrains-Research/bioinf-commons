@@ -67,7 +67,7 @@ class ReadsQuery(
         npz.checkOrRecalculate("Coverage for ${path.name}") { (npzPath) ->
             val paired = isPaired(path)
             if (paired && fragment is AutoFragment) {
-                PairedEndCoverage.builder(genomeQuery).apply {
+                val pairedEndCoverage = PairedEndCoverage.builder(genomeQuery).apply {
                     val unpaired = processPairedReads(genomeQuery, path) { chr, pos, pnext, len ->
                         process(chr, pos, pnext, len)
                     }
@@ -76,16 +76,18 @@ class ReadsQuery(
                             "$unpaired single-end reads encountered when reading paired-end file $path!"
                         )
                     }
-                }.build(unique).save(npzPath)
+                }.build(unique)
+                pairedEndCoverage.save(npzPath)
             } else {
                 if (paired) {
                     LOG.info("Fragment option ($fragment) forces reading paired-end reads as single-end!")
                 }
-                SingleEndCoverage.builder(genomeQuery).apply {
+                val singleEndCoverage = SingleEndCoverage.builder(genomeQuery).apply {
                     processReads(genomeQuery, path) {
                         process(it)
                     }
-                }.build(unique).save(npzPath)
+                }.build(unique)
+                singleEndCoverage.save(npzPath)
             }
         }
         val coverage = Coverage.load(npz, genomeQuery, fragment)
