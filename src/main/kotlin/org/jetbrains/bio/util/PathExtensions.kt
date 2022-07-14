@@ -329,7 +329,7 @@ fun Path.checkOrRecalculate(
         val prefix = if (label.isNotEmpty()) "$label: " else ""
         val ts = if (exists) toFile().lastModified() else -1
         if (exists && (size.isNotEmpty() || ignoreEmptyFile || isDirectory) && (ts > timestamp)) {
-            LOG.debug("${prefix}Already exists ($size): $target")
+            LOG.debug("${prefix}exists ($size): $target")
         } else {
             val targetType = if (isDirectory) "Directory" else "File"
             if (!exists) {
@@ -341,16 +341,16 @@ fun Path.checkOrRecalculate(
             }
 
             val outdated = if (exists && toFile().lastModified() < timestamp) "outdated " else ""
-            LOG.time(level = Level.INFO, message = "${prefix}recalculating $outdated$target") {
+            LOG.time(level = Level.INFO, message = "${prefix}processing $outdated$target") {
                 parent.createDirectories()
                 val block: (Path) -> Unit = { tmpPath ->
                     recalculate(PathWrapper(tmpPath))
                     if (ignoreEmptyFile || (isDirectory || tmpPath.size.isNotEmpty())) {
                         tmpPath.move(this, ATOMIC_MOVE, REPLACE_EXISTING)
-                        LOG.debug("${prefix}recalculated $target ($size written)")
+                        LOG.debug("${prefix}processed $target ($size written)")
                     } else {
                         tmpPath.deleteIfExists()
-                        throw IllegalStateException("${prefix}recalculate produced a zero-sized file: $tmpPath")
+                        throw IllegalStateException("${prefix}produced a zero-sized file: $tmpPath")
                     }
                 }
                 if (isDirectory) {
