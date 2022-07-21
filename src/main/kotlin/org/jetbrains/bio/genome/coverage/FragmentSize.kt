@@ -3,6 +3,7 @@ package org.jetbrains.bio.genome.coverage
 import gnu.trove.list.TIntList
 import org.jetbrains.bio.genome.Strand
 import org.jetbrains.bio.genome.containers.GenomeStrandMap
+import org.slf4j.LoggerFactory
 import kotlin.math.sqrt
 
 /**
@@ -13,6 +14,9 @@ import kotlin.math.sqrt
  *  Nature biotechnology, 2008.
  */
 object FragmentSize {
+
+    private val LOG = LoggerFactory.getLogger(FragmentSize::class.java)
+
     /**
      * Kharchenko et al. use this value as an upper bound, according to the figures in the article.
      * Also, "chipseq" R package uses 500 as the default upper bound.
@@ -39,7 +43,11 @@ object FragmentSize {
             return averageReadLength.toInt()
         }
         val ccs = computePearsonCorrelationTransform(candidateRange.toList(), data)
-        return ccs.maxByOrNull { it.pearsonTransform }!!.fragment
+        val fragment = ccs.maxByOrNull { it.pearsonTransform }!!.fragment
+        LOG.debug("Detected fragment: $fragment")
+        LOG.debug("All non-scaled cross-correlations: " +
+                ccs.joinToString(",") {"${it.fragment}:${String.format("%.2f", it.pearsonTransform)}"})
+        return fragment
     }
 
     /**
