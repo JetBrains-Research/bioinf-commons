@@ -28,6 +28,15 @@ object FragmentSize {
      * We ignore candidate fragment sizes less than [averageReadLength] according to
      * Ramachandran et al., "MaSC: mappability-sensitive cross-correlation for estimating mean fragment
      * length of single-end short-read sequencing data", Bioinformatics, 2013.
+     *
+     * Fragment size is computed as arg max 1/N ∑Nc P[tags(c, d, +), tags(c, 0, -)]
+     * where N is the total number of tags, c is the chromosome,
+     * Nc is the number of tags on c, tags(c, d, s) is the boolean vector
+     * of tags on chromosome c and strand s, shifted by d, P[] is the Pearson
+     * correlation coefficient.
+     *
+     * Important: we cannot use 3rd party Pearson correlation method, because
+     * total size of genome may exceed max int size, so cannot be stored in array.
      */
     fun detectFragmentSize(
         data: GenomeStrandMap<TIntList>,
@@ -46,7 +55,10 @@ object FragmentSize {
         val fragment = ccs.maxByOrNull { it.pearsonTransform }!!.fragment
         LOG.debug("Detected fragment: $fragment")
         LOG.debug("All non-scaled cross-correlations: " +
-                ccs.joinToString(",") {"${it.fragment}:${String.format("%.2f", it.pearsonTransform)}"})
+                ccs.filter { it.pearsonTransform > 0.01 }.joinToString(",") {
+                    "${it.fragment}:${String.format("%.2f", it.pearsonTransform)}"
+                }
+        )
         return fragment
     }
 
@@ -73,39 +85,30 @@ object FragmentSize {
     /**
      * Compute Pearson correlation transform (see below) for a given range
      * of candidate fragment sizes.
-     */
+     * Pearson correlation formula
+     * https://en.wikipedia.org/wiki/Pearson_correlation_coefficient#Mathematical_properties
+     *
+     * Linear algorithm to compute ∑xi*yi, ∑xi, ∑xi^2, ∑yi, ∑yi^2
+     * for Pearson coefficient computation
+     * In case of boolean unique alignment we deal with boolean vectors, where:
+     *      matchedTags = ∑xi*yi
+     *      positiveTags = ∑xi^2 = ∑xi
+     *      negativeTags = ∑yi^2 = ∑yi
+     *      Nc = ∑xi + ∑yi
+     *      P[xi, yi] = (Lc∑xi*yi - ∑xi*∑yi) / √(∑xi * (Lc-∑xi) * ∑yi * (Lc-∑yi))
+     *      where Lc is the length of c.
+     * The only value that depends on d is ∑xi*yi, so we can simplify the arg max.
+     *      arg max 1/N ∑Nc P[tags(c, d, +), tags(c, 0, -)] =
+     *      arg max ∑Nc P[tags(c, d, +), tags(c, 0, -)] =
+     *      arg max ∑(∑xi + ∑yi) (Lc∑xi*yi - ∑xi*∑yi) / √(∑xi * (Lc-∑xi) * ∑yi * (Lc-∑yi)) =
+     *      arg max ∑(∑xi + ∑yi) Lc ∑xi*yi / √(∑xi * (Lc-∑xi) * ∑yi * (Lc-∑yi)) =
+     *      arg max ∑ ∑xi*yi * (∑xi + ∑yi) Lc / √(∑xi * (Lc-∑xi) * ∑yi * (Lc-∑yi))
+     *      We denote the value under arg max as "Pearson correlation transform".
+    */
     private fun computePearsonCorrelationTransform(
         fragments: List<Int>,
         data: GenomeStrandMap<TIntList>
     ): List<CrossCorrelation> {
-        /*  Fragment size is computed as arg max 1/N ∑Nc P[tags(c, d, +), tags(c, 0, -)]
-            where N is the total number of tags, c is the chromosome,
-            Nc is the number of tags on c, tags(c, d, s) is the boolean vector
-            of tags on chromosome c and strand s, shifted by d, P[] is the Pearson
-            correlation coefficient.
-
-            Pearson correlation formula
-            https://en.wikipedia.org/wiki/Pearson_correlation_coefficient#Mathematical_properties
-
-            Linear algorithm to compute ∑xi*yi, ∑xi, ∑xi^2, ∑yi, ∑yi^2
-            for Pearson coefficient computation
-            In case of boolean unique alignment we deal with boolean vectors, where:
-                matchedTags = ∑xi*yi
-                positiveTags = ∑xi^2 = ∑xi
-                negativeTags = ∑yi^2 = ∑yi
-
-                Nc = ∑xi + ∑yi
-                P[xi, yi] = (Lc∑xi*yi - ∑xi*∑yi) / √(∑xi * (Lc-∑xi) * ∑yi * (Lc-∑yi))
-            where Lc is the length of c.
-
-            The only value that depends on d is ∑xi*yi, so we can simplify the arg max.
-                arg max 1/N ∑Nc P[tags(c, d, +), tags(c, 0, -)] =
-                arg max ∑Nc P[tags(c, d, +), tags(c, 0, -)] =
-                arg max ∑(∑xi + ∑yi) (Lc∑xi*yi - ∑xi*∑yi) / √(∑xi * (Lc-∑xi) * ∑yi * (Lc-∑yi)) =
-                arg max ∑(∑xi + ∑yi) Lc ∑xi*yi / √(∑xi * (Lc-∑xi) * ∑yi * (Lc-∑yi)) =
-                arg max ∑ ∑xi*yi * (∑xi + ∑yi) Lc / √(∑xi * (Lc-∑xi) * ∑yi * (Lc-∑yi))
-            We denote the value under arg max as "Pearson correlation transform".
-        */
         val ccs = fragments.map { CrossCorrelation(it) }
         for (chr in data.genomeQuery.get()) {
             val positive = data[chr, Strand.PLUS]
@@ -149,7 +152,7 @@ object FragmentSize {
                     negativeIndex = nextIndex(negative, negativeSize, negativeIndex)
                     negativeTags++
                 }
-                t1 == t2 -> {
+                else -> {
                     matchedTags += 1
                     positiveTags++
                     negativeTags++
