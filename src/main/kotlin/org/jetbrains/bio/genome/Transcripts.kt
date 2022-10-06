@@ -242,7 +242,7 @@ object Transcripts {
         .registerTypeAdapter(Location::class.java, Location.ADAPTER)
         .create()
 
-    internal fun bound5Index(
+    fun bound5Index(
         genome: Genome,
         onlyCodingGenes: Boolean
     ) = BOUND5_INDEX_CACHE.get(genome to onlyCodingGenes) {

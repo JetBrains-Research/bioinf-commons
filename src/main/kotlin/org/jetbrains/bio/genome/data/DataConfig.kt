@@ -183,7 +183,7 @@ data class ReplicateDataKey<T>(val name: String, private val parser: (Any?) -> T
     fun parse(value: Any?): T = parser(value)
 }
 
-data class ReplicateData constructor(val path: Path, internal val meta: Map<String, Any> = emptyMap()) {
+data class ReplicateData constructor(val path: Path, val meta: Map<String, Any> = emptyMap()) {
 
     init {
         check(path.exists && path.isReadable) {

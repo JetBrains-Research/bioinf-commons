@@ -47,7 +47,7 @@ class StringCompressor {
  * contents and releases the builder reference. A [finished] chunk doesn't accept any more strings to [compress].
  * It does, however, provide a [decompressedString] property to access the original UTF-8-encoded contents.
  */
-internal class StringCompressorChunk {
+class StringCompressorChunk {
 
     private var originalStringBuilder: StringBuilder? = StringBuilder(2 * FLUSH_THRESHOLD)
     private var decompressedLength: Int = 0
@@ -106,7 +106,7 @@ internal class StringCompressorChunk {
      * The chunk will no longer accept new strings to [compress]. The method is idempotent: calling it
      * repeatedly has the same effect as calling it once. Not thread-safe.
      */
-    internal fun finish() {
+    fun finish() {
         if (finished) return
         val originalString = originalStringBuilder!!.toString().toByteArray()
         val outputStream = ByteArrayOutputStream()

@@ -100,8 +100,7 @@ abstract class Progress protected constructor(
     abstract fun processedItems(): Long
 
     companion object {
-        @VisibleForTesting
-        internal val LOG = LoggerFactory.getLogger(Progress::class.java)
+                internal val LOG = LoggerFactory.getLogger(Progress::class.java)
 
         operator fun invoke(block: Builder.() -> Unit) = Builder().apply(block)
 

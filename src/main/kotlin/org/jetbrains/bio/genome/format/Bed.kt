@@ -173,7 +173,7 @@ data class BedFormat(
             delimiter ?: (if (csvFile) ',' else '\t')
         }
 
-        internal fun detectDelimiter(text: String, defaultDelimiter: Char): Char {
+        fun detectDelimiter(text: String, defaultDelimiter: Char): Char {
             for (line in text.lineSequence()) {
                 if (NON_DATA_LINE_PATTERN.matches(line)) {
                     continue

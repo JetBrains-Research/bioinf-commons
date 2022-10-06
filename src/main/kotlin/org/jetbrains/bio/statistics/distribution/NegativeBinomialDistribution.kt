@@ -32,8 +32,8 @@ import kotlin.math.pow
  */
 class NegativeBinomialDistribution(
     rng: RandomGenerator,
-    private val mean: Double,
-    internal val failures: Double
+    val mean: Double,
+    val failures: Double
 ) : AbstractIntegerDistribution(rng) {
 
     /**
@@ -200,7 +200,7 @@ class NegativeBinomialDistribution(
         /** Gamma fit based on
          * http://research.microsoft.com/en-us/um/people/minka/papers/minka-gamma.pdf
          */
-        internal fun fitGamma(meanLog: Double, mean: Double, prevA: Double): Double {
+        fun fitGamma(meanLog: Double, mean: Double, prevA: Double): Double {
             if (mean == 0.0) {
                 return Double.NaN
             }

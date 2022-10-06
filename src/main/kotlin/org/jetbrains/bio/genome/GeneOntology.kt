@@ -135,8 +135,7 @@ data class Term(
  * This class is only suitable for reading Gene Ontology OBO files
  * available from this page: http://geneontology.org/page/download-ontology.
  */
-@VisibleForTesting
-internal class OboFile constructor(
+class OboFile constructor(
     private val ontology: Ontology,
     private val reader: Reader
 ) : Iterable<Term> {

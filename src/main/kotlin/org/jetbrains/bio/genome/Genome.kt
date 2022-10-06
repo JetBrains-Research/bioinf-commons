@@ -135,7 +135,7 @@ class Genome private constructor(
     /** Species token, e.g. `"mm"`. */
     val species: String get() = build.takeWhile { !it.isDigit() }
 
-    internal val chromSizesMap: LinkedHashMap<String, Int> by lazy(chromSizesMapLambda)
+    val chromSizesMap: LinkedHashMap<String, Int> by lazy(chromSizesMapLambda)
 
     val chromosomes: List<Chromosome> by lazy {
         chromSizesMap.map { (name, length) ->
@@ -246,8 +246,7 @@ class Genome private constructor(
     companion object {
         const val TEST_ORGANISM_BUILD = "to1"
 
-        @VisibleForTesting
-        internal val LOG = LoggerFactory.getLogger(Genome::class.java)
+                internal val LOG = LoggerFactory.getLogger(Genome::class.java)
 
         /** Use cache to avoid extra chrom.sizes loading. */
         private val CACHE = Maps.newConcurrentMap<String, Genome>()
@@ -583,7 +582,7 @@ data class Chromosome private constructor(
             return CACHE.computeIfAbsent(genome to canonicalName) { Chromosome(genome, canonicalName, length) }
         }
 
-        internal val ADAPTER = object : TypeAdapter<Chromosome>() {
+        val ADAPTER = object : TypeAdapter<Chromosome>() {
             override fun read(`in`: JsonReader) = with(`in`) {
                 val token = nextString()
                 val build = token.substringBefore(":")

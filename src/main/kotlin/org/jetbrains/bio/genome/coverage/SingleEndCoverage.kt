@@ -32,7 +32,7 @@ class SingleEndCoverage private constructor(
     override val genomeQuery: GenomeQuery,
     val detectedFragment: Int,
     val actualFragment: Int = detectedFragment,
-    internal val data: GenomeStrandMap<TIntList>
+    val data: GenomeStrandMap<TIntList>
 ) : Coverage {
 
     override fun getCoverage(location: Location) = getTags(location).size
@@ -46,7 +46,7 @@ class SingleEndCoverage private constructor(
     /**
      * Returns a sorted array of reads covered by a given [location].
      */
-    internal fun getTags(location: Location): IntArray {
+    fun getTags(location: Location): IntArray {
         val data = data[location.chromosome, location.strand]
         /* we don't really care if the offsets are outside of chromosome range,
            since this won't lead to incorrect results */
@@ -68,7 +68,7 @@ class SingleEndCoverage private constructor(
     }
 
     @Throws(IOException::class)
-    internal fun save(outputPath: Path) {
+    fun save(outputPath: Path) {
         NpzFile.write(outputPath).use { writer ->
             writer.write(Coverage.VERSION_FIELD, intArrayOf(Coverage.VERSION))
             writer.write(Coverage.PAIRED_FIELD, booleanArrayOf(false))

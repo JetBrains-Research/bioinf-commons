@@ -46,7 +46,7 @@ interface Coverage {
         const val PAIRED_FIELD = "paired"
 
         @Throws(IOException::class)
-        internal fun load(
+        fun load(
             inputPath: Path,
             genomeQuery: GenomeQuery,
             fragment: Fragment = AutoFragment,
@@ -75,8 +75,7 @@ interface Coverage {
  * If [target] already appears in this vector, the returned
  * index is just before the leftmost occurrence of [target].
  */
-@VisibleForTesting
-internal fun TIntList.binarySearchLeft(target: Int): Int {
+fun TIntList.binarySearchLeft(target: Int): Int {
     var lo = 0
     var hi = size()
     while (lo < hi) {

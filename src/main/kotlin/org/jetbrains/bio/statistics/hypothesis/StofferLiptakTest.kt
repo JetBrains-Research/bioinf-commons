@@ -70,15 +70,15 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
         /**
          * EPSILON - min pvalue threshold, so that [zscore] inverseCumulativeProbability doesn't return +Inf
          */
-        internal const val EPSILON: Double = 9e-17
-        internal val NORMAL = NormalDistribution()
+        const val EPSILON: Double = 9e-17
+        val NORMAL = NormalDistribution()
 
         /**
          * Maximum distance to compute correlations between p-values for Stoffer-Liptak test
          */
         const val MAX_CORRELATION_DISTANCE = 50
 
-        internal fun computeCorrelations(pValues: DoubleArray, maxCorrelationDistance: Int): DoubleArray {
+        fun computeCorrelations(pValues: DoubleArray, maxCorrelationDistance: Int): DoubleArray {
             val distanceCorrelations = DoubleArray(min(pValues.size / 2, maxCorrelationDistance) + 1)
             for (i in 1 until distanceCorrelations.size) {
                 val original = DoubleArray(pValues.size - i - 1)

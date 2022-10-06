@@ -91,8 +91,7 @@ object BioinfToolsCLA {
     /**
      * Configure logging to console / file. Returns path to log file.
      */
-    @VisibleForTesting
-    internal fun configureLogging(quiet: Boolean, debug: Boolean) {
+        internal fun configureLogging(quiet: Boolean, debug: Boolean) {
         if (quiet) {
             Logs.quiet()
         }

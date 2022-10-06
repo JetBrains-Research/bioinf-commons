@@ -109,8 +109,7 @@ enum class CpGContent {
             cgcpg.cpg = cpg
         }
 
-        @VisibleForTesting
-        internal fun computeCpG(buffer: CharArray): Int {
+                fun computeCpG(buffer: CharArray): Int {
             var cpg = 0
             for (i in 0 until buffer.size - 1) {
                 val b = buffer[i]
@@ -122,8 +121,7 @@ enum class CpGContent {
             return cpg
         }
 
-        @VisibleForTesting
-        internal fun computeCG(buffer: CharArray): Int {
+                fun computeCG(buffer: CharArray): Int {
             var cg = 0
             for (nByte in buffer) {
                 if ('c' == nByte || 'g' == nByte) {

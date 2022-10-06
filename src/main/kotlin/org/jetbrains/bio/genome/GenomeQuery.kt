@@ -67,8 +67,7 @@ class GenomeQuery(val genome: Genome, vararg names: String) {
     override fun hashCode() = Objects.hash(build, restriction)
 
     companion object {
-        @VisibleForTesting
-        internal val LOG = LoggerFactory.getLogger(GenomeQuery::class.java)
+                internal val LOG = LoggerFactory.getLogger(GenomeQuery::class.java)
 
         /**
          * Parses [String] as genome with possible custom chromosomes set.

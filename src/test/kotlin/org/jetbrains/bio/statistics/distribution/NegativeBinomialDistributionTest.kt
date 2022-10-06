@@ -9,6 +9,7 @@ import org.jetbrains.bio.viktor.F64Array
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import kotlin.math.ln
 import kotlin.test.assertTrue
 
 class NegativeBinomialDistributionTest {
@@ -101,7 +102,7 @@ class NegativeBinomialDistributionTest {
             val shape = Sampling.sampleUniform(0.0, 20.0)
             val rate = Sampling.sampleUniform(0.0, 2.0)
             val samples = DoubleArray(sampleSize) { Sampling.sampleGamma(shape, rate) }
-            val logSamples = DoubleArray(sampleSize) { Math.log(samples[it]) }
+            val logSamples = DoubleArray(sampleSize) { ln(samples[it]) }
             val shapeGuess = Sampling.sampleUniform(0.0, 20.0)
             val fittedShape = NegativeBinomialDistribution.fitGamma(logSamples.average(), samples.average(), shapeGuess)
             try {

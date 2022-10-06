@@ -28,7 +28,7 @@ import java.nio.file.Path
 class PairedEndCoverage private constructor(
     override val genomeQuery: GenomeQuery,
     val averageInsertSize: Int,
-    internal val data: GenomeMap<TIntList>
+    val data: GenomeMap<TIntList>
 ) : Coverage {
 
     /**
@@ -45,7 +45,7 @@ class PairedEndCoverage private constructor(
     /**
      * Returns a sorted array of tags covered by a given [chromosomeRange].
      */
-    internal fun getTags(chromosomeRange: ChromosomeRange): IntArray {
+    fun getTags(chromosomeRange: ChromosomeRange): IntArray {
         val data = data[chromosomeRange.chromosome]
         val index = data.binarySearchLeft(chromosomeRange.startOffset)
         var size = 0
@@ -61,7 +61,7 @@ class PairedEndCoverage private constructor(
     override val depth = genomeQuery.get().map { chr -> data[chr].size().toLong() }.sum()
 
     @Throws(IOException::class)
-    internal fun save(outputPath: Path) {
+    fun save(outputPath: Path) {
         NpzFile.write(outputPath).use { writer ->
             writer.write(Coverage.VERSION_FIELD, intArrayOf(Coverage.VERSION))
             writer.write(Coverage.PAIRED_FIELD, booleanArrayOf(true))
