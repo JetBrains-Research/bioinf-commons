@@ -185,7 +185,7 @@ object Logs {
     val PRETTY_PRINT_LAYOUT = object : LayoutBase<ILoggingEvent>() {
 
         override fun doLayout(event: ILoggingEvent): String {
-            return "[${timePart(event)}]${logLevelPart(event)} ${event.message}" +
+            return "[${timePart(event)}]${logLevelPart(event)} ${event.formattedMessage}" +
                     "${throwablePart(event)}${CoreConstants.LINE_SEPARATOR}"
         }
 
