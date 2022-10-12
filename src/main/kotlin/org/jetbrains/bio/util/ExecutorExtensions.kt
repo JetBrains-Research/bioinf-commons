@@ -32,10 +32,18 @@ fun configureParallelism(parallelism: Int?) {
 /**
  * Executes tasks re-throwing any exception occurred.
  */
-fun ExecutorService.awaitAll(tasks: Iterable<Callable<*>>) {
+fun ExecutorService.awaitAll(tasks: Iterable<Callable<*>>, ignoreInterrupted: Boolean = false) {
     tasks.map { submit(it) }.toList().forEach {
         try {
-            it.get()
+            if (ignoreInterrupted) {
+                try {
+                    it.get()
+                } catch (e: InterruptedException) {
+                    // Ignore
+                }
+            } else {
+                it.get()
+            }
         } catch (e: ExecutionException) {
             shutdownNow()
             throw e.cause ?: e
