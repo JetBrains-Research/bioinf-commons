@@ -1,8 +1,6 @@
 package org.jetbrains.bio.statistics.hypothesis
 
 import com.google.common.primitives.Ints
-import org.jetbrains.bio.viktor.F64Array
-import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

@@ -1,6 +1,5 @@
 package org.jetbrains.bio.genome
 
-import com.google.common.annotations.VisibleForTesting
 import com.google.common.collect.Maps
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader

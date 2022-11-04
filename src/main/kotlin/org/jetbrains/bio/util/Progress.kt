@@ -1,6 +1,5 @@
 package org.jetbrains.bio.util
 
-import com.google.common.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.*

@@ -1,6 +1,5 @@
 package org.jetbrains.bio.genome
 
-import com.google.common.annotations.VisibleForTesting
 import com.google.common.collect.*
 import gnu.trove.impl.Constants
 import gnu.trove.map.TObjectIntMap

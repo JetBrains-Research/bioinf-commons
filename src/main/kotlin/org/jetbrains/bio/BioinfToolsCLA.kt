@@ -1,6 +1,5 @@
 package org.jetbrains.bio
 
-import com.google.common.annotations.VisibleForTesting
 import org.jetbrains.bio.gse.EnrichmentInRegions
 import org.jetbrains.bio.gse.OverlapRegionsWithEachLoci
 import org.jetbrains.bio.util.Logs

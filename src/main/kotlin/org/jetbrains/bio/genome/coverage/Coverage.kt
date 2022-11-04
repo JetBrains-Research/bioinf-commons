@@ -1,6 +1,5 @@
 package org.jetbrains.bio.genome.coverage
 
-import com.google.common.annotations.VisibleForTesting
 import gnu.trove.list.TIntList
 import kotlinx.support.jdk7.use
 import org.jetbrains.bio.genome.ChromosomeRange

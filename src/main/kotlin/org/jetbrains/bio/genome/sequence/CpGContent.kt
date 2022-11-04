@@ -1,6 +1,5 @@
 package org.jetbrains.bio.genome.sequence
 
-import com.google.common.annotations.VisibleForTesting
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.Location
 import kotlin.math.max

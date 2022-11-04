@@ -1,6 +1,5 @@
 package org.jetbrains.bio.util
 
-import com.google.common.annotations.VisibleForTesting
 import org.jetbrains.bio.util.MultitaskProgress.addTask
 import org.jetbrains.bio.util.MultitaskProgress.finishTask
 import org.jetbrains.bio.util.MultitaskProgress.periodNanos
