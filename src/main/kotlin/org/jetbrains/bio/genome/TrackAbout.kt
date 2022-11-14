@@ -70,6 +70,19 @@ open class TrackAboutDoubleColumnType(
     override fun render(value: Any?) = value.toString()
 }
 
+open class TrackAboutBooleanColumnType(
+    override val name: String
+) : TrackAboutColumnType<Boolean> {
+    override fun valueClass() = Boolean::class.java
+
+    override fun comparator() = Comparator<Boolean> { o1, o2 ->
+        o1.compareTo(o2)
+    }
+
+    override fun render(value: Any?) = value.toString()
+}
+
+
 class TrackAboutPercentageColumnType(
     name: String
 ) : TrackAboutDoubleColumnType(name) {
