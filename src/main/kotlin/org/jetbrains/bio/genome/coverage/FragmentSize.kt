@@ -4,6 +4,7 @@ import gnu.trove.list.TIntList
 import org.jetbrains.bio.genome.Strand
 import org.jetbrains.bio.genome.containers.GenomeStrandMap
 import org.slf4j.LoggerFactory
+import kotlin.math.ceil
 import kotlin.math.sqrt
 
 /**
@@ -46,8 +47,8 @@ object FragmentSize {
             // empty data, return a placeholder value
             return 0
         }
-        // Ignore phantom peaks <= read length
-        val candidateRange = averageReadLength.toInt()..MAX_FRAGMENT_SIZE
+        // Ignore phantom peaks <= read length + 10%
+        val candidateRange = ceil(averageReadLength * 1.1).toInt()..MAX_FRAGMENT_SIZE
         if (candidateRange.isEmpty()) {
             return averageReadLength.toInt()
         }
