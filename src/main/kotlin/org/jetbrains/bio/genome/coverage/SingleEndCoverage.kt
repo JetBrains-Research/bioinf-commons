@@ -35,7 +35,7 @@ class SingleEndCoverage private constructor(
     val data: GenomeStrandMap<TIntList>
 ) : Coverage {
 
-    override fun getCoverage(location: Location) = getTags(location).size
+    override fun getCoverage(location: Location) = getTags(location)
 
     override val depth = genomeQuery.get().flatMap { chr ->
         Strand.values().map { strand ->
@@ -46,25 +46,20 @@ class SingleEndCoverage private constructor(
     /**
      * Returns a sorted array of reads covered by a given [location].
      */
-    fun getTags(location: Location): IntArray {
+    fun getTags(location: Location): Int {
         val data = data[location.chromosome, location.strand]
         /* we don't really care if the offsets are outside of chromosome range,
            since this won't lead to incorrect results */
-        val locationShift = location.strand.choose(
-            (-actualFragment) / 2,
-            actualFragment / 2
-        )
-        val startOffset = location.startOffset + locationShift
-        val endOffset = location.endOffset + locationShift
+        val shift = if (location.strand == Strand.PLUS) actualFragment / 2 else -actualFragment / 2
+        // IMPORTANT, here we invert shift to find shifted tags correctly
+        val startOffset = location.startOffset - shift
+        val endOffset = location.endOffset - shift
         val index = data.binarySearchLeft(startOffset)
         var size = 0
-        while (index + size < data.size() &&
-            data[index + size] < endOffset
-        ) {
+        while (index + size < data.size() && data[index + size] < endOffset) {
             size++
         }
-
-        return data.toArray(index, size)
+        return size
     }
 
     @Throws(IOException::class)

@@ -98,18 +98,9 @@ class SingleEndCoverageTest {
             .putAll(chromosome1, Strand.PLUS, 5, 13, 23, 1, 111, 7, 4, 5, 50)
             .build(unique = false).withFragment(0)
 
-        assertArrayEquals(
-            intArrayOf(5, 5, 7, 13, 23),
-            coverage.getTags(Location(5, 50, chromosome1, Strand.PLUS))
-        )
-        assertArrayEquals(
-            intArrayOf(13, 23),
-            coverage.getTags(Location(10, 25, chromosome1, Strand.PLUS))
-        )
-        assertArrayEquals(
-            intArrayOf(5, 5, 7, 13, 23, 50),
-            coverage.getTags(Location(5, 55, chromosome1, Strand.PLUS))
-        )
+        assertEquals(5, coverage.getTags(Location(5, 50, chromosome1, Strand.PLUS)))
+        assertEquals(2, coverage.getTags(Location(10, 25, chromosome1, Strand.PLUS)))
+        assertEquals(6, coverage.getTags(Location(5, 55, chromosome1, Strand.PLUS)))
     }
 
     @Test
@@ -119,7 +110,7 @@ class SingleEndCoverageTest {
             .putAll(chromosome1, Strand.PLUS, *tags)
             .build(unique = false).withFragment(0)
 
-        assertArrayEquals(tags, coverage.getTags(Location(5, 50, chromosome1, Strand.PLUS)))
+        assertEquals(tags.size, coverage.getTags(Location(5, 50, chromosome1, Strand.PLUS)))
     }
 
     @Test
@@ -240,18 +231,9 @@ class SingleEndCoverageTest {
                     this.process(it)
                 }
             }.build(true).withFragment(150)
-            assertArrayEquals(
-                intArrayOf(0),
-                coverage.getTags(Location(0, 100, chromosome1, Strand.PLUS))
-            )
-            assertArrayEquals(
-                intArrayOf(0),
-                coverage.getTags(Location(0, 500, chromosome1, Strand.PLUS))
-            )
-            assertArrayEquals(
-                intArrayOf(100, 150),
-                coverage.getTags(Location(0, 100, chromosome1, Strand.MINUS))
-            )
+            assertEquals(1, coverage.getTags(Location(0, 100, chromosome1, Strand.PLUS)))
+            assertEquals(1, coverage.getTags(Location(0, 500, chromosome1, Strand.PLUS)))
+            assertEquals(2, coverage.getTags(Location(0, 100, chromosome1, Strand.MINUS)))
         }
     }
 
