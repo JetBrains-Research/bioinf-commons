@@ -8,6 +8,7 @@ import org.jetbrains.bio.genome.*
 import org.jetbrains.bio.util.*
 import picard.sam.markduplicates.MarkDuplicates
 import java.nio.file.Path
+import kotlin.math.max
 
 /**
  * Attempts to detect whether the file contains paired-end reads
@@ -28,6 +29,7 @@ fun isPaired(path: Path): Boolean {
                     }
                     return@use false
                 }
+
         else -> false
     }
 }
@@ -52,7 +54,7 @@ fun processReads(genomeQuery: GenomeQuery, path: Path, consumer: (Location) -> U
                             progress.report()
                             consumer(
                                 Location(
-                                    e.start, Math.max(e.start + 1, e.end), chromosome, strand
+                                    e.start, max(e.start + 1, e.end), chromosome, strand
                                 )
                             )
                         }
@@ -77,6 +79,7 @@ fun processReads(genomeQuery: GenomeQuery, path: Path, consumer: (Location) -> U
                     }
                 }
             }
+
             else -> error("unsupported file type: $path")
         }
     } finally {
@@ -145,6 +148,7 @@ fun processPairedReads(
                         }
                     }
             }
+
             else -> error("unsupported file type: $path")
         }
         return unpairedCount
@@ -180,7 +184,6 @@ fun removeDuplicates(path: Path): Path {
 private fun SAMRecord.invalid(): Boolean = readUnmappedFlag
         || isSecondaryOrSupplementary
         || duplicateReadFlag
-        || mappingQuality == 0 // BWA multi-alignment evidence
         || alignmentStart == 0
 
 private fun SAMRecord.toLocation(genomeQuery: GenomeQuery): Location? =
