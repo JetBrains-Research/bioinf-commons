@@ -21,6 +21,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
+import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -351,8 +352,8 @@ class ParallelProgressTest : ProgressTest() {
         )
 
         val allSeconds = parts.size
-        assertEquals(
-            allSeconds, uniqueSeconds + 1,
+        assertTrue(
+            abs(allSeconds - uniqueSeconds) <= 3,
             "shouldn't report progress more often than once in second, except [done]"
         )
         assertTrue("[done]" in logStrings[logStrings.size - 1])
