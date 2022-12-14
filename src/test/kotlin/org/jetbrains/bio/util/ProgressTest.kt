@@ -285,7 +285,7 @@ class SequentialProgressTest : ProgressTest() {
                 "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
         )
 
-        val expPartsRange = 10..12
+        val expPartsRange = 10..14
         val expPartsRangeStr = "[${expPartsRange.first}..${expPartsRange.last}]"
         assertTrue(
             logStrings.size in expPartsRange,
