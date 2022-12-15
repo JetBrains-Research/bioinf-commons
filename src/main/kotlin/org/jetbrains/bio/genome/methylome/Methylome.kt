@@ -190,10 +190,10 @@ class MethylomeBuilder(
 
         if (!stranded) {
             require(strand != Strand.MINUS) {
-                "Cannot add data to minus strand in strand-independent methylome"
+                "Cannot add data to minus strand in strand-independent methylome: ${chromosome.name}:$strand:$offset ctx=${context ?: '.'} mc: $methylatedCount cov: $totalCount"
             }
             require(context != CytosineContext.CHH) {
-                "CHH context isn't allowed in strand-independent methylome"
+                "CHH context isn't allowed in strand-independent methylome ${chromosome.name}:$strand:$offset ctx=${context ?: '.'} mc: $methylatedCount cov: $totalCount"
             }
         }
 
