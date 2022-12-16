@@ -47,8 +47,8 @@ object FragmentSize {
             // empty data, return a placeholder value
             return 0
         }
-        // Ignore phantom peaks <= read length + 10%
-        val candidateRange = ceil(averageReadLength * 1.1).toInt()..MAX_FRAGMENT_SIZE
+        // Ignore phantom peaks <= read length * 1.5
+        val candidateRange = ceil(averageReadLength * 1.5).toInt()..MAX_FRAGMENT_SIZE
         if (candidateRange.isEmpty()) {
             return averageReadLength.toInt()
         }
