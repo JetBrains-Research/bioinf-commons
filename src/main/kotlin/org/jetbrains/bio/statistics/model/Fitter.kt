@@ -54,6 +54,6 @@ interface Fitter<out Model : ClassificationModel> {
         val LOG = LoggerFactory.getLogger(Fitter::class.java)
         const val TITLE = "unknown"
         const val THRESHOLD = 0.1
-        const val MAX_ITERATIONS = 20
+        const val MAX_ITERATIONS = 50
     }
 }
