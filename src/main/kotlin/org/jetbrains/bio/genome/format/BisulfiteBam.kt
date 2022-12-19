@@ -324,7 +324,7 @@ private class BowtieSamPiler(
         // XXX for the minus strand we add up the counts using
         // reverse-complementary nucleotides, so to get 'methylatedCount'
         // we need to use 'countC' and NOT 'countG'.
-        builder.add(chromosome, strand, offset, context, countC, countATCG)
+        builder.add(chromosome, strand, offset, context, countC, countATCG, false)
     }
 
 }
@@ -399,7 +399,7 @@ private class BismarkSamPiler(
         // XXX for the minus strand we add up the counts using
         // reverse-complementary nucleotides, so to get 'methylatedCount'
         // we need to use 'countC' and NOT 'countG'.
-        builder.add(chromosome, strand, offset, context, countC, countATCG)
+        builder.add(chromosome, strand, offset, context, countC, countATCG, false)
     }
 
 }

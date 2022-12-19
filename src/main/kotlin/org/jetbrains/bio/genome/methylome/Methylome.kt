@@ -185,10 +185,11 @@ class MethylomeBuilder(
     fun add(
         chromosome: Chromosome, strand: Strand,
         offset: Int, context: CytosineContext?,
-        methylatedCount: Int, totalCount: Int
+        methylatedCount: Int, totalCount: Int,
+        allowStrandOrCtxMismatches: Boolean  // E.g. due to mismatches with reference some Methylome C could have different context / stradness compared to reference genome
     ): MethylomeBuilder {
 
-        if (!stranded) {
+        if (!stranded && !allowStrandOrCtxMismatches) {
             require(strand != Strand.MINUS) {
                 "Cannot add data to minus strand in strand-independent methylome: ${chromosome.name}:$strand:$offset ctx=${context ?: '.'} mc: $methylatedCount cov: $totalCount"
             }
