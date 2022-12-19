@@ -27,7 +27,7 @@ class MethylomeTest {
         val builder = Methylome.builder(genomeQuery)
         val chromosome = genomeQuery.get().first()
         val strand = Strand.PLUS
-        builder.add(chromosome, strand, 42, CytosineContext.CG, 10, 20, false)
+        builder.add(chromosome, strand, 42, CytosineContext.CG, 10, 20)
         val methylome0 = builder.build()
         withTempFile("methylome", ".npz") { path ->
             methylome0.save(path)
@@ -46,7 +46,7 @@ class MethylomeTest {
         val builder = Methylome.builder(genomeQuery)
         val chromosome = genomeQuery.get().first()
         val strand = Strand.PLUS
-        builder.add(chromosome, strand, 42, CytosineContext.CG, 10, 20, false)
+        builder.add(chromosome, strand, 42, CytosineContext.CG, 10, 20)
         assertSerializedCorrectly(builder.build())
     }
 
@@ -64,7 +64,7 @@ class MethylomeTest {
             val strand = if (r.nextBoolean()) Strand.PLUS else Strand.MINUS
             builder.add(
                 chromosome, strand, r.nextInt(100500), CytosineContext.CG,
-                dC.sample(), dT.sample(), false
+                dC.sample(), dT.sample()
             )
         }
 
@@ -92,10 +92,10 @@ class MethylomeTest {
         val builder = Methylome.builder(genomeQuery)
         val chromosome = genomeQuery.get().first()
         val strand = Strand.PLUS
-        builder.add(chromosome, strand, 42, CytosineContext.CG, 10, 20, false)
-        builder.add(chromosome, strand, 42, CytosineContext.CG, 11, 18, false)
-        builder.add(chromosome, strand, 42, CytosineContext.CHH, 1, 8, false)
-        builder.add(chromosome, strand, 2, CytosineContext.CHH, 8, 8, false)
+        builder.add(chromosome, strand, 42, CytosineContext.CG, 10, 20)
+        builder.add(chromosome, strand, 42, CytosineContext.CG, 11, 18)
+        builder.add(chromosome, strand, 42, CytosineContext.CHH, 1, 8)
+        builder.add(chromosome, strand, 2, CytosineContext.CHH, 8, 8)
         assertEquals(2, builder.duplicatedOffsets())
         assertEquals(4, builder.build()[chromosome, strand].size)
     }
@@ -105,10 +105,10 @@ class MethylomeTest {
         val builder = Methylome.builder(genomeQuery, true)
         val chromosome = genomeQuery.get().first()
         val strand = Strand.PLUS
-        builder.add(chromosome, strand, 42, CytosineContext.CG, 10, 20, false)
-        builder.add(chromosome, strand, 42, CytosineContext.CG, 11, 18, false)
-        builder.add(chromosome, strand, 42, CytosineContext.CHH, 1, 8, false)
-        builder.add(chromosome, strand, 2, CytosineContext.CHH, 8, 8, false)
+        builder.add(chromosome, strand, 42, CytosineContext.CG, 10, 20)
+        builder.add(chromosome, strand, 42, CytosineContext.CG, 11, 18)
+        builder.add(chromosome, strand, 42, CytosineContext.CHH, 1, 8)
+        builder.add(chromosome, strand, 2, CytosineContext.CHH, 8, 8)
         assertEquals(2, builder.duplicatedOffsets())
         assertEquals(2, builder.build()[chromosome, strand].size)
     }
@@ -117,7 +117,7 @@ class MethylomeTest {
     fun strandedMethylome() {
         val builder = Methylome.builder(genomeQuery, stranded = false)
         val chromosome = genomeQuery.get().first()
-        builder.add(chromosome, Strand.PLUS, 42, CytosineContext.CG, 10, 20, false)
+        builder.add(chromosome, Strand.PLUS, 42, CytosineContext.CG, 10, 20)
 
         val methylome0 = builder.build()
         withTempFile("methylome", ".npz") { path ->
@@ -132,8 +132,8 @@ class MethylomeTest {
     fun strandIndependentMethylome() {
         val builder = Methylome.builder(genomeQuery, stranded = true)
         val chromosome = genomeQuery.get().first()
-        builder.add(chromosome, Strand.PLUS, 42, CytosineContext.CG, 15, 20, false)
-        builder.add(chromosome, Strand.PLUS, 100, CytosineContext.CHH, 1, 20, false)
+        builder.add(chromosome, Strand.PLUS, 42, CytosineContext.CG, 15, 20)
+        builder.add(chromosome, Strand.PLUS, 100, CytosineContext.CHH, 1, 20)
 
         val methylome0 = builder.build()
         withTempFile("methylome", ".npz") { path ->
@@ -157,7 +157,7 @@ class MethylomeTest {
     fun strandedMethylome_AccessMinusStrand() {
         val builder = Methylome.builder(genomeQuery, stranded = true)
         val chromosome = genomeQuery.get().first()
-        builder.add(chromosome, Strand.MINUS, 42, CytosineContext.CG, 15, 20, false)
+        builder.add(chromosome, Strand.MINUS, 42, CytosineContext.CG, 15, 20)
 
         assertEquals(1, builder.build()[chromosome, Strand.MINUS].size)
     }
@@ -166,7 +166,7 @@ class MethylomeTest {
     fun strandIndependentMethylome_AccessMinusStrand() {
         val builder = Methylome.builder(genomeQuery, stranded = false)
         val chromosome = genomeQuery.get().first()
-        builder.add(chromosome, Strand.PLUS, 42, CytosineContext.CG, 15, 20, false)
+        builder.add(chromosome, Strand.PLUS, 42, CytosineContext.CG, 15, 20)
 
         thrown.expect(IllegalArgumentException::class.java)
         thrown.expectMessage("Cannot access minus strand in strand-independent methylome")
@@ -182,15 +182,7 @@ class MethylomeTest {
         thrown.expect(IllegalArgumentException::class.java)
         thrown.expectMessage("Cannot add data to minus strand in strand-independent methylome")
 
-        builder.add(chromosome, Strand.MINUS, 43, CytosineContext.CG, 5, 20, false)
-    }
-    @Test
-    fun strandIndependentMethylome_AddMinusData_MutedError(){
-        val builder = Methylome.builder(genomeQuery, stranded = false)
-        val chromosome = genomeQuery.get().first()
-
-        builder.add(chromosome, Strand.MINUS, 43, CytosineContext.CG, 5, 20, true)
-        assertEquals(1, builder.build()[chromosome, Strand.PLUS].size)
+        builder.add(chromosome, Strand.MINUS, 43, CytosineContext.CG, 5, 20)
     }
 
     @Test
@@ -201,16 +193,7 @@ class MethylomeTest {
         thrown.expect(IllegalArgumentException::class.java)
         thrown.expectMessage("CHH context isn't allowed in strand-independent methylome")
 
-        builder.add(chromosome, Strand.PLUS, 42, CytosineContext.CHH, 10, 20, false)
-    }
-
-    @Test
-    fun strandIndependentMethylome_AddCHHData_MutedError() {
-        val builder = Methylome.builder(genomeQuery, stranded = false)
-        val chromosome = genomeQuery.get().first()
-
-        builder.add(chromosome, Strand.PLUS, 42, CytosineContext.CHH, 10, 20, true)
-        assertEquals(1, builder.build()[chromosome, Strand.PLUS].size)
+        builder.add(chromosome, Strand.PLUS, 42, CytosineContext.CHH, 10, 20)
     }
 
     private fun assertSerializedCorrectly(methylome0: Methylome) {

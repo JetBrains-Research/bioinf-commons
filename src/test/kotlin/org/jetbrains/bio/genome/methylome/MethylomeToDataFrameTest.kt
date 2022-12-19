@@ -15,9 +15,9 @@ class MethylomeToDataFrameTest {
         val genomeQuery = GenomeQuery(Genome["to1"])
         val chromosome = genomeQuery.get().first()
         val methylome = Methylome.builder(genomeQuery)
-            .add(chromosome, Strand.PLUS, 100, CytosineContext.CG, 1, 10, false)
-            .add(chromosome, Strand.MINUS, 200, CytosineContext.CG, 2, 10, false)
-            .add(chromosome, Strand.PLUS, 200, CytosineContext.CHG, 2, 10, false)
+            .add(chromosome, Strand.PLUS, 100, CytosineContext.CG, 1, 10)
+            .add(chromosome, Strand.MINUS, 200, CytosineContext.CG, 2, 10)
+            .add(chromosome, Strand.PLUS, 200, CytosineContext.CHG, 2, 10)
             .build()
 
         val df = MethylomeToDataFrame.create(StrandFilter.BOTH, CytosineContext.CG)
@@ -45,7 +45,7 @@ class MethylomeToDataFrameTest {
         val genomeQuery = GenomeQuery(Genome["to1"])
         val chromosome = genomeQuery.get().first()
         val methylome = Methylome.builder(genomeQuery)
-            .add(chromosome, Strand.PLUS, 100, CytosineContext.CG, 1, 10, false)
+            .add(chromosome, Strand.PLUS, 100, CytosineContext.CG, 1, 10)
             .build()
 
         val df = MethylomeToDataFrame.DEFAULT
@@ -62,7 +62,7 @@ class MethylomeToDataFrameTest {
         val genomeQuery = GenomeQuery(Genome["to1"])
         val chromosome = genomeQuery.get().first()
         val methylome = Methylome.builder(genomeQuery)
-            .add(chromosome, Strand.PLUS, 100, CytosineContext.CG, 1, 10, false)
+            .add(chromosome, Strand.PLUS, 100, CytosineContext.CG, 1, 10)
             .build()
 
         val df = MethylomeToDataFrame.create(StrandFilter.BOTH, CytosineContext.CG)
