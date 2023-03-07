@@ -45,12 +45,15 @@ object F64ArrayTypeAdapter : JsonSerializer<F64Array>, JsonDeserializer<F64Array
             1 -> context.deserialize<DoubleArray>(
                 json, object : TypeToken<DoubleArray>() {}.type
             ).asF64Array()
+
             2 -> context.deserialize<Array<DoubleArray>>(
                 json, object : TypeToken<Array<DoubleArray>>() {}.type
             ).toF64Array()
+
             3 -> context.deserialize<Array<Array<DoubleArray>>>(
                 json, object : TypeToken<Array<Array<DoubleArray>>>() {}.type
             ).toF64Array()
+
             else -> throw IllegalStateException()
         }
     }

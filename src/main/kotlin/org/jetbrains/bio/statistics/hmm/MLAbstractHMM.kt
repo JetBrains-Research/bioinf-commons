@@ -146,7 +146,7 @@ abstract class MLAbstractHMM(
                 for (priorState in 0 until numStates) {
                     workBuffer[priorState] =
                         logForwardProbabilities[(observation - 1) % 2, priorState] +
-                            logTransitionProbabilities[priorState, nextState]
+                                logTransitionProbabilities[priorState, nextState]
                 }
 
                 logForwardProbabilities[observation % 2, nextState] =

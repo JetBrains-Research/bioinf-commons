@@ -129,6 +129,7 @@ aux:
                     /** A section with per-replicate labels. */
                     is Map<*, *> ->
                         replicates.map { (r, v) -> r.toString() to ReplicateData.of(v) }
+
                     else -> throw IllegalStateException("Unknown replicates structure: $replicates")
                 }
 
@@ -211,6 +212,7 @@ data class ReplicateData constructor(val path: Path, val meta: Map<String, Any> 
                 }
                 ReplicateData(any[PATH_KEY]!!.toString().toPath(), any as Map<String, Any>)
             }
+
             else ->
                 throw IllegalArgumentException("Unknown replicates structure: $any")
         }

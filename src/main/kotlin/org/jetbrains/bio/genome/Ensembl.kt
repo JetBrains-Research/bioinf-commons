@@ -158,6 +158,7 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
             // just not to write long if condition:
             "transcript", "exon", "CDS", "start_codon", "three_prime_utr" -> { /* noop */
             }
+
             else -> return type
         }
 
@@ -188,15 +189,19 @@ class GtfReader(val reader: BufferedReader, val genome: Genome) {
             "exon" -> {
                 transcriptInfo.exons.add(location)
             }
+
             "CDS" -> {
                 transcriptInfo.cds.add(location)
             }
+
             "transcript" -> {
                 transcriptInfo.transcript = location
             }
+
             "three_prime_utr" -> {
                 transcriptInfo.utr3.add(location)
             }
+
             "start_codon" -> {
                 // Used only for data validation
                 if (transcriptInfo.startCodon == -1) {

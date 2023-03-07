@@ -23,7 +23,7 @@ object BenjaminiHochberg {
             original[sorted[k]] = k
         }
 
-        val qvalues  = F64Array(m)
+        val qvalues = F64Array(m)
         for (k in 0 until m) {
             qvalues[k] = min(1.0, ps[sorted[k]] * m / (m - k))
         }

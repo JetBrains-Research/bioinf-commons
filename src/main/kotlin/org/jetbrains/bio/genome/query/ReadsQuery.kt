@@ -106,19 +106,23 @@ class ReadsQuery(
                             "Fragment size: ${coverage.actualFragment} bp " +
                                     "(overrides cross-correlation " +
                                     "estimate ${coverage.detectedFragment})"
+
                         fragment is AutoFragment ->
                             "Fragment size: ${coverage.detectedFragment} bp " +
                                     "(cross-correlation estimate)"
+
                         else ->
                             "Fragment size: ${coverage.detectedFragment} bp " +
                                     "(user input is equal to cross-correlation estimate)"
                     }
+
                     is PairedEndCoverage -> "Reads: paired-ended, " + if (fragment is FixedFragment) {
                         "Fragment size: ${coverage.averageInsertSize} bp (average; inferred from read pairs; " +
                                 "user input $fragment is ignored)"
                     } else {
                         "Fragment size: ${coverage.averageInsertSize} bp (average; inferred from read pairs)"
                     }
+
                     else -> throw IllegalArgumentException("Unknown library type: ${coverage::class.java}")
                 }
         LOG.info(information)

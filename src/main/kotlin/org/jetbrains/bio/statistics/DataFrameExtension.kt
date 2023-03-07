@@ -19,5 +19,6 @@ fun DataFrame.f64Array(column: String): F64Array =
             val floats = this.sliceAsFloat(column)
             DoubleArray(floats.size) { floats[it].toDouble() }.asF64Array()
         }
+
         else -> throw IllegalStateException("Expected Doubles or Floats: $column")
     }

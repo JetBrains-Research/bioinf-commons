@@ -83,12 +83,14 @@ data class IntersectionInfo(
                         0 -> {
                             colNames = csvRecord!!.toList().subList(2, csvRecord.size())
                         }
+
                         1 -> {
                             requireNotNull(colNames)
                             colsMergedLociNumber = IntArray(colNames!!.size) { i ->
                                 csvRecord.get(i + 2).toInt()
                             }
                         }
+
                         else -> {
                             val records = csvRecord.toList()
                             val rowValues = DoubleArray(colNames!!.size)

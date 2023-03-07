@@ -83,12 +83,14 @@ fun all(pf: RowPredicateFactory, vararg rest: RowPredicateFactory): RowPredicate
             val p1 = pfs[1](df)
             IntPredicate { p0.test(it) && p1.test(it) }
         }
+
         3 -> RowPredicateFactory { df ->
             val p0 = pfs[0](df)
             val p1 = pfs[1](df)
             val p2 = pfs[2](df)
             IntPredicate { p0.test(it) && p1.test(it) && p2.test(it) }
         }
+
         else -> RowPredicateFactory { df ->
             // XXX we could optimize it by processing pfs in threes.
             val ps = pfs.map { it(df) }

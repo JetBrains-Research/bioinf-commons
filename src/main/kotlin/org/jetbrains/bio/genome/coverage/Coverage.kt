@@ -61,7 +61,8 @@ interface Coverage {
                 if (paired) {
                     PairedEndCoverage.load(reader, inputPath, genomeQuery, failOnMissingChromosomes)
                 } else {
-                    SingleEndCoverage.load(reader, inputPath, genomeQuery, failOnMissingChromosomes).withFragment(fragment)
+                    SingleEndCoverage.load(reader, inputPath, genomeQuery, failOnMissingChromosomes)
+                        .withFragment(fragment)
                 }
             }
         }

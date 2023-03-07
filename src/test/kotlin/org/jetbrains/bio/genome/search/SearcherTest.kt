@@ -87,6 +87,7 @@ class SuffixArraySearcherTest {
                     copy[n - 1] = 1 - probabilities.sum()
                     CategoricalDistribution(copy)
                 }
+
                 else -> throw IllegalArgumentException("missing or redundant probabilities")
             }
 

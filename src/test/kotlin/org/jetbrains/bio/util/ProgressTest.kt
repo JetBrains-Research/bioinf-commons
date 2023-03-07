@@ -225,8 +225,9 @@ class SequentialProgressTest : ProgressTest() {
         progress.done() // to ensure that this doesn't make any difference
 
         val uniqueSeconds = parts.asSequence().map { it.elapsedSeconds }.distinct().count()
-        println("Unique seconds: $uniqueSeconds\n" +
-                "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
+        println(
+            "Unique seconds: $uniqueSeconds\n" +
+                    "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
         )
 
         val expPartsRange = 10..15
@@ -281,8 +282,9 @@ class SequentialProgressTest : ProgressTest() {
         progress.done() // to ensure that this doesn't make any difference
 
         val uniqueSeconds = parts.asSequence().map { it.elapsedSeconds }.distinct().count()
-        println("Unique seconds: $uniqueSeconds\n" +
-                "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
+        println(
+            "Unique seconds: $uniqueSeconds\n" +
+                    "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
         )
 
         val expPartsRange = 10..14
@@ -347,8 +349,9 @@ class ParallelProgressTest : ProgressTest() {
         progress.done() // to ensure that this doesn't make any difference
 
         val uniqueSeconds = parts.asSequence().map { it.elapsedSeconds }.distinct().count()
-        println("Unique seconds: $uniqueSeconds\n" +
-                "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
+        println(
+            "Unique seconds: $uniqueSeconds\n" +
+                    "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
         )
 
         val allSeconds = parts.size
@@ -392,11 +395,13 @@ class ParallelProgressTest : ProgressTest() {
         progress.done() // to ensure that this doesn't make any difference
 
         val uniqueSeconds = parts.asSequence().map { it.elapsedSeconds }.distinct().count()
-        println("Unique seconds: $uniqueSeconds\n" +
-                "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
+        println(
+            "Unique seconds: $uniqueSeconds\n" +
+                    "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
         )
 
-        assertEquals(parts.size, uniqueSeconds + 1,
+        assertEquals(
+            parts.size, uniqueSeconds + 1,
             "shouldn't report progress more often than once in second, except [done].\n" +
                     "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
         )

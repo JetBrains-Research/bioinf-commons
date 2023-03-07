@@ -336,12 +336,15 @@ object Transcripts {
         AssociationStrategy.SINGLE -> associatedTranscriptsSingle(
             location, limit, codingOnly
         )
+
         AssociationStrategy.TWO -> associatedTranscriptsTwo(
             location, limit, codingOnly
         )
+
         AssociationStrategy.BASAL_PLUS_EXT -> associatedTranscriptsPlus(
             location, codingOnly = codingOnly, distal = limit
         )
+
         AssociationStrategy.MULTIPLE -> associatedTranscriptsMultiple(
             location, codingOnly = codingOnly, limit = limit
         )

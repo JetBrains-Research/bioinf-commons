@@ -140,7 +140,11 @@ class AggregateTest(private val expected: List<BitRange>, private val bits: IntA
 }
 
 @RunWith(Parameterized::class)
-class FindConsequentTest(private val expected: List<BitRange>, private val bits: IntArray, private val range: BitRange) {
+class FindConsequentTest(
+    private val expected: List<BitRange>,
+    private val bits: IntArray,
+    private val range: BitRange
+) {
     @Test
     fun findConsequent() {
         val actual = bits.toBitterSet()

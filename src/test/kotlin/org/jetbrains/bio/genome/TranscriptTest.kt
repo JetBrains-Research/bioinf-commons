@@ -170,7 +170,8 @@ class TranscriptTest {
                     2, associatedTranscripts.size,
                     "Expected to get both TSS equidistant to $midpoint, but got ${associatedTranscripts.size}"
                 )
-                assertEquals(arrayListOf(transcripts[i], transcripts[i + 1]), associatedTranscripts,
+                assertEquals(
+                    arrayListOf(transcripts[i], transcripts[i + 1]), associatedTranscripts,
                     "Expected ${transcripts[i].ensemblId} and ${transcripts[i + 1].ensemblId}, but got " +
                             "${associatedTranscripts.map { it.ensemblId }}"
                 )
@@ -192,7 +193,8 @@ class TranscriptTest {
                 2, associatedTranscripts.size,
                 "Expected to get both TSS framing $midpoint, but got ${associatedTranscripts.size}"
             )
-            assertEquals(arrayListOf(transcripts[i], transcripts[i + 1]), associatedTranscripts,
+            assertEquals(
+                arrayListOf(transcripts[i], transcripts[i + 1]), associatedTranscripts,
                 "Expected ${transcripts[i].ensemblId} and ${transcripts[i + 1].ensemblId}, but got " +
                         "${associatedTranscripts.map { it.ensemblId }}"
             )

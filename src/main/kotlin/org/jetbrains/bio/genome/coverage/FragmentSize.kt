@@ -105,7 +105,7 @@ object FragmentSize {
      *      arg max ∑(∑xi + ∑yi) Lc ∑xi*yi / √(∑xi * (Lc-∑xi) * ∑yi * (Lc-∑yi)) =
      *      arg max ∑ ∑xi*yi * (∑xi + ∑yi) Lc / √(∑xi * (Lc-∑xi) * ∑yi * (Lc-∑yi))
      *      We denote the value under arg max as "Pearson correlation transform".
-    */
+     */
     private fun computePearsonCorrelationTransform(
         fragments: List<Int>,
         data: GenomeStrandMap<TIntList>
@@ -149,10 +149,12 @@ object FragmentSize {
                     positiveIndex = nextIndex(positive, positiveSize, positiveIndex)
                     positiveTags++
                 }
+
                 t1 > t2 -> {
                     negativeIndex = nextIndex(negative, negativeSize, negativeIndex)
                     negativeTags++
                 }
+
                 else -> {
                     matchedTags += 1
                     positiveTags++

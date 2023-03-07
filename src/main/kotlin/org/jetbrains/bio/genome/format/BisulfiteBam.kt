@@ -301,6 +301,7 @@ private class BowtieSamPiler(
                     'T' -> countT++
                     '=',  // fall-through.
                     'C' -> countC++
+
                     'G' -> countG++
                 }
             }

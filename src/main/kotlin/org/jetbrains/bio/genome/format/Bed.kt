@@ -281,6 +281,7 @@ data class BedFormat(
                                 }
                             )
                         }
+
                         else -> {
                             // Ignore
                         }

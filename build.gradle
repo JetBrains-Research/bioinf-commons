@@ -92,6 +92,7 @@ if (rootProject == project) {
         }
     }
 }
+
 private String settingsFolder(final String propertyName, final String folderName) {
     if (!System.hasProperty(propertyName)) {
         return "${rootProject.buildDir}/.tests/$folderName"

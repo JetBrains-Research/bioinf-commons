@@ -86,6 +86,7 @@ object DataFrameMappers {
                             val witness = values.asBooleanArray()
                             column.wrap(BitterSet(witness.size) { witness[it] })
                         }
+
                         is StringColumn -> column.wrap(values.asStringArray())
                         else -> error("unsupported column type: ${column.javaClass.canonicalName}")
                     }
@@ -108,6 +109,7 @@ object DataFrameMappers {
                         is DoubleColumn -> writer.write(column.label, column.data)
                         is BooleanColumn -> writer.write(
                             column.label, with(column.data) { BooleanArray(size()) { get(it) } })
+
                         is StringColumn -> writer.write(column.label, column.data)
                         else -> error("unsupported column type: ${column.javaClass.canonicalName}")
                     }

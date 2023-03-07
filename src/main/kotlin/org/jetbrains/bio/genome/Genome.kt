@@ -99,6 +99,7 @@ class Genome private constructor(
             gtfPath.name.endsWith(".gtf.gz") -> {
                 gtfPath.name.subSequence(0, gtfPath.name.length - ".gtf.gz".length)
             }
+
             gtfPath.extension == "gtf" -> gtfPath.stem
             else -> error("Unsupported GTF path: $gtfPath")
         }
@@ -245,7 +246,7 @@ class Genome private constructor(
     companion object {
         const val TEST_ORGANISM_BUILD = "to1"
 
-                internal val LOG = LoggerFactory.getLogger(Genome::class.java)
+        internal val LOG = LoggerFactory.getLogger(Genome::class.java)
 
         /** Use cache to avoid extra chrom.sizes loading. */
         private val CACHE = Maps.newConcurrentMap<String, Genome>()
@@ -278,6 +279,7 @@ class Genome private constructor(
                         "<n/a>", "<n/a>", "<n/a>", "<n/a>", "<n/a>",
                         null, "<n/a>", null
                     )
+
                     else -> {
                         if (!AnnotationsConfigLoader.initialized) {
                             // Init with default settings only if not initialized by user before us

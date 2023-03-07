@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.LongAdder
  * Note that reporting and finishing tasks that haven't been added isn't an error.
  */
 object MultitaskProgress {
-        internal val LOG = LoggerFactory.getLogger(MultitaskProgress::class.java)
+    internal val LOG = LoggerFactory.getLogger(MultitaskProgress::class.java)
 
     // Hack to show progress in UI
     var progressBar: ProgressBar? = null

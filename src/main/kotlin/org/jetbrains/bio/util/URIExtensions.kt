@@ -40,6 +40,7 @@ fun URI.shortName() = when {
     !path.isNullOrEmpty() && query == null -> {
         URLDecoder.decode(path.substringAfterLast('/'), "UTF-8")
     }
+
     else -> URLDecoder.decode(toString(), "UTF-8")
 }
 
@@ -87,6 +88,7 @@ fun URI.checkAccessible() {
                         val redirectUrl = conn.getHeaderField("Location")
                         false to (" (http response $status, use $redirectUrl instead)")
                     }
+
                     HttpURLConnection.HTTP_OK -> true to ""
                     else -> false to " (http response $status)"
                 }

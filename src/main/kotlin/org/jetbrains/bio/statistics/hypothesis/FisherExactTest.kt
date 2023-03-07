@@ -53,6 +53,7 @@ class FisherExactTest(
 
                 acc
             }
+
             Alternative.TWO_SIDED -> {
                 val baseline = hypergeometricProbability(N, K, n, k)
                 var acc = 0.0
@@ -67,6 +68,7 @@ class FisherExactTest(
 
                 acc
             }
+
             else -> error(alternative.toString())
         }
     }

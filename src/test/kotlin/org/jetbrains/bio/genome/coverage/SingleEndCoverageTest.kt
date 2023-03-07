@@ -9,7 +9,6 @@ import org.jetbrains.bio.genome.format.BedFormat
 import org.jetbrains.bio.genome.format.processReads
 import org.jetbrains.bio.genome.format.toBedEntry
 import org.jetbrains.bio.util.withTempFile
-import org.junit.Assert.assertArrayEquals
 import org.junit.Test
 import kotlin.test.*
 

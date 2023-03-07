@@ -50,8 +50,10 @@ class StofferLiptakTestTest {
             1.6964616000869626E-7, stofferLiptakTest.combine(doubleArrayOf(1e-10, 1e-8, 1e-10, 1e-4)), 1e-12
         )
         // Case when combining is much worse
-        Assert.assertEquals(0.010885145722788425,
-            stofferLiptakTest.combine(doubleArrayOf(9.61429557064954E-8, 5.878646086208946E-4)), 1e-6)
+        Assert.assertEquals(
+            0.010885145722788425,
+            stofferLiptakTest.combine(doubleArrayOf(9.61429557064954E-8, 5.878646086208946E-4)), 1e-6
+        )
     }
 
     @Test

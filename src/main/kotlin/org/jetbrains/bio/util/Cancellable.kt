@@ -169,6 +169,6 @@ class CancellableTask<T>(private val callable: Callable<T>) {
 
         private val TASK_COUNTER = AtomicInteger(0)
 
-                fun resetCounter() = TASK_COUNTER.set(0)
+        fun resetCounter() = TASK_COUNTER.set(0)
     }
 }

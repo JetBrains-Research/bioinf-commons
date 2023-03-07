@@ -93,7 +93,7 @@ class StofferLiptakTest(pValues: DoubleArray, maxCorrelationDistance: Int = MAX_
                 // Safeguard against NaN from Pearson correlation for zero or small vectors,
                 // See example at: https://github.com/JetBrains-Research/span/issues/34
                 if (correlation.isNaN() || !correlation.isFinite()) {
-                   correlation = 0.0
+                    correlation = 0.0
                 }
                 // Stop computing correlation after small one
                 if (Precision.equals(correlation, 0.0, 1e-6)) {

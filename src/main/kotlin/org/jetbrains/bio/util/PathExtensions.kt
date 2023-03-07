@@ -90,6 +90,7 @@ val Path.stemGz: String
         return when {
             Regex(".*\\.[a-z0-9_]+\\.gz", RegexOption.IGNORE_CASE).matches(name) ->
                 name.substringBeforeLast('.').substringBeforeLast('.')
+
             else -> stem
         }
     }
@@ -433,6 +434,7 @@ fun InputStream.streamFor(path: String) = path.let {
         lcPath.endsWith(".zip") ->
             // This only works for single-entry ZIP files.
             ZipInputStream(parentStream).apply { nextEntry }
+
         else -> parentStream
     }
 }
@@ -450,6 +452,7 @@ fun Path.outputStream(vararg options: OpenOption): OutputStream {
             // Without this line ZIP file will be corrupted.
             putNextEntry(ZipEntry("jbr_rulezzz.txt"))
         }
+
         else -> outputStream
     }
 }
