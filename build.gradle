@@ -14,7 +14,7 @@ buildscript {
 apply plugin: "kotlin"
 apply plugin: "org.jetbrains.kotlin.jvm"
 
-sourceCompatibility = 11
+sourceCompatibility = 8
 targetCompatibility = sourceCompatibility
 compileKotlin { kotlinOptions.jvmTarget = sourceCompatibility }
 compileTestKotlin { kotlinOptions.jvmTarget = sourceCompatibility }
@@ -36,8 +36,8 @@ if (rootProject == project) {
         compile("org.jetbrains.kotlinx:kotlinx-support-jdk8:0.1")
 
         // Logging dependencies
-        compile("ch.qos.logback:logback-classic:1.4.3")
-        compile("ch.qos.logback:logback-core:1.4.3")
+        compile("ch.qos.logback:logback-classic:1.3.5")
+        compile("ch.qos.logback:logback-core:1.3.5")
 
         compile("com.google.guava:guava:23.6.1-jre")
         compile("org.apache.commons:commons-csv:1.4")
@@ -67,8 +67,8 @@ if (rootProject == project) {
             compile("org.jetbrains.kotlinx:kotlinx-support-jdk8:0.1")
 
             // Logging dependencies
-            compile("ch.qos.logback:logback-classic:1.4.3")
-            compile("ch.qos.logback:logback-core:1.4.3")
+            compile("ch.qos.logback:logback-classic:1.3.5")
+            compile("ch.qos.logback:logback-core:1.3.5")
 
             compile("com.google.guava:guava:23.6.1-jre")
             compile("org.apache.commons:commons-csv:1.4")
