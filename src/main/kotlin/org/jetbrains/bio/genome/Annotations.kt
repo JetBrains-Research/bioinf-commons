@@ -239,12 +239,15 @@ object Gaps {
         val ucscAnnLegacyFormat = config.ucscAnnLegacyFormat
 
         if (ucscAnnLegacyFormat) {
+            requireNotNull(gapsUrl) {
+                "Gaps URL is required for UCSC legacy format"
+            }
             // Builds with per-chromosome gap annotations.
             val prefix = gapsUrl.substringBeforeLast("/")
             val template = "%s_${gapsUrl.substringAfterLast("/")}"
             UCSC.downloadBatchTo(gapsPath, genome, "$prefix/", template)
         } else {
-            gapsUrl.downloadTo(gapsPath)
+            gapsUrl?.downloadTo(gapsPath)
 
             // Builds with separate centromere annotations:
             if (config.centromeresUrl != null) {

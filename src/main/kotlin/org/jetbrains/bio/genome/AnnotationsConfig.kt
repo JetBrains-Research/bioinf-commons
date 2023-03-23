@@ -45,7 +45,7 @@ data class GenomeAnnotationsConfig(
     val chromsizesUrl: String,
     val repeatsUrl: String?,
     val cytobandsUrl: String?,
-    val gapsUrl: String,
+    val gapsUrl: String?,
     val centromeresUrl: String?,
     val cpgIslandsUrl: String?,
     val mart: Biomart?
@@ -268,7 +268,7 @@ object AnnotationsConfigLoader {
                 deserializedMap[CHROMSIZES_FIELD] as String,
                 deserializedMap[REPEATS_FIELD] as String?,
                 deserializedMap[CYTOBANDS_FIELD] as String?,
-                deserializedMap[GAPS_FIELD] as String,
+                deserializedMap[GAPS_FIELD] as String?,
                 deserializedMap[CENTROMERES_FIELD] as String?,
                 deserializedMap[CGIS_FIELD] as String?,
                 mart
@@ -289,9 +289,11 @@ object AnnotationsConfigLoader {
             ALIASES_FIELD to if (aliases.size == 1) aliases.first() else aliases,
             GTF_FIELD to genomeAnnotationsConfig.gtfUrl,
             SEQUENCE_FIELD to genomeAnnotationsConfig.sequenceUrl,
-            CHROMSIZES_FIELD to genomeAnnotationsConfig.chromsizesUrl,
-            GAPS_FIELD to genomeAnnotationsConfig.gapsUrl
+            CHROMSIZES_FIELD to genomeAnnotationsConfig.chromsizesUrl
         )
+        if (genomeAnnotationsConfig.gapsUrl != null) {
+            result[GAPS_FIELD] = genomeAnnotationsConfig.gapsUrl
+        }
         if (genomeAnnotationsConfig.ucscAlias != null) {
             result[UCSC_ALIAS_FIELD] = genomeAnnotationsConfig.ucscAlias
         }
