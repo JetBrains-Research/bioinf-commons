@@ -49,7 +49,7 @@ class Genome private constructor(
     val cpgIslandsPath: Path?,
     val cytobandsPath: Path?,
     val repeatsPath: Path?,
-    gapsPath: Path?,
+    val gapsPath: Path?,
     private val twoBitPath: Path?,
     private val genesGTFPath: Path?,
     genesDescriptionsPath: Path?,
@@ -62,7 +62,6 @@ class Genome private constructor(
     val chrAltName2CanonicalMapping: Map<String, String>
 ) {
     val chromSizesPath by lazy { ensureNotNull(chromSizesPath, "Chromosomes Sizes") }
-    val gapsPath by lazy { ensureNotNull(gapsPath, "Gaps") }
     fun twoBitPath(downloadIfMissing: Boolean = true) =
         ensureNotNull(twoBitPath, "Genome *.2bit Sequence").also { twoBitPath ->
             if (downloadIfMissing) {
@@ -314,7 +313,7 @@ class Genome private constructor(
                     cpgIslandsPath = annCfgUpdated.cpgIslandsUrl?.let { dataPath / CpGIslands.ISLANDS_FILE_NAME },
                     cytobandsPath = annCfgUpdated.cytobandsUrl?.let { dataPath / CytoBands.FILE_NAME },
                     repeatsPath = dataPath / Repeats.FILE_NAME,
-                    gapsPath = dataPath / Gaps.FILE_NAME,
+                    gapsPath = annCfgUpdated.gapsUrl?.let { dataPath / Gaps.FILE_NAME },
                     twoBitPath = dataPath / "$parentBuild.2bit",
                     genesGTFPath = genesGTFPath,
                     genesDescriptionsPath = genesDescriptionsPath,

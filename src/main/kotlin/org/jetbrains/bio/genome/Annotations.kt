@@ -204,7 +204,7 @@ object Gaps {
     internal fun all(genome: Genome): ListMultimap<Chromosome, Gap> {
         return CACHE.get(genome) {
             val gapsPath = genome.gapsPath
-            gapsPath.checkOrRecalculate("Gaps") { output ->
+            gapsPath?.checkOrRecalculate("Gaps") { output ->
                 val config = genome.annotationsConfig
                 requireNotNull(config) {
                     "Cannot save Gaps info to $gapsPath. Annotations information isn't available for ${genome.build}."
@@ -217,8 +217,12 @@ object Gaps {
         }
     }
 
-    private fun read(genome: Genome, gapsPath: Path): ListMultimap<Chromosome, Gap> {
+    private fun read(genome: Genome, gapsPath: Path?): ListMultimap<Chromosome, Gap> {
         val builder = ImmutableListMultimap.builder<Chromosome, Gap>()
+        if (gapsPath == null) {
+            return builder.build()
+        }
+
         val chromosomes = genome.chromosomeNamesMap
         FORMAT.parse(gapsPath.bufferedReader()).use { csvParser ->
             for (row in csvParser) {
