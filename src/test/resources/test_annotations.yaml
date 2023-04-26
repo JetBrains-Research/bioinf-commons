@@ -62,6 +62,18 @@ genomes:
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.2bit
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
 
+  hs1:
+    species: Homo sapiens
+    ucsc_alias: hs1
+    aliases: T2T CHM13v2.0
+    description: 'T2T CHM13v2.0 Telomere-to-Telomere assembly of the CHM13 cell line, with chrY from NA24385'
+    gtf: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/genes/catLiftOffGenesV1.gtf.gz
+    chr_alt_name_to_canonical:
+      - MT: chrM
+    cytobands: http://t2t.gi.ucsc.edu/chm13/hub/t2t-chm13-v2.0/download/chm13v2.0_cytobands_allchrs.bed.gz
+    sequence: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.2bit
+    chromsizes: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.chrom.sizes.txt
+
   # D. melanogaster
   # http://www.ensembl.org/Drosophila_melanogaster/
   dm3:

@@ -28,7 +28,7 @@ class AnnotationsConfigLoaderTest {
             val (version, mapping, yaml) = AnnotationsConfigLoader.parseYaml(path, 0)
             assertEquals(1, version)
             assertNull(mapping)
-            assertEquals(5, yaml.genomes.size)
+            assertEquals(6, yaml.genomes.size)
         }
     }
 
@@ -37,8 +37,8 @@ class AnnotationsConfigLoaderTest {
         withResource(AnnotationsConfigLoader::class.java, "test_annotations.yaml") { path ->
             val (version, mapping, _) = AnnotationsConfigLoader.parseYaml(path, 1)
             assertEquals(1, version)
-            assertEquals(5, mapping!!.entries.size)
-            assertEquals(listOf("ce6", "dm3", "hg19", "hg38", "mm9"), mapping.keys.sorted())
+            assertEquals(6, mapping!!.entries.size)
+            assertEquals(listOf("ce6", "dm3", "hg19", "hg38", "hs1", "mm9"), mapping.keys.sorted())
             assertEquals("Drosophila melanogaster", mapping["dm3"]!!.species)
             assertEquals(listOf("mm9", "NCBIM37"), mapping["mm9"]!!.names)
             assertEquals("mm9", mapping["mm9"]!!.ucscAlias)
@@ -81,6 +81,13 @@ class AnnotationsConfigLoaderTest {
             assertEquals(
                 "http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/centromeres.txt.gz",
                 mapping["hg38"]!!.centromeresUrl
+            )
+            assertEquals(
+                "http://t2t.gi.ucsc.edu/chm13/hub/t2t-chm13-v2.0/download/chm13v2.0_cytobands_allchrs.bed.gz",
+                mapping["hs1"]!!.cytobandsUrl
+            )
+            assertNull(
+                mapping["hs1"]!!.gapsUrl
             )
             assertNull(mapping["hg19"]!!.centromeresUrl)
             assertEquals(
