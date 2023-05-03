@@ -204,7 +204,7 @@ object Gaps {
     internal fun all(genome: Genome): ListMultimap<Chromosome, Gap> {
         return CACHE.get(genome) {
             val gapsPath = genome.gapsPath
-            gapsPath.checkOrRecalculate("Gaps") { output ->
+            gapsPath?.checkOrRecalculate("Gaps") { output ->
                 val config = genome.annotationsConfig
                 requireNotNull(config) {
                     "Cannot save Gaps info to $gapsPath. Annotations information isn't available for ${genome.build}."
@@ -217,8 +217,12 @@ object Gaps {
         }
     }
 
-    private fun read(genome: Genome, gapsPath: Path): ListMultimap<Chromosome, Gap> {
+    private fun read(genome: Genome, gapsPath: Path?): ListMultimap<Chromosome, Gap> {
         val builder = ImmutableListMultimap.builder<Chromosome, Gap>()
+        if (gapsPath == null) {
+            return builder.build()
+        }
+
         val chromosomes = genome.chromosomeNamesMap
         FORMAT.parse(gapsPath.bufferedReader()).use { csvParser ->
             for (row in csvParser) {
@@ -239,12 +243,15 @@ object Gaps {
         val ucscAnnLegacyFormat = config.ucscAnnLegacyFormat
 
         if (ucscAnnLegacyFormat) {
+            requireNotNull(gapsUrl) {
+                "Gaps URL is required for UCSC legacy format"
+            }
             // Builds with per-chromosome gap annotations.
             val prefix = gapsUrl.substringBeforeLast("/")
             val template = "%s_${gapsUrl.substringAfterLast("/")}"
             UCSC.downloadBatchTo(gapsPath, genome, "$prefix/", template)
         } else {
-            gapsUrl.downloadTo(gapsPath)
+            gapsUrl?.downloadTo(gapsPath)
 
             // Builds with separate centromere annotations:
             if (config.centromeresUrl != null) {

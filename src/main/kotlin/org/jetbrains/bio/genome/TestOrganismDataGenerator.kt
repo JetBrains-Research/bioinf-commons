@@ -59,7 +59,7 @@ object TestOrganismDataGenerator {
         val genome = Genome[Genome.TEST_ORGANISM_BUILD]
         val twoBitPath = genome.twoBitPath(downloadIfMissing = false)
         val genesGtfPath = genome.genesGtfPath(downloadIfMissing = false)
-        val gapsPath = genome.gapsPath
+        val gapsPath = genome.gapsPath!!
         val cytobandsPath = genome.cytobandsPath!!
         val repeatsPath = genome.repeatsPath!!
         val cpgIslandsPath = genome.cpgIslandsPath!!
