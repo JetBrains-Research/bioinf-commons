@@ -62,7 +62,7 @@ class ReadsQuery(
     fun isAccessible(): Boolean = npzPath().isAccessible() || path.isAccessible()
 
     fun coverage(): Coverage {
-        check(isAccessible()) { "Unable to load coverage, original reads and cache not available" }
+        check(isAccessible()) { "Unable to load coverage: original reads $path and cache ${npzPath()} not available" }
         val npz = npzPath()
         npz.checkOrRecalculate("Coverage for ${path.name}") { (npzPath) ->
             val paired = isPaired(path)
