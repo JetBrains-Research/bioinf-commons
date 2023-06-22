@@ -1,5 +1,6 @@
 package org.jetbrains.bio.dataframe
 
+import org.jetbrains.bio.genome.Range
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -113,54 +114,26 @@ class BitterSetTest {
 }
 
 @RunWith(Parameterized::class)
-class AggregateTest(private val expected: List<BitRange>, private val bits: IntArray, private val gap: Int) {
+class AggregateTest(private val expected: List<Range>, private val bits: IntArray) {
     @Test
     fun aggregate() {
         val actual = bits.toBitterSet()
-        assertEquals(expected, actual.aggregate(gap))
+        assertEquals(expected, actual.aggregate())
     }
 
     companion object {
         @JvmStatic
         @Parameters
         fun `data`(): Collection<Array<out Any>> = listOf(
-            arrayOf(emptyList<BitRange>(), intArrayOf(), 0),
-            arrayOf(listOf(BitRange(1, 4)), intArrayOf(1, 2, 3), 0),
-            arrayOf(listOf(BitRange(1, 4), BitRange(5, 7)), intArrayOf(1, 2, 3, 5, 6), 0),
+            arrayOf(emptyList<Range>(), intArrayOf()),
+            arrayOf(listOf(Range(1, 4)), intArrayOf(1, 2, 3)),
+            arrayOf(listOf(Range(1, 4), Range(5, 7)), intArrayOf(1, 2, 3, 5, 6)),
             arrayOf(
-                listOf(BitRange(1, 4), BitRange(5, 7), BitRange(10, 11), BitRange(15, 16)),
-                intArrayOf(1, 2, 3, 5, 6, 10, 15), 0
+                listOf(Range(1, 4), Range(5, 7), Range(10, 11), Range(15, 16)),
+                intArrayOf(1, 2, 3, 5, 6, 10, 15)
             ),
-            arrayOf(emptyList<BitRange>(), intArrayOf(), 10),
-            arrayOf(listOf(BitRange(1, 18), BitRange(30, 41)), intArrayOf(1, 2, 3, 4, 10, 15, 17, 30, 35, 40), 5),
-            arrayOf(listOf(BitRange(1, 3), BitRange(4, 6)), intArrayOf(1, 2, 4, 5), 0),
-            arrayOf(listOf(BitRange(1, 6)), intArrayOf(1, 2, 4, 5), 1)
-        )
-    }
-}
-
-@RunWith(Parameterized::class)
-class FindConsequentTest(
-    private val expected: List<BitRange>,
-    private val bits: IntArray,
-    private val range: BitRange
-) {
-    @Test
-    fun findConsequent() {
-        val actual = bits.toBitterSet()
-        assertEquals(expected, actual.findConsequentBlocks(range))
-    }
-
-    companion object {
-        @JvmStatic
-        @Parameters
-        fun `data`(): Collection<Array<out Any>> = listOf(
-            arrayOf(listOf(BitRange(1, 4)), intArrayOf(1, 2, 3), BitRange(1, 4)),
-            arrayOf(listOf(BitRange(1, 4)), intArrayOf(1, 2, 3), BitRange(0, 10)),
-            arrayOf(
-                listOf(BitRange(1, 4), BitRange(5, 7), BitRange(10, 11), BitRange(15, 16)),
-                intArrayOf(1, 2, 3, 5, 6, 10, 15), BitRange(1, 16)
-            )
+            arrayOf(emptyList<Range>(), intArrayOf()),
+            arrayOf(listOf(Range(1, 3), Range(4, 6)), intArrayOf(1, 2, 4, 5))
         )
     }
 }

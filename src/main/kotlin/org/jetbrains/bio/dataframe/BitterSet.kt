@@ -1,12 +1,11 @@
 package org.jetbrains.bio.dataframe
 
+import org.jetbrains.bio.genome.Range
 import java.util.*
 import kotlin.math.min
 
 /**
  * A sibling of [BitSet] which is aware of the universe cardinality.
- *
- * A more descriptive name would be `BitList` or `BitVector`.
  *
  * @author Sergei Lebedev
  * @author Oleg Shpynov
@@ -57,54 +56,28 @@ class BitterSet(private val universe: Int) : BitSet() {
     override fun size() = universe
 
     /**
-     * Returns a list of 1-bit runs in this set using gap.
+     * Returns a list of 1-bit consequent blocks.
      *
-     * For example the following bit set has 2 runs with gap = 0, and 1 run with gap = 1
+     * For example the following bit set has 2 blocks
      *
      *     110111100
      *
      * The first run is [0, 2) and the second [3, 8).
      */
-    fun aggregate(gap: Int = 0): List<BitRange> {
-        val ranges = arrayListOf<BitRange>()
+    fun aggregate(): List<Range> {
+        val ranges = arrayListOf<Range>()
         var offset = 0
         while (offset < size()) {
             val left = nextSetBit(offset)
             if (left == -1) {
                 break
             }
-            var right = min(nextClearBit(left + 1), size())
-            while (gap > 0 && right < size()) {
-                val nextSet = nextSetBit(right + 1)
-                if (nextSet != -1 && nextSet - right <= gap) {
-                    right = min(nextClearBit(nextSet + 1), size())
-                } else {
-                    break
-                }
-            }
-            ranges.add(BitRange(left, right))
+            val right = min(nextClearBit(left + 1), size())
+            ranges.add(Range(left, right))
             offset = right
         }
 
         return ranges
-    }
-
-    /**
-     * Returns a list of consequent bit blocks from aggregated range.
-     * See [aggregated] for details about aggregation bins with gap.
-     */
-    fun findConsequentBlocks(aggregated: BitRange): List<BitRange> {
-        var index = aggregated.fromIndex
-        if (!get(index)) {
-            index = nextSetBit(index)
-        }
-        val result = arrayListOf<BitRange>()
-        while (index != -1 && index < aggregated.toIndex) {
-            val next = nextClearBit(index + 1)
-            result.add(BitRange(index, min(next, aggregated.toIndex)))
-            index = nextSetBit(next)
-        }
-        return result
     }
 
     override fun equals(other: Any?) = when {
@@ -141,10 +114,3 @@ fun BooleanArray.toBitterSet() = let { arr ->
 
 fun IntArray.toBitterSet() =
     BitterSet((maxOrNull() ?: 0) + 1) { it in this }
-
-data class BitRange(
-    /** 0-based start index (inclusive). */
-    val fromIndex: Int,
-    /** 0-based end index (exclusive). */
-    val toIndex: Int
-)
