@@ -9,10 +9,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class BitterSetTest {
+class BitListTest {
     @Test
     fun copy() {
-        val b = BitterSet(10)
+        val b = BitList(10)
         val copy = b.copy()
         assertEquals(b, copy)
         assertEquals(b.hashCode(), copy.hashCode())
@@ -22,7 +22,7 @@ class BitterSetTest {
 
     @Test
     fun constructor() {
-        val b = BitterSet(10) { it < 4 }
+        val b = BitList(10) { it < 4 }
         for (i in 0 until 4) {
             assertTrue(b[i])
         }
@@ -30,32 +30,32 @@ class BitterSetTest {
 
     @Test
     fun empty() {
-        assertEquals(0, BitterSet(0).size())
+        assertEquals(0, BitList(0).size())
     }
 
     @Test
     fun equalsEmpty() {
-        assertEquals(BitterSet(0), BitterSet(0))
+        assertEquals(BitList(0), BitList(0))
     }
 
     @Test
     fun hashCodeConsistency() {
-        val b1 = BitterSet(6) { it in setOf(2, 4, 5) }
-        val b2 = BitterSet(6) { it in setOf(2, 4, 5) }
+        val b1 = BitList(6) { it in setOf(2, 4, 5) }
+        val b2 = BitList(6) { it in setOf(2, 4, 5) }
         assertEquals(b1, b2)
         assertEquals(b1.hashCode(), b2.hashCode())
     }
 
     @Test
     fun plusEmpty() {
-        val bs = BitterSet(10)
-        assertEquals(bs, bs + BitterSet(0))
+        val bs = BitList(10)
+        assertEquals(bs, bs + BitList(0))
     }
 
     @Test
     fun plusNonEmpty() {
-        val bs1 = BitterSet(10) { it in intArrayOf(1, 2) }
-        val bs2 = BitterSet(5) { it == 1 }
+        val bs1 = BitList(10) { it in intArrayOf(1, 2) }
+        val bs2 = BitList(5) { it == 1 }
 
         val bs = bs1 + bs2
         assertEquals(2, bs1.cardinality())
@@ -71,7 +71,7 @@ class BitterSetTest {
 
     @Test
     fun iteratorEmpty() {
-        val bs = BitterSet(10)
+        val bs = BitList(10)
         var count = 0
         bs.iterator().forEach { count++ }
         assertEquals(0, count)
@@ -79,7 +79,7 @@ class BitterSetTest {
 
     @Test
     fun iteratorNotEmpty() {
-        val bs = BitterSet(6) { it in setOf(2, 4, 5) }
+        val bs = BitList(6) { it in setOf(2, 4, 5) }
         val setBits = mutableListOf<Int>()
         bs.iterator().forEach { setBits.add(it) }
         assertEquals(3, setBits.size)
@@ -89,22 +89,22 @@ class BitterSetTest {
     @Test
     fun toBitterSet() {
         assertEquals(
-            booleanArrayOf(false, false, true, false, true, true).toBitterSet(),
-            BitterSet(6) { it in setOf(2, 4, 5) }
+            booleanArrayOf(false, false, true, false, true, true).toBitList(),
+            BitList(6) { it in setOf(2, 4, 5) }
         )
         assertEquals(
-            booleanArrayOf(false, false, false, false).toBitterSet(),
-            BitterSet(4)
+            booleanArrayOf(false, false, false, false).toBitList(),
+            BitList(4)
         )
         assertEquals(
-            booleanArrayOf(true, true, true, true, true).toBitterSet(),
-            BitterSet(5) { true }
+            booleanArrayOf(true, true, true, true, true).toBitList(),
+            BitList(5) { true }
         )
     }
 
     @Test
     fun getOutOfUniverse() {
-        val bs = BitterSet(6) { it in setOf(2, 4, 5) }
+        val bs = BitList(6) { it in setOf(2, 4, 5) }
         require(bs.get(5))
 
         assertFalse(bs.get(6))
@@ -117,7 +117,7 @@ class BitterSetTest {
 class AggregateTest(private val expected: List<Range>, private val bits: IntArray) {
     @Test
     fun aggregate() {
-        val actual = bits.toBitterSet()
+        val actual = bits.toBitList()
         assertEquals(expected, actual.aggregate())
     }
 

@@ -1,6 +1,6 @@
 package org.jetbrains.bio.genome.methylome
 
-import org.jetbrains.bio.dataframe.toBitterSet
+import org.jetbrains.bio.dataframe.toBitList
 import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Strand
@@ -35,7 +35,7 @@ class MethylomeToDataFrameTest {
         )
         assertArrayEquals(intArrayOf(Int.MAX_VALUE, 100), df.sliceAsInt("d"))
         assertEquals(
-            booleanArrayOf(true, false).toBitterSet(),
+            booleanArrayOf(true, false).toBitList(),
             df.sliceAsBool("strand")
         )
     }
@@ -70,7 +70,7 @@ class MethylomeToDataFrameTest {
         assertEquals(1, df.rowsNumber)
 
         assertEquals(
-            booleanArrayOf(true).toBitterSet(),
+            booleanArrayOf(true).toBitList(),
             df.sliceAsBool("strand")
         )
         assertArrayEquals(

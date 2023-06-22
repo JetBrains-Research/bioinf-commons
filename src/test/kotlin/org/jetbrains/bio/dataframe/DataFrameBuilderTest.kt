@@ -25,16 +25,16 @@ class DataFrameBuilderTest {
         builder.add(2000, 2.toByte(), 2.0, "b", false, TestEnum.VAL2)
         builder.add(3000, 3.toByte(), 3.0, "c", true, TestEnum.VAL1)
 
-        val bitSet = BitterSet(3)
-        bitSet.set(0)
-        bitSet.set(2)
+        val bitList = BitList(3)
+        bitList.set(0)
+        bitList.set(2)
 
         val expectedDf = DataFrame()
             .with("i", intArrayOf(1000, 2000, 3000))
             .with("b", byteArrayOf(1, 2, 3))
             .with("d", doubleArrayOf(1.0, 2.0, 3.0))
             .with("s", arrayOf("a", "b", "c"))
-            .with("f", bitSet)
+            .with("f", bitList)
             .with(
                 "e", TestEnum::class.java,
                 arrayOf(TestEnum.VAL1, TestEnum.VAL2, TestEnum.VAL1)

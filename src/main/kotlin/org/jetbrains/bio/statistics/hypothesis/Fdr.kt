@@ -1,6 +1,6 @@
 package org.jetbrains.bio.statistics.hypothesis
 
-import org.jetbrains.bio.dataframe.BitterSet
+import org.jetbrains.bio.dataframe.BitList
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.argSort
 import org.jetbrains.bio.viktor.logAddExp
@@ -14,7 +14,7 @@ import kotlin.math.min
  * @since 06/06/14
  */
 class Fdr(private val alpha: Double) : Predictor {
-    override fun predict(logNullMemberships: F64Array): BitterSet {
+    override fun predict(logNullMemberships: F64Array): BitList {
         return control(logNullMemberships, alpha)
     }
 
@@ -27,7 +27,7 @@ class Fdr(private val alpha: Double) : Predictor {
         fun <State> control(
             logMemberships: Map<State, F64Array>,
             nullStates: Set<State>, alpha: Double
-        ): BitterSet {
+        ): BitList {
             return control(NullHypothesis.of(nullStates).apply(logMemberships), alpha)
         }
 
@@ -45,9 +45,9 @@ class Fdr(private val alpha: Double) : Predictor {
          *             False Discovery Rate Control", ASA, 2007.
          * Sun & Cai, "Large scale multiple testing under dependence", JRSS, 2008.
          */
-        fun control(logNullMemberships: F64Array, alpha: Double): BitterSet {
+        fun control(logNullMemberships: F64Array, alpha: Double): BitList {
             val indices = logNullMemberships.argSort()
-            val res = BitterSet(logNullMemberships.size)
+            val res = BitList(logNullMemberships.size)
             var logSum = Double.NEGATIVE_INFINITY
             var logFdr: Double
             var count = 0

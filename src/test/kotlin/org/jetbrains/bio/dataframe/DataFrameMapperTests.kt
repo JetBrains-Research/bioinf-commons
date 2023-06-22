@@ -13,14 +13,14 @@ private val testDataFrameSpec = DataFrameSpec()
 
 private val testDataFrame: DataFrame
     get() {
-        val bitSet = BitterSet(5)
-        bitSet.set(2)
-        bitSet.set(3)
+        val bitList = BitList(5)
+        bitList.set(2)
+        bitList.set(3)
         return DataFrame().with("i", intArrayOf(5, 1, 3, 4, 2))
             .with("s", shortArrayOf(5, 1, 3, 4, 2))
             .with("b", byteArrayOf(5, 1, 3, 4, 2))
             .with("l", longArrayOf(5, 1, 3, 4, 2))
-            .with("f", bitSet)
+            .with("f", bitList)
             .with("str", arrayOf("str5", "str1", "str3", "str4", "str2"))
             .with(
                 "e", TestEnum::class.java, arrayOf(

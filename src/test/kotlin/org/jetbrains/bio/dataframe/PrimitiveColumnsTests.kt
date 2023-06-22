@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 class BooleanColumnTest {
     @Test
     fun testResizeSmaller() {
-        val c = BooleanColumn("mask", BitterSet(10))
+        val c = BooleanColumn("mask", BitList(10))
         c.data.set(0, 10)
 
         val resized = c.resize(5)
@@ -24,7 +24,7 @@ class BooleanColumnTest {
 
     @Test
     fun testResizeLarger() {
-        val c = BooleanColumn("mask", BitterSet(10))
+        val c = BooleanColumn("mask", BitList(10))
         c.data.set(0, 10)
 
         val resized = c.resize(20)

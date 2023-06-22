@@ -84,7 +84,7 @@ object DataFrameMappers {
                         is DoubleColumn -> column.wrap(values.asDoubleArray())
                         is BooleanColumn -> {
                             val witness = values.asBooleanArray()
-                            column.wrap(BitterSet(witness.size) { witness[it] })
+                            column.wrap(BitList(witness.size) { witness[it] })
                         }
 
                         is StringColumn -> column.wrap(values.asStringArray())

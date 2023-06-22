@@ -653,9 +653,9 @@ class FloatColumn(
 
 class BooleanColumn(
     label: String,
-    data: BitterSet,
+    data: BitList,
     val valueFormatter: ((Boolean) -> String)? = null
-) : Column<BitterSet>(label, data, java.lang.Boolean::class.java) {
+) : Column<BitList>(label, data, java.lang.Boolean::class.java) {
 
     override fun load(row: Int, value: String) {
         data[row] = value == "1" || value.equals("true", ignoreCase = true)
@@ -663,35 +663,35 @@ class BooleanColumn(
 
     override fun getAsDouble(row: Int) = if (data[row]) 1.0 else 0.0
 
-    override fun wrap(newData: BitterSet) = BooleanColumn(label, newData, valueFormatter)
+    override fun wrap(newData: BitList) = BooleanColumn(label, newData, valueFormatter)
 
     override fun rename(newLabel: String) = BooleanColumn(newLabel, data, valueFormatter)
 
-    override fun reorder(indices: IntArray): Column<BitterSet> {
+    override fun reorder(indices: IntArray): Column<BitList> {
         require(size == indices.size)
-        return wrap(BitterSet(size) { data[indices[it]] })
+        return wrap(BitList(size) { data[indices[it]] })
     }
 
-    override fun resize(newSize: Int): Column<BitterSet> {
+    override fun resize(newSize: Int): Column<BitList> {
         val copy = data.copy()
         if (copy.size() > newSize) {
             copy.clear(newSize, copy.size())
         }
 
-        return wrap(BitterSet.wrap(newSize, copy))
+        return wrap(BitList.wrap(newSize, copy))
     }
 
     override fun plus(other: Column<*>) = wrap(data + (other as BooleanColumn).data)
 
     @Deprecated("")
-    override fun merge(other: Column<*>): Column<BitterSet> {
+    override fun merge(other: Column<*>): Column<BitList> {
         throw UnsupportedOperationException()
     }
 
-    override fun filter(mask: BitSet): Column<BitterSet> {
+    override fun filter(mask: BitSet): Column<BitList> {
         val numRows = mask.cardinality()
 
-        val filtered = BitterSet(numRows)
+        val filtered = BitList(numRows)
         var offset = 0
         for (i in 0 until size) {
             if (mask.get(i)) {
@@ -723,7 +723,7 @@ class BooleanColumn(
     }
 
     @Deprecated("")
-    override fun intersect(c: Column<*>): ObjIntPredicate<BitterSet> {
+    override fun intersect(c: Column<*>): ObjIntPredicate<BitList> {
         throw UnsupportedOperationException()
     }
 

@@ -10,7 +10,7 @@ import kotlin.math.min
  * @author Sergei Lebedev
  * @author Oleg Shpynov
  */
-class BitterSet(private val universe: Int) : BitSet() {
+class BitList(private val universe: Int) : BitSet() {
     fun copy() = wrap(universe, this)
 
     /**
@@ -31,7 +31,7 @@ class BitterSet(private val universe: Int) : BitSet() {
         }
     }
 
-    operator fun plus(other: BitterSet): BitterSet {
+    operator fun plus(other: BitList): BitList {
         val acc = copy()
         for (i in other) {
             acc.set(universe + i)
@@ -40,7 +40,7 @@ class BitterSet(private val universe: Int) : BitSet() {
     }
 
     /**
-     * Unlike its relative [BitterSet] returns the universe cardinality.
+     * Unlike its relative [BitList] returns the universe cardinality.
      *
      *     val bs = BitSet()
      *     bs.set(1)
@@ -82,7 +82,7 @@ class BitterSet(private val universe: Int) : BitSet() {
 
     override fun equals(other: Any?) = when {
         this === other -> true
-        other !is BitterSet -> false
+        other !is BitList -> false
         else -> universe == other.universe && super.equals(other)
     }
 
@@ -91,15 +91,15 @@ class BitterSet(private val universe: Int) : BitSet() {
     override fun toString() = "$universe@${super.toString()}"
 
     companion object {
-        internal fun wrap(universe: Int, wrapped: BitSet): BitterSet {
+        internal fun wrap(universe: Int, wrapped: BitSet): BitList {
             require(wrapped.cardinality() <= universe)
-            return BitterSet(universe).apply {
+            return BitList(universe).apply {
                 or(wrapped)
             }
         }
 
-        inline operator fun invoke(universe: Int, block: (Int) -> Boolean): BitterSet {
-            return BitterSet(universe).apply {
+        inline operator fun invoke(universe: Int, block: (Int) -> Boolean): BitList {
+            return BitList(universe).apply {
                 0.until(universe)
                     .filter { block(it) }
                     .forEach(::set)
@@ -108,9 +108,9 @@ class BitterSet(private val universe: Int) : BitSet() {
     }
 }
 
-fun BooleanArray.toBitterSet() = let { arr ->
-    BitterSet(arr.size) { i -> arr[i] }
+fun BooleanArray.toBitList() = let { arr ->
+    BitList(arr.size) { i -> arr[i] }
 }
 
-fun IntArray.toBitterSet() =
-    BitterSet((maxOrNull() ?: 0) + 1) { it in this }
+fun IntArray.toBitList() =
+    BitList((maxOrNull() ?: 0) + 1) { it in this }

@@ -3,7 +3,7 @@ package org.jetbrains.bio.genome.methylome
 import com.google.common.base.MoreObjects
 import com.google.common.primitives.Shorts
 import gnu.trove.map.hash.TObjectIntHashMap
-import org.jetbrains.bio.dataframe.BitterSet
+import org.jetbrains.bio.dataframe.BitList
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Strand
@@ -176,7 +176,7 @@ class MethylomeBuilder(
     private val plusData = frameMap(genomeQuery)
     private val minusData = frameMap(genomeQuery)
     private val uniqueOffsets = genomeMap(genomeQuery) {
-        BitterSet(it.length)
+        BitList(it.length)
     }
 
     private val duplicatedOffsets = AtomicLong()

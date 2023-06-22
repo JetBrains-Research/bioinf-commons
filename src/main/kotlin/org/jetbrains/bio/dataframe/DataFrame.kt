@@ -40,13 +40,13 @@ class DataFrame @JvmOverloads constructor(
         return DataFrame(rowsNumber, columns.map { it.reorder(indices) })
     }
 
-    fun test(pf: RowPredicateFactory, startRow: Int = 0, endRow: Int = rowsNumber): BitterSet {
+    fun test(pf: RowPredicateFactory, startRow: Int = 0, endRow: Int = rowsNumber): BitList {
         if (rowsNumber == 0) {
-            return BitterSet(0)
+            return BitList(0)
         }
         checkPositionIndexes(startRow, endRow, rowsNumber)
         val rowPredicate = pf(this)
-        return BitterSet(endRow - startRow) { rowPredicate.test(startRow + it) }
+        return BitList(endRow - startRow) { rowPredicate.test(startRow + it) }
     }
 
     fun filter(pf: RowPredicateFactory, startRow: Int = 0, endRow: Int = rowsNumber): DataFrame {
@@ -55,7 +55,7 @@ class DataFrame @JvmOverloads constructor(
         val fullMask = if (startRow == 0 && endRow == rowsNumber) {
             mask
         } else {
-            val newMask = BitterSet(rowsNumber)
+            val newMask = BitList(rowsNumber)
 
             var ptr = mask.nextSetBit(0)
             while (ptr >= 0) {
@@ -140,7 +140,7 @@ class DataFrame @JvmOverloads constructor(
     ) = with(data.size, StringColumn(label, data, valueFormatter))
 
     fun with(
-        label: String, data: BitterSet,
+        label: String, data: BitList,
         valueFormatter: ((Boolean) -> String)? = null
     ) = with(data.size(), BooleanColumn(label, data, valueFormatter))
 
@@ -178,7 +178,7 @@ class DataFrame @JvmOverloads constructor(
     @Suppress("unchecked_cast")
     fun <T> sliceAsObj(label: String): Array<T> = columns[getLabelIndex(label)].data as Array<T>
 
-    fun sliceAsBool(label: String) = columns[getLabelIndex(label)].data as BitterSet
+    fun sliceAsBool(label: String) = columns[getLabelIndex(label)].data as BitList
 
     // XXX remove me if you can.
     fun rowAsDouble(r: Int): DoubleArray {
@@ -235,7 +235,7 @@ class DataFrame @JvmOverloads constructor(
 
     inner class Slicer {
         operator fun get(rowsRange: IntProgression) = this@DataFrame.apply {
-            val mask = BitterSet(rowsNumber)
+            val mask = BitList(rowsNumber)
             if (rowsRange is IntRange) {
                 val startRow = rowsRange.first
                 val endRow = rowsRange.last + 1

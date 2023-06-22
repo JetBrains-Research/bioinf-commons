@@ -245,16 +245,16 @@ class DataFrameTest {
 
     @Test
     fun testReorder() {
-        val bitSet = BitterSet(5)
-        bitSet.set(2)
-        bitSet.set(3)
+        val bitList = BitList(5)
+        bitList.set(2)
+        bitList.set(3)
         val df = DataFrame()
             .with("i", intArrayOf(5, 1, 3, 4, 2))
             .with("d", doubleArrayOf(5.0, 1.0, 3.0, 4.0, 2.0))
             .with("s", shortArrayOf(5, 1, 3, 4, 2))
             .with("b", byteArrayOf(5, 1, 3, 4, 2))
             .with("l", longArrayOf(5, 1, 3, 4, 2))
-            .with("F34", bitSet)
+            .with("F34", bitList)
             .with(
                 "e", TestEnum::class.java,
                 arrayOf(
@@ -327,12 +327,12 @@ class DataFrameTest {
 
     @Test
     fun testReorderByFlag() {
-        val bitSet = BitterSet(5)
-        bitSet.set(2)
-        bitSet.set(3)
+        val bitList = BitList(5)
+        bitList.set(2)
+        bitList.set(3)
         val df = DataFrame()
             .with("i", intArrayOf(5, 1, 3, 4, 2))
-            .with("F34", bitSet)
+            .with("F34", bitList)
 
         assertArrayEquals(
             intArrayOf(5, 1, 2, 3, 4),

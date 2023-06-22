@@ -29,7 +29,7 @@ data class DataFrameSpec(
 
     fun booleans(vararg names: String): DataFrameSpec {
         for (name in names) {
-            columns.add(BooleanColumn(name, BitterSet(0)))
+            columns.add(BooleanColumn(name, BitList(0)))
         }
         return this
     }
