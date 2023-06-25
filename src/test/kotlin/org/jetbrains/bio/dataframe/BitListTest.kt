@@ -1,15 +1,52 @@
 package org.jetbrains.bio.dataframe
 
 import org.jetbrains.bio.genome.Range
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExpectedException
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
+import java.lang.IllegalArgumentException
+import java.lang.IndexOutOfBoundsException
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class BitListTest {
+
+    @get:Rule
+    var expectedEx = ExpectedException.none()
+
+    @Test
+    fun setIOOB() {
+        expectedEx.expect(IndexOutOfBoundsException::class.java)
+        expectedEx.expectMessage("bitIndex >= size: 10 >= 10")
+        BitList(10).set(10)
+    }
+
+    @Test
+    fun setIOOB2() {
+        expectedEx.expect(IndexOutOfBoundsException::class.java)
+        expectedEx.expectMessage("toIndex > size: 0 > 10")
+        BitList(10).set(0, 11, true)
+    }
+
+    @Test
+    fun clearIOOB() {
+        expectedEx.expect(IndexOutOfBoundsException::class.java)
+        expectedEx.expectMessage("bitIndex >= size: 10 >= 10")
+        BitList(10).clear(10)
+    }
+
+    @Test
+    fun clearIOOB2() {
+        expectedEx.expect(IndexOutOfBoundsException::class.java)
+        expectedEx.expectMessage("toIndex > size: 0 > 10")
+        BitList(10).clear(0, 11)
+    }
+
+
     @Test
     fun copy() {
         val b = BitList(10)

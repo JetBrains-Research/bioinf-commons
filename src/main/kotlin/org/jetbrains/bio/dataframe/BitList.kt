@@ -31,12 +31,36 @@ class BitList(private val universe: Int) : BitSet() {
         }
     }
 
+    override fun set(bitIndex: Int) {
+        if (bitIndex >= universe) throw IndexOutOfBoundsException("bitIndex >= size: $bitIndex >= $universe")
+        super.set(bitIndex)
+    }
+
+    override fun set(fromIndex: Int, toIndex: Int) {
+        if (fromIndex >= universe) throw IndexOutOfBoundsException("fromIndex >= size: $fromIndex >= $universe")
+        if (toIndex > universe) throw IndexOutOfBoundsException("toIndex > size: $fromIndex > $universe")
+        super.set(fromIndex, toIndex)
+    }
+
+    override fun clear(bitIndex: Int) {
+        if (bitIndex >= universe) throw IndexOutOfBoundsException("bitIndex >= size: $bitIndex >= $universe")
+        super.clear(bitIndex)
+    }
+
+    override fun clear(fromIndex: Int, toIndex: Int) {
+        if (fromIndex >= universe) throw IndexOutOfBoundsException("fromIndex >= size: $fromIndex >= $universe")
+        if (toIndex > universe) throw IndexOutOfBoundsException("toIndex > size: $fromIndex > $universe")
+        super.clear(fromIndex, toIndex)
+    }
+
     operator fun plus(other: BitList): BitList {
         val acc = copy()
-        for (i in other) {
-            acc.set(universe + i)
+        val prevUniverse = universe
+        return wrap(prevUniverse + other.universe, acc).apply {
+            for (i in other) {
+                set(prevUniverse + i)
+            }
         }
-        return wrap(universe + other.universe, acc)
     }
 
     /**
