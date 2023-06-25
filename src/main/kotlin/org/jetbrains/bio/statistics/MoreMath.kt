@@ -92,6 +92,9 @@ object MoreMath {
      */
     @JvmStatic
     fun binomialCoefficientLog(n: Int, k: Int): Double {
+        require(n >= 0) { "n < 0: $n" }
+        require(k >= 0) { "k < 0: $k" }
+        require(n >= k) { "n < k: $n < $k" }
         return factorialLog(n) - factorialLog(k) - factorialLog(n - k)
     }
 }

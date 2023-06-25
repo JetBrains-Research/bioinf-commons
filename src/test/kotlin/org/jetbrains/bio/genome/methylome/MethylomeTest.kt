@@ -63,7 +63,7 @@ class MethylomeTest {
             val chromosome = chromosomes.get(r.nextInt(chromosomes.size))
             val strand = if (r.nextBoolean()) Strand.PLUS else Strand.MINUS
             builder.add(
-                chromosome, strand, r.nextInt(100500), CytosineContext.CG,
+                chromosome, strand, r.nextInt(10000), CytosineContext.CG,
                 dC.sample(), dT.sample()
             )
         }
