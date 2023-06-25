@@ -378,15 +378,16 @@ fun writeGtf(writer: BufferedWriter, transcripts: Collection<Transcript>) {
             val cdsBounds = transcript.cdsRange
             if (cdsBounds != null && cdsBounds.intersects(exon.toRange())) {
                 val cdsPart = cdsBounds.intersection(exon.toRange())
-                GtfFeature(
-                    cdsPart.on(location.chromosome, location.strand),
-                    "biomarkt",
-                    FeatureType.CDS,
-                    frame = frame,
-                    attributes = baseAttributes + ("exon_number" to number.toString())
-                ).write(csvPrinter)
-
-                frame = (frame + cdsPart.length()) % 3
+                if (cdsPart != null) {
+                    GtfFeature(
+                        cdsPart.on(location.chromosome, location.strand),
+                        "biomarkt",
+                        FeatureType.CDS,
+                        frame = frame,
+                        attributes = baseAttributes + ("exon_number" to number.toString())
+                    ).write(csvPrinter)
+                }
+                frame = (frame + (cdsPart?.length() ?: 0)) % 3
             }
             number++
         }

@@ -6,10 +6,7 @@ import org.jetbrains.bio.genome.Strand.PLUS
 import org.jetbrains.bio.genome.sequence.asNucleotideSequence
 import org.junit.Test
 import java.math.RoundingMode
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class RangeTest {
     @Test
@@ -44,7 +41,7 @@ class RangeTest {
 
     @Test
     fun testIntersection() {
-        assertEquals(Range(0, 0), Range(10, 11) intersection Range(11, 12))
+        assertNull(Range(10, 11) intersection Range(11, 12))
         assertEquals(Range(11, 12), Range(10, 12) intersection Range(11, 12))
     }
 

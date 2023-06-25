@@ -137,8 +137,7 @@ class Transcript(
             // GC:
             r
         } else {
-            val part = r.intersection(bounds)
-            if (part == Range.EMPTY) null else part
+            r.intersection(bounds)
         }
     }
 
