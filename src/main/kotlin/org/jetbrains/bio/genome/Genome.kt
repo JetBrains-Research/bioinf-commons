@@ -667,6 +667,7 @@ fun String.toStrand() = single().toStrand()
 fun Char.toStrand() = when (this) {
     '+' -> Strand.PLUS
     '-' -> Strand.MINUS
+    'C' -> Strand.MINUS
     '.' -> Strand.PLUS // stranded
     else -> throw IllegalStateException("Unknown strand: $this")
 }
