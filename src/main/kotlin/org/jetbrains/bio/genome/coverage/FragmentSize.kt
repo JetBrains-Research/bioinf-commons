@@ -22,7 +22,7 @@ object FragmentSize {
      * Kharchenko et al. use this value as an upper bound, according to the figures in the article.
      * Also, "chipseq" R package uses 500 as the default upper bound.
      */
-    private const val MAX_FRAGMENT_SIZE = 500
+     const val MAX_FRAGMENT_SIZE = 500
 
     /**
      * Detects the fragment size using the cross correlation approach.
