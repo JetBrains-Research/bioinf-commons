@@ -27,7 +27,7 @@ import java.nio.file.Path
  */
 class PairedEndCoverage private constructor(
     override val genomeQuery: GenomeQuery,
-    val averageInsertSize: Int,
+    val averageFragmentSize: Int,
     val data: GenomeMap<TIntList>
 ) : Coverage {
 
@@ -66,7 +66,7 @@ class PairedEndCoverage private constructor(
             writer.write(Coverage.VERSION_FIELD, intArrayOf(Coverage.VERSION))
             writer.write(Coverage.PAIRED_FIELD, booleanArrayOf(true))
             writer.write(PAIRED_VERSION_FIELD, intArrayOf(PAIRED_VERSION))
-            writer.write(AVERAGE_INSERT_SIZE_FIELD, intArrayOf(averageInsertSize))
+            writer.write(AVERAGE_FRAGMENT_SIZE_FIELD, intArrayOf(averageFragmentSize))
 
             for (chromosome in genomeQuery.get()) {
                 val key = chromosome.name
@@ -99,10 +99,20 @@ class PairedEndCoverage private constructor(
             chromosome: Chromosome,
             pos: Int, pnext: Int, length: Int
         ): Builder {
-            val insertSize = pos + length - pnext
-            data[chromosome].add(pnext + insertSize / 2)
+            // Process case when mate pair begins before
+            if (pos > pnext) {
+                return process(chromosome, pnext, pos, length)
+            }
+            val fragmentSize = pnext + length - pos
+            check(fragmentSize >= 0) {
+                "Negative fragment size chromosome=$chromosome, pos=$pos, pnext=$pnext, length=$length"
+            }
+            if (fragmentSize > FragmentSize.MAX_FRAGMENT_SIZE) {
+                return this  // Ignore too long fragment sizes
+            }
             readPairsCount++
-            totalInsertLength += insertSize
+            data[chromosome].add(pos + fragmentSize / 2)
+            totalInsertLength += fragmentSize
             return this
         }
 
@@ -130,17 +140,16 @@ class PairedEndCoverage private constructor(
             }
             return PairedEndCoverage(
                 genomeQuery,
-                averageInsertSize = averageInsertSize,
+                averageFragmentSize = averageInsertSize,
                 data = data
             )
         }
     }
 
     companion object {
-
-        const val PAIRED_VERSION = 2
+        const val PAIRED_VERSION = 3
         const val PAIRED_VERSION_FIELD = "paired_version"
-        const val AVERAGE_INSERT_SIZE_FIELD = "average_insert_size"
+        const val AVERAGE_FRAGMENT_SIZE_FIELD = "average_fragment_size"
 
         private val LOG = LoggerFactory.getLogger(PairedEndCoverage::class.java)
 
@@ -163,7 +172,7 @@ class PairedEndCoverage private constructor(
             } catch (e: IllegalStateException) {
                 throw IllegalStateException("$path paired-end coverage version is missing", e)
             }
-            val averageInsertSize = npzReader[AVERAGE_INSERT_SIZE_FIELD].asIntArray().single()
+            val averageFragmentSize = npzReader[AVERAGE_FRAGMENT_SIZE_FIELD].asIntArray().single()
             val data: GenomeMap<TIntList> = genomeMap(genomeQuery) { TIntArrayList() }
             for (chromosome in genomeQuery.get()) {
                 try {
@@ -183,7 +192,7 @@ class PairedEndCoverage private constructor(
                     }
                 }
             }
-            return PairedEndCoverage(genomeQuery, averageInsertSize, data = data)
+            return PairedEndCoverage(genomeQuery, averageFragmentSize, data = data)
         }
     }
 

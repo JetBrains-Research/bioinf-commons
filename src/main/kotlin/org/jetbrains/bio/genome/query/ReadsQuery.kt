@@ -117,10 +117,10 @@ class ReadsQuery(
                     }
 
                     is PairedEndCoverage -> "Reads: paired-ended, " + if (fragment is FixedFragment) {
-                        "Fragment size: ${coverage.averageInsertSize} bp (average; inferred from read pairs; " +
+                        "Fragment size: ${coverage.averageFragmentSize} bp (average; inferred from read pairs; " +
                                 "user input $fragment is ignored)"
                     } else {
-                        "Fragment size: ${coverage.averageInsertSize} bp (average; inferred from read pairs)"
+                        "Fragment size: ${coverage.averageFragmentSize} bp (average; inferred from read pairs)"
                     }
 
                     else -> throw IllegalArgumentException("Unknown library type: ${coverage::class.java}")

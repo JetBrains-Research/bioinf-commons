@@ -21,7 +21,7 @@ class PairedEndCoverageTest {
         )
         assertEquals(
             0,
-            coverage.averageInsertSize
+            coverage.averageFragmentSize
         )
     }
 
@@ -45,7 +45,7 @@ class PairedEndCoverageTest {
         )
         assertEquals(
             95,
-            coverage.averageInsertSize
+            coverage.averageFragmentSize
         )
     }
 
@@ -81,7 +81,7 @@ class PairedEndCoverageTest {
         )
         assertEquals(
             95,
-            coverage.averageInsertSize
+            coverage.averageFragmentSize
         )
     }
 
@@ -113,7 +113,7 @@ class PairedEndCoverageTest {
         )
         assertEquals(
             95,
-            coverage.averageInsertSize
+            coverage.averageFragmentSize
         )
     }
 
@@ -182,7 +182,7 @@ class PairedEndCoverageTest {
             val loaded = Coverage.load(coveragePath, genomeQuery)
             assertEquals(PairedEndCoverage::class.java, loaded::class.java)
             assertEquals(coverage.data, (loaded as PairedEndCoverage).data)
-            assertEquals(coverage.averageInsertSize, loaded.averageInsertSize)
+            assertEquals(coverage.averageFragmentSize, loaded.averageFragmentSize)
         }
     }
 
@@ -198,7 +198,7 @@ class PairedEndCoverageTest {
             )
             assertEquals(PairedEndCoverage::class.java, loaded::class.java)
             assertNotIn(chromosome2, loaded.genomeQuery.get())
-            assertEquals(coverage.averageInsertSize, (loaded as PairedEndCoverage).averageInsertSize)
+            assertEquals(coverage.averageFragmentSize, (loaded as PairedEndCoverage).averageFragmentSize)
         }
     }
 
