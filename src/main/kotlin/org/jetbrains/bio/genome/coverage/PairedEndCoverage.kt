@@ -84,7 +84,7 @@ class PairedEndCoverage private constructor(
     ) {
 
         private var readPairsCount = 0L
-        private var totalInsertLength = 0L
+        private var totalFragmentSize = 0L
 
         /**
          * We expect this method to be called for only one read of each read pair: the one
@@ -112,7 +112,7 @@ class PairedEndCoverage private constructor(
             }
             readPairsCount++
             data[chromosome].add(pos + fragmentSize / 2)
-            totalInsertLength += fragmentSize
+            totalFragmentSize += fragmentSize
             return this
         }
 
@@ -133,14 +133,14 @@ class PairedEndCoverage private constructor(
                 data[chromosome].sort()
             }
 
-            val averageInsertSize = if (readPairsCount != 0L) {
-                (totalInsertLength / readPairsCount).toInt()
+            val averageFragmentSize = if (readPairsCount != 0L) {
+                (totalFragmentSize / readPairsCount).toInt()
             } else {
                 0
             }
             return PairedEndCoverage(
                 genomeQuery,
-                averageFragmentSize = averageInsertSize,
+                averageFragmentSize = averageFragmentSize,
                 data = data
             )
         }
