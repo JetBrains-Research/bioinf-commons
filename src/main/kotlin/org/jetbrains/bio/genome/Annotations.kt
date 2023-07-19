@@ -12,12 +12,8 @@ import com.google.common.collect.ListMultimap
 import org.apache.commons.csv.CSVFormat
 import org.jetbrains.bio.genome.RepeatsHs1.readHs1
 import org.jetbrains.bio.util.*
-import java.io.BufferedReader
-import java.io.FileInputStream
-import java.io.InputStreamReader
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.zip.GZIPInputStream
 
 /**
  * A shortcut for annotation caches.
@@ -88,20 +84,12 @@ object Repeats {
 
 
     private fun read(genome: Genome, repeatsPath: Path): ListMultimap<Chromosome, Repeat> {
-        val chromosomes = genome.chromosomeNamesMap
-
-        return if (genome.annotationsConfig?.repeatsUrl?.contains("hs1") == true) {
-            parseHs1(repeatsPath, chromosomes)
-        } else {
-            parse(repeatsPath, chromosomes)
+        if (genome.annotationsConfig?.repeatsUrl?.contains("hs1") == true) {
+            return readHs1(genome, repeatsPath)
         }
-    }
 
-    private fun parse(
-        repeatsPath: Path,
-        chromosomes: Map<String, Chromosome>,
-    ): ImmutableListMultimap<Chromosome, Repeat> {
         val builder = ImmutableListMultimap.builder<Chromosome, Repeat>()
+        val chromosomes = genome.chromosomeNamesMap
         FORMAT.parse(repeatsPath.bufferedReader()).use { csvParser ->
             for (row in csvParser) {
                 val chromosome = chromosomes[row["chrom"]] ?: continue
@@ -119,67 +107,6 @@ object Repeats {
         }
 
         return builder.build()
-    }
-
-    private fun parseHs1(
-        repeatsPath: Path,
-        chromosomes: Map<String, Chromosome>,
-    ): ImmutableListMultimap<Chromosome, Repeat> {
-        val builder = ImmutableListMultimap.builder<Chromosome, Repeat>()
-
-        val reader = InputStreamReader(GZIPInputStream(FileInputStream(repeatsPath.toFile())))
-        BufferedReader(reader).lines()
-            .filter { isValidHs1RepeatsLine(it) }
-            .forEach {
-                val parsingResult = parseHs1RepeatsLine(it, chromosomes)
-                if (parsingResult != null) builder.put(parsingResult.first, parsingResult.second)
-            }
-
-        return builder.build()
-    }
-
-    private fun isValidHs1RepeatsLine(line: String): Boolean {
-        val substringPresentOnlyInHeader = " repeat "
-        val chrMarker = "chr"
-
-        return line.isNotBlank() && line.contains(chrMarker) && !line.contains(substringPresentOnlyInHeader)
-    }
-
-    private fun parseHs1RepeatsLine(line: String, chromosomes: Map<String, Chromosome>): Pair<Chromosome, Repeat>? {
-        try {
-            val list = line.trim().split("\\s+".toRegex())
-            if (list.size != 15) {
-                return null
-            }
-
-            val chromosome = chromosomes[list[4]] ?: return null
-            val strand = list[8].toStrand()
-            val startOffset = list[5].toInt()
-            val endOffset = list[6].toInt()
-            val location = Location(startOffset, endOffset, chromosome, strand)
-
-            val classFamily = list[10]
-            val repeatClass: String
-            val repeatFamily: String
-            if (classFamily.contains("/")) {
-                val substrings = classFamily.split("/")
-                repeatClass = substrings[0].lowercase()
-                repeatFamily = substrings[1].lowercase()
-            } else {
-                repeatClass = classFamily
-                repeatFamily = classFamily
-            }
-
-            val repeat = Repeat(
-                list[9], location,
-                repeatClass,
-                repeatFamily
-            )
-
-            return Pair(chromosome, repeat)
-        } catch (e: Exception) {
-            return null
-        }
     }
 }
 
