@@ -25,7 +25,7 @@ object Pattern {
             for (i in 0 until seed.start) {
                 if (!seed.nucleotideAlternatives[i].match(sequence.charAt(position + i))) {
                     if (++mm > mismatches) {
-                        return false;
+                        return false
                     }
                 }
             }
@@ -36,7 +36,7 @@ object Pattern {
             for (i in seedEnd until length) {
                 if (!seed.nucleotideAlternatives[i].match(sequence.charAt(position + i))) {
                     if (++mm > mismatches) {
-                        return false;
+                        return false
                     }
                 }
             }
@@ -54,9 +54,9 @@ object Pattern {
     fun getSeeds(text: String, mismatches: Int): Stream<Seed> {
         val seed = 1f * text.length / (mismatches + 1)
         return IntStream.range(0, mismatches + 1).mapToObj { i ->
-            val seedStart = (i * seed).toInt();
-            val seedEnd = ((i + 1) * seed).toInt();
-            Seed(text, seedEnd - seedStart, seedStart);
+            val seedStart = (i * seed).toInt()
+            val seedEnd = ((i + 1) * seed).toInt()
+            Seed(text, seedEnd - seedStart, seedStart)
         }
     }
 }

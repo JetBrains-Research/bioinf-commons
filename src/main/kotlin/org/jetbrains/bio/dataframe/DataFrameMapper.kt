@@ -48,7 +48,7 @@ fun DataFrame.dumpHead(rowsCount: Int): String {
     }
 
     val buff = StringBuilder()
-    DataFrameMappers.TSV.save(buff, resize(rowsCount), true, true);
+    DataFrameMappers.TSV.save(buff, resize(rowsCount), true, true)
     return buff.toString()
 }
 

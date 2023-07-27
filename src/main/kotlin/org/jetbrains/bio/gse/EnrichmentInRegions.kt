@@ -278,7 +278,7 @@ object EnrichmentInRegions {
                 val chromSizesPath = options.valueOf("chrom.sizes") as Path
                 LOG.info("CHROM.SIZES: $chromSizesPath")
 
-                val chrMapStr = options.valuesOf("chrmap") as List<String>
+                val chrMapStr = options.valuesOf("chrmap").filterIsInstance<String>()
                 LOG.info("CHROM MAPPING: $chrMapStr")
 
                 // val twoBitPath = options.valueOf("reference") as Path
@@ -343,8 +343,8 @@ object EnrichmentInRegions {
 
                 val metricStr = options.valueOf("metric") as String
                 val metric = when (metricStr) {
-                    "overlap" -> OverlapNumberMetric(aSetFlankedBothSides);
-                    "intersection" -> IntersectionNumberMetric(aSetFlankedBothSides);
+                    "overlap" -> OverlapNumberMetric(aSetFlankedBothSides)
+                    "intersection" -> IntersectionNumberMetric(aSetFlankedBothSides)
                     else -> throw IllegalArgumentException(
                         "Unsupported metric '${metricStr}', use one of: ${metrics.joinToString()}"
                     )

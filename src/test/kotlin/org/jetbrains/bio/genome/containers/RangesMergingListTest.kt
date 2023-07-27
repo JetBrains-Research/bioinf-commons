@@ -146,20 +146,20 @@ class RangesMergingListTest {
 
     @Test
     fun overlapRegion() {
-        assertFalse(rangeMergingList().overlapRanges(7, 12));
+        assertFalse(rangeMergingList().overlapRanges(7, 12))
 
         val rl1 = rangeMergingList(Range(10, 30))
-        assertTrue(rl1.overlapRanges(7, 12));
-        assertTrue(rl1.overlapRanges(20, 40));
+        assertTrue(rl1.overlapRanges(7, 12))
+        assertTrue(rl1.overlapRanges(20, 40))
 
-        assertFalse(rl1.overlapRanges(2, 7));
-        assertFalse(rl1.overlapRanges(7, 10));
-        assertFalse(rl1.overlapRanges(30, 40));
-        assertFalse(rl1.overlapRanges(40, 50));
+        assertFalse(rl1.overlapRanges(2, 7))
+        assertFalse(rl1.overlapRanges(7, 10))
+        assertFalse(rl1.overlapRanges(30, 40))
+        assertFalse(rl1.overlapRanges(40, 50))
 
         val rl2 = rangeMergingList(Range(0, 30))
-        assertTrue(rl2.overlapRanges(0, 4));
-        assertTrue(rl2.overlapRanges(29, 30));
+        assertTrue(rl2.overlapRanges(0, 4))
+        assertTrue(rl2.overlapRanges(29, 30))
     }
 
     @Test

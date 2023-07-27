@@ -83,7 +83,7 @@ class RangesSortedList internal constructor(
             }
         }
 
-        return result;
+        return result
     }
 }
 

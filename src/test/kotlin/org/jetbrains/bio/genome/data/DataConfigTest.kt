@@ -10,6 +10,7 @@ import java.util.regex.Pattern
 import kotlin.test.*
 
 class DataConfigTest {
+    @Suppress("UNCHECKED_CAST")
     @Test
     fun consistency() {
         withConfig { config ->
