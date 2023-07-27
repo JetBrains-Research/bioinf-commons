@@ -204,6 +204,7 @@ data class ReplicateData constructor(val path: Path, val meta: Map<String, Any> 
             it == true
         }
 
+        @Suppress("UNCHECKED_CAST")
         fun of(any: Any?): ReplicateData = when (any) {
             is String -> ReplicateData(any.toPath())
             is Map<*, *> -> {

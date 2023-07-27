@@ -67,7 +67,7 @@ class FastaReader(val readSequence: Boolean) {
 }
 
 @Suppress("nothing_to_inline")
-private inline fun BufferedWriter.write(ch: Char) = write(ch.toInt())
+private inline fun BufferedWriter.write(ch: Char) = write(ch.code)
 
 @Throws(IOException::class)
 fun Iterable<FastaRecord>.write(path: Path, width: Int = 80) {
@@ -79,7 +79,7 @@ fun Iterable<FastaRecord>.write(path: Path, width: Int = 80) {
 
             val length = it.sequence.length
             for (i in 0 until length) {
-                writer.write(it.sequence[i].toInt())
+                writer.write(it.sequence[i].code)
                 if (i % width == 0 && i > 0 && i < length - 1) {
                     writer.write('\n')
                 }

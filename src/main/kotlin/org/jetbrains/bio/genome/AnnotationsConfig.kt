@@ -150,7 +150,7 @@ object AnnotationsConfigLoader {
         // create if not exist or was outdated
         yamlConfig.checkOrRecalculate { output ->
             val text = AnnotationsConfigLoader::class.java
-                .getResourceAsStream("/annotations.yaml")
+                .getResourceAsStream("/annotations.yaml")!!
                 .bufferedReader(Charsets.UTF_8)
                 .readText()
             output.path.write(text)
@@ -229,9 +229,9 @@ object AnnotationsConfigLoader {
          *    MT: chrM
          */
         val chrAltName2CanonicalMapping = if (CHR_ALT_NAME_TO_CANONICAL_FIELD in deserializedMap) {
-            (deserializedMap[CHR_ALT_NAME_TO_CANONICAL_FIELD] as List<Map<String, String>>).map {
-                it.entries.first().let { (k, v) -> k to v }
-            }.toMap()
+            (deserializedMap[CHR_ALT_NAME_TO_CANONICAL_FIELD] as List<*>).associate {
+                (it as Map<*, *>).entries.first().let { (k, v) -> k as String to v as String}
+            }
         } else {
             emptyMap()
         }
@@ -248,7 +248,7 @@ object AnnotationsConfigLoader {
 
         val biomart = deserializedMap[BIOMART_FIELD]
         val mart = if (biomart != null) {
-            val biomartMap = biomart as Map<String, String>
+            val biomartMap = biomart as Map<*, *>
             val url = biomartMap[BIOMART_URL_FIELD] as String
             val dataset = biomartMap[BIOMART_DATASET_FIELD] as String
             Biomart(dataset, url)
