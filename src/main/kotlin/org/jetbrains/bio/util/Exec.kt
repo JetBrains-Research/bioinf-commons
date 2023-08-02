@@ -104,7 +104,7 @@ fun <T> withResource(
     val resource = proxy.getResource("/$name")
     if (checkNotNull) {
         checkNotNull(resource) { "Resource '$name' not found for class: $proxy" }
-    } else {
+    } else if (resource == null) {
         LOG.warn("Resource '$name' not found for class: $proxy")
     }
 
