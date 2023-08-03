@@ -21,6 +21,7 @@ genomes:
     # centromeres:  n/a
     cgis: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/database/cpgIslandExt.txt.gz
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/mm9.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/mm9.fa.gz
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/mm9.chrom.sizes
 
   mm10:
@@ -42,6 +43,7 @@ genomes:
     # centromeres:  n/a
     cgis: http://hgdownload.cse.ucsc.edu/goldenPath/mm10/database/cpgIslandExt.txt.gz
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/mm10/bigZips/mm10.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/mm10/bigZips/mm10.fa.gz
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes
 
   # http://www.ensembl.org/Homo_sapiens
@@ -63,6 +65,7 @@ genomes:
     # centromeres:  n/a
     cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/cpgIslandExt.txt.gz
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips/hg18.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips/hg18.fa.gz
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips/hg18.chrom.sizes
 
   hg19:
@@ -83,6 +86,7 @@ genomes:
     # centromeres:  n/a
     cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cpgIslandExt.txt.gz
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.fa.gz
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.chrom.sizes
 
   hs37-1kg:
@@ -108,7 +112,8 @@ genomes:
     #           $1, $2, $3, $5, $6, width, $6, width*$7*0.01, 100.0*2*$6/width, $7, $9);}' | sort -k1,1 -k2,2n | \
     #           gzip > cpgIslandExt.txt.gz
     cgis: http://localhost/cpgIslandExt.txt.gz # XXX: fake url, generate using UCSC 'cpg_lh' tool manually
-    sequence: ftp://anonymous@ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/human_g1k_v37.fasta.gz  # XXX: fake url, put file in genome dir manually, *.fasta.gz conversion not supported at the moment
+    sequence: ftp://anonymous@ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/human_g1k_v37.fasta.gz  # XXX: fake url, put file in genome dir manually, *.fasta.gz conversion not supported at the momentmanually
+    fasta: ftp://anonymous@ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/human_g1k_v37.fasta.gz
     chromsizes: http://localhost/hs37-1kg.chrom.sizes # XXX: fake url, use ucsc tool 'twoBitInfo' to generate this file
 
   hs37d5:
@@ -133,6 +138,7 @@ genomes:
     #           gzip > cpgIslandExt.txt.gz
     cgis: http://localhost/cpgIslandExt.txt.gz # XXX: fake url, generate using UCSC 'cpg_lh' tool manually
     sequence: ftp://anonymous@ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz  # XXX: fake url, put file in genome dir manually, *.fasta.gz conversion not supported at the moment
+    fasta: ftp://anonymous@ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz
     chromsizes: http://localhost/hs37d5.chrom.sizes # XXX: fake url, use ucsc tool 'twoBitInfo' to generate this file
 
   hg38:
@@ -153,6 +159,7 @@ genomes:
     centromeres: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/centromeres.txt.gz
     cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/cpgIslandExt.txt.gz
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
 
   hs1:
@@ -165,6 +172,7 @@ genomes:
       - MT: chrM
     cytobands: http://t2t.gi.ucsc.edu/chm13/hub/t2t-chm13-v2.0/download/chm13v2.0_cytobands_allchrs.bed.gz
     sequence: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/hs1/bigZips/hs1.fa.gz
     chromsizes: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.chrom.sizes.txt
 
   # http://www.ensembl.org/Drosophila_melanogaster/
@@ -186,6 +194,7 @@ genomes:
     # centromeres:  n/a
     # cgis: n/a
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips/dm3.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips/dm3.fa.gz
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips/dm3.chrom.sizes
 
   dm6:
@@ -205,6 +214,7 @@ genomes:
     # centromeres:  n/a
     cgis: http://hgdownload.cse.ucsc.edu/goldenPath/dm6/database/cpgIslandExt.txt.gz
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/dm6/bigZips/dm6.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/dm6/bigZips/dm6.fa.gz
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/dm6/bigZips/dm6.chrom.sizes
 
   # http://www.ensembl.org/Danio_rerio
@@ -225,6 +235,7 @@ genomes:
     # centromeres:  n/a
     cgis: http://hgdownload.cse.ucsc.edu/goldenPath/danRer7/database/cpgIslandExt.txt.gz
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/danRer7/bigZips/danRer7.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/danRer7/bigZips/danRer7.fa.gz
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/danRer7/bigZips/danRer7.chrom.sizes
 
   danRer10:
@@ -244,6 +255,7 @@ genomes:
     # centromeres:  n/a
     cgis: http://hgdownload.cse.ucsc.edu/goldenPath/danRer10/database/cpgIslandExt.txt.gz
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/danRer10/bigZips/danRer10.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/danRer10/bigZips/danRer10.fa.gz
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/danRer10/bigZips/danRer10.chrom.sizes
 
   danRer11:
@@ -264,6 +276,7 @@ genomes:
     # centromeres:  n/a
     cgis: http://hgdownload.cse.ucsc.edu/goldenPath/danRer11/database/cpgIslandExt.txt.gz
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/danRer11/bigZips/danRer11.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/danRer11/bigZips/danRer11.fa.gz
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/danRer11/bigZips/danRer11.chrom.sizes
 
   # http://www.ensembl.org/Rattus_norvegicus
@@ -284,6 +297,7 @@ genomes:
     # centromeres:  n/a
     cgis: http://hgdownload.cse.ucsc.edu/goldenPath/rn5/database/cpgIslandExt.txt.gz
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/rn5/bigZips/rn5.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/rn5/bigZips/rn5.fa.gz
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/rn5/bigZips/rn5.chrom.sizes
 
   rn6:
@@ -304,6 +318,7 @@ genomes:
     # centromeres:  n/a
     cgis: http://hgdownload.cse.ucsc.edu/goldenPath/rn6/database/cpgIslandExt.txt.gz
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/rn6/bigZips/rn6.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/rn6/bigZips/rn6.fa.gz
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/rn6/bigZips/rn6.chrom.sizes
 
   # Naked mole rat: chromosomes names are weird, like 'JH602071' and not supported by browser, we expect "chr..."
@@ -366,6 +381,7 @@ genomes:
     # centromeres:  n/a
     # cgis: n/a
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/ce6/bigZips/ce6.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/ce6/bigZips/ce6.fa.gz
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/ce6/bigZips/ce6.chrom.sizes
 
   # Caused by: ERROR Index for header 'description' is 1 but CSVRecord only has 1 values!
@@ -386,6 +402,7 @@ genomes:
     # centromeres:  n/a
     # cgis: n/a
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/ce10/bigZips/ce10.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/ce10/bigZips/ce10.fa.gz
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/ce10/bigZips/ce10.chrom.sizes
 
   #  wbcel215:
@@ -419,4 +436,5 @@ genomes:
     # centromeres:  n/a
     cgis: http://hgdownload.cse.ucsc.edu/goldenPath/ce11/database/cpgIslandExt.txt.gz
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/ce11/bigZips/ce11.2bit
+    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/ce11/bigZips/ce11.fa.gz
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/ce11/bigZips/ce11.chrom.sizes

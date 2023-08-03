@@ -11,10 +11,14 @@ import org.jetbrains.bio.genome.format.TwoBitSequence
 import org.jetbrains.bio.genome.format.TwoBitWriter
 import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
+import java.io.FileInputStream
 import java.io.IOException
 import java.io.UncheckedIOException
 import java.lang.ref.WeakReference
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+import java.util.zip.GZIPInputStream
 
 /**
  * The genome.
@@ -85,6 +89,36 @@ class Genome private constructor(
                                 TwoBitWriter.convert(faPath, output.path)
                                 faPath.delete()
                             }
+                        }
+                    }
+                }
+            }
+
+
+    fun fastaPath(downloadIfMissing: Boolean = true) =
+            ensureNotNull(fastaPath, "Genome *.fa Sequence").also { fastaPath ->
+                if (downloadIfMissing) {
+                    fastaPath.checkOrRecalculate { output ->
+                        val config = annotationsConfig
+                        requireNotNull(config) {
+                            "Cannot save Fasta file to $fastaPath"
+                        }
+                        val sUrl = config.fastaUrl
+                        val suffixCompressed =
+                                listOf(".fa.gz", ".fasta.gz").firstOrNull { sUrl.endsWith(it) }
+                        val suffix =
+                                listOf(".fa", ".fasta").firstOrNull { sUrl.endsWith(it) }
+                        
+                        if (suffixCompressed != null) {
+                            val faPath = "${output.path}.gz".toPath()
+                            sUrl.downloadTo(faPath)
+                            GZIPInputStream(FileInputStream(faPath.toFile())).use {
+                                    Files.copy(it, output.path, StandardCopyOption.REPLACE_EXISTING)
+                            }
+                            faPath.delete()
+                        } else {
+                            requireNotNull(suffix) { "Unsupported fasta path type: $sUrl" }
+                            sUrl.downloadTo(output.path)
                         }
                     }
                 }
@@ -276,7 +310,7 @@ class Genome private constructor(
                         TEST_ORGANISM_BUILD -> GenomeAnnotationsConfig(
                                 "Test Organism", TEST_ORGANISM_BUILD, listOf("to1"),
                                 "test", "<n/a>", emptyMap(), false,
-                                "<n/a>", "<n/a>", "<n/a>", "<n/a>", "<n/a>",
+                                "<n/a>", "<n/a>", "<n/a>", "<n/a>", "<n/a>", "<n/a>",
                                 null, "<n/a>", null
                         )
 
