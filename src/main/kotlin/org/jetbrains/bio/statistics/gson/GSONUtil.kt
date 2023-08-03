@@ -30,6 +30,7 @@ object GSONUtil {
      * If it's a descendant, the factory creates and returns an adapter
      * via [typeAdapter] function, otherwise it returns null.
      */
+    @Suppress("UNCHECKED_CAST")
     @JvmStatic
     fun <C> classSpecificFactory(
         aClass: Class<C>,
@@ -73,6 +74,7 @@ object GSONUtil {
                 Streams.write(element, out)
             }
 
+            @Suppress("UNCHECKED_CAST")
             @Throws(IOException::class)
             override fun read(reader: JsonReader): T? {
                 val element = Streams.parse(reader)
@@ -135,6 +137,7 @@ object GSONUtil {
                 Streams.write(element, out)
             }
 
+            @Suppress("UNCHECKED_CAST")
             override fun read(`in`: JsonReader): T? {
                 val element = Streams.parse(`in`)
                 val modelFQNElement = element.asJsonObject.remove(fqnField)
@@ -173,15 +176,15 @@ object GSONUtil {
             }
 
             private fun getSerializationFormatVersion(aClass: Class<T>): String {
-                try {
-                    return (aClass.getDeclaredField("VERSION").get(null)).toString()
+                return try {
+                    (aClass.getDeclaredField("VERSION").get(null)).toString()
                 } catch (e: Exception) {
                     deserializationError(
-                        "Cannot get serialization format version." +
-                                " Probably VERSION field is missing in %s. Exception message: %s",
-                        aClass.name, e.message, cause = e
+                            "Cannot get serialization format version." +
+                                    " Probably VERSION field is missing in %s. Exception message: %s",
+                            aClass.name, e.message, cause = e
                     )
-                    return "" // this statement can never be reached
+                    "" // this statement can never be reached
                 }
             }
         }

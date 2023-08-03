@@ -52,7 +52,7 @@ class RangesMergingList internal constructor(
     override fun intersectRanges(startOffset: Int, endOffset: Int): List<Range> {
         var i = max(0, lookup(startOffset))
         val result = arrayListOf<Range>()
-        val len = size;
+        val len = size
         while (i < len) {
             // Iterate over nearby ranges.
             if (startOffsets[i] >= endOffset) {
@@ -80,7 +80,7 @@ class RangesMergingList internal constructor(
      *
      */
     fun complementaryRanges(chrLen: Int): RangesMergingList {
-        val len = size;
+        val len = size
 
         val complStarts = TIntArrayList(len + 1)
         val complEnds = TIntArrayList(len + 1)
@@ -89,7 +89,7 @@ class RangesMergingList internal constructor(
             complStarts.add(0)
             complEnds.add(chrLen)
         } else {
-            var i = 0;
+            var i = 0
             while (i < len) {
                 val start = startOffsets[i]
                 val end = endOffsets[i]
@@ -113,7 +113,7 @@ class RangesMergingList internal constructor(
                 complStarts.removeAt(complStarts.size() - 1)
             }
         }
-        return RangesMergingList(complStarts, complEnds);
+        return RangesMergingList(complStarts, complEnds)
     }
 
     /**

@@ -9,16 +9,16 @@ import kotlin.test.assertTrue
 class RangesSortedListTest {
     @Test
     fun overlapRegion() {
-        assertFalse(rangeSortedList().overlapRanges(7, 12));
+        assertFalse(rangeSortedList().overlapRanges(7, 12))
 
         val rl1 = rangeSortedList(Range(10, 30))
-        assertTrue(rl1.overlapRanges(7, 12));
-        assertTrue(rl1.overlapRanges(20, 40));
+        assertTrue(rl1.overlapRanges(7, 12))
+        assertTrue(rl1.overlapRanges(20, 40))
 
-        assertFalse(rl1.overlapRanges(2, 7));
-        assertFalse(rl1.overlapRanges(7, 10));
-        assertFalse(rl1.overlapRanges(30, 40));
-        assertFalse(rl1.overlapRanges(40, 50));
+        assertFalse(rl1.overlapRanges(2, 7))
+        assertFalse(rl1.overlapRanges(7, 10))
+        assertFalse(rl1.overlapRanges(30, 40))
+        assertFalse(rl1.overlapRanges(40, 50))
 
         val rl2 = rangeSortedList(
             Range(0, 40),
@@ -27,9 +27,9 @@ class RangesSortedListTest {
             Range(30, 70),
             Range(50, 100)
         )
-        assertTrue(rl2.overlapRanges(20, 70));
-        assertTrue(rl2.overlapRanges(0, 5));
-        assertTrue(rl2.overlapRanges(99, 100));
+        assertTrue(rl2.overlapRanges(20, 70))
+        assertTrue(rl2.overlapRanges(0, 5))
+        assertTrue(rl2.overlapRanges(99, 100))
     }
 
     @Test

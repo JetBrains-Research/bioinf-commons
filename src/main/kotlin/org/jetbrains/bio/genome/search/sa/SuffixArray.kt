@@ -31,7 +31,7 @@ class SuffixArray(val sequence: NucleotideSequence, val sa: IntArray) {
             NpzFile.write(path).use { writer ->
                 writer.write("version", intArrayOf(VERSION))
                 val ints = IntArray(chromosome.length + BPR.KBS_STRING_EXTENSION_SIZE) {
-                    if (it < chromosome.length) chromosome.sequence.charAt(it).toInt() else 0
+                    if (it < chromosome.length) chromosome.sequence.charAt(it).code else 0
                 }
                 val sa = Algorithm.BPR.decoratedInstance.buildSuffixArray(ints, 0, chromosome.sequence.length)
                 writer.write("sa", sa)

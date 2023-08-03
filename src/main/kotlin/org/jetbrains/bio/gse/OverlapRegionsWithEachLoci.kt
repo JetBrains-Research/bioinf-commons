@@ -100,7 +100,7 @@ object OverlapRegionsWithEachLoci {
                 val chromSizesPath = options.valueOf("chrom.sizes") as Path
                 LOG.info("CHROM.SIZES: $chromSizesPath")
 
-                val chrMapStr = options.valuesOf("chrmap") as List<String>
+                val chrMapStr = options.valuesOf("chrmap").filterIsInstance<String>()
                 LOG.info("CHROM MAPPING: $chrMapStr")
 
                 val genome = Genome.get(
@@ -155,7 +155,7 @@ object OverlapRegionsWithEachLoci {
     ) {
         outputFolderPath.createDirectories()
 
-        val threadsNumber = parallelismLevel();
+        val threadsNumber = parallelismLevel()
         val regionLabelAndLociToTest: List<List<Pair<String, LocationsList<out RangesList>>>> =
             EnrichmentInRegions.collectRegionsFrom(
                 if (regionsPath.isDirectory) Files.list(regionsPath) else Stream.of(regionsPath),

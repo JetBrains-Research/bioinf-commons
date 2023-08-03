@@ -48,8 +48,8 @@ object MoreMath {
 
     init {
         for (i in 0..1023) {
-            LOG_FACTORIAL_1[i] = CombinatoricsUtils.factorialLog(i);
-            LOG_FACTORIAL_16[i] = CombinatoricsUtils.factorialLog(1024 + 16 * i);
+            LOG_FACTORIAL_1[i] = CombinatoricsUtils.factorialLog(i)
+            LOG_FACTORIAL_16[i] = CombinatoricsUtils.factorialLog(1024 + 16 * i)
         }
     }
 

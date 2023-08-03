@@ -501,7 +501,7 @@ class IntHistogram {
 
     fun mean(valuesNumber: Int = countValues()): Double {
         // sum(x_i) / n
-        val metricMeanAcc = KahanSum();
+        val metricMeanAcc = KahanSum()
         data.forEachEntry { metric, count ->
             metricMeanAcc += (count * metric).toDouble()
             true
@@ -556,7 +556,7 @@ class IntHistogram {
             return 0.0
         }
         //  sum((x_i - mean)^2) / (n - 1)
-        val metricVarAcc = KahanSum();
+        val metricVarAcc = KahanSum()
         data.forEachEntry { metric, count ->
             metricVarAcc += count * (metric - mean).pow(2)
             true

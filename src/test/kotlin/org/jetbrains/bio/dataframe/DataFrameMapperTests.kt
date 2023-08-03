@@ -147,7 +147,7 @@ class CsvMapperTest {
         ).joinToString("\n")
 
         val buff = StringBuilder()
-        DataFrameMappers.TSV.save(buff, testDataFrame, true, true);
+        DataFrameMappers.TSV.save(buff, testDataFrame, true, true)
         assertEquals(expected, buff.toString())
     }
 
@@ -190,7 +190,7 @@ class CsvMapperTest {
             .with("e", TestEnum::class.java, tdf.sliceAsObj("e")) { "e:${it}" }
             .with("d", tdf.sliceAsInt("i").map { it / 3.0 }.toDoubleArray()) { "%.4f".format(it) }
             .with("fl", tdf.sliceAsInt("i").map { it / 3.0f }.toFloatArray()) { "%.2f".format(it) }
-        DataFrameMappers.TSV.save(buff, newDf, true, true);
+        DataFrameMappers.TSV.save(buff, newDf, true, true)
         Assert.assertEquals(
             expected,
             buff.toString()
@@ -259,7 +259,7 @@ class CsvMapperTest {
             .with("fl", tdf.sliceAsInt("i").map { it / 3.0f }.toFloatArray()) { "%.2f".format(it) }
 
         val resizedDf = newDf.resize(newDf.rowsNumber - 2)
-        DataFrameMappers.TSV.save(buff, resizedDf, true, true);
+        DataFrameMappers.TSV.save(buff, resizedDf, true, true)
         Assert.assertEquals(
             expected,
             buff.toString()

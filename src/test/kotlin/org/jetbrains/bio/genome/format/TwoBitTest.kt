@@ -79,9 +79,9 @@ class TwoBitTest {
         assertEquals(ch1 + "nnnn" + ch2, tbs.substring(14, 20))
         assertEquals(ch1 + "nnnn" + ch2, tbs.substring(14, 20, Strand.PLUS))
         assertEquals(
-            SequenceUtil.complement(ch2.toByte()).toChar() +
+            SequenceUtil.complement(ch2.code.toByte()).toInt().toChar() +
                     "nnnn" +
-                    SequenceUtil.complement(ch1.toByte()).toChar(),
+                    SequenceUtil.complement(ch1.code.toByte()).toInt().toChar(),
             tbs.substring(14, 20, Strand.MINUS)
         )
         assertEquals(sequence.length, tbs.substring(0, tbs.length).length)

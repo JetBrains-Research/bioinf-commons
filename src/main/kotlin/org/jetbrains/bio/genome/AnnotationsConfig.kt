@@ -42,6 +42,7 @@ data class GenomeAnnotationsConfig(
     val chrAltName2CanonicalMapping: Map<String, String>,
     val ucscAnnLegacyFormat: Boolean,
     val sequenceUrl: String,
+    val fastaUrl: String?,
     val chromsizesUrl: String,
     val repeatsUrl: String?,
     val cytobandsUrl: String?,
@@ -52,7 +53,7 @@ data class GenomeAnnotationsConfig(
 )
 
 object AnnotationsConfigLoader {
-    const val VERSION: Int = 4
+    const val VERSION: Int = 5 // XXX: Keep it in sync with annotations.yaml 'version' field
     private val LOG = LoggerFactory.getLogger(AnnotationsConfigLoader::class.java)
 
     private var pathAndConfig: Pair<Path, Map<String, GenomeAnnotationsConfig>>? = null
@@ -150,7 +151,7 @@ object AnnotationsConfigLoader {
         // create if not exist or was outdated
         yamlConfig.checkOrRecalculate { output ->
             val text = AnnotationsConfigLoader::class.java
-                .getResourceAsStream("/annotations.yaml")
+                .getResourceAsStream("/annotations.yaml")!!
                 .bufferedReader(Charsets.UTF_8)
                 .readText()
             output.path.write(text)
@@ -213,6 +214,7 @@ object AnnotationsConfigLoader {
     private const val GTF_FIELD = "gtf"
     private const val UCSC_ANNOTATIONS_LEGACY_FIELD = "ucsc_annotations_legacy"
     private const val SEQUENCE_FIELD = "sequence"
+    private const val FASTA_FIELD = "fasta"
     private const val CHROMSIZES_FIELD = "chromsizes"
     private const val REPEATS_FIELD = "repeats"
     private const val CYTOBANDS_FIELD = "cytobands"
@@ -229,9 +231,9 @@ object AnnotationsConfigLoader {
          *    MT: chrM
          */
         val chrAltName2CanonicalMapping = if (CHR_ALT_NAME_TO_CANONICAL_FIELD in deserializedMap) {
-            (deserializedMap[CHR_ALT_NAME_TO_CANONICAL_FIELD] as List<Map<String, String>>).map {
-                it.entries.first().let { (k, v) -> k to v }
-            }.toMap()
+            (deserializedMap[CHR_ALT_NAME_TO_CANONICAL_FIELD] as List<*>).associate {
+                (it as Map<*, *>).entries.first().let { (k, v) -> k as String to v as String}
+            }
         } else {
             emptyMap()
         }
@@ -248,7 +250,7 @@ object AnnotationsConfigLoader {
 
         val biomart = deserializedMap[BIOMART_FIELD]
         val mart = if (biomart != null) {
-            val biomartMap = biomart as Map<String, String>
+            val biomartMap = biomart as Map<*, *>
             val url = biomartMap[BIOMART_URL_FIELD] as String
             val dataset = biomartMap[BIOMART_DATASET_FIELD] as String
             Biomart(dataset, url)
@@ -265,6 +267,7 @@ object AnnotationsConfigLoader {
                 chrAltName2CanonicalMapping,
                 deserializedMap[UCSC_ANNOTATIONS_LEGACY_FIELD]?.toString()?.toBoolean() ?: false,
                 deserializedMap[SEQUENCE_FIELD] as String,
+                deserializedMap[FASTA_FIELD] as String?,
                 deserializedMap[CHROMSIZES_FIELD] as String,
                 deserializedMap[REPEATS_FIELD] as String?,
                 deserializedMap[CYTOBANDS_FIELD] as String?,
@@ -310,6 +313,10 @@ object AnnotationsConfigLoader {
         }
         if (genomeAnnotationsConfig.cytobandsUrl != null) {
             result[CYTOBANDS_FIELD] = genomeAnnotationsConfig.cytobandsUrl
+        }
+
+        if (genomeAnnotationsConfig.fastaUrl != null) {
+            result[FASTA_FIELD] = genomeAnnotationsConfig.fastaUrl
         }
         if (genomeAnnotationsConfig.centromeresUrl != null) {
             result[CENTROMERES_FIELD] = genomeAnnotationsConfig.centromeresUrl

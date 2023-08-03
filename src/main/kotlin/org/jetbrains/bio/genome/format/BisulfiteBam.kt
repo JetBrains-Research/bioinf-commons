@@ -296,7 +296,7 @@ private class BowtieSamPiler(
                     continue
                 }
 
-                when (pc.getReadBase(i).toChar()) {
+                when (pc.getReadBase(i).toInt().toChar()) {
                     'A' -> countA++
                     'T' -> countT++
                     '=',  // fall-through.
@@ -311,7 +311,7 @@ private class BowtieSamPiler(
                     continue
                 }
 
-                when (pc.getReadBase(i).toChar()) {
+                when (pc.getReadBase(i).toInt().toChar()) {
                     'A' -> countT++
                     'T' -> countA++
                     'C' -> countG++
@@ -439,7 +439,7 @@ private data class BowtiePilerColumn(override val position: Int) : PilerColumn {
         return if (base < 0) (-base).toByte() else base
     }
 
-    override fun getBaseAnnotation(i: Int) = getReadBase(i).toChar()
+    override fun getBaseAnnotation(i: Int) = getReadBase(i).toInt().toChar()
 
     override fun size() = bases.size()
 
@@ -451,18 +451,18 @@ private data class BismarkPilerColumn(override val position: Int) : PilerColumn 
     private val annotations = TCharArrayList()
     private val readNegativeStrandFlags = BitSet()
 
+    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
     override fun add(offset: Int, record: SAMRecord, bismarkBsAnnotation: String) {
         val base = record.readBases[offset]
         bases.add(if (record.readNegativeStrandFlag) (-base).toByte() else base)
 
         // todo: here we can ignore '.' in bismark
-        val baseAnn: Char
-        if (record.readNegativeStrandFlag) {
+        val baseAnn: Char = if (record.readNegativeStrandFlag) {
             val currPosition = annotations.size()
             readNegativeStrandFlags.set(currPosition)
-            baseAnn = bismarkBsAnnotation[bismarkBsAnnotation.length - 1 - offset]
+            bismarkBsAnnotation[bismarkBsAnnotation.length - 1 - offset]
         } else {
-            baseAnn = bismarkBsAnnotation[offset]
+            bismarkBsAnnotation[offset]
         }
         annotations.add(baseAnn)
     }
