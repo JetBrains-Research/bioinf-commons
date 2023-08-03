@@ -103,6 +103,21 @@ class AnnotationsConfigLoaderTest {
                 "http://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips/dm3.chrom.sizes",
                 mapping["dm3"]!!.chromsizesUrl
             )
+            assertEquals(
+                    "http://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips/dm3.fa.gz",
+                    mapping["dm3"]!!.fastaUrl
+            )
+            assertEquals(
+                    "http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.fa.gz",
+                    mapping["hg19"]!!.fastaUrl
+            )
+            assertEquals(
+                    "http://hgdownload.cse.ucsc.edu/goldenPath/hs1/bigZips/hs1.fa.gz",
+                    mapping["hs1"]!!.fastaUrl
+            )
+            assertNull(
+                    mapping["mm9"]!!.fastaUrl
+            )
         }
     }
 
