@@ -65,7 +65,7 @@ genomes:
     # centromeres:  n/a
     cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/cpgIslandExt.txt.gz
     sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips/hg18.2bit
-    fasta: http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips/hg18.fa.gz
+    fasta: n/a
     chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips/hg18.chrom.sizes
 
   hg19:
