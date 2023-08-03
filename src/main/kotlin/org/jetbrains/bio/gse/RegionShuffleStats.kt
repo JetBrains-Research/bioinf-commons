@@ -14,10 +14,7 @@ import org.jetbrains.bio.genome.containers.intersection.RegionsMetric
 import org.jetbrains.bio.genome.format.BedFormat
 import org.jetbrains.bio.genome.sampling.shuffleChromosomeRanges
 import org.jetbrains.bio.statistics.hypothesis.BenjaminiHochberg
-import org.jetbrains.bio.util.Progress
-import org.jetbrains.bio.util.createDirectories
-import org.jetbrains.bio.util.div
-import org.jetbrains.bio.util.parallelismLevel
+import org.jetbrains.bio.util.*
 import org.jetbrains.bio.viktor.KahanSum
 import org.jetbrains.bio.viktor.asF64Array
 import org.slf4j.LoggerFactory
@@ -469,9 +466,6 @@ data class TestedRegionStats(
         }
     }
 }
-
-
-private fun Int.formatLongNumber() = String.format("%,d", this).replace(',', ' ')
 
 enum class PermutationAltHypothesis(private val presentableString: String) {
     TWO_SIDED("two-sided"),
