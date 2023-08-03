@@ -1,6 +1,7 @@
 package org.jetbrains.bio.genome
 
 import org.jetbrains.bio.util.FileSize
+import org.jetbrains.bio.util.formatLongNumber
 import org.jetbrains.bio.util.presentablePath
 import java.net.URI
 import java.nio.file.Path
@@ -36,8 +37,6 @@ class TrackAboutStringColumnType(
     infix fun to(path: Path?) = TrackAboutMetricValue(this, path?.toString() ?: "n/a")
     infix fun to(uri: URI) = TrackAboutMetricValue(this, uri.presentablePath())
 }
-
-private fun Long.formatLongNumber() = String.format("%,d", this).replace(',', ' ')
 
 class TrackAboutLongColumnType(
     override val name: String
