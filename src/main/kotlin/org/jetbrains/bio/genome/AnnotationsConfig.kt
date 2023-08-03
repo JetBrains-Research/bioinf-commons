@@ -42,7 +42,7 @@ data class GenomeAnnotationsConfig(
     val chrAltName2CanonicalMapping: Map<String, String>,
     val ucscAnnLegacyFormat: Boolean,
     val sequenceUrl: String,
-    val fastaUrl: String,
+    val fastaUrl: String?,
     val chromsizesUrl: String,
     val repeatsUrl: String?,
     val cytobandsUrl: String?,
@@ -267,7 +267,7 @@ object AnnotationsConfigLoader {
                 chrAltName2CanonicalMapping,
                 deserializedMap[UCSC_ANNOTATIONS_LEGACY_FIELD]?.toString()?.toBoolean() ?: false,
                 deserializedMap[SEQUENCE_FIELD] as String,
-                deserializedMap[FASTA_FIELD] as String,
+                deserializedMap[FASTA_FIELD] as String?,
                 deserializedMap[CHROMSIZES_FIELD] as String,
                 deserializedMap[REPEATS_FIELD] as String?,
                 deserializedMap[CYTOBANDS_FIELD] as String?,
@@ -313,6 +313,10 @@ object AnnotationsConfigLoader {
         }
         if (genomeAnnotationsConfig.cytobandsUrl != null) {
             result[CYTOBANDS_FIELD] = genomeAnnotationsConfig.cytobandsUrl
+        }
+
+        if (genomeAnnotationsConfig.fastaUrl != null) {
+            result[FASTA_FIELD] = genomeAnnotationsConfig.fastaUrl
         }
         if (genomeAnnotationsConfig.centromeresUrl != null) {
             result[CENTROMERES_FIELD] = genomeAnnotationsConfig.centromeresUrl

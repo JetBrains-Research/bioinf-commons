@@ -123,6 +123,7 @@ class AnnotationsConfigLoaderTest {
                     chrAltName2CanonicalMapping = mapOf("MT" to "chrM"),
                     ucscAnnLegacyFormat = false,
                     sequenceUrl = "https://sequence",
+                    fastaUrl = "https://fasta",
                     chromsizesUrl = "https://chromsizes",
                     repeatsUrl = null,
                     cytobandsUrl = "https://cytobands",

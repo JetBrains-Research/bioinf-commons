@@ -103,7 +103,8 @@ class Genome private constructor(
                         requireNotNull(config) {
                             "Cannot save Fasta file to $fastaPath"
                         }
-                        val sUrl = config.fastaUrl
+                        ensureNotNull(config.fastaUrl, "This genome does not have provided fasta file")
+                        val sUrl = config.fastaUrl!!
                         val suffixCompressed =
                                 listOf(".fa.gz", ".fasta.gz").firstOrNull { sUrl.endsWith(it) }
                         val suffix =
@@ -113,7 +114,7 @@ class Genome private constructor(
                             val faPath = "${output.path}.gz".toPath()
                             try {
                                 sUrl.downloadTo(faPath)
-                                faPath.inputStream().use {
+                                GZIPInputStream(FileInputStream(faPath.toFile())).use {
                                     Files.copy(it, output.path, StandardCopyOption.REPLACE_EXISTING)
                                 }
                             } finally {
