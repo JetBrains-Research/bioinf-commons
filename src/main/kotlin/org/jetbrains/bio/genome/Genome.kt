@@ -111,11 +111,16 @@ class Genome private constructor(
                         
                         if (suffixCompressed != null) {
                             val faPath = "${output.path}.gz".toPath()
-                            sUrl.downloadTo(faPath)
-                            GZIPInputStream(FileInputStream(faPath.toFile())).use {
+                            try {
+                                sUrl.downloadTo(faPath)
+                                faPath.inputStream().use {
                                     Files.copy(it, output.path, StandardCopyOption.REPLACE_EXISTING)
+                                }
+                            } finally {
+                                if (faPath.exists) {
+                                    faPath.delete()
+                                }
                             }
-                            faPath.delete()
                         } else {
                             requireNotNull(suffix) { "Given genome does not have correct url: $sUrl" }
                             sUrl.downloadTo(output.path)
