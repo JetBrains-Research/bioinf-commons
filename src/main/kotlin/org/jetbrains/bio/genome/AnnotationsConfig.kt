@@ -53,7 +53,7 @@ data class GenomeAnnotationsConfig(
 )
 
 object AnnotationsConfigLoader {
-    const val VERSION: Int = 4
+    const val VERSION: Int = 4 // XXX: Keep it in sync with annotations.yaml 'version' field
     private val LOG = LoggerFactory.getLogger(AnnotationsConfigLoader::class.java)
 
     private var pathAndConfig: Pair<Path, Map<String, GenomeAnnotationsConfig>>? = null

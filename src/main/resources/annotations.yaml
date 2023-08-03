@@ -1,4 +1,9 @@
 ---
+
+# NOTE: Increment `version` here and use same in AnnotationsConfigLoader.VERSION for any change of YAML format here, e.g.
+# when new fields or new genome is added. This will allow to automatically update user's `~/.jbr_browser/genomes/annotations.yaml`
+# file otherwise your code will throw exceptions on deserialization of user's annotation YAML file with previous format
+
 version: 5
 genomes:
   # http://www.ensembl.org/Mus_musculus
