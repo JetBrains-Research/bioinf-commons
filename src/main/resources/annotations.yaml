@@ -1,5 +1,5 @@
 ---
-version: 4
+version: 5
 genomes:
   # http://www.ensembl.org/Mus_musculus
   mm9:

@@ -117,7 +117,7 @@ class Genome private constructor(
                             }
                             faPath.delete()
                         } else {
-                            requireNotNull(suffix) { "Unsupported fasta path type: $sUrl" }
+                            requireNotNull(suffix) { "Given genome does not have correct url: $sUrl" }
                             sUrl.downloadTo(output.path)
                         }
                     }
