@@ -73,6 +73,7 @@ genomes:
     gtf: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/genes/catLiftOffGenesV1.gtf.gz
     chr_alt_name_to_canonical:
       - MT: chrM
+    repeats: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.repeatMasker.out.gz
     cytobands: http://t2t.gi.ucsc.edu/chm13/hub/t2t-chm13-v2.0/download/chm13v2.0_cytobands_allchrs.bed.gz
     sequence: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.2bit
     fasta: http://hgdownload.cse.ucsc.edu/goldenPath/hs1/bigZips/hs1.fa.gz

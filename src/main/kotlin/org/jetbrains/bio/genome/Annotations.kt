@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableListMultimap
 import com.google.common.collect.LinkedListMultimap
 import com.google.common.collect.ListMultimap
 import org.apache.commons.csv.CSVFormat
+import org.jetbrains.bio.genome.RepeatsHs1.readHs1
 import org.jetbrains.bio.util.*
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -83,6 +84,10 @@ object Repeats {
 
 
     private fun read(genome: Genome, repeatsPath: Path): ListMultimap<Chromosome, Repeat> {
+        if (genome.annotationsConfig?.repeatsUrl?.contains("hs1") == true) {
+            return readHs1(genome, repeatsPath)
+        }
+
         val builder = ImmutableListMultimap.builder<Chromosome, Repeat>()
         val chromosomes = genome.chromosomeNamesMap
         FORMAT.parse(repeatsPath.bufferedReader()).use { csvParser ->

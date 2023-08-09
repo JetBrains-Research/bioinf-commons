@@ -89,6 +89,10 @@ class AnnotationsConfigLoaderTest {
             assertNull(
                 mapping["hs1"]!!.gapsUrl
             )
+            assertEquals(
+                "http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.repeatMasker.out.gz",
+                mapping["hs1"]!!.repeatsUrl
+            )
             assertNull(mapping["hg19"]!!.centromeresUrl)
             assertEquals(
                 "http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cpgIslandExt.txt.gz",
