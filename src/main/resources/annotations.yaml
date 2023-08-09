@@ -173,10 +173,35 @@ genomes:
     aliases: T2T CHM13v2.0
     description: 'T2T CHM13v2.0 Telomere-to-Telomere assembly of the CHM13 cell line, with chrY from NA24385'
     gtf: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/genes/catLiftOffGenesV1.gtf.gz
-    chr_alt_name_to_canonical:
-      - MT: chrM
+    chr_alt_name_to_canonical: #based on http://hgdownload.soe.ucsc.edu/goldenPath/hs1/hubs/chromAlias.txt
+      - CP068277.2: chr1
+      - CP068268.2: chr10
+      - CP068267.2: chr11
+      - CP068266.2: chr12
+      - CP068265.2: chr13
+      - CP068264.2: chr14
+      - CP068263.2: chr15
+      - CP068262.2: chr16
+      - CP068261.2: chr17
+      - CP068260.2: chr18
+      - CP068259.2: chr19
+      - CP068276.2: chr2
+      - CP068258.2: chr20
+      - CP068257.2: chr21
+      - CP068256.2: chr22
+      - CP068275.2: chr3
+      - CP068274.2: chr4
+      - CP068273.2: chr5
+      - CP068272.2: chr6
+      - CP068271.2: chr7
+      - CP068270.2: chr8
+      - CP068269.2: chr9
+      - CP068254.1: chrM
+      - CP068255.2: chrX
+      - CP086569.2: chrY
     repeats: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.repeatMasker.out.gz
     cytobands: http://t2t.gi.ucsc.edu/chm13/hub/t2t-chm13-v2.0/download/chm13v2.0_cytobands_allchrs.bed.gz
+    cgis: http://hgdownload.soe.ucsc.edu/gbdb/hs1/bbi/cpgIslandExt.bb
     sequence: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.2bit
     fasta: http://hgdownload.cse.ucsc.edu/goldenPath/hs1/bigZips/hs1.fa.gz
     chromsizes: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.chrom.sizes.txt
