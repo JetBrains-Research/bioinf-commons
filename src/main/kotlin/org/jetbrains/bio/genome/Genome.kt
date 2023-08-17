@@ -15,9 +15,11 @@ import java.io.FileInputStream
 import java.io.IOException
 import java.io.UncheckedIOException
 import java.lang.ref.WeakReference
+import java.nio.channels.ClosedByInterruptException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.util.concurrent.CancellationException
 import java.util.zip.GZIPInputStream
 
 /**
@@ -560,10 +562,13 @@ data class Chromosome private constructor(
                         "Chromosome $name length differs in chrom.sizes($length) and 2bit file($twoBitLength)"
                     }
                     TwoBitReader.read(twoBitPath, name)
+                } catch (e: ClosedByInterruptException) {
+                    // Thread requested sequence was interrupted, e.g. in JBR browser while rendering
+                    throw e
                 } catch (e: IOException) {
-                    throw UncheckedIOException(
-                            "Error loading $name from ${genome.twoBitPath(false)}", e
-                    )
+                    val errMsg = "Error loading $name from ${genome.twoBitPath(false)}"
+                    LOG.error(errMsg, e) // Workaround: Cause of 'UncheckedIOException' not seen in stdout console, so add it to message
+                    throw UncheckedIOException("Error loading $name from ${genome.twoBitPath(false)}", e)
                 }
 
                 sequenceRef = WeakReference(s)
@@ -610,6 +615,8 @@ data class Chromosome private constructor(
     override fun toString() = "${genome.build}:$name"
 
     companion object {
+        internal val LOG = LoggerFactory.getLogger(Chromosome::class.java)
+
         /** Use cache to avoid extra sequence loading. */
         private val CACHE = Maps.newConcurrentMap<Pair<Genome, String>, Chromosome>()
 
