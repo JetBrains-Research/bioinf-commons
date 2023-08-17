@@ -140,7 +140,7 @@ object EnrichmentInRegions {
 
             acceptsAll(
                 listOf("l", "loi"),
-                "Loci of interest (loi) file path in TAB separated BED, BED3 or BED4 format. Strand is ignored."
+                "Loci of interest (loi) file path in TAB separated BED, BED3 or BED4 format. Strand is ignored. E.g. loi could be DMRs."
             )
                 .withRequiredArg()
                 .withValuesConvertedBy(PathConverter.bedtoolsValidFile(minBedSpecFields = 3))
@@ -177,7 +177,7 @@ object EnrichmentInRegions {
 
             acceptsAll(
                 listOf("r", "regions"),
-                "Regions *.bed file or folder with *.bed regions files. Strand is ignored."
+                "Regions *.bed file or folder with *.bed regions files. Strand is ignored. E.g. regions could be CGIs."
             )
                 .withRequiredArg()
                 .withValuesConvertedBy(PathConverter.noCheck())
@@ -376,7 +376,7 @@ object EnrichmentInRegions {
         }
     }
 
-    private fun parseLocation(
+    fun parseLocation(
         intersectionFilterStr: String,
         genome: Genome,
         chromSizesPath: Path

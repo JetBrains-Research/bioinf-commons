@@ -1,6 +1,7 @@
 package org.jetbrains.bio
 
 import org.jetbrains.bio.gse.EnrichmentInRegions
+import org.jetbrains.bio.gse.MethylationEnrichmentInRegions
 import org.jetbrains.bio.gse.OverlapRegionsWithEachLoci
 import org.jetbrains.bio.util.Logs
 import org.slf4j.event.Level
@@ -74,13 +75,18 @@ object BioinfToolsCLA {
     ) {
         LOCI_ENRICHMENT_IN_REGIONS(
             "enrichmentInRegions",
-            "Loci of interest enrichment in region sets compared to similar simulated loci.", { args ->
+            "Loci of interest enrichment in region sets compared to similar simulated loci. E.g. loci of interest could be DMRs, and simulated loci could be CGIs.", { args ->
                 EnrichmentInRegions.main(args)
+            }),
+        METHYLATION_ENRICHMENT_IN_REGIONS(
+            "methylationEnrichmentInRegions",
+            "Methylated loci of interest enrichment in region sets compared to similar simulated loci. E.g. loci of interest could be DMRs, and simulated loci could be CGIs.", { args ->
+                MethylationEnrichmentInRegions.main(args)
             }),
 
         OVERLAP_REGIONS_WITH_EACH_LOCI(
             "overlapPerLocus",
-            "For each locus from loci and of regions calculate: overlap(regions, i-th locus location)", { args ->
+            "For each locus from loci and of regions calculate: overlap(regions, i-th locus location). E.g. loci of interest could be DMRs, and simulated loci could be CGIs.", { args ->
                 OverlapRegionsWithEachLoci.main(args)
             });
 
