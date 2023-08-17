@@ -568,7 +568,7 @@ data class Chromosome private constructor(
                 } catch (e: IOException) {
                     val errMsg = "Error loading $name from ${genome.twoBitPath(false)}"
                     LOG.error(errMsg, e) // Workaround: Cause of 'UncheckedIOException' not seen in stdout console, so add it to message
-                    throw UncheckedIOException("Error loading $name from ${genome.twoBitPath(false)}", e)
+                    throw UncheckedIOException("Error loading $name from ${genome.twoBitPath(false)}, caused by ${e.javaClass.canonicalName}: msg=${e.message}", e)
                 }
 
                 sequenceRef = WeakReference(s)
