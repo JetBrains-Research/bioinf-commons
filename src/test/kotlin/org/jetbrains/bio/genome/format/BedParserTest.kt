@@ -1,6 +1,7 @@
 package org.jetbrains.bio.genome.format
 
 import kotlinx.support.jdk7.use
+import org.jetbrains.bio.Tests
 import org.jetbrains.bio.big.BedEntry
 import org.jetbrains.bio.big.BedEntryUnpackException
 import org.jetbrains.bio.big.ExtendedBedEntry
@@ -8,6 +9,7 @@ import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.Strand
+import org.jetbrains.bio.genome.methylome.CytosineContext
 import org.jetbrains.bio.util.*
 import org.junit.Assert.assertArrayEquals
 import org.junit.Rule
@@ -25,9 +27,6 @@ import kotlin.test.assertTrue
  * See format details at https://genome.ucsc.edu/FAQ/FAQformat.html#format1
  */
 class BedParserTest {
-    @get:Rule
-    var expectedEx = ExpectedException.none()
-
     companion object {
         private const val CONTENT_RGB_EXAMPLE_SPACE_INSTEAD_OF_TABS =
             "chr2    127471196  127472363  Pos1  0  +  127471196  127472363  255,0,0\n" +
@@ -233,16 +232,16 @@ class BedParserTest {
                 "chr1 2000 cloneB - 2000 6000 2 0,3601"
 
         withBedFile(content) { path ->
-            expectedEx.expect(IllegalArgumentException::class.java)
             // 1-st line treated as header, so error in 2-nd file line
-            expectedEx.expectMessage(
-                """Source: $path
+            val msg = """Source: $path
 Unknown BED format:
 chr1 2000 cloneB - 2000 6000 2 0,3601
 Fields number in BED file is between 3 and 15, but was 2"""
-            )
-
-            BedFormat.auto(path)
+            Tests.assertThrowsWithMessage(
+                msg, IllegalArgumentException::class.java,
+            ) {
+                BedFormat.auto(path)
+            }
         }
     }
 
@@ -264,14 +263,16 @@ Fields number in BED file is between 3 and 15, but was 2"""
             val autoFormat = BedFormat.auto(path)
             assertEquals(BedFormat.from("bed11+", ' '), autoFormat)
 
-            expectedEx.expect(BedEntryUnpackException::class.java)
-            expectedEx.expectMessage(
-                "Unpacking BED entry failed at field 5. Reason: score value 3.14 is not an integer"
-            )
 
-            autoFormat.parse(path) {
-                it.forEach { entry ->
-                    entry.unpack(autoFormat.fieldsNumber, true, autoFormat.delimiter)
+
+            Tests.assertThrowsWithMessage(
+                "Unpacking BED entry failed at field 5. Reason: score value 3.14 is not an integer",
+                BedEntryUnpackException::class.java,
+            ) {
+                autoFormat.parse(path) {
+                    it.forEach { entry ->
+                        entry.unpack(autoFormat.fieldsNumber, true, autoFormat.delimiter)
+                    }
                 }
             }
         }
