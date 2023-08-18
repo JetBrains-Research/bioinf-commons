@@ -1,6 +1,9 @@
 package org.jetbrains.bio.dataframe
 
+import org.jetbrains.bio.Tests
 import org.jetbrains.bio.genome.Range
+import org.jetbrains.bio.util.checkAccessible
+import org.jetbrains.bio.util.toUri
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -12,36 +15,45 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class BitListTest {
-
-    @get:Rule
-    var expectedEx = ExpectedException.none()
-
     @Test
     fun setIOOB() {
-        expectedEx.expect(IndexOutOfBoundsException::class.java)
-        expectedEx.expectMessage("bitIndex >= size: 10 >= 10")
-        BitList(10).set(10)
+        Tests.assertThrowsWithMessage(
+            "bitIndex >= size: 10 >= 10",
+            IndexOutOfBoundsException::class.java,
+        ) {
+            BitList(10).set(10)
+        }
     }
 
     @Test
     fun setIOOB2() {
-        expectedEx.expect(IndexOutOfBoundsException::class.java)
-        expectedEx.expectMessage("toIndex > size: 0 > 10")
-        BitList(10).set(0, 11, true)
+        Tests.assertThrowsWithMessage(
+            "toIndex > size: 0 > 10",
+            IndexOutOfBoundsException::class.java,
+        ) {
+            BitList(10).set(0, 11, true)
+        }
     }
 
     @Test
     fun clearIOOB() {
-        expectedEx.expect(IndexOutOfBoundsException::class.java)
-        expectedEx.expectMessage("bitIndex >= size: 10 >= 10")
-        BitList(10).clear(10)
+        Tests.assertThrowsWithMessage(
+            "bitIndex >= size: 10 >= 10",
+            IndexOutOfBoundsException::class.java,
+        ) {
+            BitList(10).clear(10)
+        }
+
     }
 
     @Test
     fun clearIOOB2() {
-        expectedEx.expect(IndexOutOfBoundsException::class.java)
-        expectedEx.expectMessage("toIndex > size: 0 > 10")
-        BitList(10).clear(0, 11)
+        Tests.assertThrowsWithMessage(
+            "toIndex > size: 0 > 10",
+            IndexOutOfBoundsException::class.java,
+        ) {
+            BitList(10).clear(0, 11)
+        }
     }
 
 
@@ -123,18 +135,12 @@ class BitListTest {
 
     @Test
     fun toBitterSet() {
+        assertEquals(booleanArrayOf(false, false, true, false, true, true).toBitList(),
+            BitList(6) { it in setOf(2, 4, 5) })
         assertEquals(
-            booleanArrayOf(false, false, true, false, true, true).toBitList(),
-            BitList(6) { it in setOf(2, 4, 5) }
+            booleanArrayOf(false, false, false, false).toBitList(), BitList(4)
         )
-        assertEquals(
-            booleanArrayOf(false, false, false, false).toBitList(),
-            BitList(4)
-        )
-        assertEquals(
-            booleanArrayOf(true, true, true, true, true).toBitList(),
-            BitList(5) { true }
-        )
+        assertEquals(booleanArrayOf(true, true, true, true, true).toBitList(), BitList(5) { true })
     }
 
     @Test
@@ -164,8 +170,7 @@ class AggregateTest(private val expected: List<Range>, private val bits: IntArra
             arrayOf(listOf(Range(1, 4)), intArrayOf(1, 2, 3)),
             arrayOf(listOf(Range(1, 4), Range(5, 7)), intArrayOf(1, 2, 3, 5, 6)),
             arrayOf(
-                listOf(Range(1, 4), Range(5, 7), Range(10, 11), Range(15, 16)),
-                intArrayOf(1, 2, 3, 5, 6, 10, 15)
+                listOf(Range(1, 4), Range(5, 7), Range(10, 11), Range(15, 16)), intArrayOf(1, 2, 3, 5, 6, 10, 15)
             ),
             arrayOf(emptyList<Range>(), intArrayOf()),
             arrayOf(listOf(Range(1, 3), Range(4, 6)), intArrayOf(1, 2, 4, 5))

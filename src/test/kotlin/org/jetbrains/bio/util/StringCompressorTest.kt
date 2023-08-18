@@ -1,16 +1,15 @@
 package org.jetbrains.bio.util
 
+import org.jetbrains.bio.Tests.assertThrowsWithMessage
+import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
+import org.junit.function.ThrowingRunnable
 import org.junit.rules.ExpectedException
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class StringCompressorTest {
-
-    @get:Rule
-    var expectedEx = ExpectedException.none()
-
     @Test
     fun compressDecompressSingleString() {
         val compressor = StringCompressor()
@@ -33,10 +32,16 @@ class StringCompressorTest {
         chunk.compress("foo")
         chunk.finish()
         assertTrue(chunk.finished, "Chunk should be finished after finish() invocation.")
-        expectedEx.expect(IllegalStateException::class.java)
-        expectedEx.expectMessage("finished StringCompressorChunk")
-        chunk.compress("bar")
+
+        assertThrowsWithMessage(
+            "finished StringCompressorChunk",
+            IllegalStateException::class.java,
+            partialMessageMatch = true
+        ) {
+            chunk.compress("bar")
+        }
     }
+
 
     @Test
     fun autoFinishChunk() {
@@ -44,8 +49,13 @@ class StringCompressorTest {
         val longString = "a".repeat(StringCompressorChunk.FLUSH_THRESHOLD)
         chunk.compress(longString)
         assertTrue(chunk.finished, "Chunk should be finished after reaching flush threshold.")
-        expectedEx.expect(IllegalStateException::class.java)
-        expectedEx.expectMessage("finished StringCompressorChunk")
-        chunk.compress("foo")
+
+        assertThrowsWithMessage(
+            "finished StringCompressorChunk",
+            IllegalStateException::class.java,
+            partialMessageMatch = true
+        ) {
+            chunk.compress("foo")
+        }
     }
 }

@@ -1,5 +1,8 @@
 package org.jetbrains.bio.dataframe
 
+import org.jetbrains.bio.Tests
+import org.jetbrains.bio.util.checkAccessible
+import org.jetbrains.bio.util.toUri
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -7,10 +10,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class DataFrameBuilderTest {
-    @Rule
-    @JvmField
-    var thrown = ExpectedException.none()
-
     @Test
     fun testBuilder() {
         val builder = DataFrameSpec()
@@ -55,45 +54,67 @@ class DataFrameBuilderTest {
     @Test
     fun testCheckWrongIntRow() {
         val builder = DataFrameSpec().ints("v").builder()
-        thrown.expect(IllegalArgumentException::class.java)
-        thrown.expectMessage("Wrong type: 0-th arg (column: v) value 1 is expected to be of type Integer")
-        builder.add(1.toLong())
-        builder.build()
+
+        Tests.assertThrowsWithMessage(
+            "Wrong type: 0-th arg (column: v) value 1 is expected to be of type Integer",
+            IllegalArgumentException::class.java,
+        ) {
+            builder.add(1.toLong())
+            builder.build()
+        }
     }
 
     @Test
     fun testCheckWrongLongRow() {
         val builder = DataFrameSpec().longs("v").builder()
-        thrown.expect(IllegalArgumentException::class.java)
-        thrown.expectMessage("Wrong type: 0-th arg (column: v) value 1 is expected to be of type Long")
-        builder.add(1)
-        builder.build()
+
+        Tests.assertThrowsWithMessage(
+            "Wrong type: 0-th arg (column: v) value 1 is expected to be of type Long",
+            IllegalArgumentException::class.java,
+        ) {
+            builder.add(1)
+            builder.build()
+        }
     }
 
     @Test
     fun testCheckWrongByteRow() {
         val builder = DataFrameSpec().bytes("v").builder()
-        thrown.expect(IllegalArgumentException::class.java)
-        thrown.expectMessage("Wrong type: 0-th arg (column: v) value 1 is expected to be of type Byte")
-        builder.add(1)
-        builder.build()
+
+        Tests.assertThrowsWithMessage(
+            "Wrong type: 0-th arg (column: v) value 1 is expected to be of type Byte",
+            IllegalArgumentException::class.java,
+        ) {
+            builder.add(1)
+            builder.build()
+        }
     }
 
     @Test
     fun testCheckWrongDoubleRow() {
         val builder = DataFrameSpec().doubles("v").builder()
-        thrown.expect(IllegalArgumentException::class.java)
-        thrown.expectMessage("is expected to be of type Double")
-        builder.add(1)
-        builder.build()
+
+        Tests.assertThrowsWithMessage(
+            "is expected to be of type Double",
+            IllegalArgumentException::class.java, partialMessageMatch = true
+        ) {
+            builder.add(1)
+            builder.build()
+        }
+
     }
 
     @Test
     fun testCheckWrongStringRow() {
         val builder = DataFrameSpec().strings("v").builder()
-        thrown.expect(IllegalArgumentException::class.java)
-        thrown.expectMessage("Wrong type: 0-th arg (column: v) value 1 is expected to be of type String")
-        builder.add(1)
-        builder.build()
+
+        Tests.assertThrowsWithMessage(
+            "Wrong type: 0-th arg (column: v) value 1 is expected to be of type String",
+            IllegalArgumentException::class.java,
+        ) {
+            builder.add(1)
+            builder.build()
+        }
+
     }
 }

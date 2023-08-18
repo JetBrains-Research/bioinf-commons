@@ -2,11 +2,10 @@ package org.jetbrains.bio.statistics.model
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParseException
+import org.jetbrains.bio.Tests
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.statistics.Preprocessed
-import org.jetbrains.bio.util.bufferedWriter
-import org.jetbrains.bio.util.read
-import org.jetbrains.bio.util.withTempFile
+import org.jetbrains.bio.util.*
 import org.jetbrains.bio.viktor.F64Array
 import org.junit.Before
 import org.junit.Rule
@@ -16,10 +15,6 @@ import java.util.*
 import kotlin.test.assertEquals
 
 class ClassificationModelTest {
-    @Rule
-    @JvmField
-    val thrown: ExpectedException = ExpectedException.none()
-
     @Before
     fun setUp() {
         Boo.VERSION = 222
@@ -57,9 +52,12 @@ class ClassificationModelTest {
             val obj = Boo(1)
             path.bufferedWriter().use { gson.toJson(obj, it) }
 
-            thrown.expect(JsonParseException::class.java)
-            thrown.expectMessage("Deserialization error: Class name (model.class.fqn) is missing.")
-            ClassificationModel.load<Boo>(path)
+            Tests.assertThrowsWithMessage(
+                "Deserialization error: Class name (model.class.fqn) is missing.",
+                JsonParseException::class.java,
+            ) {
+                ClassificationModel.load<Boo>(path)
+            }
         }
     }
 
@@ -89,12 +87,13 @@ class ClassificationModelTest {
             // Change model
             Boo.VERSION = 123
 
-            thrown.expect(JsonParseException::class.java)
-            thrown.expectMessage(
+            Tests.assertThrowsWithMessage(
                 "Deserialization error: Format has changed, " +
-                        "'org.jetbrains.bio.statistics.model.Boo' expects '123' version, but got '222'"
-            )
-            ClassificationModel.load<Boo>(path)
+                        "'org.jetbrains.bio.statistics.model.Boo' expects '123' version, but got '222'",
+                JsonParseException::class.java,
+            ) {
+                ClassificationModel.load<Boo>(path)
+            }
         }
     }
 
@@ -108,13 +107,13 @@ class ClassificationModelTest {
             // Change model
             Boo.VERSION = 666
 
-            thrown.expect(JsonParseException::class.java)
-            thrown.expectMessage(
+            Tests.assertThrowsWithMessage(
                 "Deserialization error: Format has changed, " +
-                        "'org.jetbrains.bio.statistics.model.Boo' expects '666' version, but got '222'"
-            )
-
-            ClassificationModel.load<Boo>(path)
+                        "'org.jetbrains.bio.statistics.model.Boo' expects '666' version, but got '222'",
+                JsonParseException::class.java,
+            ) {
+                ClassificationModel.load<Boo>(path)
+            }
         }
     }
 }

@@ -1,5 +1,7 @@
 package org.jetbrains.bio
 
+import org.junit.Assert
+import org.junit.function.ThrowingRunnable
 import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -70,4 +72,30 @@ object Tests {
         }
     }
 
+
+    /**
+     * Asserts that a specific exception is thrown with a specific message. Standard `Assertions.assertThrows()`
+     * checks message only when expectedThrowable is different, this method validates message always
+     *
+     * @param message The expected message of the exception.
+     * @param expectedThrowable The expected type of the exception.
+     * @param partialMessageMatch Indicates whether the full message should match partially or exactly (default: false).
+     * @param runnable The code block to be tested.
+     * @throws AssertionFailedError if the expected exception is not thrown or the message does not match.
+     */
+    fun <T: Throwable> assertThrowsWithMessage(
+        message: String, expectedThrowable: Class<T>,
+        partialMessageMatch: Boolean = false,
+        runnable: ThrowingRunnable
+    ) {
+        val e = Assert.assertThrows(message, expectedThrowable, runnable)
+        if (partialMessageMatch) {
+            assertTrue(
+                e.message?.contains(message) ?: false,
+                message="Actual message is: <${e.message}>, expected fragment not found: <$message>"
+            )
+        } else {
+            assertEquals(message, e.message)
+        }
+    }
 }

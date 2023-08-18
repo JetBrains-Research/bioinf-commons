@@ -1,5 +1,6 @@
 package org.jetbrains.bio.util
 
+import org.jetbrains.bio.Tests
 import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
@@ -16,8 +17,6 @@ import kotlin.test.assertTrue
  * @author Roman.Chernyatchik
  */
 class URIExtensionsTest {
-    @get:Rule
-    var expectedEx = ExpectedException.none()
 
     @Test
     fun isFile() {
@@ -83,9 +82,12 @@ class URIExtensionsTest {
     fun toPathForNonFileUrl() {
         val url = "http://www.encodeproject.org/files/@@download/foo.bigWig"
 
-        expectedEx.expect(IllegalArgumentException::class.java)
-        expectedEx.expectMessage("Cannot convert URL to path: $url")
-        URI.create(url).toPath()
+        Tests.assertThrowsWithMessage(
+            "Cannot convert URL to path: $url",
+            IllegalArgumentException::class.java,
+        ) {
+            URI.create(url).toPath()
+        }
     }
 
     @Test
@@ -215,10 +217,14 @@ class URIExtensionsTest {
     fun toURIMalFormedPathWindows() {
         Assume.assumeTrue(isWindows())
 
-        expectedEx.expect(IllegalArgumentException::class.java)
-        expectedEx.expectMessage("Illegal character in path at index 10: file:///C:\\mnt\\stripe\\foo.bw")
+        Tests.assertThrowsWithMessage(
+            "Illegal character in path at index 10: file:///C:\\mnt\\stripe\\foo.bw",
+            IllegalArgumentException::class.java,
+        ) {
+            "file:///C:\\mnt\\stripe\\foo.bw".toUri()
+        }
 
-        "file:///C:\\mnt\\stripe\\foo.bw".toUri()
+
     }
 
     @Test
@@ -240,10 +246,12 @@ class URIExtensionsTest {
         withTempFile("foo", "boo") { path ->
             path.deleteIfExists()
 
-            expectedEx.expect(IllegalStateException::class.java)
-            expectedEx.expectMessage("Track file doesn't exist: $path")
-
-            path.toUri().checkAccessible()
+            Tests.assertThrowsWithMessage(
+                "Track file doesn't exist: $path",
+                IllegalStateException::class.java,
+            ) {
+                path.toUri().checkAccessible()
+            }
         }
     }
 
@@ -257,10 +265,13 @@ class URIExtensionsTest {
 
     @Test
     fun checkAccessibleURI() {
-        expectedEx.expect(IllegalStateException::class.java)
-        expectedEx.expectMessage("URL not supported: foo://boo")
+        Tests.assertThrowsWithMessage(
+            "URL not supported: foo://boo",
+            IllegalStateException::class.java,
+        ) {
+            "foo://boo".toUri().checkAccessible()
+        }
 
-        "foo://boo".toUri().checkAccessible()
     }
 
     @Test
