@@ -130,19 +130,6 @@ class RegionShuffleStats(
                 sampleRegions(simulationsInChunk, intersectionFilter, sourceLoci, bgLociList, parallelismLevel())
 
 
-            // TODO: maybe roll back, issue was other.
-//            val sampledRegions: List<LocationsList<out RangesList>> =
-//                sampleRegions(srcRegionsPath, simulationsInChunk).let { result ->
-//                    if (intersectionFilter == null) {
-//                        result
-//                    } else {
-//                        result.map { ll ->
-//                            val filtered = ll.intersectRanges(intersectionFilter)
-//                            LocationsMergingList.create(filtered.genomeQuery, filtered.locationIterator())
-//                        }
-//                    }
-//                }
-
             /*
             // XXX: optional save sampledRegions (flatmap)
             val dumpSampledLoci = false
