@@ -9,18 +9,14 @@ import org.jetbrains.bio.experiment.Configuration
 import org.jetbrains.bio.genome.format.TwoBitReader
 import org.jetbrains.bio.genome.format.TwoBitSequence
 import org.jetbrains.bio.genome.format.TwoBitWriter
+import org.jetbrains.bio.genome.format.writeAsFasta
 import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
-import java.io.FileInputStream
 import java.io.IOException
 import java.io.UncheckedIOException
 import java.lang.ref.WeakReference
 import java.nio.channels.ClosedByInterruptException
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
-import java.util.concurrent.CancellationException
-import java.util.zip.GZIPInputStream
 
 /**
  * The genome.
@@ -97,37 +93,11 @@ class Genome private constructor(
             }
 
 
-    fun fastaPath(downloadIfMissing: Boolean = true) =
+    fun fastaPath(generateIfNeeded: Boolean = true) =
             ensureNotNull(fastaPath, "Genome *.fa Sequence").also { fastaPath ->
-                if (downloadIfMissing) {
+                if (generateIfNeeded) {
                     fastaPath.checkOrRecalculate { output ->
-                        val config = annotationsConfig
-                        requireNotNull(config) {
-                            "Cannot save Fasta file to $fastaPath"
-                        }
-                        ensureNotNull(config.fastaUrl, "This genome does not have provided fasta file")
-                        val sUrl = config.fastaUrl!!
-                        val suffixCompressed =
-                                listOf(".fa.gz", ".fasta.gz").firstOrNull { sUrl.endsWith(it) }
-                        val suffix =
-                                listOf(".fa", ".fasta").firstOrNull { sUrl.endsWith(it) }
-                        
-                        if (suffixCompressed != null) {
-                            val faPath = "${output.path}.gz".toPath()
-                            try {
-                                sUrl.downloadTo(faPath)
-                                GZIPInputStream(FileInputStream(faPath.toFile())).use {
-                                    Files.copy(it, output.path, StandardCopyOption.REPLACE_EXISTING)
-                                }
-                            } finally {
-                                if (faPath.exists) {
-                                    faPath.delete()
-                                }
-                            }
-                        } else {
-                            requireNotNull(suffix) { "Given genome does not have correct url: $sUrl" }
-                            sUrl.downloadTo(output.path)
-                        }
+                        writeAsFasta(output.path)
                     }
                 }
             }
