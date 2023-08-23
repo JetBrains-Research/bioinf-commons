@@ -144,7 +144,7 @@ class GenomeStrandMap<T> internal constructor(
     }
 
     fun contains(chromosome: Chromosome, strand: Strand) =
-        chromosome.genome.build == genomeQuery.build && chromosome.name to strand in data.keys
+        (chromosome.genome.build == genomeQuery.build) && (chromosome.name to strand in data.keys)
 
     override operator fun get(chromosome: Chromosome, strand: Strand): T {
         if (!contains(chromosome, strand)) {
