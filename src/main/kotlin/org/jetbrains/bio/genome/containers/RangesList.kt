@@ -66,6 +66,13 @@ abstract class BaseRangesList(
         require(startOffsets.size() == endOffsets.size())
     }
 
+    operator fun get(idx: Int): Range {
+        require(idx >= 0 && idx < size) {
+            "Index=$idx is out of range: [0..$size)"
+        }
+        return Range(startOffsets[idx], endOffsets[idx])
+    }
+
     override fun overlapRanges(other: RangesList, flankBothSides: Int): List<Range> {
         require(flankBothSides >= 0) { "Expected to be non-negative, but was $flankBothSides" }
 

@@ -8,6 +8,72 @@ import kotlin.test.assertTrue
 
 class RangesSortedListTest {
     @Test
+    fun overlapRegionWithDuplicatedStarts() {
+        val rl1 = rangeSortedList(
+            Range(10, 11),
+            Range(10, 12),
+            Range(10, 13),
+            Range(10, 14),
+            Range(10, 30),
+            Range(15, 30),
+            Range(40, 50),
+        )
+        assertTrue(rl1.overlapRanges(9, 11))
+        assertTrue(rl1.overlapRanges(10, 16))
+        assertTrue(rl1.overlapRanges(14, 15))
+        assertTrue(rl1.overlapRanges(15, 16))
+        assertTrue(rl1.overlapRanges(29, 30))
+        assertFalse(rl1.overlapRanges(30, 31))
+    }
+    @Test
+    fun includesRegionWithDuplicatedStarts() {
+        val rl1 = rangeSortedList(
+            Range(10, 11),
+            Range(10, 12),
+            Range(10, 13),
+            Range(10, 14),
+            Range(10, 30),
+            Range(15, 30),
+            Range(40, 50),
+        )
+        assertTrue(rl1.includesRange(10, 16))
+    }
+
+
+    @Test
+    fun lookup() {
+        val data = listOf(
+            Range(1, 2),
+            Range(4, 6),
+            Range(4, 9),
+            Range(4, 7),
+            Range(4, 10),
+            Range(6, 10),
+            Range(20, 30),
+            Range(40, 51),
+            Range(40, 50),
+            Range(40, 52),
+            Range(40, 53),
+        ).toRangeSortedList()
+
+        checkLookup(data,-1, null, 0)
+        checkLookup(data,0, Range(1, 2), 1)
+        checkLookup(data,0, Range(1, 2), 3)
+        checkLookup(data,1, Range(4, 6), 5)
+        checkLookup(data, 5, Range(6, 10), 10)
+        checkLookup(data,6, Range(20, 30), 30)
+        checkLookup(data,6, Range(20, 30), 35)
+        checkLookup(data,7, Range(40, 50), 100)
+    }
+
+    fun checkLookup(data: RangesSortedList, expectedIdx: Int, expectedRange: Range?, startOffset: Int) {
+        val actualIdx = data.internalLookupLeft(startOffset)
+        assertEquals(expectedIdx, actualIdx, message = "Start offset '$startOffset' expected at idx=$expectedIdx (range=$expectedRange), actual=$actualIdx (range=${
+            if (actualIdx == -1) null else data[actualIdx]
+        })")
+    }
+
+    @Test
     fun overlapRegion() {
         assertFalse(rangeSortedList().overlapRanges(7, 12))
 
