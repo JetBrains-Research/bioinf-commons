@@ -161,7 +161,7 @@ class SingleEndCoverage private constructor(
                 }
             } else {
                 val covTypeByte = npzReader[Coverage.COV_TYPE_FIELD].asIntArray().single()
-                check(covTypeByte == Coverage.CoverageType.BASEPAIR.ordinal) {
+                check(covTypeByte == Coverage.CoverageType.SINGLE_END_CHIPSEQ.ordinal) {
                     "$path attempting to read other coverage (type=$covTypeByte) cache file"
                 }
             }
