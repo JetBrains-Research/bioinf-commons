@@ -288,7 +288,7 @@ class Genome private constructor(
                         TEST_ORGANISM_BUILD -> GenomeAnnotationsConfig(
                                 "Test Organism", TEST_ORGANISM_BUILD, listOf("to1"),
                                 "test", "<n/a>", emptyMap(), false,
-                                "<n/a>", "<n/a>", "<n/a>", "<n/a>", "<n/a>", "<n/a>",
+                            "<n/a>", "<n/a>", "<n/a>", "<n/a>", "<n/a>",
                                 null, "<n/a>", null
                         )
 
