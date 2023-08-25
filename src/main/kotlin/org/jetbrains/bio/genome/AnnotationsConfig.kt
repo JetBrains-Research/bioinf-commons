@@ -42,7 +42,6 @@ data class GenomeAnnotationsConfig(
     val chrAltName2CanonicalMapping: Map<String, String>,
     val ucscAnnLegacyFormat: Boolean,
     val sequenceUrl: String,
-    val fastaUrl: String?,
     val chromsizesUrl: String,
     val repeatsUrl: String?,
     val cytobandsUrl: String?,
@@ -53,7 +52,7 @@ data class GenomeAnnotationsConfig(
 )
 
 object AnnotationsConfigLoader {
-    const val VERSION: Int = 5 // XXX: Keep it in sync with annotations.yaml 'version' field
+    const val VERSION: Int = 6 // XXX: Keep it in sync with annotations.yaml 'version' field
     private val LOG = LoggerFactory.getLogger(AnnotationsConfigLoader::class.java)
 
     private var pathAndConfig: Pair<Path, Map<String, GenomeAnnotationsConfig>>? = null
@@ -214,7 +213,6 @@ object AnnotationsConfigLoader {
     private const val GTF_FIELD = "gtf"
     private const val UCSC_ANNOTATIONS_LEGACY_FIELD = "ucsc_annotations_legacy"
     private const val SEQUENCE_FIELD = "sequence"
-    private const val FASTA_FIELD = "fasta"
     private const val CHROMSIZES_FIELD = "chromsizes"
     private const val REPEATS_FIELD = "repeats"
     private const val CYTOBANDS_FIELD = "cytobands"
@@ -267,7 +265,6 @@ object AnnotationsConfigLoader {
                 chrAltName2CanonicalMapping,
                 deserializedMap[UCSC_ANNOTATIONS_LEGACY_FIELD]?.toString()?.toBoolean() ?: false,
                 deserializedMap[SEQUENCE_FIELD] as String,
-                deserializedMap[FASTA_FIELD] as String?,
                 deserializedMap[CHROMSIZES_FIELD] as String,
                 deserializedMap[REPEATS_FIELD] as String?,
                 deserializedMap[CYTOBANDS_FIELD] as String?,
@@ -313,10 +310,6 @@ object AnnotationsConfigLoader {
         }
         if (genomeAnnotationsConfig.cytobandsUrl != null) {
             result[CYTOBANDS_FIELD] = genomeAnnotationsConfig.cytobandsUrl
-        }
-
-        if (genomeAnnotationsConfig.fastaUrl != null) {
-            result[FASTA_FIELD] = genomeAnnotationsConfig.fastaUrl
         }
         if (genomeAnnotationsConfig.centromeresUrl != null) {
             result[CENTROMERES_FIELD] = genomeAnnotationsConfig.centromeresUrl

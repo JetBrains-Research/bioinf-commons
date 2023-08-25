@@ -78,9 +78,9 @@ fun Iterable<FastaRecord>.write(path: Path, width: Int = 80) {
             writer.write('\n')
 
             val length = it.sequence.length
-            for (i in 0 until length) {
-                writer.write(it.sequence[i].code)
-                if (i % width == 0 && i > 0 && i < length - 1) {
+            for (i in 1 .. length) {
+                writer.write(it.sequence[i - 1].code)
+                if (i % width == 0 && i < length) {
                     writer.write('\n')
                 }
             }
