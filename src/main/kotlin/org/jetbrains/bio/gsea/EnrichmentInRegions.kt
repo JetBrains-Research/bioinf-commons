@@ -1,4 +1,4 @@
-package org.jetbrains.bio.gse
+package org.jetbrains.bio.gsea
 
 import joptsimple.OptionParser
 import org.jetbrains.bio.BioinfToolsCLA
@@ -24,7 +24,7 @@ object EnrichmentInRegions {
     private val LOG = LoggerFactory.getLogger(EnrichmentInRegions::class.java)
 
     fun doCalculations(
-        loiPath: Path,
+        lociPath: Path,
         backGroundRegions: Path?,
         addLoiToBg: Boolean,
         regionsPath: Path,
@@ -65,12 +65,12 @@ object EnrichmentInRegions {
             "No regions files passed file suffix filter."
         }
 
-        RegionShuffleStats(
+        RegionShuffleStatsFromBedCoverage(
             genome,
             simulationsNumber, chunkSize,
             maxRetries
         ).calcStatistics(
-            loiPath, backGroundRegions,
+            lociPath, backGroundRegions,
             regionsAndRanges,
             detailedReportFolder,
             metric = metric,
@@ -80,7 +80,8 @@ object EnrichmentInRegions {
             intersectionFilter = regionsToTestFilter,
             genomeMaskedLociPath = genomeMaskedLociPath,
             genomeAllowedLociPath = genomeAllowedLociPath,
-            addLoiToBg = addLoiToBg
+            addLoiToBg = addLoiToBg,
+            samplingWithReplacement = false
         ).save(reportPath)
 
         LOG.info("Report saved to: $reportPath")

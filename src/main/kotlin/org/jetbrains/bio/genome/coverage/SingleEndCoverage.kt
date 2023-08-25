@@ -17,7 +17,7 @@ import java.io.IOException
 import java.nio.file.Path
 
 /**
- * The container maintains a sorted list of tag offsets for each chromosome and strand.
+ * The container maintains a sorted list of tag offsets for each chromosome and strand for ChIP-Seq data.
  * Immutable. Saves data in [NpzFile] format.
  *
  * [detectedFragment] is estimated from the data using cross-correlation and saved
@@ -66,7 +66,7 @@ class SingleEndCoverage private constructor(
     fun save(outputPath: Path) {
         NpzFile.write(outputPath).use { writer ->
             writer.write(Coverage.VERSION_FIELD, intArrayOf(Coverage.VERSION))
-            writer.write(Coverage.PAIRED_FIELD, booleanArrayOf(false))
+            writer.write(Coverage.COV_TYPE_FIELD, intArrayOf(Coverage.CoverageType.SINGLE_END_CHIPSEQ.ordinal))
             writer.write(FRAGMENT_FIELD, intArrayOf(detectedFragment))
 
             for (chromosome in genomeQuery.get()) {
@@ -154,9 +154,18 @@ class SingleEndCoverage private constructor(
             genomeQuery: GenomeQuery,
             failOnMissingChromosomes: Boolean
         ): SingleEndCoverage {
-            check(!npzReader[Coverage.PAIRED_FIELD].asBooleanArray().single()) {
-                "$path attempting to read single-end coverage from paired-end cache file"
+            if (npzReader[Coverage.VERSION_FIELD].asIntArray().single() == 4) {
+                // legacy support
+                check(!npzReader["paired"].asBooleanArray().single()) {
+                    "$path attempting to read single-end coverage from paired-end cache file"
+                }
+            } else {
+                val covTypeByte = npzReader[Coverage.COV_TYPE_FIELD].asIntArray().single()
+                check(covTypeByte == Coverage.CoverageType.BASEPAIR.ordinal) {
+                    "$path attempting to read other coverage (type=$covTypeByte) cache file"
+                }
             }
+
             val detectedFragment = npzReader[FRAGMENT_FIELD].asIntArray().single()
             val data: GenomeStrandMap<TIntList> = genomeStrandMap(genomeQuery) { _, _ ->
                 TIntArrayList()

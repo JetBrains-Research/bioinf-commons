@@ -17,7 +17,7 @@ import java.io.IOException
 import java.nio.file.Path
 
 /**
- * The container stores paired-end coverage information.
+ * The container stores paired-end coverage information for ChIP-Seq data.
  * Immutable. Saves data in [NpzFile] format.
  *
  * For paired-end coverage, we don't need any fragment size or shift information.
@@ -64,7 +64,7 @@ class PairedEndCoverage private constructor(
     fun save(outputPath: Path) {
         NpzFile.write(outputPath).use { writer ->
             writer.write(Coverage.VERSION_FIELD, intArrayOf(Coverage.VERSION))
-            writer.write(Coverage.PAIRED_FIELD, booleanArrayOf(true))
+            writer.write(Coverage.COV_TYPE_FIELD, intArrayOf(Coverage.CoverageType.PAIRED_END_CHIPSEQ.ordinal))
             writer.write(PAIRED_VERSION_FIELD, intArrayOf(PAIRED_VERSION))
             writer.write(AVERAGE_FRAGMENT_SIZE_FIELD, intArrayOf(averageFragmentSize))
 
@@ -161,9 +161,18 @@ class PairedEndCoverage private constructor(
             genomeQuery: GenomeQuery,
             failOnMissingChromosomes: Boolean
         ): PairedEndCoverage {
-            check(npzReader[Coverage.PAIRED_FIELD].asBooleanArray().single()) {
-                "$path attempting to read paired-end coverage from single-end cache file"
+            if (npzReader[Coverage.VERSION_FIELD].asIntArray().single() == 4) {
+                // legacy support
+                check(npzReader["paired"].asBooleanArray().single()) {
+                    "$path attempting to read paired-end coverage from single-end cache file"
+                }
+            } else {
+                val covTypeByte = npzReader[Coverage.COV_TYPE_FIELD].asIntArray().single()
+                check(covTypeByte == Coverage.CoverageType.BASEPAIR.ordinal) {
+                    "$path attempting to read other coverage (type=$covTypeByte) cache file"
+                }
             }
+
             try {
                 val version = npzReader[PAIRED_VERSION_FIELD].asIntArray().single()
                 check(version == PAIRED_VERSION) {

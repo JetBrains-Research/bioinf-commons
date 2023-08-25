@@ -19,7 +19,6 @@ import java.nio.channels.ClosedByInterruptException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.concurrent.CancellationException
 import java.util.zip.GZIPInputStream
 
 /**
@@ -623,7 +622,7 @@ data class Chromosome private constructor(
         /** Constructs a chromosome from a human-readable name, e.g. "chrM". */
         operator fun invoke(genome: Genome, name: String): Chromosome {
             check(name in genome.chromosomeNamesMap) {
-                "unknown chromosome $name for genome ${genome.presentableName()}"
+                "Unknown chromosome '$name' for genome ${genome.presentableName()}"
             }
             val canonicalName = genome.chromosomeNamesMap[name]!!.name
             val length = genome.chromSizesMap[canonicalName]!!

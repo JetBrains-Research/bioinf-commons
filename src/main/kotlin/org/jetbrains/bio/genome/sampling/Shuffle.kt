@@ -16,13 +16,15 @@ import java.util.concurrent.ThreadLocalRandom
  * @param regions regions to shuffle. Only length of regions are used.
  * @param background background regions, if null shuffle from whole genome.
  * @param maxRetries number of attempts to generate regions satisfying all conditions.
+ * @param withReplacement If true then resulted regions could intersect.
  */
 
 fun shuffleChromosomeRanges(
     genomeQuery: GenomeQuery,
     regions: List<ChromosomeRange>,
     background: List<ChromosomeRange>? = null,
-    maxRetries: Int = 100
+    maxRetries: Int = 100,
+    withReplacement: Boolean
 ): List<ChromosomeRange> {
     val lengths = regions.map { it.length() }.toIntArray()
 
@@ -40,7 +42,7 @@ fun shuffleChromosomeRanges(
     }
 
     for (i in 1..maxRetries) {
-        val result = tryShuffle(genomeQuery, backgroundRegions, lengths, prefixSum, maxRetries)
+        val result = tryShuffle(genomeQuery, backgroundRegions, lengths, prefixSum, maxRetries, withReplacement)
         if (result != null) {
             return result
         }
@@ -48,7 +50,7 @@ fun shuffleChromosomeRanges(
     throw RuntimeException("Too many shuffle attempts")
 }
 
-private fun hasIntersection(regionsMap: GenomeMap<MutableList<Range>>, chromosomeRange: ChromosomeRange): Boolean {
+fun hasIntersection(regionsMap: GenomeMap<MutableList<Range>>, chromosomeRange: ChromosomeRange): Boolean {
     val list = regionsMap[chromosomeRange.chromosome]
     val range = chromosomeRange.toRange()
     for (r in list) {
@@ -64,10 +66,15 @@ private fun tryShuffle(
     background: List<ChromosomeRange>,
     lengths: IntArray,
     prefixSum: LongArray,
-    maximalReTries: Int = 100
+    maximalReTries: Int = 100,
+    withReplacement: Boolean
 ): List<ChromosomeRange>? {
-    val maskedGenomeMap = genomeMap<MutableList<Range>>(genomeQuery) {
-        ArrayList()
+    val maskedGenomeMap = when {
+        withReplacement -> null
+        // mask positions already used for sampled loci:
+        else -> genomeMap<MutableList<Range>>(genomeQuery) {
+            ArrayList()
+        }
     }
     val result = ArrayList<ChromosomeRange>(lengths.size)
 
@@ -95,10 +102,21 @@ private fun tryShuffle(
             val startOffset = (l.startOffset + offset).toInt()
 
             val candidate = ChromosomeRange(startOffset, startOffset + lengths[i], l.chromosome)
-            if (candidate.endOffset <= candidate.chromosome.length && !hasIntersection(maskedGenomeMap, candidate)) {
-                // success
-                nextRange = candidate
-                break
+
+            if (candidate.endOffset <= candidate.chromosome.length) {
+                val isCandidateValid = if (withReplacement) {
+                    // N/A
+                    true
+                } else {
+                    // Doesn't intersect already seen regions
+                    !hasIntersection(maskedGenomeMap!!, candidate)
+                }
+
+                if (isCandidateValid) {
+                    // success
+                    nextRange = candidate
+                    break
+                }
             }
             // else retry
         }
@@ -107,7 +125,9 @@ private fun tryShuffle(
             // Cannot sample next range in given attempts number
             return null
         }
-        maskedGenomeMap[nextRange.chromosome].add(nextRange.toRange())
+        if (!withReplacement) {
+            maskedGenomeMap!![nextRange.chromosome].add(nextRange.toRange())
+        }
         result.add(nextRange)
     }
 

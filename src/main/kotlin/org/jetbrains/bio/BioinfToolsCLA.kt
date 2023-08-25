@@ -1,8 +1,8 @@
 package org.jetbrains.bio
 
-import org.jetbrains.bio.gse.EnrichmentInRegions
-import org.jetbrains.bio.gse.MethylationEnrichmentInRegions
-import org.jetbrains.bio.gse.OverlapRegionsWithEachLoci
+import org.jetbrains.bio.gsea.EnrichmentInRegions
+import org.jetbrains.bio.gsea.MethylationEnrichmentInRegions
+import org.jetbrains.bio.gsea.OverlapRegionsWithEachLoci
 import org.jetbrains.bio.util.Logs
 import org.slf4j.event.Level
 

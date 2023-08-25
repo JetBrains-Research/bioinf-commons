@@ -13,7 +13,7 @@ import java.nio.file.Path
 
 /**
  * [Coverage] allows to query the tags coverage of a given genomic [Location].
- * Currently, it has two implementations: [SingleEndCoverage] and [PairedEndCoverage].
+ * Currently, it has two implementations: [SingleEndCoverage], [PairedEndCoverage], [BasePairCoverage].
  */
 interface Coverage {
 
@@ -34,15 +34,20 @@ interface Coverage {
 
     val depth: Long
 
+    enum class CoverageType {
+        SINGLE_END_CHIPSEQ,
+        PAIRED_END_CHIPSEQ,
+        BASEPAIR,
+    }
     companion object {
 
         /**
          * Binary storage format version. Loader will throw an [IOException]
          * if it doesn't match.
          */
-        const val VERSION = 4
+        const val VERSION = 5
         const val VERSION_FIELD = "version"
-        const val PAIRED_FIELD = "paired"
+        const val COV_TYPE_FIELD = "coverage_type"
 
         @Throws(IOException::class)
         fun load(
@@ -53,16 +58,25 @@ interface Coverage {
         ): Coverage {
             return NpzFile.read(inputPath).use { reader ->
                 val version = reader[VERSION_FIELD].asIntArray().single()
-                check(version == VERSION) {
-                    "$inputPath coverage version is $version instead of $VERSION"
+                val coverageType = if (version == 4 ) {
+                    val paired = reader["paired"].asBooleanArray().single()
+                    if (paired) CoverageType.PAIRED_END_CHIPSEQ else CoverageType.SINGLE_END_CHIPSEQ
+                } else {
+                    check(version == VERSION) {
+                        "$inputPath coverage version is $version instead of $VERSION"
+                    }
+
+                    val covTypeByte = reader[COV_TYPE_FIELD].asIntArray().single()
+                    require(covTypeByte >= 0)
+                    require(covTypeByte < CoverageType.values().size)
+                    CoverageType.values()[covTypeByte]
                 }
 
-                val paired = reader[PAIRED_FIELD].asBooleanArray().single()
-                if (paired) {
-                    PairedEndCoverage.load(reader, inputPath, genomeQuery, failOnMissingChromosomes)
-                } else {
-                    SingleEndCoverage.load(reader, inputPath, genomeQuery, failOnMissingChromosomes)
+                when (coverageType) {
+                    CoverageType.SINGLE_END_CHIPSEQ -> SingleEndCoverage.load(reader, inputPath, genomeQuery, failOnMissingChromosomes)
                         .withFragment(fragment)
+                    CoverageType.PAIRED_END_CHIPSEQ -> PairedEndCoverage.load(reader, inputPath, genomeQuery, failOnMissingChromosomes)
+                    CoverageType.BASEPAIR -> BasePairCoverage.load(reader, inputPath, genomeQuery, failOnMissingChromosomes)
                 }
             }
         }

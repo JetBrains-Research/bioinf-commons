@@ -45,7 +45,7 @@ class ShuffleTest {
             ChromosomeRange(2000, 3000, chromosomes[2])
         )
 
-        val shuffled = shuffleChromosomeRanges(genomeQuery, regions, background)
+        val shuffled = shuffleChromosomeRanges(genomeQuery, regions, background, withReplacement = false)
 
         checkShuffled(regions, shuffled)
         for (r in shuffled) {
@@ -59,6 +59,36 @@ class ShuffleTest {
         }
     }
 
+    @Test
+    fun shuffleRegionsWithBackgroudWithReplacement() {
+        val regions = listOf(
+            ChromosomeRange(0, 100, chromosomes[0]),
+            ChromosomeRange(0, 200, chromosomes[1]),
+            ChromosomeRange(0, 300, chromosomes[2])
+        )
+
+        val background = listOf(
+            ChromosomeRange(100, 300, chromosomes[0]),
+            ChromosomeRange(1000, 2000, chromosomes[1]),
+            ChromosomeRange(2000, 3000, chromosomes[2])
+        )
+
+        val shuffled = shuffleChromosomeRanges(genomeQuery, regions, background, withReplacement = true)
+
+        val l1 = regions.map { it.length() }.sorted().toList()
+        val l2 = shuffled.map { it.length() }.sorted().toList()
+        assertEquals(l1, l2, "Shuffled regions must have same length set")
+
+        for (r in shuffled) {
+            var inBackground = false
+            for (b in background) {
+                if (r.chromosome == b.chromosome && r.startOffset in b.toRange()) {
+                    inBackground = true
+                }
+            }
+            assertTrue(inBackground, "All region start must be in backgroud.")
+        }
+    }
 
     @Test
     fun shuffleRegions() {
@@ -68,7 +98,19 @@ class ShuffleTest {
             ChromosomeRange(0, 300, chromosomes[2])
         )
 
-        val shuffled = shuffleChromosomeRanges(genomeQuery, regions)
+        val shuffled = shuffleChromosomeRanges(genomeQuery, regions, withReplacement = false)
+        checkShuffled(regions, shuffled)
+    }
+
+    @Test
+    fun shuffleRegionsWithReplacement() {
+        val regions = listOf(
+            ChromosomeRange(0, 100, chromosomes[0]),
+            ChromosomeRange(0, 200, chromosomes[1]),
+            ChromosomeRange(0, 300, chromosomes[2])
+        )
+
+        val shuffled = shuffleChromosomeRanges(genomeQuery, regions, withReplacement = true)
         checkShuffled(regions, shuffled)
     }
 
