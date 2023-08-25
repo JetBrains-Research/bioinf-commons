@@ -20,30 +20,30 @@ class RegionShuffleStatsFromBedCoverage(
     maxRetries: Int
 ) : RegionShuffleStats(genome, simulationsNumber, chunkSize, maxRetries) {
     override fun calcStatistics(
-        srcRegionsPath: Path,
+        inputRegionsPath: Path,
         backgroundPath: Path?,
-        regionLabelAndLociToTest: List<Pair<String, LocationsList<out RangesList>>>,
+        loiLabel2RangesList: List<Pair<String, LocationsList<out RangesList>>>,
         outputFolderPath: Path?,
         metric: RegionsMetric,
         hypAlt: PermutationAltHypothesis,
-        aSetIsLoi: Boolean,
+        aSetIsRegions: Boolean,
         mergeOverlapped: Boolean,
         intersectionFilter: LocationsList<out RangesList>?,
-        genomeMaskedLociPath: Path?,
-        genomeAllowedLociPath: Path?,
-        addLoiToBg: Boolean,
+        genomeMaskedAreaPath: Path?,
+        genomeAllowedAreaPath: Path?,
+        mergeRegionsToBg: Boolean,
         samplingWithReplacement: Boolean
     ) = doCalcStatistics(
-        regionLabelAndLociToTest,
+        loiLabel2RangesList,
         outputFolderPath,
         metric,
         hypAlt,
-        aSetIsLoi,
+        aSetIsRegions,
         mergeOverlapped,
         intersectionFilter,
-        srcLociAndBackgroundProvider = { gq ->
-            loadSrcLociAndBedLikeBackground(
-                srcRegionsPath, backgroundPath, addLoiToBg, genomeMaskedLociPath, genomeAllowedLociPath, gq
+        inputRegionsAndBackgroundProvider = { gq ->
+            loadInputRegionsAndBedLikeBackground(
+                inputRegionsPath, backgroundPath, mergeRegionsToBg, genomeMaskedAreaPath, genomeAllowedAreaPath, gq
             )
         },
         samplingFun = { gq, regions, background, maxRetries, withReplacement ->
@@ -57,21 +57,22 @@ class RegionShuffleStatsFromBedCoverage(
         }
     )
 
-    private fun loadSrcLociAndBedLikeBackground(
-        srcRegionsPath: Path, backgroundRegionsPath: Path?,
-        addLoiToBg: Boolean,
-        genomeMaskedLociPath: Path?,
-        genomeAllowedLociPath: Path?,
+    private fun loadInputRegionsAndBedLikeBackground(
+        inputRegionsPath: Path,
+        backgroundRegionsPath: Path?,
+        mergeRegionsToBg: Boolean,
+        genomeMaskedAreaPath: Path?,
+        genomeAllowedAreaPath: Path?,
         gq: GenomeQuery
     ): Pair<List<Location>, LocationsMergingList> {
-        val sourceLoci = readLocationsIgnoringStrand(srcRegionsPath, gq)
-        LOG.info("Source loci: ${sourceLoci.size} regions")
+        val inputRegions = readLocationsIgnoringStrand(inputRegionsPath, gq)
+        LOG.info("Input regions: ${inputRegions.size.formatLongNumber()} regions")
 
-        val bgLoci = if (backgroundRegionsPath != null) {
+        val bgRegions = if (backgroundRegionsPath != null) {
             val bgLocations = readLocationsIgnoringStrand(backgroundRegionsPath, gq).toMutableList()
-            if (addLoiToBg) {
+            if (mergeRegionsToBg) {
                 // merge source loci into background
-                bgLocations.addAll(sourceLoci)
+                bgLocations.addAll(inputRegions)
             }
             val bgLoci = LocationsMergingList.create(
                 gq,
@@ -79,10 +80,10 @@ class RegionShuffleStatsFromBedCoverage(
             )
             LOG.info("Background regions: ${bgLoci.size} regions")
 
-            sourceLoci.forEach {
+            inputRegions.forEach {
                 require(bgLoci.includes(it)) {
                     "Background $backgroundRegionsPath regions are required to include all loci of interest, but the " +
-                            "loci is missing in bg: ${it.toChromosomeRange()}"
+                            "region is missing in bg: ${it.toChromosomeRange()}"
                 }
             }
             bgLoci
@@ -97,22 +98,21 @@ class RegionShuffleStatsFromBedCoverage(
         }
 
         val allowedGenomeFilter = makeAllowedRegionsFilter(
-            genomeMaskedLociPath, genomeAllowedLociPath, gq
+            genomeMaskedAreaPath, genomeAllowedAreaPath, gq
         )
 
-        val (allowedBgList, allowedSourceLoci) = if (allowedGenomeFilter == null) {
-            bgLoci to sourceLoci
-        } else {
-            LOG.info("Applying allowed regions filters...")
-            val allowedBg = bgLoci.intersectRanges(allowedGenomeFilter) as LocationsMergingList
-            val allowedSourceLoci = sourceLoci.filter { allowedGenomeFilter.includes(it) }
-
-            LOG.info("Background regions (all restrictions applied): ${allowedBg.size.formatLongNumber()} regions")
-            LOG.info("Source loci (all restrictions applied): ${allowedSourceLoci.size.formatLongNumber()} regions")
-            allowedBg to allowedSourceLoci
+        @Suppress("FoldInitializerAndIfToElvis")
+        if (allowedGenomeFilter == null) {
+            return inputRegions to bgRegions
         }
 
-        return allowedSourceLoci to allowedBgList
+        LOG.info("Applying allowed regions filters...")
+        val allowedBg = bgRegions.intersectRanges(allowedGenomeFilter) as LocationsMergingList
+        val allowedInputRegions = inputRegions.filter { allowedGenomeFilter.includes(it) }
+
+        LOG.info("Background regions (all filters applied): ${allowedBg.size.formatLongNumber()} regions")
+        LOG.info("Input regions (all filters applied): ${allowedInputRegions.size.formatLongNumber()} regions")
+        return allowedInputRegions to allowedBg
     }
 
     companion object {

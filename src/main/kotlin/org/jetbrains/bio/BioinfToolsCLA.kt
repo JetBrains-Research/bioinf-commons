@@ -1,8 +1,8 @@
 package org.jetbrains.bio
 
-import org.jetbrains.bio.gsea.EnrichmentInRegions
-import org.jetbrains.bio.gsea.MethylationEnrichmentInRegions
-import org.jetbrains.bio.gsea.OverlapRegionsWithEachLoci
+import org.jetbrains.bio.gsea.EnrichmentInLoi
+import org.jetbrains.bio.gsea.MethylationEnrichmentInLoi
+import org.jetbrains.bio.gsea.OverlapLoiWithEachRegion
 import org.jetbrains.bio.util.Logs
 import org.slf4j.event.Level
 
@@ -73,21 +73,23 @@ object BioinfToolsCLA {
         val command: String, val description: String,
         private val f: (Array<String>) -> Unit
     ) {
-        LOCI_ENRICHMENT_IN_REGIONS(
-            "enrichmentInRegions",
-            "Loci of interest enrichment in region sets compared to similar simulated loci. E.g. loci of interest could be DMRs, and simulated loci could be CGIs.", { args ->
-                EnrichmentInRegions.main(args)
+        ENRICHMENT_IN_LOI(
+            "enrichment",
+            "Loci of interest enrichment in given region sets compared to similar simulated regions. " +
+                    "E.g. loci of interest could be CGIs, simulated regions could be DMRs.", { args ->
+                EnrichmentInLoi.main(args)
             }),
-        METHYLATION_ENRICHMENT_IN_REGIONS(
-            "methylationEnrichmentInRegions",
-            "Methylated loci of interest enrichment in region sets compared to similar simulated loci. E.g. loci of interest could be DMRs, and simulated loci could be CGIs.", { args ->
-                MethylationEnrichmentInRegions.main(args)
+        METHYLATION_ENRICHMENT_IN_LOI(
+            "meth_enrichment",
+            "Loci of interest enrichment in given region sets compared to similar simulated regions from methylome background." +
+                    "E.g. loci of interest could be CGIs, simulated regions could be CGIs.", { args ->
+                MethylationEnrichmentInLoi.main(args)
             }),
 
-        OVERLAP_REGIONS_WITH_EACH_LOCI(
-            "overlapPerLocus",
-            "For each locus from loci and of regions calculate: overlap(regions, i-th locus location). E.g. loci of interest could be DMRs, and simulated loci could be CGIs.", { args ->
-                OverlapRegionsWithEachLoci.main(args)
+        OVERLAP_LOI_WITH_EACH_REGION(
+            "overlap_per_region",
+            "For each regions from input and loi calculate: overlap(loi, i-th region). E.g. regions could be DMRs, and loci could be CGIs.", { args ->
+                OverlapLoiWithEachRegion.main(args)
             });
 
         operator fun invoke(args: Array<String>) = f(args)

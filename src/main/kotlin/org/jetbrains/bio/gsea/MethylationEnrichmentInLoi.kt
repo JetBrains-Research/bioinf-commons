@@ -18,9 +18,10 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Stream
 
-// TODO: loci / regions rename
-object MethylationEnrichmentInRegions {
-    private val LOG = LoggerFactory.getLogger(MethylationEnrichmentInRegions::class.java)
+// TODO: [make cmdline option] methylome coverage table is 1-based, convert to 0-based! loadInputRegionsAndMethylomeCovBackground:offsetIsOneBased
+
+object MethylationEnrichmentInLoi {
+    private val LOG = LoggerFactory.getLogger(MethylationEnrichmentInLoi::class.java)
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -45,17 +46,9 @@ object MethylationEnrichmentInRegions {
                 .withValuesSeparatedBy(",")
 
             acceptsAll(
-                listOf("l", "loci"),
-                "Methylome related loci file path in TAB separated BED, BED3 or BED4 format. Strand is ignored. E.g. DMRs."
-            )
-                .withRequiredArg()
-                .withValuesConvertedBy(PathConverter.bedtoolsValidFile(minBedSpecFields = 3))
-                .required()
-
-            acceptsAll(
                 listOf("b", "background"),
                 "Covered methylome positions to use as random background. Strand is ignored. Must " +
-                        "intersect with each of given loci. File should be TAB separated, 1st column is chromosome name, " +
+                        "intersect with each of given input region. File should be TAB separated, 1st column is chromosome name, " +
                         "second column is 1-based offset. E.g. CpG offsets from DMC or proportions table."
             )
                 .withRequiredArg()
@@ -64,43 +57,48 @@ object MethylationEnrichmentInRegions {
 
             acceptsAll(
                 listOf("genome-masked"),
-                "Mask genome regions: loci intersecting masked regions are skipped, masked regions removed from background." +
-                        " File path in TAB separated BED with at least 3 fields. Strand is ignored."
+                "Path to masked genome area file: Input regions intersecting masked area are skipped, masked area" +
+                        " is also excluded from background. File is TAB-separated BED with at least 3 fields. Strand is ignored."
             )
                 .withRequiredArg()
                 .withValuesConvertedBy(PathConverter.bedtoolsValidFile(minBedSpecFields = 3))
 
             acceptsAll(
                 listOf("genome-allowed"),
-                "Allow only certain genome regions: input loci/background not-intersecting masked regions are skipped." +
-                        " File path in TAB separated BED with at least 3 fields. Strand is ignored."
+                "Path to allowed genome area: Input regions/Background not-intersecting allowed area is skipped." +
+                        " File is TAB-separated BED with at least 3 fields. Strand is ignored."
             )
                 .withRequiredArg()
                 .withValuesConvertedBy(PathConverter.bedtoolsValidFile(minBedSpecFields = 3))
 
-
             acceptsAll(
                 listOf("r", "regions"),
-                "Regions *.bed file or folder with *.bed regions files. Strand is ignored. E.g. regions could be CGIs."
+                "Regions to test file. File is TAB-separated BED with at least 3 fields. Strand is ignored." +
+                        " E.g. regions could be DMRs."
+            )
+                .withRequiredArg()
+                .withValuesConvertedBy(PathConverter.bedtoolsValidFile(minBedSpecFields = 3))
+                .required()
+
+            acceptsAll(
+                listOf("l", "loi"),
+                "Loci of interest (LOI) to check enrichment. Could be single *.bed file or folder with *.bed" +
+                        " files. Strand is ignored. E.g. loi could be CGIs file."
             )
                 .withRequiredArg()
                 .withValuesConvertedBy(PathConverter.noCheck())
                 .required()
 
-
             acceptsAll(
-                listOf("regions-filter"),
-                "Filter regions files ending with requested suffix string (not regexp)"
+                listOf("loi-filter"),
+                "Filter LOI files ending with requested suffix string (not regexp)"
             )
                 .withRequiredArg()
 
-
-            // TODO: optional save & load sampledRegions - to make results % reproducible w/o random effect
-
             acceptsAll(
-                listOf("regions-intersect"),
-                "Intersect regions with given range 'chromosome:start-end'" +
-                        " before overrepresented regions test. 'start' offset 0-based, 'end' offset exclusive, i.e" +
+                listOf("loi-intersect"),
+                "Intersect LOI with given range 'chromosome:start-end'" +
+                        " before over-representation test. 'start' offset 0-based, 'end' offset exclusive, i.e" +
                         " [start, end)"
             )
                 .withRequiredArg()
@@ -119,13 +117,12 @@ object MethylationEnrichmentInRegions {
                         " or absolute path or it's part including folder name ending with '/'."
             )
                 .withRequiredArg()
-                .defaultsTo("loi_regions_enrichment_")
-
+                .defaultsTo("regions_in_loi_regions_enrichment_")
 
             acceptsAll(
                 listOf("h1"),
-                "Alternative hypothesis: Loci abundance is greater/less/different(two-sided) compared " +
-                        "to simulated regions with similar lengths in provided regions"
+                "Alternative hypothesis: Input regions abundance in LOI is greater/less/different(two-sided) compared " +
+                        "to simulated regions with similar lengths."
             )
                 .withRequiredArg().ofType(PermutationAltHypothesis::class.java)
                 .withValuesConvertedBy(PermutationAltHypothesis.converter())
@@ -144,24 +141,25 @@ object MethylationEnrichmentInRegions {
                 .ofType(Int::class.java)
                 .defaultsTo(50_000)
 
-            acceptsAll(listOf("retries"), "Region shuffling max retries")
+            acceptsAll(listOf("retries"), "Regions shuffling max retries. Used because is not always possible to" +
+                    " shuffle non-interested regions of given size.")
                 .withRequiredArg()
                 .ofType(Int::class.java)
                 .defaultsTo(1_000)
 
 
             accepts(
-                "a-regions",
-                "Metric is applied to (a,b) where by default 'a' is loci/simulated loci set, 'b' is region to check set. This" +
-                        " option switches a and b definitions."
+                "a-loi",
+                "Metric is applied to (a,b) where by default 'a' is input/simulated regions regions set," +
+                        " 'b' is LOI to check set. This option swaps a and b."
             )
 
             accepts(
                 "replace",
-                "Sample with replacement, i.e. sampled loci could intersect. By default w/o replacement"
+                "Sample with replacement, i.e. sampled regions could intersect each other. By default w/o replacement"
             )
 
-            acceptsAll(listOf("a-flanked"), "Flank 'a' regions at both sides (non-negative dist in bp)")
+            acceptsAll(listOf("a-flanked"), "Flank 'a' ranges at both sides (non-negative dist in bp)")
                 .withRequiredArg()
                 .ofType(Int::class.java)
                 .defaultsTo(0)
@@ -177,13 +175,13 @@ object MethylationEnrichmentInRegions {
 
             acceptsAll(
                 listOf("m", "merge"),
-                "Merge overlapped locations while loading files if applicable. Will speedup computations."
+                "Merge overlapped locations (e.g regions, loi) while loading files if applicable. Will speedup computations."
             )
 
             // Logging level:
             acceptsAll(listOf("d", "debug"), "Print all the debug info")
 
-            val tool = BioinfToolsCLA.Tools.METHYLATION_ENRICHMENT_IN_REGIONS
+            val tool = BioinfToolsCLA.Tools.METHYLATION_ENRICHMENT_IN_LOI
             parse(args, description = tool.description) { options ->
                 BioinfToolsCLA.configureLogging("quiet" in options, "debug" in options)
                 LOG.info("Tool [${tool.command}]: ${tool.description} (vers: ${BioinfToolsCLA.version()})")
@@ -203,22 +201,30 @@ object MethylationEnrichmentInRegions {
                 )
                 LOG.info("GENOME BUILD: ${genome.build}")
 
-                val srcLoci = options.valueOf("loci") as Path // e.g. DMRs
-                LOG.info("SOURCE_LOCI: $srcLoci")
+                val inputRegions = options.valueOf("regions") as Path // e.g. DMRs
+                LOG.info("INPUT REGIONS: $inputRegions")
 
-                val genomeMaskedLociPath = options.valueOf("genome-masked") as Path?
-                LOG.info("GENOME MASKED LOCI: $genomeMaskedLociPath")
+                val genomeMaskedAreaPath = options.valueOf("genome-masked") as Path?
+                LOG.info("GENOME MASKED AREA: $genomeMaskedAreaPath")
 
-                val genomeAllowedLociPath = options.valueOf("genome-allowed") as Path?
-                LOG.info("GENOME ALLOWED LOCI: $genomeAllowedLociPath")
+                val genomeAllowedAreaPath = options.valueOf("genome-allowed") as Path?
+                LOG.info("GENOME ALLOWED AREA: $genomeAllowedAreaPath")
 
                 val methylomeBackground = options.valueOf("background") as Path
                 LOG.info("METHYLOME BACKGROUND: $methylomeBackground")
 
-                val regionsFolderPath = options.valueOf("regions") as Path
-                LOG.info("REGIONS_TO_TEST: $regionsFolderPath")
-                val regionsNameSuffix = options.valueOf("regions-filter") as String?
-                LOG.info("REGIONS_FNAME_SUFFIX: ${regionsNameSuffix ?: "N/A"}")
+                val loiFolderPath = options.valueOf("loi") as Path
+                LOG.info("LOI TO TEST: $loiFolderPath")
+
+                val loiNameSuffix = options.valueOf("loi-filter") as String?
+                LOG.info("LOI FNAME SUFFIX: ${loiNameSuffix ?: "N/A"}")
+
+                val loiLocationBasedFilter = (options.valueOf("loi-intersect") as String?)?.let {
+                    EnrichmentInLoi.parseLocation(
+                        it, genome, chromSizesPath
+                    )
+                }
+                LOG.info("INTERSECT LOI WITH RANGE: ${loiLocationBasedFilter ?: "N/A"}")
 
                 val baseName = options.valueOf("basename") as String
                 val outputBaseName = FileSystems.getDefault().getPath(baseName).normalize().toAbsolutePath()
@@ -246,11 +252,11 @@ object MethylationEnrichmentInRegions {
                 val samplingWithReplacement = options.has("replace")
                 LOG.info("SAMPLE WITH REPLACEMENT: $samplingWithReplacement")
 
-                val aSetIsLoi = !options.has("a-regions")
-                if (aSetIsLoi) {
-                    LOG.info("METRIC(a,b): a=REGION, b=LOCI/SIMULATED LOCI")
+                val aSetIsRegions = !options.has("a-loi")
+                if (aSetIsRegions) {
+                    LOG.info("METRIC(a,b): a=INPUT/SIMULATED REGIONs, b=LOI")
                 } else {
-                    LOG.info("METRIC(a,b): a=LOCI/SIMULATED LOCI, b=REGION")
+                    LOG.info("METRIC(a,b): a=LOI, b=INPUT/SIMULATED REGIONs")
                 }
 
                 val aSetFlankedBothSides = options.valueOf("a-flanked") as Int
@@ -269,25 +275,18 @@ object MethylationEnrichmentInRegions {
                 }
                 LOG.info("METRIC: ${metric.column}")
 
-                val regionsToTestFilterLocation = (options.valueOf("regions-intersect") as String?)?.let {
-                    EnrichmentInRegions.parseLocation(
-                        it, genome, chromSizesPath
-                    )
-                }
-                LOG.info("INTERSECT REGIONS WITH RANGE: ${regionsToTestFilterLocation ?: "N/A"}")
-
                 doCalculations(
-                    srcLoci, methylomeBackground, regionsFolderPath, genome,
+                    inputRegions, methylomeBackground, loiFolderPath, genome,
                     simulationsNumber,
                     if (chunkSize == 0) simulationsNumber else chunkSize,
                     outputBaseName,
                     metric,
                     detailedReport, retries, hypAlt,
-                    aSetIsLoi,
+                    aSetIsRegions,
                     mergeOverlapped,
-                    regionsToTestFilterLocation,
-                    regionsNameSuffix,
-                    genomeMaskedLociPath, genomeAllowedLociPath,
+                    loiLocationBasedFilter,
+                    loiNameSuffix,
+                    genomeMaskedAreaPath, genomeAllowedAreaPath,
                     samplingWithReplacement = samplingWithReplacement
                 )
             }
@@ -295,9 +294,9 @@ object MethylationEnrichmentInRegions {
     }
 
     fun doCalculations(
-        lociPath: Path,
+        inputRegions: Path,
         methylomeBackgroundPath: Path,
-        regionsPath: Path,
+        loiFolderPath: Path,
         genome: Genome,
         simulationsNumber: Int,
         chunkSize: Int,
@@ -306,32 +305,28 @@ object MethylationEnrichmentInRegions {
         detailed: Boolean,
         maxRetries: Int,
         hypAlt: PermutationAltHypothesis,
-        aSetIsLoi: Boolean,
+        aSetIsRegions: Boolean,
         mergeOverlapped: Boolean,
-        regionsToTestFilterLocation: Location?,
-        regionsNameSuffix: String?,
-        genomeMaskedLociPath: Path?,
-        genomeAllowedLociPath: Path?,
+        loiLocationBasedFilter: Location?,
+        loiNameSuffix: String?,
+        genomeMaskedAreaPath: Path?,
+        genomeAllowedAreaPath: Path?,
         samplingWithReplacement: Boolean
     ) {
         val reportPath = "${outputBasename}${metric.column}.tsv".toPath()
         val detailedReportFolder = if (detailed) "${outputBasename}${metric.column}_stats".toPath() else null
 
-        val regionsToTestFilter = regionsToTestFilterLocation?.let {
-            LocationsSortedList.create(
-                genome.toQuery(),
-                listOf(regionsToTestFilterLocation)
-            )
+        val loiFilter = loiLocationBasedFilter?.let {
+            LocationsSortedList.create(genome.toQuery(), listOf(loiLocationBasedFilter))
         }
 
-        val regionsAndRanges: List<Pair<String, LocationsList<out RangesList>>> =
-            EnrichmentInRegions.collectRegionsFrom(
-                if (regionsPath.isDirectory) Files.list(regionsPath) else Stream.of(regionsPath),
-                genome, mergeOverlapped, regionsToTestFilter, regionsNameSuffix
-            )
+        val filesStream = if (loiFolderPath.isDirectory) Files.list(loiFolderPath) else Stream.of(loiFolderPath)
+        val loiLabel2RangesList: List<Pair<String, LocationsList<out RangesList>>> = EnrichmentInLoi.collectLoiFrom(
+            filesStream, genome, mergeOverlapped, loiFilter, loiNameSuffix
+        )
 
-        require(regionsAndRanges.isNotEmpty()) {
-            "No regions files passed file suffix filter."
+        require(loiLabel2RangesList.isNotEmpty()) {
+            "No LOI files passed file suffix filter."
         }
 
         RegionShuffleStatsFromMethylomeCoverage(
@@ -339,17 +334,17 @@ object MethylationEnrichmentInRegions {
             simulationsNumber, chunkSize,
             maxRetries
         ).calcStatistics(
-            lociPath, methylomeBackgroundPath,
-            regionsAndRanges,
+            inputRegions, methylomeBackgroundPath,
+            loiLabel2RangesList,
             detailedReportFolder,
             metric = metric,
             hypAlt = hypAlt,
-            aSetIsLoi = aSetIsLoi,
+            aSetIsRegions = aSetIsRegions,
             mergeOverlapped = mergeOverlapped,
-            intersectionFilter = regionsToTestFilter,
-            genomeMaskedLociPath = genomeMaskedLociPath,
-            genomeAllowedLociPath = genomeAllowedLociPath,
-            addLoiToBg = false, // N/A
+            intersectionFilter = loiFilter,
+            genomeMaskedAreaPath = genomeMaskedAreaPath,
+            genomeAllowedAreaPath = genomeAllowedAreaPath,
+            mergeRegionsToBg = false, // N/A
             samplingWithReplacement = samplingWithReplacement
         ).save(reportPath)
 

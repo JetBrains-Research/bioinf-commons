@@ -6,7 +6,7 @@ data class TestedRegionStats(
     var countSetsWithMetricsAboveThr: Int = 0,
     var countSetsWithMetricsBelowThr: Int = 0,
     var simulationsNumber: Int = 0,
-    var metricValueForSrc: Long = 0L,
+    var metricValueForInput: Long = 0L,
     val metricHist: IntHistogram = IntHistogram()
 ) {
     fun pvalue(hypAlt: PermutationAltHypothesis): Double {

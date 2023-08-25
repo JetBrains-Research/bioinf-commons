@@ -2,7 +2,10 @@ package org.jetbrains.bio.gsea
 
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.genome.*
-import org.jetbrains.bio.genome.containers.*
+import org.jetbrains.bio.genome.containers.GenomeMap
+import org.jetbrains.bio.genome.containers.LocationsList
+import org.jetbrains.bio.genome.containers.RangesList
+import org.jetbrains.bio.genome.containers.genomeMap
 import org.jetbrains.bio.genome.containers.intersection.RegionsMetric
 import org.jetbrains.bio.genome.coverage.BasePairCoverage
 import org.jetbrains.bio.genome.sampling.hasIntersection
@@ -12,6 +15,8 @@ import java.nio.file.Path
 import java.util.concurrent.ThreadLocalRandom
 import kotlin.math.min
 
+// TODO: optional save/load sampled regions to make 100% reproducible
+
 class RegionShuffleStatsFromMethylomeCoverage(
     genome: Genome,
     simulationsNumber: Int,
@@ -20,33 +25,33 @@ class RegionShuffleStatsFromMethylomeCoverage(
 ) : RegionShuffleStats(genome, simulationsNumber, chunkSize, maxRetries) {
 
     override fun calcStatistics(
-        srcRegionsPath: Path,
+        inputRegionsPath: Path,
         backgroundPath: Path?,
-        regionLabelAndLociToTest: List<Pair<String, LocationsList<out RangesList>>>,
+        loiLabel2RangesList: List<Pair<String, LocationsList<out RangesList>>>,
         outputFolderPath: Path?,
         metric: RegionsMetric,
         hypAlt: PermutationAltHypothesis,
-        aSetIsLoi: Boolean,
+        aSetIsRegions: Boolean,
         mergeOverlapped: Boolean,
         intersectionFilter: LocationsList<out RangesList>?,
-        genomeMaskedLociPath: Path?,
-        genomeAllowedLociPath: Path?,
-        addLoiToBg: Boolean,
+        genomeMaskedAreaPath: Path?,
+        genomeAllowedAreaPath: Path?,
+        mergeRegionsToBg: Boolean,
         samplingWithReplacement: Boolean
     ): DataFrame {
         requireNotNull(backgroundPath) { "Background should be provided" }
 
         return doCalcStatistics(
-            regionLabelAndLociToTest,
+            loiLabel2RangesList,
             outputFolderPath,
             metric,
             hypAlt,
-            aSetIsLoi,
+            aSetIsRegions,
             mergeOverlapped,
             intersectionFilter,
-            srcLociAndBackgroundProvider = { gq ->
-                loadSrcLociAndMethylomeCovBackground(
-                    srcRegionsPath, backgroundPath, genomeMaskedLociPath, genomeAllowedLociPath, gq
+            inputRegionsAndBackgroundProvider = { gq ->
+                loadInputRegionsAndMethylomeCovBackground(
+                    inputRegionsPath, backgroundPath, genomeMaskedAreaPath, genomeAllowedAreaPath, gq
                 )
             },
             samplingFun = { gq, regions, background, maxRetries, withReplacement ->
@@ -61,49 +66,49 @@ class RegionShuffleStatsFromMethylomeCoverage(
         )
     }
 
-    fun loadSrcLociAndMethylomeCovBackground(
-        srcRegionsPath: Path,
+    private fun loadInputRegionsAndMethylomeCovBackground(
+        inputRegionsPath: Path,
         backgroundRegionsPath: Path,
-        genomeMaskedLociPath: Path?,
-        genomeAllowedLociPath: Path?,
+        genomeMaskedAreaPath: Path?,
+        genomeAllowedAreaPath: Path?,
         gq: GenomeQuery
     ): Pair<List<Location>, BasePairCoverage> {
-        val sourceLoci = readLocationsIgnoringStrand(srcRegionsPath, gq)
-        LOG.info("Source loci: ${sourceLoci.size} regions")
+        val inputRegions = readLocationsIgnoringStrand(inputRegionsPath, gq)
+        LOG.info("Input regions: ${inputRegions.size.formatLongNumber()} regions")
 
         val methCovData = BasePairCoverage.loadFromTSV(
             gq, backgroundRegionsPath,
-            offsetIsOneBased = true,  // TODO: [make cmdline option] methylome coverage table is 1-based, convert to 0-based!
+            offsetIsOneBased = true,
             progress = true
         )
         LOG.info("Background coverage: ${methCovData.depth.formatLongNumber()} offsets")
 
-        sourceLoci.forEach {
-            require(methCovData.getCoverage(it) > 0) {
-                "Background $backgroundRegionsPath coverage should cover all input loci, but the " +
-                        "loci is missing in background: ${it.toChromosomeRange()}"
+        inputRegions.forEach { loc ->
+            require(methCovData.getCoverage(loc) > 0) {
+                "Background $backgroundRegionsPath coverage should cover all input regions, but the " +
+                        "region is missing in background: ${loc.toChromosomeRange()}"
             }
         }
-        LOG.info("[OK] Loci matches methylome coverage")
+        LOG.info("[OK] Regions matches methylome coverage")
 
         val allowedGenomeFilter = makeAllowedRegionsFilter(
-            genomeMaskedLociPath, genomeAllowedLociPath, gq
+            genomeMaskedAreaPath, genomeAllowedAreaPath, gq
         )
 
-        val (allowedMethCovData, allowedSourceLoci) = if (allowedGenomeFilter == null) {
-            methCovData to sourceLoci
-        } else {
-            LOG.info("Applying allowed regions filters...")
-
-            val allowedMethCovData = methCovData.filterExclude(allowedGenomeFilter, progress = true)
-            LOG.info("Background coverage (all restrictions applied): ${allowedMethCovData.depth.formatLongNumber()} offsets")
-
-            val allowedSourceLoci = sourceLoci.filter { allowedGenomeFilter.includes(it) }
-            LOG.info("Source loci (all restrictions applied): ${allowedSourceLoci.size.formatLongNumber()} regions")
-
-            allowedMethCovData to allowedSourceLoci
+        @Suppress("FoldInitializerAndIfToElvis")
+        if (allowedGenomeFilter == null) {
+            return inputRegions to methCovData
         }
-        return allowedSourceLoci to allowedMethCovData
+
+        LOG.info("Applying allowed regions filters...")
+
+        val allowedMethCovData = methCovData.filterExclude(allowedGenomeFilter, progress = true)
+        LOG.info("Background coverage (all filters applied): ${allowedMethCovData.depth.formatLongNumber()} offsets")
+
+        val allowedInputRegions = inputRegions.filter { allowedGenomeFilter.includes(it) }
+        LOG.info("Input regions (all filters applied): ${allowedInputRegions.size.formatLongNumber()} regions")
+
+        return allowedInputRegions to allowedMethCovData
     }
 
 

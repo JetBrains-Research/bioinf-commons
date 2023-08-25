@@ -16,8 +16,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Stream
 
-object OverlapRegionsWithEachLoci {
-    private val LOG = LoggerFactory.getLogger(OverlapRegionsWithEachLoci::class.java)
+object OverlapLoiWithEachRegion {
+    private val LOG = LoggerFactory.getLogger(OverlapLoiWithEachRegion::class.java)
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -41,28 +41,30 @@ object OverlapRegionsWithEachLoci {
                 .withValuesSeparatedBy(",")
 
             acceptsAll(
-                listOf("l", "loi"),
-                "Loci of interest (loi) file path in TAB separated BED, BED3 or BED4 format. Strand is ignored."
+                listOf("r", "regions"),
+                "Regions to test file. File is TAB-separated BED with at least 3 fields. Strand is ignored." +
+                        " E.g. regions could be DMRs."
             )
                 .withRequiredArg()
-                .withValuesConvertedBy(PathConverter.bedtoolsValidFile(minBedSpecFields = 4))
+                .withValuesConvertedBy(PathConverter.bedtoolsValidFile(minBedSpecFields = 3))
                 .required()
 
             acceptsAll(
-                listOf("r", "regions"),
-                "Regions *.bed file or folder with *.bed regions files. Strand is ignored."
+                listOf("l", "loi"),
+                "Loci of interest (LOI) to check enrichment. Could be single *.bed file or folder with *.bed" +
+                        " files. Strand is ignored. E.g. loi could be CGIs file."
             )
                 .withRequiredArg()
                 .withValuesConvertedBy(PathConverter.noCheck())
                 .required()
 
             acceptsAll(
-                listOf("regions-filter"),
-                "Filter regions files ending with requested suffix string (not regexp)"
+                listOf("loi-filter"),
+                "Filter LOI files ending with requested suffix string (not regexp)"
             )
                 .withRequiredArg()
 
-            acceptsAll(listOf("regions-flanked"), "Flank regions at both sides (non-negative dist in bp)")
+            acceptsAll(listOf("a-flanked"), "Flank 'a' ranges at both sides (non-negative dist in bp)")
                 .withRequiredArg()
                 .ofType(Int::class.java)
                 .defaultsTo(0)
@@ -86,13 +88,13 @@ object OverlapRegionsWithEachLoci {
 
             acceptsAll(
                 listOf("m", "merge"),
-                "Merge overlapped locations while loading files if applicable. Will speedup computations."
+                "Merge overlapped locations (e.g regions, loi) while loading files if applicable. Will speedup computations."
             )
 
             // Logging level:
             acceptsAll(listOf("d", "debug"), "Print all the debug info")
 
-            val tool = BioinfToolsCLA.Tools.OVERLAP_REGIONS_WITH_EACH_LOCI
+            val tool = BioinfToolsCLA.Tools.OVERLAP_LOI_WITH_EACH_REGION
             parse(args, description = tool.description) { options ->
                 BioinfToolsCLA.configureLogging("quiet" in options, "debug" in options)
                 LOG.info("Tool [${tool.command}]: ${tool.description} (vers: ${BioinfToolsCLA.version()})")
@@ -109,16 +111,17 @@ object OverlapRegionsWithEachLoci {
                 )
                 LOG.info("GENOME BUILD: ${genome.build}")
 
-                val srcLoci = options.valueOf("loi") as Path
-                LOG.info("SOURCE_LOCI: $srcLoci")
+                val inputRegions = options.valueOf("regions") as Path
+                LOG.info("INPUT REGIONS: $inputRegions")
 
-                val regionsFolderPath = options.valueOf("regions") as Path
-                LOG.info("REGIONS: $regionsFolderPath")
-                val regionsNameSuffix = options.valueOf("regions-filter") as String?
-                LOG.info("REGIONS_FNAME_SUFFIX: ${regionsNameSuffix ?: "N/A"}")
+                val loiFolderPath = options.valueOf("loi") as Path
+                LOG.info("LOI TO TEST: $loiFolderPath")
 
-                val aSetFlankedBothSides = options.valueOf("regions-flanked") as Int
-                LOG.info("REGIONS FLANKED: $aSetFlankedBothSides")
+                val loiNameSuffix = options.valueOf("loi-filter") as String?
+                LOG.info("LOI FNAME SUFFIX: ${loiNameSuffix ?: "N/A"}")
+
+                val aSetFlankedBothSides = options.valueOf("a-flanked") as Int
+                LOG.info("A FLANKED: $aSetFlankedBothSides")
 
                 val outputFolder = options.valueOf("output") as Path
                 LOG.info("OUTPUT_FOLDER: $outputFolder")
@@ -137,75 +140,87 @@ object OverlapRegionsWithEachLoci {
                 LOG.info("METRIC: ${metric.column}")
 
                 doCalculations(
-                    srcLoci, regionsFolderPath, genome, outputFolder, metric,
-                    mergeOverlapped, regionsNameSuffix
+                    inputRegions, loiFolderPath, genome, outputFolder, metric,
+                    mergeOverlapped, loiNameSuffix
                 )
             }
         }
     }
 
     fun doCalculations(
-        loiPath: Path,
-        regionsPath: Path,
+        inputRegionsPath: Path,
+        loiFolderPath: Path,
         genome: Genome,
         outputFolderPath: Path,
         metric: RegionsMetric,
         mergeOverlapped: Boolean,
-        regionsNameSuffix: String?
+        loiNameSuffix: String?
     ) {
         outputFolderPath.createDirectories()
 
         val threadsNumber = parallelismLevel()
-        val regionLabelAndLociToTest: List<List<Pair<String, LocationsList<out RangesList>>>> =
-            EnrichmentInRegions.collectRegionsFrom(
-                if (regionsPath.isDirectory) Files.list(regionsPath) else Stream.of(regionsPath),
-                genome, mergeOverlapped, null, regionsNameSuffix
-            ).chunked(threadsNumber)
+        val filesStream = if (loiFolderPath.isDirectory) Files.list(loiFolderPath) else Stream.of(loiFolderPath)
+        val loiLabel2RangesList: List<List<Pair<String, LocationsList<out RangesList>>>>  = EnrichmentInLoi.collectLoiFrom(
+            filesStream, genome, mergeOverlapped, null, loiNameSuffix
+        ).chunked(threadsNumber)
 
-        val regionsSetsToTestNumber = regionLabelAndLociToTest.sumOf { it.size }
-        LOG.info("Regions sets to test: $regionsSetsToTestNumber")
-        require(regionsSetsToTestNumber > 0) {
-            "No regions files passed file suffix filter."
+        val totalSetsToTest = loiLabel2RangesList.sumOf { it.size }
+        LOG.info("LOI sets to test: $totalSetsToTest")
+        require(totalSetsToTest > 0) {
+            "No loi files passed file suffix filter."
         }
         val gq = genome.toQuery()
-        val (sourceLoci, sourceLociBedFormat) = readNamedLocationsIgnoringStrand(loiPath, gq)
-        require(sourceLoci.isNotEmpty()) {
-            "Loci file is empty or all loci were masked."
+        val (inputRegions, inputRegionsBedFormat) = readNamedLocationsIgnoringStrand(inputRegionsPath, gq)
+        require(inputRegions.isNotEmpty()) {
+            "Regions file is empty."
         }
-        LOG.info("Loaded ${sourceLoci.size} loci, bed format: $sourceLociBedFormat")
-        val sourceLoci2RangeList = sourceLoci.map { it to it.location.toRangeSortedList() }
+        LOG.info("Loaded ${inputRegions.size.formatLongNumber()} regions, bed format: $inputRegionsBedFormat")
+        val regions2RangesList = inputRegions.map { it to it.location.toRangeSortedList() }
 
-        val progress = Progress { title = "Overlap(region set, locus) progress" }.bounded(
-            regionsSetsToTestNumber.toLong()
+        val progress = Progress { title = "Overlap(loi set, each region) progress" }.bounded(
+            totalSetsToTest.toLong()
         )
-        regionLabelAndLociToTest.parallelStream().forEach { chunk ->
-            for ((regionTypeLabel, regionLociToTest) in chunk) {
+        loiLabel2RangesList.parallelStream().forEach { chunk ->
+            for ((loiLabel, loiRanges) in chunk) {
                 progress.report()
 
-                val values = LongArray(sourceLoci2RangeList.size)
-                sourceLoci2RangeList.forEachIndexed { i, (namedLocus, lociAsRangeList) ->
-                    val metricValueForSrc = regionLociToTest.calcAdditiveMetricDouble(
-                        lociAsRangeList, namedLocus.location.chromosome, namedLocus.location.strand,
+                val values = LongArray(regions2RangesList.size)
+                regions2RangesList.forEachIndexed { i, (namedRegion, regionAsRangeList) ->
+                    val metricValueForSrc = loiRanges.calcAdditiveMetricDouble(
+                        regionAsRangeList, namedRegion.location.chromosome, namedRegion.location.strand,
                         metric::calcMetric
                     ).toLong()
                     values[i] = metricValueForSrc
                 }
 
-                val path = outputFolderPath / "${regionTypeLabel}_${metric.column}.tsv"
+                val path = outputFolderPath / "${loiLabel}_${metric.column}.tsv"
                 // Save:
                 DataFrame()
-                    .with("chr", sourceLoci2RangeList.map { it.first.location.chromosome.name }.toTypedArray())
-                    .with("startOffset", sourceLoci2RangeList.map { it.first.location.startOffset }.toIntArray())
-                    .with("endOffset", sourceLoci2RangeList.map { it.first.location.endOffset }.toIntArray()).let {
-                        if (sourceLociBedFormat.fieldsNumber >= 4) {
-                            it.with(
-                                "name",
-                                sourceLoci2RangeList.map { (it.first as NamedLocation).name }.toTypedArray()
-                            )
-                        } else {
-                            it
+                    .with(
+                        "chr",
+                        regions2RangesList.map { (regin, _) -> regin.location.chromosome.name }.toTypedArray()
+                    )
+                    .with(
+                        "startOffset",
+                        regions2RangesList.map { (regin, _) -> regin.location.startOffset }.toIntArray()
+                    )
+                    .with(
+                        "endOffset",
+                        regions2RangesList.map { (regin, _) -> regin.location.endOffset }.toIntArray()
+                    ).let { df ->
+                        when {
+                            inputRegionsBedFormat.fieldsNumber >= 4 -> {
+                                df.with(
+                                    "name",
+                                    regions2RangesList.map { (regin, _) ->
+                                        (regin as NamedLocation).name
+                                    }.toTypedArray()
+                                )
+                            }
+                            else -> df
                         }
-                    }.with(metric.column, values)
+                    }
+                    .with(metric.column, values)
                     .save(path)
                 LOG.info("Report saved to: $path")
             }
@@ -221,7 +236,7 @@ object OverlapRegionsWithEachLoci {
         var recordsNumber = 0
         val ignoredChrs = mutableListOf<String>()
 
-        val loci = bedFormat.parse(path) { bedParser ->
+        val locations = bedFormat.parse(path) { bedParser ->
             bedParser.mapNotNull {
                 recordsNumber++
 
@@ -242,17 +257,17 @@ object OverlapRegionsWithEachLoci {
                 }
             }
         }
-        if (loci.size != recordsNumber) {
-            val pnt = loci.size.asPercentOf(recordsNumber)
+        if (locations.size != recordsNumber) {
+            val pnt = locations.size.asPercentOf(recordsNumber)
             LOG.warn(
-                "$path: Loaded $pnt % (${loci.size} of $recordsNumber) locations." +
+                "$path: Loaded $pnt % (${locations.size} of $recordsNumber) locations." +
                         " Ignored chromosomes: ${ignoredChrs.size}. For more details use debug option."
             )
         }
         if (ignoredChrs.isNotEmpty()) {
             LOG.debug("$path: Ignored chromosomes: $ignoredChrs")
         }
-        return loci to bedFormat
+        return locations to bedFormat
     }
 
 }
