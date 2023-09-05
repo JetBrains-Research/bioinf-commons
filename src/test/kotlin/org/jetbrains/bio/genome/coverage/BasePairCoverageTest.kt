@@ -9,9 +9,9 @@ import org.junit.Test
 import kotlin.test.assertEquals
 
 class BasePairCoverageTest {
-    internal val gq: GenomeQuery = GenomeQuery(Genome["to1"])
-    internal val chr1: Chromosome = gq.get()[0]
-    internal val chr2: Chromosome = gq.get()[1]
+    private val gq: GenomeQuery = GenomeQuery(Genome["to1"])
+    private val chr1: Chromosome = gq.get()[0]
+    private val chr2: Chromosome = gq.get()[1]
 
     @Test
     fun testLoadFromFileZeroBased() {
@@ -456,7 +456,7 @@ class BasePairCoverageTest {
     }
 
     @Test
-    fun testSerialization() {
+    fun testSerializationToNpz() {
         val builder = BasePairCoverage.builder(gq, offsetIsOneBased = false)
         gq.get().forEachIndexed { j, chromosome ->
             for (i in 0..99) {
@@ -466,11 +466,32 @@ class BasePairCoverageTest {
 
         val coverage = builder.build(false)
         withTempFile("coverage", ".cov") { coveragePath ->
-            coverage.save(coveragePath)
+            coverage.saveToNpz(coveragePath)
             val loaded = Coverage.load(coveragePath, gq)
             assertEquals(BasePairCoverage::class.java, loaded::class.java)
             assertEquals(coverage.depth, (loaded as BasePairCoverage).depth)
             assertEquals(coverage.data, loaded.data)
+        }
+    }
+
+    @Test
+    fun testSerializationToTsv() {
+        val builder = BasePairCoverage.builder(gq, offsetIsOneBased = false)
+        gq.get().forEachIndexed { j, chromosome ->
+            for (i in 0..99) {
+                builder.process(chromosome, i + 50)
+            }
+        }
+
+        for (offsetIsOneBased in listOf(false, true)) {
+            val coverage = builder.build(false)
+            withTempFile("coverage", ".tsv") { coveragePath ->
+                coverage.saveToTSV(coveragePath, offsetIsOneBased = offsetIsOneBased)
+                val loaded = BasePairCoverage.loadFromTSV(gq, coveragePath, offsetIsOneBased = offsetIsOneBased)
+                assertEquals(BasePairCoverage::class.java, loaded::class.java)
+                assertEquals(coverage.depth, loaded.depth)
+                assertEquals(coverage.data, loaded.data)
+            }
         }
     }
 
@@ -499,7 +520,7 @@ class BasePairCoverageTest {
             .process(chr2, 10)
             .process(chr2, 15)
             .build(false)
-            .filterExclude(filter)
+            .filter(filter, includeRegions = false)
 
         assertEquals(6, cov.depth)
         assertEquals("{2, 23, 30}", cov.data[chr1].toString())
@@ -524,8 +545,67 @@ class BasePairCoverageTest {
             .process(chr2, 3)
             .process(chr2, 15)
             .build(false)
-            .filterExclude(filter)
+            .filter(filter, includeRegions = false)
 
         assertEquals(0, cov.depth)
+    }
+
+
+    @Test
+    fun testFilterInclude() {
+        val filter = LocationsMergingList.create(
+            gq,
+            listOf(
+                Location(0, 2, chr1),
+                Location(3, 21, chr1, Strand.MINUS),
+                Location(24, 30, chr1),
+
+                Location(11, 15, chr2),
+                Location(16, 50, chr2),
+            )
+        )
+
+        val cov = BasePairCoverage.builder(gq, false)
+            .process(chr1, 1)
+            .process(chr1, 2)
+            .process(chr1, 10)
+            .process(chr1, 20)
+            .process(chr1, 23)
+            .process(chr1, 30)
+            .process(chr1, 32)
+            .process(chr2, 3)
+            .process(chr2, 10)
+            .process(chr2, 15)
+            .build(false)
+            .filter(filter, includeRegions = true)
+
+        assertEquals(3, cov.depth)
+        assertEquals("{1, 10, 20}", cov.data[chr1].toString())
+        assertEquals("{}", cov.data[chr2].toString())
+    }
+
+
+    @Test
+    fun testFilterIncludeAll() {
+        val filter = LocationsMergingList.create(
+            gq,
+            listOf(
+                Location(1, 20, chr1),
+                Location(3, 16, chr2),
+            )
+        )
+
+        val cov = BasePairCoverage.builder(gq, false)
+            .process(chr1, 2)
+            .process(chr1, 5)
+            .process(chr1, 10)
+            .process(chr2, 3)
+            .process(chr2, 15)
+            .build(false)
+            .filter(filter, includeRegions = true)
+
+        assertEquals(5, cov.depth)
+        assertEquals("{2, 5, 10}", cov.data[chr1].toString())
+        assertEquals("{3, 15}", cov.data[chr2].toString())
     }
 }

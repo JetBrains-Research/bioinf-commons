@@ -4,6 +4,9 @@ import com.google.common.collect.ImmutableList
 import com.google.common.hash.Hashing
 import com.google.common.primitives.Longs
 import kotlinx.support.jdk7.use
+import org.jetbrains.bio.genome.Location
+import org.jetbrains.bio.genome.format.BedFormat
+import org.jetbrains.bio.genome.format.toBedEntry
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import java.io.BufferedWriter
@@ -416,6 +419,21 @@ inline fun <T> withTempDirectory(
         tempDir.deleteIfExists()
     }
 }
+
+inline fun <T> withTempBedFile(
+    ranges: List<Location>,
+    bedFormat: BedFormat = BedFormat(),
+    block: (Path) -> T
+) =
+    withTempFile("track", ".bed") { trackPath ->
+        bedFormat.print(trackPath).use { bedPrinter ->
+            ranges.forEach {
+                bedPrinter.print(it.toBedEntry())
+            }
+        }
+        block(trackPath)
+    }
+
 
 /**
  * Returns a buffered input stream for this path.

@@ -7,6 +7,7 @@ import gnu.trove.set.hash.TIntHashSet
 import kotlinx.support.jdk7.use
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.QuoteMode
+import org.jetbrains.bio.dataframe.DataFrameMappers
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Location
@@ -15,10 +16,7 @@ import org.jetbrains.bio.genome.containers.GenomeMap
 import org.jetbrains.bio.genome.containers.LocationsMergingList
 import org.jetbrains.bio.genome.containers.genomeMap
 import org.jetbrains.bio.npy.NpzFile
-import org.jetbrains.bio.util.Progress
-import org.jetbrains.bio.util.bufferedReader
-import org.jetbrains.bio.util.formatLongNumber
-import org.jetbrains.bio.util.size
+import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.nio.file.Path
@@ -66,13 +64,14 @@ class BasePairCoverage private constructor(
     override fun toString() = MoreObjects.toStringHelper(this)
         .addValue(genomeQuery).toString()
 
-    fun filterExclude(
-        regionsToExclude: LocationsMergingList,
+    fun filter(
+        regions: LocationsMergingList,
+        includeRegions: Boolean,
         progress: Boolean = false
     ): BasePairCoverage {
         val builder = Builder(genomeQuery, false)
 
-        val rangeLists = regionsToExclude.rangeLists
+        val rangeLists = regions.rangeLists
 
         val progressInd = if (progress) {
             Progress { title = "Filtering coverage" }
@@ -83,7 +82,7 @@ class BasePairCoverage private constructor(
 
         genomeQuery.get().forEach { chr ->
             for (offset in data[chr]) {
-                var excluded = false
+                var included = false
                 for (strand in Strand.values()) {
                     if (!rangeLists.contains(chr, strand)) {
                         continue
@@ -91,14 +90,16 @@ class BasePairCoverage private constructor(
 
                     val rl = rangeLists[chr, strand]
                     if (rl.includesRange(offset)) {
-                        excluded = true
+                        included = true
                         break
                     }
                 }
 
-                if (!excluded) {
+                if (includeRegions == included) {
+                    // if both are false or both are true
                     builder.process(chr, offset)
                 }
+
                 progressInd?.report()
             }
         }
@@ -109,7 +110,7 @@ class BasePairCoverage private constructor(
 
 
     @Throws(IOException::class)
-    fun save(outputPath: Path) {
+    fun saveToNpz(outputPath: Path) {
         NpzFile.write(outputPath).use { writer ->
             writer.write(Coverage.VERSION_FIELD, intArrayOf(Coverage.VERSION))
             writer.write(Coverage.COV_TYPE_FIELD, intArrayOf(Coverage.CoverageType.BASEPAIR.ordinal))
@@ -118,6 +119,18 @@ class BasePairCoverage private constructor(
             for (chromosome in genomeQuery.get()) {
                 val key = chromosome.name
                 writer.write(key, data[chromosome].toArray())
+            }
+        }
+    }
+
+    @Throws(IOException::class)
+    fun saveToTSV(outputPath: Path, offsetIsOneBased: Boolean = true) {
+        DataFrameMappers.TSV.format.print(outputPath.bufferedWriter()).use { csvPrinter ->
+            for (chromosome in genomeQuery.get()) {
+                val chrName = chromosome.name
+                for (offset in data[chromosome].toArray()) {
+                    csvPrinter.printRecord(chrName, offset + (if (offsetIsOneBased) 1 else 0))
+                }
             }
         }
     }

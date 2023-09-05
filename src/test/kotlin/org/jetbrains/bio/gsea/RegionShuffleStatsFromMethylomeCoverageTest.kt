@@ -3,10 +3,9 @@ package org.jetbrains.bio.gsea
 import org.jetbrains.bio.genome.*
 import org.jetbrains.bio.genome.containers.genomeMap
 import org.jetbrains.bio.genome.coverage.BasePairCoverage
+import org.jetbrains.bio.util.withTempBedFile
+import org.jetbrains.bio.util.withTempFile
 import org.junit.Test
-import java.lang.IllegalArgumentException
-import java.lang.IndexOutOfBoundsException
-import java.lang.RuntimeException
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.fail
@@ -57,6 +56,7 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
             newRegions.map { background.getCoverage(it.on(Strand.PLUS)) }.sorted(),
         )
     }
+
     @Test
     fun shuffleChromosomeRangesWithoutReplacement() {
         val background = createBasePairCoverage(COVERAGE_WITH_NON_COVERED_FIRST_AND_LAST_CHR, gq)
@@ -189,6 +189,7 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
             withReplacement = false
         )
     }
+
     @Test
     fun generateShuffledRegionWithCustomShift() {
         checkShuffledRegion(
@@ -280,7 +281,11 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
 
         results.forEach { r ->
             assertEquals(r.expectedRange, r.actualRange, message = "Mismatch in : rVal=${r.rVal}, nPos=${r.nPos}")
-            assertEquals(r.expectedMaskedPositions, r.actualMaskedPositions, message = "Mismatch in : rVal=${r.rVal}, nPos=${r.nPos}")
+            assertEquals(
+                r.expectedMaskedPositions,
+                r.actualMaskedPositions,
+                message = "Mismatch in : rVal=${r.rVal}, nPos=${r.nPos}"
+            )
             if (r.actualRange != null) {
                 val actualNPos = background.getCoverage(r.actualRange.on(Strand.PLUS))
                 assertEquals(
@@ -292,7 +297,10 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
         }
     }
 
-    private fun createBasePairCoverage(coverageContent: List<Pair<Chromosome, Int>>, genomeQuery: GenomeQuery): BasePairCoverage {
+    private fun createBasePairCoverage(
+        coverageContent: List<Pair<Chromosome, Int>>,
+        genomeQuery: GenomeQuery
+    ): BasePairCoverage {
         val builder = BasePairCoverage.builder(genomeQuery, false)
         coverageContent.forEach { (chr, offset) ->
             builder.process(chr, offset)
@@ -300,7 +308,8 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
         return builder.build(true)
     }
 
-    @Test fun calculatePrefixSum() {
+    @Test
+    fun calculatePrefixSum() {
         checkCalculatePrefixSum(COVERAGE_EX, 0, chr1, 0)
         checkCalculatePrefixSum(COVERAGE_EX, 3, chr1, 0)
         checkCalculatePrefixSum(COVERAGE_EX, 9, chr1, 0)
@@ -308,12 +317,63 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
             checkCalculatePrefixSum(COVERAGE_EX, 11, chr2, 1)
         }
     }
-    @Test fun calculatePrefixSumWithNonCovChrs() {
+
+    @Test
+    fun calculatePrefixSumWithNonCovChrs() {
         checkCalculatePrefixSum(COVERAGE_WITH_NON_COVERED_FIRST_AND_LAST_CHR, 0, chr3, 0)
         checkCalculatePrefixSum(COVERAGE_WITH_NON_COVERED_FIRST_AND_LAST_CHR, 9, chr3, 0)
         assertFailsWith(IndexOutOfBoundsException::class, message = "Index 1 out of bounds for length 1") {
             checkCalculatePrefixSum(COVERAGE_WITH_NON_COVERED_FIRST_AND_LAST_CHR, 10, chr3, 0)
         }
+    }
+
+    @Test
+    fun loadInputRegionsAndMethylomeCovBackground() {
+        val lociGenomeAllowed = listOf(
+            Location(10, 100, RegionShuffleStatsTest.chr1),
+        )
+        val lociGenomeMasked = listOf(
+            Location(28, 80, RegionShuffleStatsTest.chr1),
+        )
+
+        val lociInputRegions = listOf(
+            Location(20, 22, RegionShuffleStatsTest.chr1),
+            Location(24, 27, RegionShuffleStatsTest.chr1),
+            // intersects ignored area
+            Location(9, 14, RegionShuffleStatsTest.chr1),
+            Location(27, 60, RegionShuffleStatsTest.chr1),
+            // masked:
+            Location(62, 70, RegionShuffleStatsTest.chr1),
+            // outside allowed:
+            Location(2, 5, RegionShuffleStatsTest.chr1),
+            Location(110, 200, RegionShuffleStatsTest.chr1),
+        )
+
+        val (inputRegions, cov) = withTempBedFile(lociGenomeAllowed) { genomeAllowedLociPath ->
+            withTempBedFile(lociGenomeMasked) { genomeMaskedLociPath ->
+                withTempBedFile(lociInputRegions) { inputRegionsPath ->
+                    withTempFile("bgcov", ".tsv") { bgRegionsPath ->
+                        createBasePairCoverage(COVERAGE_EX, gq).saveToTSV(bgRegionsPath)
+
+                        RegionShuffleStatsFromMethylomeCoverage.loadInputRegionsAndMethylomeCovBackground(
+                            inputRegionsPath, bgRegionsPath,
+                            genomeMaskedLociPath, genomeAllowedLociPath, gq
+                        )
+                    }
+                }
+            }
+        }
+
+        assertEquals(
+            listOf(
+                Location(20,22, chr1),
+                Location(24,27, chr1)
+            ).sorted(),
+            inputRegions.toList().sorted()
+        )
+
+        assertEquals(6, cov.depth)
+        assertEquals("{10, 20, 22, 24, 25, 26}", cov.data[chr1].toString())
     }
 
     private fun checkCalculatePrefixSum(
@@ -346,6 +406,7 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
         val actualRange: ChromosomeRange? = null,
         val actualMaskedPositions: Int = -1,
     )
+
     companion object {
         internal val gq: GenomeQuery = GenomeQuery(Genome["to1"])
         internal val chr1: Chromosome = gq.get()[0]

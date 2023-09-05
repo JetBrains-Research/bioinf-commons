@@ -66,52 +66,6 @@ class RegionShuffleStatsFromMethylomeCoverage(
         )
     }
 
-    private fun loadInputRegionsAndMethylomeCovBackground(
-        inputRegionsPath: Path,
-        backgroundRegionsPath: Path,
-        genomeMaskedAreaPath: Path?,
-        genomeAllowedAreaPath: Path?,
-        gq: GenomeQuery
-    ): Pair<List<Location>, BasePairCoverage> {
-        val inputRegions = readLocationsIgnoringStrand(inputRegionsPath, gq)
-        LOG.info("Input regions: ${inputRegions.size.formatLongNumber()} regions")
-
-        val methCovData = BasePairCoverage.loadFromTSV(
-            gq, backgroundRegionsPath,
-            offsetIsOneBased = true,
-            progress = true
-        )
-        LOG.info("Background coverage: ${methCovData.depth.formatLongNumber()} offsets")
-
-        inputRegions.forEach { loc ->
-            require(methCovData.getCoverage(loc) > 0) {
-                "Background $backgroundRegionsPath coverage should cover all input regions, but the " +
-                        "region is missing in background: ${loc.toChromosomeRange()}"
-            }
-        }
-        LOG.info("[OK] Regions matches methylome coverage")
-
-        val allowedGenomeFilter = makeAllowedRegionsFilter(
-            genomeMaskedAreaPath, genomeAllowedAreaPath, gq
-        )
-
-        @Suppress("FoldInitializerAndIfToElvis")
-        if (allowedGenomeFilter == null) {
-            return inputRegions to methCovData
-        }
-
-        LOG.info("Applying allowed regions filters...")
-
-        val allowedMethCovData = methCovData.filterExclude(allowedGenomeFilter, progress = true)
-        LOG.info("Background coverage (all filters applied): ${allowedMethCovData.depth.formatLongNumber()} offsets")
-
-        val allowedInputRegions = inputRegions.filter { allowedGenomeFilter.includes(it) }
-        LOG.info("Input regions (all filters applied): ${allowedInputRegions.size.formatLongNumber()} regions")
-
-        return allowedInputRegions to allowedMethCovData
-    }
-
-
     companion object {
         private val LOG = LoggerFactory.getLogger(RegionShuffleStatsFromBedCoverage::class.java)
 
@@ -292,6 +246,59 @@ class RegionShuffleStatsFromMethylomeCoverage(
             }
             val prefixSum = prefixSumList.toLongArray()
             return Pair(backgroundChrs, prefixSum)
+        }
+
+        fun loadInputRegionsAndMethylomeCovBackground(
+            inputRegionsPath: Path,
+            backgroundRegionsPath: Path,
+            genomeMaskedAreaPath: Path?,
+            genomeAllowedAreaPath: Path?,
+            gq: GenomeQuery
+        ): Pair<List<Location>, BasePairCoverage> {
+            val inputRegions = readLocationsIgnoringStrand(inputRegionsPath, gq)
+            LOG.info("Input regions: ${inputRegions.size.formatLongNumber()} regions")
+
+            val methCovData = BasePairCoverage.loadFromTSV(
+                gq, backgroundRegionsPath,
+                offsetIsOneBased = true,
+                progress = true
+            )
+            LOG.info("Background coverage: ${methCovData.depth.formatLongNumber()} offsets")
+
+            val allowedGenomeFilter = makeAllowedRegionsFilter(
+                genomeMaskedAreaPath, genomeAllowedAreaPath, gq
+            )
+
+            @Suppress("FoldInitializerAndIfToElvis")
+            if (allowedGenomeFilter == null) {
+                ensureInputRegionsMatchesBackgound(inputRegions, methCovData, backgroundRegionsPath)
+                return inputRegions to methCovData
+            }
+
+            LOG.info("Applying allowed regions filters...")
+
+            val allowedMethCovData = methCovData.filter(allowedGenomeFilter, progress = true, includeRegions = true)
+            LOG.info("Background coverage (all filters applied): ${allowedMethCovData.depth.formatLongNumber()} offsets")
+
+            val allowedInputRegions = inputRegions.filter { allowedGenomeFilter.includes(it) }
+            LOG.info("Input regions (all filters applied): ${allowedInputRegions.size.formatLongNumber()} regions")
+
+            ensureInputRegionsMatchesBackgound(allowedInputRegions, allowedMethCovData, backgroundRegionsPath)
+            return allowedInputRegions to allowedMethCovData
+        }
+
+        private fun ensureInputRegionsMatchesBackgound(
+            inputRegions: List<Location>,
+            methCovData: BasePairCoverage,
+            backgroundRegionsPath: Path
+        ) {
+            inputRegions.forEach { loc ->
+                require(methCovData.getCoverage(loc) > 0) {
+                    "Background $backgroundRegionsPath coverage should cover all input regions, but the " +
+                            "region is missing in background: ${loc.toChromosomeRange()}"
+                }
+            }
+            LOG.info("[OK] Regions matches methylome coverage")
         }
 
     }

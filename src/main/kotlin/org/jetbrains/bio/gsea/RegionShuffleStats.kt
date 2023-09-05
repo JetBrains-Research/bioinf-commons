@@ -302,7 +302,14 @@ abstract class RegionShuffleStats(
             }
             return loci
         }
-        
+
+        /**
+         * Loads complementary regions to the given masked genome regions filter.
+         *
+         * @param genomeMaskedLociPath The path to the file containing the masked genome loci. File is TAB-separated BED with at least 3 fields. Strand is ignored.
+         * @param gq The genome query object.
+         * @return A list of locations representing the complementary regions to the masked genome regions filter.
+         */
         fun loadComplementaryToMaskedGenomeRegionsFilter(
             genomeMaskedLociPath: Path,
             gq: GenomeQuery
@@ -316,6 +323,13 @@ abstract class RegionShuffleStats(
             return maskedGenomeLocations.apply { rl, chr, _ -> rl.complementaryRanges(chr.length) }
         }
 
+        /**
+         * Loads the genome allowed locations filter from the specified genome allowed loci file and genome query.
+         *
+         * @param genomeAllowedLociPath The path to the genome allowed loci file. File is TAB-separated BED with at least 3 fields. Strand is ignored.
+         * @param gq The genome query.
+         * @return The loaded genome allowed locations filter as a LocationsMergingList.
+         */
         fun loadGenomeAllowedLocationsFilter(
             genomeAllowedLociPath: Path,
             gq: GenomeQuery
