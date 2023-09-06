@@ -273,8 +273,6 @@ object EnrichmentInLoi {
                 val mergeRegionsToBg = options.has("add-regions-to-bg")
                 LOG.info("MERGE REGIONS INTO BACKGROUND: $mergeRegionsToBg")
 
-
-
                 val sharedOpts = processSharedOptions(options, metrics, LOG)
 
                 doCalculations(sharedOpts, mergeRegionsToBg)

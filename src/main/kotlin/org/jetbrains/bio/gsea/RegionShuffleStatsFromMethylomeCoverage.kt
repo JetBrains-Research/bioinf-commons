@@ -21,7 +21,8 @@ class RegionShuffleStatsFromMethylomeCoverage(
     genome: Genome,
     simulationsNumber: Int,
     chunkSize: Int,
-    maxRetries: Int
+    maxRetries: Int,
+    val zeroBasedBg: Boolean
 ) : RegionShuffleStats(genome, simulationsNumber, chunkSize, maxRetries) {
 
     override fun calcStatistics(
@@ -37,7 +38,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
         genomeMaskedAreaPath: Path?,
         genomeAllowedAreaPath: Path?,
         mergeRegionsToBg: Boolean,
-        samplingWithReplacement: Boolean
+        samplingWithReplacement: Boolean,
     ): DataFrame {
         requireNotNull(backgroundPath) { "Background should be provided" }
 
@@ -51,7 +52,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
             intersectionFilter,
             inputRegionsAndBackgroundProvider = { gq ->
                 loadInputRegionsAndMethylomeCovBackground(
-                    inputRegionsPath, backgroundPath, genomeMaskedAreaPath, genomeAllowedAreaPath, gq
+                    inputRegionsPath, backgroundPath, zeroBasedBg, genomeMaskedAreaPath, genomeAllowedAreaPath, gq
                 )
             },
             samplingFun = { gq, regions, background, maxRetries, withReplacement ->
@@ -251,6 +252,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
         fun loadInputRegionsAndMethylomeCovBackground(
             inputRegionsPath: Path,
             backgroundRegionsPath: Path,
+            zeroBasedBg: Boolean,
             genomeMaskedAreaPath: Path?,
             genomeAllowedAreaPath: Path?,
             gq: GenomeQuery
@@ -260,7 +262,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
 
             val methCovData = BasePairCoverage.loadFromTSV(
                 gq, backgroundRegionsPath,
-                offsetIsOneBased = true,
+                offsetIsOneBased = !zeroBasedBg,
                 progress = true
             )
             LOG.info("Background coverage: ${methCovData.depth.formatLongNumber()} offsets")

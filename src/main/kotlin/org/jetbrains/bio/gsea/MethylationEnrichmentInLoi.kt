@@ -11,9 +11,6 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.util.stream.Stream
 
-// TODO: [make cmdline option] methylome coverage table is 1-based, convert to 0-based! loadInputRegionsAndMethylomeCovBackground:offsetIsOneBased
-// TODO: [make cmdline option] methylome coverage table is 1-based, convert to 0-based! loadInputRegionsAndMethylomeCovBackground:offsetIsOneBased
-
 object MethylationEnrichmentInLoi {
     private val LOG = LoggerFactory.getLogger(MethylationEnrichmentInLoi::class.java)
 
@@ -48,6 +45,12 @@ object MethylationEnrichmentInLoi {
                 .withRequiredArg()
                 .withValuesConvertedBy(PathConverter.noCheck())
                 .required()
+
+            // Force background to have 0-based offsets
+            accepts(
+                "bg-zero",
+                "Background offsets in 0-based format instead of 1-based."
+            )
 
             acceptsAll(
                 listOf("genome-masked"),
@@ -183,15 +186,19 @@ object MethylationEnrichmentInLoi {
                 val samplingWithReplacement = options.has("replace")
                 LOG.info("SAMPLE WITH REPLACEMENT: $samplingWithReplacement")
 
+                val zeroBasedBg = "bg-zero" in options
+                LOG.info("0-BASED OFFSETS IN BACKGROUND: $zeroBasedBg")
+
                 val sharedOpts = EnrichmentInLoi.processSharedOptions(options, metrics, LOG)
-                doCalculations(sharedOpts, samplingWithReplacement)
+                doCalculations(sharedOpts, samplingWithReplacement, zeroBasedBg)
             }
         }
     }
 
     fun doCalculations(
         sharedOpts: EnrichmentInLoi.SharedOptions,
-        samplingWithReplacement: Boolean
+        samplingWithReplacement: Boolean,
+        zeroBasedBg: Boolean
     ) {
         val loiFolderPath = sharedOpts.loiFolderPath
         val outputBasename = sharedOpts.outputBaseName
@@ -217,7 +224,8 @@ object MethylationEnrichmentInLoi {
         RegionShuffleStatsFromMethylomeCoverage(
             sharedOpts.genome,
             sharedOpts.simulationsNumber, sharedOpts.getChunkSize(),
-            sharedOpts.retries
+            sharedOpts.retries,
+            zeroBasedBg = zeroBasedBg,
         ).calcStatistics(
             sharedOpts.inputRegions, // DMRs
             sharedOpts.backgroundPath, // Methylome background
