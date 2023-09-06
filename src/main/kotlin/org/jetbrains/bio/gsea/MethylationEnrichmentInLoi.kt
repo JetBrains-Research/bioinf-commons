@@ -2,22 +2,16 @@ package org.jetbrains.bio.gsea
 
 import joptsimple.OptionParser
 import org.jetbrains.bio.BioinfToolsCLA
-import org.jetbrains.bio.genome.Genome
-import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.containers.LocationsList
 import org.jetbrains.bio.genome.containers.LocationsSortedList
 import org.jetbrains.bio.genome.containers.RangesList
-import org.jetbrains.bio.genome.containers.intersection.IntersectionNumberMetric
-import org.jetbrains.bio.genome.containers.intersection.OverlapNumberMetric
-import org.jetbrains.bio.genome.containers.intersection.RegionsMetric
 import org.jetbrains.bio.genome.toQuery
 import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
-import java.nio.file.FileSystems
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.stream.Stream
 
+// TODO: [make cmdline option] methylome coverage table is 1-based, convert to 0-based! loadInputRegionsAndMethylomeCovBackground:offsetIsOneBased
 // TODO: [make cmdline option] methylome coverage table is 1-based, convert to 0-based! loadInputRegionsAndMethylomeCovBackground:offsetIsOneBased
 
 object MethylationEnrichmentInLoi {
@@ -150,8 +144,8 @@ object MethylationEnrichmentInLoi {
 
             accepts(
                 "a-loi",
-                "Metric is applied to (a,b) where by default 'a' is input/simulated regions regions set," +
-                        " 'b' is LOI to check set. This option swaps a and b."
+                "Metric will be applied to (a,b) where 'a'  is LOI to check set, 'b' is input/simulated regions regions set. " +
+                        "Without this option LOI will be 'b'."
             )
 
             accepts(
@@ -186,143 +180,34 @@ object MethylationEnrichmentInLoi {
                 BioinfToolsCLA.configureLogging("quiet" in options, "debug" in options)
                 LOG.info("Tool [${tool.command}]: ${tool.description} (vers: ${BioinfToolsCLA.version()})")
 
-                val chromSizesPath = options.valueOf("chrom.sizes") as Path
-                LOG.info("CHROM.SIZES: $chromSizesPath")
-
-                val chrMapStr = options.valuesOf("chrmap").filterIsInstance<String>()
-                LOG.info("CHROM MAPPING: $chrMapStr")
-
-                // val twoBitPath = options.valueOf("reference") as Path
-                // LOG.info("GENOME REFERENCE: $twoBitPath")
-
-                val genome = Genome.get(
-                    chromSizesPath,
-                    chrAltName2CanonicalMapping = parseChrNamesMapping(chrMapStr)
-                )
-                LOG.info("GENOME BUILD: ${genome.build}")
-
-                val inputRegions = options.valueOf("regions") as Path // e.g. DMRs
-                LOG.info("INPUT REGIONS: $inputRegions")
-
-                val genomeMaskedAreaPath = options.valueOf("genome-masked") as Path?
-                LOG.info("GENOME MASKED AREA: $genomeMaskedAreaPath")
-
-                val genomeAllowedAreaPath = options.valueOf("genome-allowed") as Path?
-                LOG.info("GENOME ALLOWED AREA: $genomeAllowedAreaPath")
-
-                val methylomeBackground = options.valueOf("background") as Path
-                LOG.info("METHYLOME BACKGROUND: $methylomeBackground")
-
-                val loiFolderPath = options.valueOf("loi") as Path
-                LOG.info("LOI TO TEST: $loiFolderPath")
-
-                val loiNameSuffix = options.valueOf("loi-filter") as String?
-                LOG.info("LOI FNAME SUFFIX: ${loiNameSuffix ?: "N/A"}")
-
-                val loiLocationBasedFilter = (options.valueOf("loi-intersect") as String?)?.let {
-                    EnrichmentInLoi.parseLocation(
-                        it, genome, chromSizesPath
-                    )
-                }
-                LOG.info("INTERSECT LOI WITH RANGE: ${loiLocationBasedFilter ?: "N/A"}")
-
-                val baseName = options.valueOf("basename") as String
-                val outputBaseName = FileSystems.getDefault().getPath(baseName).normalize().toAbsolutePath()
-                LOG.info("OUTPUT_BASENAME: $outputBaseName")
-
-                val hypAlt = options.valueOf("h1") as PermutationAltHypothesis
-                LOG.info("Alt Hypothesis: $hypAlt")
-
-                val simulationsNumber = options.valueOf("simulations") as Int
-                LOG.info("SIMULATIONS: $simulationsNumber")
-
-                val chunkSize = options.valueOf("chunk-size") as Int
-                LOG.info("SIMULATIONS CHUNK SIZE: $chunkSize")
-
-                val retries = options.valueOf("retries") as Int
-                LOG.info("MAX RETRIES: $retries")
-
-                val parallelism = options.valueOf("parallelism") as Int?
-                configureParallelism(parallelism)
-                LOG.info("THREADS: $parallelism (use #threads=${parallelismLevel()})")
-
-                val detailedReport = options.has("detailed")
-                LOG.info("DETAILED REPORT FLAG: $detailedReport")
-
                 val samplingWithReplacement = options.has("replace")
                 LOG.info("SAMPLE WITH REPLACEMENT: $samplingWithReplacement")
 
-                val aSetIsRegions = !options.has("a-loi")
-                if (aSetIsRegions) {
-                    LOG.info("METRIC(a,b): a=INPUT/SIMULATED REGIONs, b=LOI")
-                } else {
-                    LOG.info("METRIC(a,b): a=LOI, b=INPUT/SIMULATED REGIONs")
-                }
-
-                val aSetFlankedBothSides = options.valueOf("a-flanked") as Int
-                LOG.info("A FLANKED: $aSetFlankedBothSides")
-
-                val mergeOverlapped = options.has("merge")
-                LOG.info("MERGE OVERLAPPED: $mergeOverlapped")
-
-                val metricStr = options.valueOf("metric") as String
-                val metric = when (metricStr) {
-                    "overlap" -> OverlapNumberMetric(aSetFlankedBothSides)
-                    "intersection" -> IntersectionNumberMetric(aSetFlankedBothSides)
-                    else -> throw IllegalArgumentException(
-                        "Unsupported metric '${metricStr}', use one of: ${metrics.joinToString()}"
-                    )
-                }
-                LOG.info("METRIC: ${metric.column}")
-
-                doCalculations(
-                    inputRegions, methylomeBackground, loiFolderPath, genome,
-                    simulationsNumber,
-                    if (chunkSize == 0) simulationsNumber else chunkSize,
-                    outputBaseName,
-                    metric,
-                    detailedReport, retries, hypAlt,
-                    aSetIsRegions,
-                    mergeOverlapped,
-                    loiLocationBasedFilter,
-                    loiNameSuffix,
-                    genomeMaskedAreaPath, genomeAllowedAreaPath,
-                    samplingWithReplacement = samplingWithReplacement
-                )
+                val sharedOpts = EnrichmentInLoi.processSharedOptions(options, metrics, LOG)
+                doCalculations(sharedOpts, samplingWithReplacement)
             }
         }
     }
 
     fun doCalculations(
-        inputRegions: Path,
-        methylomeBackgroundPath: Path,
-        loiFolderPath: Path,
-        genome: Genome,
-        simulationsNumber: Int,
-        chunkSize: Int,
-        outputBasename: Path,
-        metric: RegionsMetric,
-        detailed: Boolean,
-        maxRetries: Int,
-        hypAlt: PermutationAltHypothesis,
-        aSetIsRegions: Boolean,
-        mergeOverlapped: Boolean,
-        loiLocationBasedFilter: Location?,
-        loiNameSuffix: String?,
-        genomeMaskedAreaPath: Path?,
-        genomeAllowedAreaPath: Path?,
+        sharedOpts: EnrichmentInLoi.SharedOptions,
         samplingWithReplacement: Boolean
     ) {
-        val reportPath = "${outputBasename}${metric.column}.tsv".toPath()
-        val detailedReportFolder = if (detailed) "${outputBasename}${metric.column}_stats".toPath() else null
+        val loiFolderPath = sharedOpts.loiFolderPath
+        val outputBasename = sharedOpts.outputBaseName
+        val loiLocationBasedFilter = sharedOpts.loiLocationBasedFilter
+
+        val reportPath = "${outputBasename}${sharedOpts.metric.column}.tsv".toPath()
+        val detailedReportFolder =
+            if (sharedOpts.detailedReport) "${outputBasename}${sharedOpts.metric.column}_stats".toPath() else null
 
         val loiFilter = loiLocationBasedFilter?.let {
-            LocationsSortedList.create(genome.toQuery(), listOf(loiLocationBasedFilter))
+            LocationsSortedList.create(sharedOpts.genome.toQuery(), listOf(loiLocationBasedFilter))
         }
 
         val filesStream = if (loiFolderPath.isDirectory) Files.list(loiFolderPath) else Stream.of(loiFolderPath)
         val loiLabel2RangesList: List<Pair<String, LocationsList<out RangesList>>> = EnrichmentInLoi.collectLoiFrom(
-            filesStream, genome, mergeOverlapped, loiFilter, loiNameSuffix
+            filesStream, sharedOpts.genome, sharedOpts.mergeOverlapped, loiFilter, sharedOpts.loiNameSuffix
         )
 
         require(loiLabel2RangesList.isNotEmpty()) {
@@ -330,20 +215,21 @@ object MethylationEnrichmentInLoi {
         }
 
         RegionShuffleStatsFromMethylomeCoverage(
-            genome,
-            simulationsNumber, chunkSize,
-            maxRetries
+            sharedOpts.genome,
+            sharedOpts.simulationsNumber, sharedOpts.getChunkSize(),
+            sharedOpts.retries
         ).calcStatistics(
-            inputRegions, methylomeBackgroundPath,
+            sharedOpts.inputRegions, // DMRs
+            sharedOpts.backgroundPath, // Methylome background
             loiLabel2RangesList,
             detailedReportFolder,
-            metric = metric,
-            hypAlt = hypAlt,
-            aSetIsRegions = aSetIsRegions,
-            mergeOverlapped = mergeOverlapped,
+            metric = sharedOpts.metric,
+            hypAlt = sharedOpts.hypAlt,
+            aSetIsRegions = sharedOpts.aSetIsRegions,
+            mergeOverlapped = sharedOpts.mergeOverlapped,
             intersectionFilter = loiFilter,
-            genomeMaskedAreaPath = genomeMaskedAreaPath,
-            genomeAllowedAreaPath = genomeAllowedAreaPath,
+            genomeMaskedAreaPath = sharedOpts.genomeMaskedAreaPath,
+            genomeAllowedAreaPath = sharedOpts.genomeAllowedAreaPath,
             mergeRegionsToBg = false, // N/A
             samplingWithReplacement = samplingWithReplacement
         ).save(reportPath)
