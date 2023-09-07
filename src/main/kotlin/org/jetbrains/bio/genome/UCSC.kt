@@ -1,16 +1,18 @@
 package org.jetbrains.bio.genome
 
 import org.apache.commons.net.ftp.FTPClient
-import org.apache.http.HttpEntity
-import org.apache.http.client.HttpClient
-import org.apache.http.client.HttpResponseException
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.utils.HttpClientUtils
-import org.apache.http.config.SocketConfig
-import org.apache.http.conn.ConnectTimeoutException
-import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.http.impl.client.LaxRedirectStrategy
+import org.apache.hc.client5.http.ConnectTimeoutException
+import org.apache.hc.client5.http.HttpResponseException
+import org.apache.hc.client5.http.classic.HttpClient
+import org.apache.hc.client5.http.classic.methods.HttpGet
+import org.apache.hc.client5.http.config.RequestConfig
+import org.apache.hc.client5.http.impl.DefaultRedirectStrategy
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
+import org.apache.hc.core5.http.HttpEntity
+import org.apache.hc.core5.http.io.SocketConfig
+import org.apache.hc.core5.io.CloseMode
+import org.apache.hc.core5.util.Timeout
 import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
 import java.io.FileOutputStream
@@ -19,12 +21,13 @@ import java.net.SocketTimeoutException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.util.concurrent.TimeUnit
 
-private fun HttpClient.tryGet(url: String): HttpEntity? {
+private fun CloseableHttpClient.tryGet(url: String): HttpEntity? {
     val response = execute(HttpGet(url))
-    val statusLine = response.statusLine
-    if (statusLine.statusCode / 100 != 2) {
-        throw HttpResponseException(statusLine.statusCode, "${statusLine.reasonPhrase}: $url")
+    val code = response.code
+    if (code / 100 != 2) {
+        throw HttpResponseException(code, "${response.reasonPhrase}: $url")
     }
 
     return response.entity
@@ -90,9 +93,8 @@ private fun String.downloadFtp(outputPath: Path) {
 
 private fun String.downloadHttp(timeoutMs: Int, maxRetries: Int, outputPath: Path): Boolean {
     val httpClient = HttpClientBuilder.create()
-        .setDefaultRequestConfig(RequestConfig.custom().setConnectTimeout(timeoutMs).build())
-        .setDefaultSocketConfig(SocketConfig.custom().setSoTimeout(timeoutMs).build())
-        .setRedirectStrategy(LaxRedirectStrategy())
+        .setDefaultRequestConfig(RequestConfig.custom().setConnectTimeout(Timeout.of(timeoutMs.toLong(), TimeUnit.MILLISECONDS)).build())
+        .setRedirectStrategy(DefaultRedirectStrategy())
         .build()
 
     for (trial in 1..maxRetries) {
@@ -116,7 +118,7 @@ private fun String.downloadHttp(timeoutMs: Int, maxRetries: Int, outputPath: Pat
             } catch (ignore: InterruptedException) {
             }
         } finally {
-            HttpClientUtils.closeQuietly(httpClient)
+            httpClient.close(CloseMode.GRACEFUL)
         }
     }
     return false

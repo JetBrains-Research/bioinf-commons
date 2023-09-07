@@ -2,10 +2,10 @@ package org.jetbrains.bio.genome
 
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
-import org.apache.http.client.HttpResponseException
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.utils.URIBuilder
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.hc.client5.http.HttpResponseException
+import org.apache.hc.client5.http.classic.methods.HttpGet
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
+import org.apache.hc.core5.net.URIBuilder
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.InputStream
@@ -143,12 +143,9 @@ data class Biomart(
             val uri = builder.build()
             LOG.debug("URI: ${uri.toASCIIString()}")
             val response = HttpClientBuilder.create().build().execute(HttpGet(uri))
-            val statusLine = response.statusLine
-            if (statusLine.statusCode / 100 != 2) {
-                throw HttpResponseException(
-                    statusLine.statusCode,
-                    statusLine.reasonPhrase
-                )
+            val code = response.code
+            if (code / 100 != 2) {
+                throw HttpResponseException(code, response.reasonPhrase)
             }
 
             return response.entity.content.use { block(it) }
