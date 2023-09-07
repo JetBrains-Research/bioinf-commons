@@ -18,7 +18,7 @@ class RegionShuffleStatsFromBedCoverage(
     maxRetries: Int
 ) : RegionShuffleStats(simulationsNumber, chunkSize, maxRetries) {
     override fun calcStatistics(
-        genomeQuery: GenomeQuery,
+        gq: GenomeQuery,
         inputRegionsPath: Path,
         backgroundPath: Path?,
         loiInfos: List<LoiInfo>,
@@ -33,7 +33,7 @@ class RegionShuffleStatsFromBedCoverage(
         mergeRegionsToBg: Boolean,
         samplingWithReplacement: Boolean
     ) = doCalcStatistics(
-        genomeQuery,
+        gq,
         loiInfos,
         outputFolderPath,
         metric,
@@ -41,14 +41,14 @@ class RegionShuffleStatsFromBedCoverage(
         aSetIsRegions,
         mergeOverlapped,
         intersectionFilter,
-        inputRegionsAndBackgroundProvider = { gq ->
+        inputRegionsAndBackgroundProvider = { genomeQuery ->
             loadInputRegionsAndBedLikeBackground(
-                inputRegionsPath, backgroundPath, mergeRegionsToBg, genomeMaskedAreaPath, genomeAllowedAreaPath, gq
+                inputRegionsPath, backgroundPath, mergeRegionsToBg, genomeMaskedAreaPath, genomeAllowedAreaPath, genomeQuery
             )
         },
-        samplingFun = { gq, regions, background, maxRetries, withReplacement ->
+        samplingFun = { genomeQuery, regions, background, maxRetries, withReplacement ->
             shuffleChromosomeRanges(
-                gq,
+                genomeQuery,
                 regions,
                 background.asLocationSequence().map { it.toChromosomeRange() }.toList(),
                 maxRetries = maxRetries,

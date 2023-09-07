@@ -51,14 +51,14 @@ class RegionShuffleStatsFromMethylomeCoverage(
             aSetIsRegions,
             mergeOverlapped,
             intersectionFilter,
-            inputRegionsAndBackgroundProvider = { gq ->
+            inputRegionsAndBackgroundProvider = { genomeQuery ->
                 loadInputRegionsAndMethylomeCovBackground(
-                    inputRegionsPath, backgroundPath, zeroBasedBg, genomeMaskedAreaPath, genomeAllowedAreaPath, gq
+                    inputRegionsPath, backgroundPath, zeroBasedBg, genomeMaskedAreaPath, genomeAllowedAreaPath, genomeQuery
                 )
             },
-            samplingFun = { gq, regions, background, maxRetries, withReplacement ->
+            samplingFun = { genomeQuery, regions, background, maxRetries, withReplacement ->
                 shuffleChromosomeRanges(
-                    gq,
+                    genomeQuery,
                     regions,
                     background,
                     maxRetries = maxRetries,

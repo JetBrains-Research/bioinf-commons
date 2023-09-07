@@ -320,7 +320,7 @@ abstract class RegionShuffleStats(
                 )
             }
             if (ignoredChrs.isNotEmpty()) {
-                LOG.debug("$path: Ignored chromosomes: $ignoredChrs")
+                LOG.debug("{}: Ignored chromosomes: {}", path, ignoredChrs)
             }
             return loci to recordsNumber
         }
