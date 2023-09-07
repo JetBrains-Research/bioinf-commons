@@ -438,7 +438,7 @@ object EnrichmentInLoi {
         val retries = options.valueOf("retries") as Int
         logger.info("MAX RETRIES: $retries")
 
-        val aSetIsRegions = options.has("a-loi")
+        val aSetIsRegions = !options.has("a-loi")
         if (aSetIsRegions) {
             logger.info("METRIC(a,b): a=INPUT/SIMULATED REGIONs, b=LOI")
         } else {

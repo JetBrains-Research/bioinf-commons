@@ -146,7 +146,7 @@ object MethylationEnrichmentInLoi {
 
             accepts(
                 "a-loi",
-                "Metric will be applied to (a,b) where 'a'  is LOI to check set, 'b' is input/simulated regions regions set. " +
+                "Metric will be applied to (a,b) where 'a' is LOI to check set, 'b' is input/simulated regions regions set. " +
                         "Without this option LOI will be 'b'."
             )
 
