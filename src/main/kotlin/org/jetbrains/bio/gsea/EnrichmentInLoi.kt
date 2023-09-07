@@ -4,6 +4,7 @@ import joptsimple.OptionParser
 import joptsimple.OptionSet
 import org.jetbrains.bio.BioinfToolsCLA
 import org.jetbrains.bio.genome.Genome
+import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.containers.LocationsList
 import org.jetbrains.bio.genome.containers.LocationsMergingList
@@ -37,30 +38,24 @@ object EnrichmentInLoi {
     ) {
         val loiFolderPath = sharedOpts.loiFolderPath
         val outputBasename = sharedOpts.outputBaseName
-        val loiLocationBasedFilter = sharedOpts.loiLocationBasedFilter
+        val limitResultsToSpecificLocation = sharedOpts.limitResultsToSpecificLocation
 
         val reportPath = "${outputBasename}${sharedOpts.metric.column}.tsv".toPath()
         val detailedReportFolder =
             if (sharedOpts.detailedReport) "${outputBasename}${sharedOpts.metric.column}_stats".toPath() else null
 
-        val loiFilter = loiLocationBasedFilter?.let {
-            LocationsSortedList.create(sharedOpts.genome.toQuery(), listOf(loiLocationBasedFilter))
-        }
+        val gq = sharedOpts.genome.toQuery()
 
-        val filesStream = if (loiFolderPath.isDirectory) Files.list(loiFolderPath) else Stream.of(loiFolderPath)
-        val loiInfos: List<LoiInfo> = collectLoiFrom(
-            filesStream, sharedOpts.genome, sharedOpts.mergeOverlapped, loiFilter, sharedOpts.loiNameSuffix
-        )
-
-        require(loiInfos.isNotEmpty()) {
-            "No LOI files passed file suffix filter."
+        val limitResultsToSpecificLocationFilter: LocationsMergingList? = limitResultsToSpecificLocation?.let {
+            LocationsMergingList.create(gq, listOf(limitResultsToSpecificLocation))
         }
+        val loiInfos: List<LoiInfo> = loiLocationBaseFilterList(sharedOpts, gq, limitResultsToSpecificLocationFilter, loiFolderPath)
 
         RegionShuffleStatsFromBedCoverage(
-            sharedOpts.genome,
-            sharedOpts.simulationsNumber, sharedOpts.getChunkSize(),
-            sharedOpts.retries
+            sharedOpts.simulationsNumber,
+            sharedOpts.getChunkSize(), sharedOpts.retries
         ).calcStatistics(
+            gq,
             sharedOpts.inputRegions,
             sharedOpts.backgroundPath,
             loiInfos,
@@ -69,7 +64,7 @@ object EnrichmentInLoi {
             hypAlt = sharedOpts.hypAlt,
             aSetIsRegions = sharedOpts.aSetIsRegions,
             mergeOverlapped = sharedOpts.mergeOverlapped,
-            intersectionFilter = loiFilter,
+            intersectionFilter = limitResultsToSpecificLocationFilter,
             genomeMaskedAreaPath = sharedOpts.genomeMaskedAreaPath,
             genomeAllowedAreaPath = sharedOpts.genomeAllowedAreaPath,
             mergeRegionsToBg = mergeRegionsToBg,
@@ -82,11 +77,37 @@ object EnrichmentInLoi {
         }
     }
 
+    fun loiLocationBaseFilterList(
+        sharedOpts: SharedOptions,
+        gq: GenomeQuery,
+        loiLocationBaseFilterList: LocationsMergingList?,
+        loiFolderPath: Path
+    ): List<LoiInfo> {
+        val allowedGenomeFilter: LocationsMergingList? = RegionShuffleStats.makeAllowedRegionsFilter(
+            sharedOpts.genomeMaskedAreaPath, sharedOpts.genomeAllowedAreaPath, gq
+        )
+        val loiFilter = when {
+            loiLocationBaseFilterList == null -> allowedGenomeFilter
+            allowedGenomeFilter == null -> loiLocationBaseFilterList
+            else -> allowedGenomeFilter.intersectRanges(loiLocationBaseFilterList) as LocationsMergingList
+        }
+
+        val filesStream = if (loiFolderPath.isDirectory) Files.list(loiFolderPath) else Stream.of(loiFolderPath)
+        val loiInfos: List<LoiInfo> = collectLoiFrom(
+            filesStream, gq, sharedOpts.mergeOverlapped, loiFilter, sharedOpts.loiNameSuffix
+        )
+
+        require(loiInfos.isNotEmpty()) {
+            "No LOI files passed file suffix filter."
+        }
+        return loiInfos
+    }
+
     fun collectLoiFrom(
         filesStream: Stream<Path>,
-        genome: Genome,
+        gq: GenomeQuery,
         mergeOverlapped: Boolean,
-        loiFilter: LocationsSortedList?,
+        loiFilter: LocationsMergingList?,
         loiNameSuffix: String?
     ): List<LoiInfo> = filesStream.filter { path ->
         loiNameSuffix == null || path.name.endsWith(loiNameSuffix)
@@ -94,18 +115,20 @@ object EnrichmentInLoi {
         val name = path.fileName.toString()
 
         val (locList, nLoadedLoi, nRecords) = RegionShuffleStats.readLocationsIgnoringStrand(
-            path, genome, mergeOverlapped
+            path, gq, mergeOverlapped
         )
         val filteredLocList = if (loiFilter == null) {
             locList
         } else {
-            val gq = locList.genomeQuery
             val filteredIterator = locList.intersectRanges(loiFilter).locationIterator()
             when {
                 mergeOverlapped -> LocationsMergingList.create(gq, filteredIterator)
                 else -> LocationsSortedList.create(gq, filteredIterator)
             }
         }
+        // LOG.warn("DEBUG REGIONS=${locList.asLocationSequence().joinToString { it.toString() }}")
+
+        LOG.info("LOI [$name] (all filters applied): ${filteredLocList.size.formatLongNumber()} regions of ${nLoadedLoi.formatLongNumber()} loaded region")
 
         LoiInfo(name, filteredLocList, processedLoiNumber = nLoadedLoi, recordsNumber = nRecords)
     }.collect(Collectors.toList())
@@ -187,8 +210,8 @@ object EnrichmentInLoi {
                 .withRequiredArg()
 
             acceptsAll(
-                listOf("loi-intersect"),
-                "Intersect LOI with given range 'chromosome:start-end'" +
+                listOf("limit-intersect"),
+                "Intersect LOI & simulated results with given range 'chromosome:start-end'" +
                         " before over-representation test. 'start' offset 0-based, 'end' offset exclusive, i.e" +
                         " [start, end)"
             )
@@ -336,7 +359,7 @@ object EnrichmentInLoi {
         val parallelism: Int?,
         val simulationsNumber: Int,
         val outputBaseName: Path,
-        val loiLocationBasedFilter: Location?,
+        val limitResultsToSpecificLocation: Location?,
         val backgroundPath: Path?,
         val genome: Genome,
         val inputRegions: Path,
@@ -389,12 +412,12 @@ object EnrichmentInLoi {
         val loiNameSuffix = options.valueOf("loi-filter") as String?
         LOG.info("LOI FNAME SUFFIX: ${loiNameSuffix ?: "N/A"}")
 
-        val loiLocationBasedFilter = (options.valueOf("loi-intersect") as String?)?.let {
+        val limitResultsToSpecificLocation = (options.valueOf("limit-intersect") as String?)?.let {
             parseLocation(
                 it, genome, chromSizesPath
             )
         }
-        LOG.info("INTERSECT LOI WITH RANGE: ${loiLocationBasedFilter ?: "N/A"}")
+        LOG.info("INTERSECT LOI WITH RANGE: ${limitResultsToSpecificLocation ?: "N/A"}")
 
         val parallelism = options.valueOf("parallelism") as Int?
         configureParallelism(parallelism)
@@ -449,7 +472,7 @@ object EnrichmentInLoi {
             parallelism = parallelism,
             simulationsNumber = simulationsNumber,
             outputBaseName = outputBaseName,
-            loiLocationBasedFilter = loiLocationBasedFilter,
+            limitResultsToSpecificLocation = limitResultsToSpecificLocation,
             backgroundPath = backGroundPath,
             genome = genome,
             inputRegions = inputRegions,

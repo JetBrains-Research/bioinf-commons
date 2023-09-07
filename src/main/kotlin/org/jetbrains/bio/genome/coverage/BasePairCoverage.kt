@@ -67,7 +67,8 @@ class BasePairCoverage private constructor(
     fun filter(
         regions: LocationsMergingList,
         includeRegions: Boolean,
-        progress: Boolean = false
+        progress: Boolean = false,
+        ignoreRegionsOnMinusStrand: Boolean = true
     ): BasePairCoverage {
         val builder = Builder(genomeQuery, false)
 
@@ -80,10 +81,11 @@ class BasePairCoverage private constructor(
             null
         }
 
+        val strands = if (ignoreRegionsOnMinusStrand) arrayOf(Strand.PLUS) else Strand.values()
         genomeQuery.get().forEach { chr ->
             for (offset in data[chr]) {
                 var included = false
-                for (strand in Strand.values()) {
+                for (strand in strands) {
                     if (!rangeLists.contains(chr, strand)) {
                         continue
                     }

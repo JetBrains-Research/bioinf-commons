@@ -356,7 +356,7 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
                         createBasePairCoverage(COVERAGE_EX, gq).saveToTSV(bgRegionsPath)
 
                         RegionShuffleStatsFromMethylomeCoverage.loadInputRegionsAndMethylomeCovBackground(
-                            inputRegionsPath, bgRegionsPath,
+                            inputRegionsPath, bgRegionsPath, zeroBasedBg = false,
                             genomeMaskedLociPath, genomeAllowedLociPath, gq
                         )
                     }

@@ -155,11 +155,12 @@ object OverlapLoiWithEachRegion {
         loiNameSuffix: String?
     ) {
         outputFolderPath.createDirectories()
+        val gq = genome.toQuery()
 
         val threadsNumber = parallelismLevel()
         val filesStream = if (loiFolderPath.isDirectory) Files.list(loiFolderPath) else Stream.of(loiFolderPath)
         val chunkedLoiInfos: List<List<LoiInfo>>  = EnrichmentInLoi.collectLoiFrom(
-            filesStream, genome, mergeOverlapped, null, loiNameSuffix
+            filesStream, gq, mergeOverlapped, null, loiNameSuffix
         ).chunked(threadsNumber)
 
         val totalSetsToTest = chunkedLoiInfos.sumOf { it.size }
@@ -167,7 +168,7 @@ object OverlapLoiWithEachRegion {
         require(totalSetsToTest > 0) {
             "No loi files passed file suffix filter."
         }
-        val gq = genome.toQuery()
+
         val (inputRegions, inputRegionsBedFormat) = readNamedLocationsIgnoringStrand(inputRegionsPath, gq)
         require(inputRegions.isNotEmpty()) {
             "Regions file is empty."

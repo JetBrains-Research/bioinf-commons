@@ -2,12 +2,13 @@ package org.jetbrains.bio.gsea
 
 import joptsimple.OptionParser
 import org.jetbrains.bio.BioinfToolsCLA
-import org.jetbrains.bio.genome.containers.LocationsSortedList
+import org.jetbrains.bio.genome.containers.LocationsMergingList
 import org.jetbrains.bio.genome.toQuery
-import org.jetbrains.bio.util.*
+import org.jetbrains.bio.util.PathConverter
+import org.jetbrains.bio.util.contains
+import org.jetbrains.bio.util.parse
+import org.jetbrains.bio.util.toPath
 import org.slf4j.LoggerFactory
-import java.nio.file.Files
-import java.util.stream.Stream
 
 object MethylationEnrichmentInLoi {
     private val LOG = LoggerFactory.getLogger(MethylationEnrichmentInLoi::class.java)
@@ -91,8 +92,8 @@ object MethylationEnrichmentInLoi {
                 .withRequiredArg()
 
             acceptsAll(
-                listOf("loi-intersect"),
-                "Intersect LOI with given range 'chromosome:start-end'" +
+                listOf("limit-intersect"),
+                "Intersect LOI & simulated results with given range 'chromosome:start-end'" +
                         " before over-representation test. 'start' offset 0-based, 'end' offset exclusive, i.e" +
                         " [start, end)"
             )
@@ -200,31 +201,29 @@ object MethylationEnrichmentInLoi {
     ) {
         val loiFolderPath = sharedOpts.loiFolderPath
         val outputBasename = sharedOpts.outputBaseName
-        val loiLocationBasedFilter = sharedOpts.loiLocationBasedFilter
+        val limitResultsToSpecificLocation = sharedOpts.limitResultsToSpecificLocation
+        val gq = sharedOpts.genome.toQuery()
 
         val reportPath = "${outputBasename}${sharedOpts.metric.column}.tsv".toPath()
         val detailedReportFolder =
             if (sharedOpts.detailedReport) "${outputBasename}${sharedOpts.metric.column}_stats".toPath() else null
 
-        val loiFilter = loiLocationBasedFilter?.let {
-            LocationsSortedList.create(sharedOpts.genome.toQuery(), listOf(loiLocationBasedFilter))
+        val limitResultsToSpecificLocationFilter: LocationsMergingList? = limitResultsToSpecificLocation?.let {
+            LocationsMergingList.create(gq, listOf(limitResultsToSpecificLocation))
         }
-
-        val filesStream = if (loiFolderPath.isDirectory) Files.list(loiFolderPath) else Stream.of(loiFolderPath)
-        val loiInfos: List<LoiInfo> = EnrichmentInLoi.collectLoiFrom(
-            filesStream, sharedOpts.genome, sharedOpts.mergeOverlapped, loiFilter, sharedOpts.loiNameSuffix
+        val loiInfos: List<LoiInfo> = EnrichmentInLoi.loiLocationBaseFilterList(
+            sharedOpts,
+            gq,
+            limitResultsToSpecificLocationFilter,
+            loiFolderPath
         )
 
-        require(loiInfos.isNotEmpty()) {
-            "No LOI files passed file suffix filter."
-        }
-
         RegionShuffleStatsFromMethylomeCoverage(
-            sharedOpts.genome,
-            sharedOpts.simulationsNumber, sharedOpts.getChunkSize(),
-            sharedOpts.retries,
+            sharedOpts.simulationsNumber,
+            sharedOpts.getChunkSize(), sharedOpts.retries,
             zeroBasedBg = zeroBasedBg,
         ).calcStatistics(
+            gq,
             sharedOpts.inputRegions, // DMRs
             sharedOpts.backgroundPath, // Methylome background
             loiInfos,
@@ -233,7 +232,7 @@ object MethylationEnrichmentInLoi {
             hypAlt = sharedOpts.hypAlt,
             aSetIsRegions = sharedOpts.aSetIsRegions,
             mergeOverlapped = sharedOpts.mergeOverlapped,
-            intersectionFilter = loiFilter,
+            intersectionFilter = limitResultsToSpecificLocationFilter,
             genomeMaskedAreaPath = sharedOpts.genomeMaskedAreaPath,
             genomeAllowedAreaPath = sharedOpts.genomeAllowedAreaPath,
             mergeRegionsToBg = false, // N/A

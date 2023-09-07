@@ -1,6 +1,5 @@
 package org.jetbrains.bio.gsea
 
-import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.Strand
@@ -14,12 +13,12 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
 class RegionShuffleStatsFromBedCoverage(
-    genome: Genome,
     simulationsNumber: Int,
     chunkSize: Int,
     maxRetries: Int
-) : RegionShuffleStats(genome, simulationsNumber, chunkSize, maxRetries) {
+) : RegionShuffleStats(simulationsNumber, chunkSize, maxRetries) {
     override fun calcStatistics(
+        genomeQuery: GenomeQuery,
         inputRegionsPath: Path,
         backgroundPath: Path?,
         loiInfos: List<LoiInfo>,
@@ -34,6 +33,7 @@ class RegionShuffleStatsFromBedCoverage(
         mergeRegionsToBg: Boolean,
         samplingWithReplacement: Boolean
     ) = doCalcStatistics(
+        genomeQuery,
         loiInfos,
         outputFolderPath,
         metric,

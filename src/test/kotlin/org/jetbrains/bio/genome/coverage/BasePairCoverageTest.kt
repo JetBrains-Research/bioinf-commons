@@ -522,6 +522,38 @@ class BasePairCoverageTest {
             .build(false)
             .filter(filter, includeRegions = false)
 
+        assertEquals(9, cov.depth)
+        assertEquals("{2, 5, 10, 20, 23, 30}", cov.data[chr1].toString())
+        assertEquals("{3, 10, 15}", cov.data[chr2].toString())
+    }
+
+    @Test
+    fun testFilterExcludeStranded() {
+        val filter = LocationsMergingList.create(
+            gq,
+            listOf(
+                Location(0, 2, chr1),
+                Location(3, 21, chr1, Strand.MINUS),
+                Location(24, 30, chr1),
+
+                Location(11, 15, chr2),
+                Location(16, 50, chr2),
+            )
+        )
+
+        val cov = BasePairCoverage.builder(gq, false)
+            .process(chr1, 2)
+            .process(chr1, 5)
+            .process(chr1, 10)
+            .process(chr1, 20)
+            .process(chr1, 23)
+            .process(chr1, 30)
+            .process(chr2, 3)
+            .process(chr2, 10)
+            .process(chr2, 15)
+            .build(false)
+            .filter(filter, includeRegions = false, ignoreRegionsOnMinusStrand = false)
+
         assertEquals(6, cov.depth)
         assertEquals("{2, 23, 30}", cov.data[chr1].toString())
         assertEquals("{3, 10, 15}", cov.data[chr2].toString())
@@ -578,6 +610,39 @@ class BasePairCoverageTest {
             .process(chr2, 15)
             .build(false)
             .filter(filter, includeRegions = true)
+
+        assertEquals(1, cov.depth)
+        assertEquals("{1}", cov.data[chr1].toString())
+        assertEquals("{}", cov.data[chr2].toString())
+    }
+
+    @Test
+    fun testFilterIncludeStranded() {
+        val filter = LocationsMergingList.create(
+            gq,
+            listOf(
+                Location(0, 2, chr1),
+                Location(3, 21, chr1, Strand.MINUS),
+                Location(24, 30, chr1),
+
+                Location(11, 15, chr2),
+                Location(16, 50, chr2),
+            )
+        )
+
+        val cov = BasePairCoverage.builder(gq, false)
+            .process(chr1, 1)
+            .process(chr1, 2)
+            .process(chr1, 10)
+            .process(chr1, 20)
+            .process(chr1, 23)
+            .process(chr1, 30)
+            .process(chr1, 32)
+            .process(chr2, 3)
+            .process(chr2, 10)
+            .process(chr2, 15)
+            .build(false)
+            .filter(filter, includeRegions = true, ignoreRegionsOnMinusStrand = false)
 
         assertEquals(3, cov.depth)
         assertEquals("{1, 10, 20}", cov.data[chr1].toString())

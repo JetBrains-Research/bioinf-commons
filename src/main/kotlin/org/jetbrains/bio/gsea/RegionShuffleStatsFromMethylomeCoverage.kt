@@ -18,14 +18,14 @@ import kotlin.math.min
 // TODO: optional save/load sampled regions to make 100% reproducible
 
 class RegionShuffleStatsFromMethylomeCoverage(
-    genome: Genome,
     simulationsNumber: Int,
     chunkSize: Int,
     maxRetries: Int,
     val zeroBasedBg: Boolean
-) : RegionShuffleStats(genome, simulationsNumber, chunkSize, maxRetries) {
+) : RegionShuffleStats(simulationsNumber, chunkSize, maxRetries) {
 
     override fun calcStatistics(
+        gq: GenomeQuery,
         inputRegionsPath: Path,
         backgroundPath: Path?,
         loiInfos: List<LoiInfo>,
@@ -43,6 +43,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
         requireNotNull(backgroundPath) { "Background should be provided" }
 
         return doCalcStatistics(
+            gq,
             loiInfos,
             outputFolderPath,
             metric,
@@ -279,7 +280,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
 
             LOG.info("Applying allowed regions filters...")
 
-            val allowedMethCovData = methCovData.filter(allowedGenomeFilter, progress = true, includeRegions = true)
+            val allowedMethCovData = methCovData.filter(allowedGenomeFilter, progress = true, includeRegions = true, ignoreRegionsOnMinusStrand = true)
             LOG.info("Background coverage (all filters applied): ${allowedMethCovData.depth.formatLongNumber()} offsets of ${methCovData.depth.formatLongNumber()}")
 
             val allowedInputRegions = inputRegions.filter { allowedGenomeFilter.includes(it) }

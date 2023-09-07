@@ -1,7 +1,9 @@
 package org.jetbrains.bio.gsea
 
 import org.jetbrains.bio.dataframe.DataFrame
-import org.jetbrains.bio.genome.*
+import org.jetbrains.bio.genome.ChromosomeRange
+import org.jetbrains.bio.genome.GenomeQuery
+import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.containers.LocationsList
 import org.jetbrains.bio.genome.containers.LocationsMergingList
 import org.jetbrains.bio.genome.containers.LocationsSortedList
@@ -18,7 +20,6 @@ import java.util.stream.IntStream
 import kotlin.math.ceil
 
 /**
- * @param genome Genome
  * @param simulationsNumber Simulations number
  * @param chunkSize Size of chunk
  * @param maxRetries Max retries when cannot shuffle region from background
@@ -26,7 +27,6 @@ import kotlin.math.ceil
  * Loci file path will be added to background
  */
 abstract class RegionShuffleStats(
-    protected val genome: Genome,
     protected  val simulationsNumber: Int,
     protected  val chunkSize: Int,
     protected  val maxRetries: Int
@@ -39,6 +39,7 @@ abstract class RegionShuffleStats(
      * @param metric Metric will be applied to  `(sampledLoci, lociToTest)`
      */
     abstract fun calcStatistics(
+        gq: GenomeQuery,
         inputRegionsPath: Path,
         backgroundPath: Path?,
         loiInfos: List<LoiInfo>,
@@ -56,6 +57,7 @@ abstract class RegionShuffleStats(
 
 
     protected fun <T> doCalcStatistics(
+        gq: GenomeQuery,
         loiInfos: List<LoiInfo>,
         outputFolderPath: Path? = null,
         metric: RegionsMetric,
@@ -69,8 +71,6 @@ abstract class RegionShuffleStats(
     ): DataFrame {
         outputFolderPath?.createDirectories()
         val dumpDetails = outputFolderPath != null
-
-        val gq = genome.toQuery()
 
         val (inputRegions, bgRegionsList) = inputRegionsAndBackgroundProvider(gq)
         require(inputRegions.isNotEmpty()) {
@@ -268,24 +268,25 @@ abstract class RegionShuffleStats(
          * Reads locations from a given path, ignoring strand information.
          *
          * @param path The path to the file containing the locations.
-         * @param genome The genome to use for querying.
+         * @param gq The genome query.
          * @param mergeOverlapped If true,  overlapped regions will be merged
          *
          * @return A triple containing the locations list and the number of loaded locations before merge and
          *   the records number in initial file
          */
         fun readLocationsIgnoringStrand(
-            path: Path, genome: Genome, mergeOverlapped: Boolean
-        ): Triple<LocationsList<out RangesList>, Int, Int> = genome.toQuery().let { gq ->
+            path: Path, gq: GenomeQuery, mergeOverlapped: Boolean
+        ): Triple<LocationsList<out RangesList>, Int, Int> {
             val (locations, recordsNumber) = readLocationsIgnoringStrand(path, gq)
-            if (mergeOverlapped) {
-                val mergedLocations = LocationsMergingList.create(gq, locations)
-                if (locations.size != mergedLocations.size) {
-                    LOG.info("$path: ${locations.size} regions merged to ${mergedLocations.size}")
+            return when {
+                mergeOverlapped -> {
+                    val mergedLocations = LocationsMergingList.create(gq, locations)
+                    if (locations.size != mergedLocations.size) {
+                        LOG.info("$path: ${locations.size} regions merged to ${mergedLocations.size}")
+                    }
+                    Triple(mergedLocations, locations.size, recordsNumber)
                 }
-                Triple(mergedLocations, locations.size, recordsNumber)
-            } else {
-                Triple(LocationsSortedList.create(gq, locations), locations.size, recordsNumber)
+                else -> Triple(LocationsSortedList.create(gq, locations), locations.size, recordsNumber)
             }
         }
 
@@ -341,7 +342,7 @@ abstract class RegionShuffleStats(
             LOG.info("Genome masked loci (merged): ${maskedGenomeLocations.size.formatLongNumber()} regions")
 
             // complementary regions
-            return maskedGenomeLocations.apply { rl, chr, _ -> rl.complementaryRanges(chr.length) }
+            return maskedGenomeLocations.apply { rl, chr, _strand -> rl.complementaryRanges(chr.length) }
         }
 
         /**
