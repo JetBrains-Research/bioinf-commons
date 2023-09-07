@@ -4,8 +4,6 @@ import joptsimple.OptionParser
 import org.jetbrains.bio.BioinfToolsCLA
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.genome.*
-import org.jetbrains.bio.genome.containers.LocationsList
-import org.jetbrains.bio.genome.containers.RangesList
 import org.jetbrains.bio.genome.containers.intersection.OverlapNumberMetric
 import org.jetbrains.bio.genome.containers.intersection.RegionsMetric
 import org.jetbrains.bio.genome.containers.toRangeSortedList
@@ -160,11 +158,11 @@ object OverlapLoiWithEachRegion {
 
         val threadsNumber = parallelismLevel()
         val filesStream = if (loiFolderPath.isDirectory) Files.list(loiFolderPath) else Stream.of(loiFolderPath)
-        val loiLabel2RangesList: List<List<Pair<String, LocationsList<out RangesList>>>>  = EnrichmentInLoi.collectLoiFrom(
+        val chunkedLoiInfos: List<List<LoiInfo>>  = EnrichmentInLoi.collectLoiFrom(
             filesStream, genome, mergeOverlapped, null, loiNameSuffix
         ).chunked(threadsNumber)
 
-        val totalSetsToTest = loiLabel2RangesList.sumOf { it.size }
+        val totalSetsToTest = chunkedLoiInfos.sumOf { it.size }
         LOG.info("LOI sets to test: $totalSetsToTest")
         require(totalSetsToTest > 0) {
             "No loi files passed file suffix filter."
@@ -180,20 +178,20 @@ object OverlapLoiWithEachRegion {
         val progress = Progress { title = "Overlap(loi set, each region) progress" }.bounded(
             totalSetsToTest.toLong()
         )
-        loiLabel2RangesList.parallelStream().forEach { chunk ->
-            for ((loiLabel, loiRanges) in chunk) {
+        chunkedLoiInfos.parallelStream().forEach { chunk ->
+            for (info in chunk) {
                 progress.report()
 
                 val values = LongArray(regions2RangesList.size)
                 regions2RangesList.forEachIndexed { i, (namedRegion, regionAsRangeList) ->
-                    val metricValueForSrc = loiRanges.calcAdditiveMetricDouble(
+                    val metricValueForSrc = info.loci.calcAdditiveMetricDouble(
                         regionAsRangeList, namedRegion.location.chromosome, namedRegion.location.strand,
                         metric::calcMetric
                     ).toLong()
                     values[i] = metricValueForSrc
                 }
 
-                val path = outputFolderPath / "${loiLabel}_${metric.column}.tsv"
+                val path = outputFolderPath / "${info.label}_${metric.column}.tsv"
                 // Save:
                 DataFrame()
                     .with(

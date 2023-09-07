@@ -2,9 +2,7 @@ package org.jetbrains.bio.gsea
 
 import joptsimple.OptionParser
 import org.jetbrains.bio.BioinfToolsCLA
-import org.jetbrains.bio.genome.containers.LocationsList
 import org.jetbrains.bio.genome.containers.LocationsSortedList
-import org.jetbrains.bio.genome.containers.RangesList
 import org.jetbrains.bio.genome.toQuery
 import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
@@ -213,11 +211,11 @@ object MethylationEnrichmentInLoi {
         }
 
         val filesStream = if (loiFolderPath.isDirectory) Files.list(loiFolderPath) else Stream.of(loiFolderPath)
-        val loiLabel2RangesList: List<Pair<String, LocationsList<out RangesList>>> = EnrichmentInLoi.collectLoiFrom(
+        val loiInfos: List<LoiInfo> = EnrichmentInLoi.collectLoiFrom(
             filesStream, sharedOpts.genome, sharedOpts.mergeOverlapped, loiFilter, sharedOpts.loiNameSuffix
         )
 
-        require(loiLabel2RangesList.isNotEmpty()) {
+        require(loiInfos.isNotEmpty()) {
             "No LOI files passed file suffix filter."
         }
 
@@ -229,7 +227,7 @@ object MethylationEnrichmentInLoi {
         ).calcStatistics(
             sharedOpts.inputRegions, // DMRs
             sharedOpts.backgroundPath, // Methylome background
-            loiLabel2RangesList,
+            loiInfos,
             detailedReportFolder,
             metric = sharedOpts.metric,
             hypAlt = sharedOpts.hypAlt,

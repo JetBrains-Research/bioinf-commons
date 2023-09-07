@@ -34,14 +34,14 @@ abstract class RegionShuffleStats(
     /**
      * Strand is ignore in all files
      *
-     * @param loiLabel2RangesList  Test sampled loci vs given regions lists (label and loci) using given metric
+     * @param loiInfos  Test sampled loci vs given regions lists (label, loci, initial #regions in loci) using given metric
      * @param outputFolderPath Results path
      * @param metric Metric will be applied to  `(sampledLoci, lociToTest)`
      */
     abstract fun calcStatistics(
         inputRegionsPath: Path,
         backgroundPath: Path?,
-        loiLabel2RangesList: List<Pair<String, LocationsList<out RangesList>>>,
+        loiInfos: List<LoiInfo>,
         outputFolderPath: Path? = null,
         metric: RegionsMetric,
         hypAlt: PermutationAltHypothesis = PermutationAltHypothesis.GREATER,
@@ -56,7 +56,7 @@ abstract class RegionShuffleStats(
 
 
     protected fun <T> doCalcStatistics(
-        loiLabel2RangesList: List<Pair<String, LocationsList<out RangesList>>>,
+        loiInfos: List<LoiInfo>,
         outputFolderPath: Path? = null,
         metric: RegionsMetric,
         hypAlt: PermutationAltHypothesis = PermutationAltHypothesis.GREATER,
@@ -81,10 +81,17 @@ abstract class RegionShuffleStats(
             else -> LocationsSortedList.create(gq, inputRegions)
         }
 
-        LOG.info("LOI sets to test: ${loiLabel2RangesList.size}")
+        LOG.info("LOI sets to test: ${loiInfos.size}")
 
-        val label2Stats = loiLabel2RangesList.associate { (label, loi) ->
-            label to TestedRegionStats()
+        val label2Stats = loiInfos.associate { info ->
+            info.label to TestedRegionStats()
+        }
+
+        val label2LoadedRegionsNumber = loiInfos.associate { info ->
+            info.label to info.processedLoiNumber
+        }
+        val label2RecordsNumber = loiInfos.associate { info ->
+            info.label to info.recordsNumber
         }
 
         val nChunks = ceil(simulationsNumber.toDouble() / chunkSize).toInt()
@@ -128,17 +135,17 @@ abstract class RegionShuffleStats(
             }
             */
             val chunkProgress = Progress { title = "Chunk Over/Under-representation:" }.bounded(
-                loiLabel2RangesList.size.toLong()
+                loiInfos.size.toLong()
             )
-            for ((loiLabel, loiRanges) in loiLabel2RangesList) {
+            for (info in loiInfos) {
                 chunkProgress.report()
 
-                val metricValueForInput = calcMetric(allowedInputRegionsList, loiRanges, aSetIsRegions, metric)
+                val metricValueForInput = calcMetric(allowedInputRegionsList, info.loci, aSetIsRegions, metric)
 
                 val metricValueForSampled =
-                    calcMetricForSampled(sampledRegions, loiRanges, aSetIsRegions, metric, metricValueForInput)
+                    calcMetricForSampled(sampledRegions, info.loci, aSetIsRegions, metric, metricValueForInput)
 
-                val stats = label2Stats[loiLabel]!!
+                val stats = label2Stats[info.label]!!
                 metricValueForSampled.forEach { st ->
                     stats.countSetsWithMetricsAboveThr += st.countSetsWithMetricsAboveThr
                     stats.countSetsWithMetricsBelowThr += st.countSetsWithMetricsBelowThr
@@ -154,8 +161,8 @@ abstract class RegionShuffleStats(
         progress.done()
 
         // Save results to DataFrame:
-        val loiLabels = loiLabel2RangesList.map { it.first }
-        val loiRangesNumber = loiLabel2RangesList.map { it.second.size }.toIntArray()
+        val loiLabels = loiInfos.map { it.label }
+        val loiRangesNumber = loiInfos.map { it.loci.size }.toIntArray()
         val pValuesList = ArrayList<Double>()
         val metricValuesForInput = ArrayList<Long>()
         val sampledSetsMetricMedian = ArrayList<Int>()
@@ -191,10 +198,14 @@ abstract class RegionShuffleStats(
         val pValues = pValuesList.toDoubleArray()
         val qValues = BenjaminiHochberg.adjust(pValues.asF64Array()).toDoubleArray()
 
+        val metricArgString = if (aSetIsRegions) "regions, loi" else "loi, regions"
         return DataFrame()
             .with("loi", loiLabels.toTypedArray())
-            .with("input_regions_n", IntArray(loiLabels.size) { inputRegions.size })
-            .with("loi_regions_m", loiRangesNumber)
+            .with("n_loi_records", loiLabels.map { label2RecordsNumber[it]!! }.toIntArray())
+            .with("n_loi_loaded", loiLabels.map { label2LoadedRegionsNumber[it]!! }.toIntArray())
+            .with("n_loi_merged", loiRangesNumber)
+            .with("n_regions", IntArray(loiLabels.size) { inputRegions.size })
+            .with("metric", loiLabels.map { "${metric.column}($metricArgString)" }.toTypedArray())
             .with("input_${metric.column}", metricValuesForInput.toLongArray())
             .with("sampled_median_${metric.column}", sampledSetsMetricMedian.toIntArray())
             .with("sampled_mean_${metric.column}", sampledSetsMetricMean.toDoubleArray())
@@ -253,18 +264,28 @@ abstract class RegionShuffleStats(
     companion object {
         private val LOG = LoggerFactory.getLogger(RegionShuffleStats::class.java)
 
+        /**
+         * Reads locations from a given path, ignoring strand information.
+         *
+         * @param path The path to the file containing the locations.
+         * @param genome The genome to use for querying.
+         * @param mergeOverlapped If true,  overlapped regions will be merged
+         *
+         * @return A triple containing the locations list and the number of loaded locations before merge and
+         *   the records number in initial file
+         */
         fun readLocationsIgnoringStrand(
             path: Path, genome: Genome, mergeOverlapped: Boolean
-        ): LocationsList<out RangesList> = genome.toQuery().let { gq ->
-            val locations = readLocationsIgnoringStrand(path, gq)
+        ): Triple<LocationsList<out RangesList>, Int, Int> = genome.toQuery().let { gq ->
+            val (locations, recordsNumber) = readLocationsIgnoringStrand(path, gq)
             if (mergeOverlapped) {
                 val mergedLocations = LocationsMergingList.create(gq, locations)
                 if (locations.size != mergedLocations.size) {
                     LOG.info("$path: ${locations.size} regions merged to ${mergedLocations.size}")
                 }
-                mergedLocations
+                Triple(mergedLocations, locations.size, recordsNumber)
             } else {
-                LocationsSortedList.create(gq, locations)
+                Triple(LocationsSortedList.create(gq, locations), locations.size, recordsNumber)
             }
         }
 
@@ -272,7 +293,7 @@ abstract class RegionShuffleStats(
             path: Path,
             gq: GenomeQuery,
             bedFormat: BedFormat = BedFormat.auto(path)
-        ): List<Location> {
+        ): Pair<List<Location>, Int> {
             var recordsNumber = 0
             val ignoredChrs = mutableListOf<String>()
 
@@ -300,7 +321,7 @@ abstract class RegionShuffleStats(
             if (ignoredChrs.isNotEmpty()) {
                 LOG.debug("$path: Ignored chromosomes: $ignoredChrs")
             }
-            return loci
+            return loci to recordsNumber
         }
 
         /**
@@ -314,7 +335,7 @@ abstract class RegionShuffleStats(
             genomeMaskedLociPath: Path,
             gq: GenomeQuery
         ): LocationsMergingList {
-            val maskedGenome = readLocationsIgnoringStrand(genomeMaskedLociPath, gq)
+            val maskedGenome = readLocationsIgnoringStrand(genomeMaskedLociPath, gq).first
             LOG.info("Genome masked loci: ${maskedGenome.size.formatLongNumber()} regions")
             val maskedGenomeLocations = LocationsMergingList.create(gq, maskedGenome)
             LOG.info("Genome masked loci (merged): ${maskedGenomeLocations.size.formatLongNumber()} regions")
@@ -335,7 +356,7 @@ abstract class RegionShuffleStats(
             gq: GenomeQuery
         ): LocationsMergingList {
             val allowedGenome = genomeAllowedLociPath.let {
-                readLocationsIgnoringStrand(it, gq)
+                readLocationsIgnoringStrand(it, gq).first
             }
 
             LOG.info("Genome allowed loci: ${allowedGenome.size.formatLongNumber()} regions")

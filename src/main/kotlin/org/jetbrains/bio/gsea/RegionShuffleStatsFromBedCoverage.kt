@@ -22,7 +22,7 @@ class RegionShuffleStatsFromBedCoverage(
     override fun calcStatistics(
         inputRegionsPath: Path,
         backgroundPath: Path?,
-        loiLabel2RangesList: List<Pair<String, LocationsList<out RangesList>>>,
+        loiInfos: List<LoiInfo>,
         outputFolderPath: Path?,
         metric: RegionsMetric,
         hypAlt: PermutationAltHypothesis,
@@ -34,7 +34,7 @@ class RegionShuffleStatsFromBedCoverage(
         mergeRegionsToBg: Boolean,
         samplingWithReplacement: Boolean
     ) = doCalcStatistics(
-        loiLabel2RangesList,
+        loiInfos,
         outputFolderPath,
         metric,
         hypAlt,
@@ -65,11 +65,11 @@ class RegionShuffleStatsFromBedCoverage(
         genomeAllowedAreaPath: Path?,
         gq: GenomeQuery
     ): Pair<List<Location>, LocationsMergingList> {
-        val inputRegions = readLocationsIgnoringStrand(inputRegionsPath, gq)
+        val inputRegions = readLocationsIgnoringStrand(inputRegionsPath, gq).first
         LOG.info("Input regions: ${inputRegions.size.formatLongNumber()} regions")
 
         val bgRegions = if (backgroundRegionsPath != null) {
-            val bgLocations = readLocationsIgnoringStrand(backgroundRegionsPath, gq).toMutableList()
+            val bgLocations = readLocationsIgnoringStrand(backgroundRegionsPath, gq).first.toMutableList()
             if (mergeRegionsToBg) {
                 // merge source loci into background
                 bgLocations.addAll(inputRegions)
@@ -110,8 +110,8 @@ class RegionShuffleStatsFromBedCoverage(
         val allowedBg = bgRegions.intersectRanges(allowedGenomeFilter) as LocationsMergingList
         val allowedInputRegions = inputRegions.filter { allowedGenomeFilter.includes(it) }
 
-        LOG.info("Background regions (all filters applied): ${allowedBg.size.formatLongNumber()} regions")
-        LOG.info("Input regions (all filters applied): ${allowedInputRegions.size.formatLongNumber()} regions")
+        LOG.info("Background regions (all filters applied): ${allowedBg.size.formatLongNumber()} regions of ${bgRegions.size.formatLongNumber()}")
+        LOG.info("Input regions (all filters applied): ${allowedInputRegions.size.formatLongNumber()} regions of ${inputRegions.size.formatLongNumber()}")
         return allowedInputRegions to allowedBg
     }
 

@@ -48,11 +48,11 @@ object EnrichmentInLoi {
         }
 
         val filesStream = if (loiFolderPath.isDirectory) Files.list(loiFolderPath) else Stream.of(loiFolderPath)
-        val loiLabel2RangesList: List<Pair<String, LocationsList<out RangesList>>> = collectLoiFrom(
+        val loiInfos: List<LoiInfo> = collectLoiFrom(
             filesStream, sharedOpts.genome, sharedOpts.mergeOverlapped, loiFilter, sharedOpts.loiNameSuffix
         )
 
-        require(loiLabel2RangesList.isNotEmpty()) {
+        require(loiInfos.isNotEmpty()) {
             "No LOI files passed file suffix filter."
         }
 
@@ -63,7 +63,7 @@ object EnrichmentInLoi {
         ).calcStatistics(
             sharedOpts.inputRegions,
             sharedOpts.backgroundPath,
-            loiLabel2RangesList,
+            loiInfos,
             detailedReportFolder,
             metric = sharedOpts.metric,
             hypAlt = sharedOpts.hypAlt,
@@ -88,25 +88,26 @@ object EnrichmentInLoi {
         mergeOverlapped: Boolean,
         loiFilter: LocationsSortedList?,
         loiNameSuffix: String?
-    ): List<Pair<String, LocationsList<out RangesList>>> = filesStream.filter { path ->
+    ): List<LoiInfo> = filesStream.filter { path ->
         loiNameSuffix == null || path.name.endsWith(loiNameSuffix)
     }.map { path ->
         val name = path.fileName.toString()
 
-        val locationsList = RegionShuffleStats.readLocationsIgnoringStrand(path, genome, mergeOverlapped).let { ll ->
-            if (loiFilter == null) {
-                ll
-            } else {
-                val gq = ll.genomeQuery
-                val filteredIterator = ll.intersectRanges(loiFilter).locationIterator()
-                when {
-                    mergeOverlapped -> LocationsMergingList.create(gq, filteredIterator)
-                    else -> LocationsSortedList.create(gq, filteredIterator)
-                }
+        val (locList, nLoadedLoi, nRecords) = RegionShuffleStats.readLocationsIgnoringStrand(
+            path, genome, mergeOverlapped
+        )
+        val filteredLocList = if (loiFilter == null) {
+            locList
+        } else {
+            val gq = locList.genomeQuery
+            val filteredIterator = locList.intersectRanges(loiFilter).locationIterator()
+            when {
+                mergeOverlapped -> LocationsMergingList.create(gq, filteredIterator)
+                else -> LocationsSortedList.create(gq, filteredIterator)
             }
         }
 
-        name to locationsList
+        LoiInfo(name, filteredLocList, processedLoiNumber = nLoadedLoi, recordsNumber = nRecords)
     }.collect(Collectors.toList())
 
     @JvmStatic
@@ -467,3 +468,10 @@ fun parseChrNamesMapping(chrMapStr: List<String>) = chrMapStr.map {
     }
     pair[0].trim() to pair[1].trim()
 }.toMap()
+
+class LoiInfo(
+    val label: String,
+    val loci: LocationsList<out RangesList>,
+    val processedLoiNumber: Int,
+    val recordsNumber: Int
+)

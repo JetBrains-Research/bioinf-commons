@@ -28,7 +28,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
     override fun calcStatistics(
         inputRegionsPath: Path,
         backgroundPath: Path?,
-        loiLabel2RangesList: List<Pair<String, LocationsList<out RangesList>>>,
+        loiInfos: List<LoiInfo>,
         outputFolderPath: Path?,
         metric: RegionsMetric,
         hypAlt: PermutationAltHypothesis,
@@ -43,7 +43,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
         requireNotNull(backgroundPath) { "Background should be provided" }
 
         return doCalcStatistics(
-            loiLabel2RangesList,
+            loiInfos,
             outputFolderPath,
             metric,
             hypAlt,
@@ -257,7 +257,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
             genomeAllowedAreaPath: Path?,
             gq: GenomeQuery
         ): Pair<List<Location>, BasePairCoverage> {
-            val inputRegions = readLocationsIgnoringStrand(inputRegionsPath, gq)
+            val inputRegions = readLocationsIgnoringStrand(inputRegionsPath, gq).first
             LOG.info("Input regions: ${inputRegions.size.formatLongNumber()} regions")
 
             val methCovData = BasePairCoverage.loadFromTSV(
@@ -280,10 +280,10 @@ class RegionShuffleStatsFromMethylomeCoverage(
             LOG.info("Applying allowed regions filters...")
 
             val allowedMethCovData = methCovData.filter(allowedGenomeFilter, progress = true, includeRegions = true)
-            LOG.info("Background coverage (all filters applied): ${allowedMethCovData.depth.formatLongNumber()} offsets")
+            LOG.info("Background coverage (all filters applied): ${allowedMethCovData.depth.formatLongNumber()} offsets of ${methCovData.depth.formatLongNumber()}")
 
             val allowedInputRegions = inputRegions.filter { allowedGenomeFilter.includes(it) }
-            LOG.info("Input regions (all filters applied): ${allowedInputRegions.size.formatLongNumber()} regions")
+            LOG.info("Input regions (all filters applied): ${allowedInputRegions.size.formatLongNumber()} regions of ${inputRegions.size.formatLongNumber()}")
 
             ensureInputRegionsMatchesBackgound(allowedInputRegions, allowedMethCovData, backgroundRegionsPath)
             return allowedInputRegions to allowedMethCovData
