@@ -10,7 +10,8 @@ import com.google.common.collect.ImmutableListMultimap
 import com.google.common.collect.LinkedListMultimap
 import com.google.common.collect.ListMultimap
 import org.apache.commons.csv.CSVFormat
-import org.jetbrains.bio.genome.RepeatsHs1.readHs1
+import org.jetbrains.bio.genome.CpGIslandsHs1.readHs1CpGIslands
+import org.jetbrains.bio.genome.RepeatsHs1.readHs1Repeats
 import org.jetbrains.bio.util.*
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -85,7 +86,7 @@ object Repeats {
 
     private fun read(genome: Genome, repeatsPath: Path): ListMultimap<Chromosome, Repeat> {
         if (genome.annotationsConfig?.repeatsUrl?.contains("hs1") == true) {
-            return readHs1(genome, repeatsPath)
+            return readHs1Repeats(genome, repeatsPath)
         }
 
         val builder = ImmutableListMultimap.builder<Chromosome, Repeat>()
@@ -350,6 +351,10 @@ object CpGIslands {
         islandsPath: Path,
         ucscAnnLegacyFormat: Boolean
     ): ListMultimap<Chromosome, CpGIsland> {
+        if (genome.annotationsConfig?.cpgIslandsUrl?.contains("hs1") == true) {
+            return readHs1CpGIslands(genome, islandsPath, genome.chrAltName2CanonicalMapping)
+        }
+
         val builder = ImmutableListMultimap.builder<Chromosome, CpGIsland>()
         val chromosomes = genome.chromosomeNamesMap
 

@@ -4,6 +4,7 @@ package org.jetbrains.bio.genome
 
 import com.google.common.collect.ImmutableListMultimap
 import com.google.common.collect.ListMultimap
+import org.jetbrains.bio.big.BigBedFile
 import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.InputStreamReader
@@ -13,7 +14,7 @@ import java.util.zip.GZIPInputStream
 
 object RepeatsHs1 {
 
-    internal fun readHs1(genome: Genome, repeatsPath: Path): ListMultimap<Chromosome, Repeat> {
+    internal fun readHs1Repeats(genome: Genome, repeatsPath: Path): ListMultimap<Chromosome, Repeat> {
         val chromosomes = genome.chromosomeNamesMap
 
         val reader = InputStreamReader(GZIPInputStream(FileInputStream(repeatsPath.toFile())))
@@ -82,5 +83,52 @@ object RepeatsHs1 {
         '+' -> Strand.PLUS
         'C' -> Strand.MINUS
         else -> throw IllegalStateException("Unknown strand: $this")
+    }
+}
+
+object CpGIslandsHs1 {
+    internal fun readHs1CpGIslands(
+        genome: Genome,
+        islandsPath: Path,
+        chrAltName2CanonicalMapping: Map<String, String>,
+    ): ListMultimap<Chromosome, CpGIsland> {
+        val chromosomesNames = genome.chromosomeNamesMap
+
+        val builder = ImmutableListMultimap.builder<Chromosome, CpGIsland>()
+
+        BigBedFile.read(islandsPath).use { bbf ->
+            for (chromosome in bbf.chromosomes.valueCollection()) {
+                for ((chrom, start, end, rest) in bbf.query(chromosome)) {
+                    val chr = chromosomesNames[chrAltName2CanonicalMapping[chrom]]
+                    val island = parseIsland(chr, start, end, rest)
+
+                    if (chr != null && island != null) {
+                        builder.put(chr, island)
+                    }
+                }
+            }
+        }
+
+        return builder.build()
+    }
+
+    internal fun parseIsland(chr: Chromosome?, start: Int, end: Int, rest: String): CpGIsland? {
+        if (chr == null) {
+            return null
+        }
+
+        val otherFields = rest.split("\t")
+        if (otherFields.size < 7) {
+            return null
+        }
+        val location = Location(
+            start, end,
+            chr
+        )
+
+        return CpGIsland(
+            otherFields[2].toInt(), otherFields[3].toInt(),
+            otherFields[6].toDouble(), location
+        )
     }
 }
