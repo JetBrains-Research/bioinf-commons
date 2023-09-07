@@ -211,6 +211,7 @@ abstract class RegionShuffleStats(
             .with("sampled_mean_${metric.column}", sampledSetsMetricMean.toDoubleArray())
             .with("sampled_var_${metric.column}", sampledSetsMetricVar.toDoubleArray())
             .with("sampled_sets_n", IntArray(loiLabels.size) { simulationsNumber })
+            .with("test_H1", loiLabels.map { hypAlt.name }.toTypedArray())
             .with("pValue", pValues)
             .with("qValue", qValues)
             .reorder("pValue")
