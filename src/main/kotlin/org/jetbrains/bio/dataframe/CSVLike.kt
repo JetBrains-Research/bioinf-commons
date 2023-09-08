@@ -42,7 +42,7 @@ class CSVLike(val format: CSVFormat) : DataFrameMapper() {
         val progress = Progress { title = "Reading data frame $path" }.bounded(rowsNumber.toLong())
         val df = DataFrame(rowsNumber, spec.columns.map { it.resize(rowsNumber) })
         path.bufferedReader().use {
-            val format = format.withHeader(*df.labels).withSkipHeaderRecord(header)
+            val format = format.builder().setHeader(*df.labels).setSkipHeaderRecord(header).build()
             for ((i, row) in format.parse(it).withIndex()) {
                 // XXX we allow row to contain more columns because it's often
                 // the case for UCSC annotations :(
@@ -66,7 +66,7 @@ class CSVLike(val format: CSVFormat) : DataFrameMapper() {
         return df
     }
 
-    override fun save(path: Path, df: DataFrame) = save(path.bufferedWriter(), df, true, true)
+    override fun save(path: Path, df: DataFrame) = save(path.bufferedWriter(), df, header = true, typed = true)
 
     fun save(
         out: Appendable,
@@ -76,7 +76,7 @@ class CSVLike(val format: CSVFormat) : DataFrameMapper() {
         comments: Array<String>? = null
     ) {
 
-        val typesSeparator = ";${format.delimiter}"
+        val typesSeparator = ";${format.delimiterString}"
         format.print(out).use { csvPrinter ->
             comments?.forEach { csvPrinter.printComment(it) }
 

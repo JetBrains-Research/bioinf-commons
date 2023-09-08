@@ -72,12 +72,12 @@ object Repeats {
         }
     }
 
-    private val FORMAT = CSVFormat.TDF.withHeader(
+    private val FORMAT = CSVFormat.TDF.builder().setHeader(
         "bin", "sw_score", "mismatches", "deletions", "insertions",
         "chrom", "genomic_start", "genomic_end", "genomic_left",
         "strand", "name", "class", "family", "repeat_start",
         "repeat_end", "repeat_left", "id"
-    )
+    ).build()
 
     internal fun all(genome: Genome) = CACHE.get(genome) {
         repeatsPath(genome)?.let { read(genome, it) } ?: ArrayListMultimap.create()
@@ -134,8 +134,9 @@ object CytoBands {
 
     internal const val FILE_NAME = "cytoBand.txt.gz"
 
-    internal val FORMAT = CSVFormat.TDF
-        .withHeader("chrom", "start_offset", "end_offset", "name", "gie_stain")
+    internal val FORMAT = CSVFormat.TDF.builder().setHeader(
+        "chrom", "start_offset", "end_offset", "name", "gie_stain"
+    ).build()
 
     internal fun all(genome: Genome): ListMultimap<Chromosome, CytoBand> {
         return CACHE.get(genome) {
@@ -200,10 +201,10 @@ object Gaps {
 
     internal const val FILE_NAME = "gap.txt.gz"
 
-    internal val FORMAT = CSVFormat.TDF.withHeader(
+    internal val FORMAT = CSVFormat.TDF.builder().setHeader(
         "bin", "chrom", "start_offset", "end_offset", "ix", "n",
         "size", "type", "bridge"
-    )
+    ).build()
 
     private const val CENTROMERES_FILE_NAME = "centromeres.txt.gz"
 
@@ -365,9 +366,9 @@ object CpGIslands {
 
         val csvFormat = if (ucscAnnLegacyFormat) {
             //Builds missing `bin` column in the annotations
-            CSVFormat.TDF.withHeader(*headers)
+            CSVFormat.TDF.builder().setHeader(*headers).build()
         } else {
-            CSVFormat.TDF.withHeader("bin", *headers)
+            CSVFormat.TDF.builder().setHeader("bin", *headers).build()
         }
 
         csvFormat.parse(islandsPath.bufferedReader()).use { csvParser ->

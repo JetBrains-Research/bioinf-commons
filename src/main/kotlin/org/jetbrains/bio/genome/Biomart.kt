@@ -5,6 +5,7 @@ import org.apache.commons.csv.CSVParser
 import org.apache.hc.client5.http.HttpResponseException
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
+import org.apache.hc.core5.http.io.HttpClientResponseHandler
 import org.apache.hc.core5.net.URIBuilder
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -36,9 +37,9 @@ data class Biomart(
             "dataset" to dataset
         )
         wire(url, params) {
-            CSVFormat.TDF.parse(it.bufferedReader()).map {
-                Attribute(it[0], it[1])
-            }.sortedBy { it.name }
+            CSVFormat.TDF.parse(it.bufferedReader()).map { csvRecord ->
+                Attribute(csvRecord[0], csvRecord[1])
+            }.sortedBy { attr -> attr.name }
         }
     }
 
@@ -52,14 +53,15 @@ data class Biomart(
             "dataset" to dataset
         )
         wire(url, params) {
-            val format = CSVFormat.TDF.withHeader(
+            val format = CSVFormat.TDF.builder().setHeader(
                 "name", "short_description", "allowed_values",
                 "long_description", "<unknown>", "type", "operator",
                 "config", "default"
-            )
-            format.parse(it.bufferedReader()).map {
-                Filter(it["name"], it["short_description"])
-            }.sortedBy { it.name }
+            ).build()
+
+            format.parse(it.bufferedReader()).map { csvRecord ->
+                Filter(csvRecord["name"], csvRecord["short_description"])
+            }.sortedBy { filter -> filter.name }
         }
     }
 
@@ -105,8 +107,8 @@ data class Biomart(
             }
 
             block(
-                CSVFormat.TDF.withHeader(*attributes.toTypedArray())
-                    .withSkipHeaderRecord()
+                CSVFormat.TDF.builder().setHeader(*attributes.toTypedArray())
+                    .setSkipHeaderRecord(true).build()
                     .parse(reader)
             )
         }

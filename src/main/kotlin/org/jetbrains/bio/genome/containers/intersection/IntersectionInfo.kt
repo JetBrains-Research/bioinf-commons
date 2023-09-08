@@ -25,10 +25,10 @@ data class IntersectionInfo(
     fun saveToCSV(writer: Writer) {
         val (nrows, ncols) = data.shape
 
-        CSVFormat.DEFAULT
-            .withQuoteMode(QuoteMode.MINIMAL)
-            .withCommentMarker('#')!!
-            .print(writer).use { p ->
+        CSVFormat.DEFAULT.builder()
+            .setQuoteMode(QuoteMode.MINIMAL)
+            .setCommentMarker('#')!!
+            .build().print(writer).use { p ->
                 // header
                 p.print("a_names")
                 p.print("a_merged_loci_count")
@@ -68,10 +68,10 @@ data class IntersectionInfo(
          * Supports same format, as our WASHU tables
          */
         @Suppress("unused")
-        fun loadFromCSV(path: Path) = CSVFormat.DEFAULT
-            .withQuoteMode(QuoteMode.MINIMAL)
-            .withCommentMarker('#')!!
-            .parse(path.bufferedReader()).use { parser ->
+        fun loadFromCSV(path: Path) = CSVFormat.DEFAULT.builder()
+            .setQuoteMode(QuoteMode.MINIMAL)
+            .setCommentMarker('#')!!
+            .build().parse(path.bufferedReader()).use { parser ->
                 var colNames: List<String>? = null
                 var colsMergedLociNumber: IntArray? = null
                 val rowsMergedLociNumber = TIntArrayList()

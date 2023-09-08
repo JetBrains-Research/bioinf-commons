@@ -48,19 +48,19 @@ fun DataFrame.dumpHead(rowsCount: Int): String {
     }
 
     val buff = StringBuilder()
-    DataFrameMappers.TSV.save(buff, resize(rowsCount), true, true)
+    DataFrameMappers.TSV.save(buff, resize(rowsCount), header = true, typed = true)
     return buff.toString()
 }
 
 object DataFrameMappers {
     val TSV = CSVLike(
-        CSVFormat.TDF.withQuoteMode(QuoteMode.MINIMAL).withCommentMarker('#')
-            .withRecordSeparator("\n")!!
+        CSVFormat.TDF.builder().setQuoteMode(QuoteMode.MINIMAL).setCommentMarker('#').setRecordSeparator("\n")
+            .build()
     )
 
     val CSV = CSVLike(
-        CSVFormat.DEFAULT.withQuoteMode(QuoteMode.MINIMAL).withCommentMarker('#')
-            .withRecordSeparator("\n")!!
+        CSVFormat.DEFAULT.builder().setQuoteMode(QuoteMode.MINIMAL).setCommentMarker('#').setRecordSeparator("\n")
+            .build()
     )
 
     val NPZ = object : DataFrameMapper() {

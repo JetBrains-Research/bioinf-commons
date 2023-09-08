@@ -210,14 +210,14 @@ object GafFile {
     // See
     // for field descriptions.
     private val FORMAT = CSVFormat.TDF
-        .withCommentMarker('!')
-        .withHeader(
+        .builder().setCommentMarker('!')
+        .setHeader(
             "db", "db_object_id", "db_object_symbol", "qualifier",
             "go_id", "db_reference", "evidence_code", "with_or_from",
             "aspect", "db_object_name", "db_object_synonym",
             "do_object_type", "taxon", "date", "assigned_by",
             "annotation_extension", "gene_product_form_id"
-        )
+        ).build()
 
     fun read(genome: Genome, path: Path, ontology: Ontology): SetMultimap<String, String> {
         val aspect = when (ontology) {
