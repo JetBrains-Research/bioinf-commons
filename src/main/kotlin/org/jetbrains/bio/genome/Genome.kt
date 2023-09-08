@@ -656,6 +656,8 @@ enum class Strand(val char: Char) {
 
     companion object {
         internal val LOG = LoggerFactory.getLogger(Strand::class.java)
+
+        fun fromBool(isPlusStrand: Boolean) = if (isPlusStrand) Strand.PLUS else MINUS
     }
 
 }
