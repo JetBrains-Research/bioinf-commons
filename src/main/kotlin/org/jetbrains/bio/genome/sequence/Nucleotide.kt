@@ -42,12 +42,15 @@ enum class Nucleotide constructor(
         internal const val ANY_NUCLEOTIDE_BYTE: Byte = 0b101
         const val N = 'n'
 
-        fun fromChar(c: Char): Nucleotide? {
-            val byte = getByte(c)
+        fun fromChar(c: Char): Nucleotide? = fromByte(getByte(c))
+
+        fun fromByte(byte: Byte): Nucleotide? {
             if (byte == ANY_NUCLEOTIDE_BYTE) {
                 return null
             }
-            return Nucleotide.values()[byte.toInt()]
+            val byteInt = byte.toInt()
+            checkElementIndex(byteInt, 4, "invalid nucleotide byte = $byte:")
+            return Nucleotide.values()[byteInt]
         }
 
         internal fun getByte(c: Char) = when (c) {

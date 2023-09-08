@@ -14,6 +14,8 @@ interface NucleotideSequence {
      */
     fun charAt(pos: Int): Char
 
+    fun nucleotideAt(pos: Int) = Nucleotide.fromChar(charAt(pos))
+
     /**
      * Returns the lowercase nucleotide at specific position and strand.
      */

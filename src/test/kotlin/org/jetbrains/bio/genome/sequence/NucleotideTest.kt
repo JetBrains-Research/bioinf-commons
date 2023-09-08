@@ -1,7 +1,10 @@
 package org.jetbrains.bio.genome.sequence
 
 import org.junit.Test
+import java.lang.IllegalArgumentException
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 
 class NucleotideTest {
     @Test
@@ -44,12 +47,35 @@ class NucleotideTest {
     }
 
     @Test
+    fun testFromByte() {
+        assertEquals(Nucleotide.T, Nucleotide.fromByte(Nucleotide.T.byte))
+        assertEquals(Nucleotide.A, Nucleotide.fromByte(Nucleotide.A.byte))
+        assertEquals(Nucleotide.C, Nucleotide.fromByte(Nucleotide.C.byte))
+        assertEquals(Nucleotide.G, Nucleotide.fromByte(Nucleotide.G.byte))
+
+        assertNull(Nucleotide.fromByte(Nucleotide.ANY_NUCLEOTIDE_BYTE))
+    }
+
+    @Test
+    fun testFromInvalidByte(){
+        assertFailsWith(IndexOutOfBoundsException::class, message = "invalid nucleotide byte = 6: (6) must be less than size (4)") {
+            assertEquals(Nucleotide.G, Nucleotide.fromByte(6.toByte()))
+        }
+        assertFailsWith(IndexOutOfBoundsException::class, message = "invalid nucleotide byte = 128: (128) must be less than size (4)") {
+            assertEquals(Nucleotide.G, Nucleotide.fromByte(128.toByte()))
+        }
+    }
+
+    @Test
     fun testFromChar() {
         assertEquals(Nucleotide.T, Nucleotide.fromChar('t'))
         assertEquals(Nucleotide.A, Nucleotide.fromChar('a'))
         assertEquals(Nucleotide.G, Nucleotide.fromChar('g'))
         assertEquals(Nucleotide.T, Nucleotide.fromChar('T'))
         assertEquals(Nucleotide.C, Nucleotide.fromChar('C'))
-        assertEquals('n', Nucleotide.getChar(Nucleotide.ANY_NUCLEOTIDE_BYTE))
+
+        assertNull( Nucleotide.fromChar('N'))
+        assertNull( Nucleotide.fromChar('n'))
+        assertNull( Nucleotide.fromChar('?'))
     }
 }

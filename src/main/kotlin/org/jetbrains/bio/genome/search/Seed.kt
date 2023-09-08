@@ -35,9 +35,7 @@ data class Seed(val text: String, val length: Int, val start: Int) {
             }
 
             object : NucleotideSequence {
-                override fun charAt(pos: Int): Char {
-                    return Nucleotide.ALPHABET[bytes[pos].toInt()].toChar()
-                }
+                override fun charAt(pos: Int): Char = Nucleotide.ALPHABET[bytes[pos].toInt()]
 
                 override val length: Int
                     get() = bytes.size
