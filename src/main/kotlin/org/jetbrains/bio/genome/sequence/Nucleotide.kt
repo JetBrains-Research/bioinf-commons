@@ -14,7 +14,6 @@ enum class Nucleotide constructor(
      */
     val byte: Byte
 ) {
-
     // Please keep 'em in bytes order
     T(0b00),
     C(0b01),
@@ -23,7 +22,15 @@ enum class Nucleotide constructor(
 
     val char: Char get() = getChar(byte)
 
+    init {
+        // is important for Nucleotide.fromChar method
+        require(byte.toInt() == this.ordinal)
+    }
+
     companion object {
+        /**
+         * Lower case letters
+         */
         val ALPHABET = CharArray(values().size)
 
         init {
@@ -35,11 +42,19 @@ enum class Nucleotide constructor(
         internal const val ANY_NUCLEOTIDE_BYTE: Byte = 0b101
         const val N = 'n'
 
+        fun fromChar(c: Char): Nucleotide? {
+            val byte = getByte(c)
+            if (byte == ANY_NUCLEOTIDE_BYTE) {
+                return null
+            }
+            return Nucleotide.values()[byte.toInt()]
+        }
+
         internal fun getByte(c: Char) = when (c) {
-            'T', 't' -> 0
-            'C', 'c' -> 1
-            'A', 'a' -> 2
-            'G', 'g' -> 3
+            'T', 't' -> T.byte
+            'C', 'c' -> C.byte
+            'A', 'a' -> A.byte
+            'G', 'g' -> G.byte
             else -> ANY_NUCLEOTIDE_BYTE
         }
 
