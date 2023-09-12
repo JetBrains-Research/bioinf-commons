@@ -56,6 +56,11 @@ class RegionShuffleStatsFromMethylomeCoverage(
                     inputRegionsPath, backgroundPath, zeroBasedBg, genomeMaskedAreaPath, genomeAllowedAreaPath, genomeQuery
                 )
             },
+            loiOverlapWithBgFun = {loiFiltered, background ->
+                loiFiltered.asLocationSequence().count {
+                    background.getCoverage(it) > 0
+                }
+            },
             samplingFun = { genomeQuery, regions, background, maxRetries, withReplacement ->
                 shuffleChromosomeRanges(
                     genomeQuery,

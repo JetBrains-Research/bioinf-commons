@@ -93,14 +93,14 @@ object EnrichmentInLoi {
         }
 
         val filesStream = if (loiFolderPath.isDirectory) Files.list(loiFolderPath) else Stream.of(loiFolderPath)
-        val loiInfos: List<LoiInfo> = collectLoiFrom(
+        val loiInfosFiltered: List<LoiInfo> = collectLoiFrom(
             filesStream, gq, sharedOpts.mergeOverlapped, loiFilter, sharedOpts.loiNameSuffix
         )
 
-        require(loiInfos.isNotEmpty()) {
+        require(loiInfosFiltered.isNotEmpty()) {
             "No LOI files passed file suffix filter."
         }
-        return loiInfos
+        return loiInfosFiltered
     }
 
     fun collectLoiFrom(
@@ -494,7 +494,7 @@ fun parseChrNamesMapping(chrMapStr: List<String>) = chrMapStr.map {
 
 class LoiInfo(
     val label: String,
-    val loci: LocationsList<out RangesList>,
+    val lociFiltered: LocationsList<out RangesList>,
     val processedLoiNumber: Int,
     val recordsNumber: Int
 )

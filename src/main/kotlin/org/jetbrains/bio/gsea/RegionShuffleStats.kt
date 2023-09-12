@@ -67,6 +67,7 @@ abstract class RegionShuffleStats(
         intersectionFilter: LocationsList<out RangesList>? = null,
         samplingWithReplacement: Boolean = false,
         inputRegionsAndBackgroundProvider: (GenomeQuery) -> Pair<List<Location>, T>,
+        loiOverlapWithBgFun: (LocationsList<out RangesList>, T) -> Int,
         samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Boolean) -> List<Location>
     ): DataFrame {
         outputFolderPath?.createDirectories()
@@ -76,7 +77,7 @@ abstract class RegionShuffleStats(
         require(inputRegions.isNotEmpty()) {
             "Regions file is empty or all regions were removed by filters."
         }
-        val allowedInputRegionsList = when {
+        val inputRegionsListFiltered = when {
             mergeOverlapped -> LocationsMergingList.create(gq, inputRegions)
             else -> LocationsSortedList.create(gq, inputRegions)
         }
@@ -96,9 +97,14 @@ abstract class RegionShuffleStats(
 
         val nChunks = ceil(simulationsNumber.toDouble() / chunkSize).toInt()
 
+        LOG.info("Calc LOI overlap with BG: ${loiInfos.size}")
+        val infoOverlapWithBg = loiInfos.map { info -> loiOverlapWithBgFun(info.lociFiltered, bgRegionsList) }.toIntArray()
+
+        LOG.info("Do overrepresented check...")
         val progress = Progress { title = "Over/Under-representation check progress (all chunks)" }.bounded(
             nChunks.toLong()
         )
+
         (0 until nChunks).forEach { chunkId ->
             val start = chunkId * chunkSize
             val end = minOf(simulationsNumber, (chunkId + 1) * chunkSize)
@@ -140,10 +146,10 @@ abstract class RegionShuffleStats(
             for (info in loiInfos) {
                 chunkProgress.report()
 
-                val metricValueForInput = calcMetric(allowedInputRegionsList, info.loci, aSetIsRegions, metric)
+                val metricValueForInput = calcMetric(inputRegionsListFiltered, info.lociFiltered, aSetIsRegions, metric)
 
                 val metricValueForSampled =
-                    calcMetricForSampled(sampledRegions, info.loci, aSetIsRegions, metric, metricValueForInput)
+                    calcMetricForSampled(sampledRegions, info.lociFiltered, aSetIsRegions, metric, metricValueForInput)
 
                 val stats = label2Stats[info.label]!!
                 metricValueForSampled.forEach { st ->
@@ -162,7 +168,7 @@ abstract class RegionShuffleStats(
 
         // Save results to DataFrame:
         val loiLabels = loiInfos.map { it.label }
-        val loiRangesNumber = loiInfos.map { it.loci.size }.toIntArray()
+        val loiFilteredAndMergedRangesNumber = loiInfos.map { it.lociFiltered.size }.toIntArray()
         val pValuesList = ArrayList<Double>()
         val metricValuesForInput = ArrayList<Long>()
         val sampledSetsMetricMedian = ArrayList<Int>()
@@ -203,9 +209,11 @@ abstract class RegionShuffleStats(
             .with("loi", loiLabels.toTypedArray())
             .with("n_loi_records", loiLabels.map { label2RecordsNumber[it]!! }.toIntArray())
             .with("n_loi_loaded", loiLabels.map { label2LoadedRegionsNumber[it]!! }.toIntArray())
-            .with("n_loi_merged", loiRangesNumber)
+            .with("n_loi_filtered_merged", loiFilteredAndMergedRangesNumber)
             .with("n_regions", IntArray(loiLabels.size) { inputRegions.size })
             .with("metric", loiLabels.map { "${metric.column}($metricArgString)" }.toTypedArray())
+            .with("n_regions_filtered", IntArray(loiLabels.size) { inputRegionsListFiltered.size })
+            .with("loi_filtered_merged_bg_overlap", infoOverlapWithBg)
             .with("input_${metric.column}", metricValuesForInput.toLongArray())
             .with("sampled_median_${metric.column}", sampledSetsMetricMedian.toIntArray())
             .with("sampled_mean_${metric.column}", sampledSetsMetricMean.toDoubleArray())

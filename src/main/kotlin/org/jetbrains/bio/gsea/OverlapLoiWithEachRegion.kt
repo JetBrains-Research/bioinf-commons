@@ -185,7 +185,7 @@ object OverlapLoiWithEachRegion {
 
                 val values = LongArray(regions2RangesList.size)
                 regions2RangesList.forEachIndexed { i, (namedRegion, regionAsRangeList) ->
-                    val metricValueForSrc = info.loci.calcAdditiveMetricDouble(
+                    val metricValueForSrc = info.lociFiltered.calcAdditiveMetricDouble(
                         regionAsRangeList, namedRegion.location.chromosome, namedRegion.location.strand,
                         metric::calcMetric
                     ).toLong()

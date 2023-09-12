@@ -6,6 +6,7 @@ import org.jetbrains.bio.genome.Strand
 import org.jetbrains.bio.genome.containers.LocationsList
 import org.jetbrains.bio.genome.containers.LocationsMergingList
 import org.jetbrains.bio.genome.containers.RangesList
+import org.jetbrains.bio.genome.containers.intersection.OverlapNumberMetric
 import org.jetbrains.bio.genome.containers.intersection.RegionsMetric
 import org.jetbrains.bio.genome.sampling.shuffleChromosomeRanges
 import org.jetbrains.bio.util.formatLongNumber
@@ -45,6 +46,9 @@ class RegionShuffleStatsFromBedCoverage(
             loadInputRegionsAndBedLikeBackground(
                 inputRegionsPath, backgroundPath, mergeRegionsToBg, genomeMaskedAreaPath, genomeAllowedAreaPath, genomeQuery
             )
+        },
+        loiOverlapWithBgFun = {loiFiltered, background ->
+            OverlapNumberMetric().calcMetric(loiFiltered, background).toInt()
         },
         samplingFun = { genomeQuery, regions, background, maxRetries, withReplacement ->
             shuffleChromosomeRanges(
