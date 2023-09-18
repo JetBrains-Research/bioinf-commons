@@ -59,6 +59,7 @@ object TestOrganismDataGenerator {
         val genome = Genome[Genome.TEST_ORGANISM_BUILD]
         val twoBitPath = genome.twoBitPath(downloadIfMissing = false)
         val genesGtfPath = genome.genesGtfPath(downloadIfMissing = false)
+        val genesDescriptionPath = genome.genesDescriptionsPath
         val gapsPath = genome.gapsPath!!
         val cytobandsPath = genome.cytobandsPath!!
         val repeatsPath = genome.repeatsPath!!
@@ -66,7 +67,7 @@ object TestOrganismDataGenerator {
         val mappabilityPath = genomePath / "mapability.bigWig"
         val saPath = genomePath / "sa"
         if (genomePath.exists && chromSizesPath.exists && twoBitPath.exists &&
-            genesGtfPath.exists && gapsPath.exists && cytobandsPath.exists &&
+            genesGtfPath.exists && genesDescriptionPath.exists && gapsPath.exists && cytobandsPath.exists &&
             repeatsPath.exists && cpgIslandsPath.exists && mappabilityPath.exists && saPath.exists
         ) {
             LOG.info("All files present. Nothing to generate.")
@@ -76,7 +77,7 @@ object TestOrganismDataGenerator {
         LOG.info("Generating genome $build files...")
         generateChromSizes(chromSizesPath)
         generateSequence(genome, twoBitPath)
-        generateTranscripts(genome, genesGtfPath)
+        generateTranscripts(genome, genesGtfPath, genesDescriptionPath)
         generateCentromere(genome, gapsPath)
         generateCytobands(genome, cytobandsPath)
         generateRepeats(repeatsPath)
@@ -138,12 +139,12 @@ object TestOrganismDataGenerator {
      *
      * @see Transcripts
      */
-    private fun generateTranscripts(genome: Genome, genesGtfPath: Path) {
+    private fun generateTranscripts(genome: Genome, genesGtfPath: Path, genesDescriptionPath: Path) {
         LOG.info("Generating transcript annotations")
 
-        genesGtfPath.bufferedWriter().use { w ->
+        val transcripts = arrayListOf<Transcript>()
 
-            val transcripts = arrayListOf<Transcript>()
+        genesGtfPath.bufferedWriter().use { w ->
 
             for (name in CHROMOSOMES_SIZES.keys.sorted()) {
                 val chromosome = Chromosome(genome, name)
@@ -169,6 +170,13 @@ object TestOrganismDataGenerator {
 
             writeGtf(w, transcripts)
         }
+
+        GeneDescription.serializeFromId2DescriptionMapping(
+            transcripts.mapIndexed { idx, t ->
+                t.ensemblGeneId to "Test Gene ${t.geneSymbol} [Source:HGNC Symbol;Acc:HGNC:${idx + 1}]"
+            },
+            genesDescriptionPath
+        )
     }
 
     /** Here be dragons! */

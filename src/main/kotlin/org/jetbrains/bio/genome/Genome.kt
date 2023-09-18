@@ -301,8 +301,7 @@ class Genome private constructor(
                         }
                     }
                     val dataPath = Configuration.genomesPath / parentBuild
-                    val genesDescriptionsPath: Path? =
-                            if (parentBuild == TEST_ORGANISM_BUILD) null else dataPath / "description.tsv"
+                    val genesDescriptionsPath: Path = dataPath / "description.tsv"
                     val genesGTFPath: Path = dataPath / (when (parentBuild) {
                         TEST_ORGANISM_BUILD -> "genes.gtf.gz"
                         else -> annCfg.gtfUrl.substringAfterLast('/')

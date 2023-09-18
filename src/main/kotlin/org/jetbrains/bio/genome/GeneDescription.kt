@@ -32,14 +32,21 @@ object GeneDescription {
             val descriptionPath = genome.genesDescriptionsPath
             descriptionPath.checkOrRecalculate("Genes") { output ->
                 val pairs = downloadAnnotation(genome).toList()
-                DataFrame()
-                    .with("name", pairs.map { it.first }.toTypedArray())
-                    .with("description", pairs.map { it.second }.toTypedArray())
-                    .save(output.path)
+                serializeFromId2DescriptionMapping(pairs, output.path)
             }
 
             load(descriptionPath)
         }
+    }
+
+    fun serializeFromId2DescriptionMapping(
+        geneId2Description: List<Pair<String, String>>,
+        output: Path
+    ) {
+        DataFrame()
+            .with("name", geneId2Description.map { it.first }.toTypedArray())
+            .with("description", geneId2Description.map { it.second }.toTypedArray())
+            .save(output)
     }
 
     private fun load(descriptionPath: Path): Map<String, String> {
