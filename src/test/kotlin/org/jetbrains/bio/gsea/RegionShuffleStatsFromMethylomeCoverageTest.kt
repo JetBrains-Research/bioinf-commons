@@ -349,15 +349,19 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
             Location(110, 200, RegionShuffleStatsTest.chr1),
         )
 
-        val (inputRegions, cov) = withTempBedFile(lociGenomeAllowed) { genomeAllowedLociPath ->
+        val (inputRegionsFiltered, cov) = withTempBedFile(lociGenomeAllowed) { genomeAllowedLociPath ->
             withTempBedFile(lociGenomeMasked) { genomeMaskedLociPath ->
                 withTempBedFile(lociInputRegions) { inputRegionsPath ->
                     withTempFile("bgcov", ".tsv") { bgRegionsPath ->
                         createBasePairCoverage(COVERAGE_EX, gq).saveToTSV(bgRegionsPath)
 
-                        RegionShuffleStatsFromMethylomeCoverage.loadInputRegionsAndMethylomeCovBackground(
-                            inputRegionsPath, bgRegionsPath, zeroBasedBg = false,
-                            genomeMaskedLociPath, genomeAllowedLociPath, gq
+                        RegionShuffleStatsFromMethylomeCoverage.inputRegionsAndBackgroundProviderFun(
+                            inputRegionsPath,
+                            bgRegionsPath,
+                            zeroBasedBg = false,
+                            gq,
+                            genomeMaskedLociPath,
+                            genomeAllowedLociPath
                         )
                     }
                 }
@@ -369,7 +373,7 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
                 Location(20,22, chr1),
                 Location(24,27, chr1)
             ).sorted(),
-            inputRegions.toList().sorted()
+            inputRegionsFiltered.toList().sorted()
         )
 
         assertEquals(6, cov.depth)

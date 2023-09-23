@@ -79,11 +79,11 @@ class IntHistogram {
         return sqrt(metricVarAcc.result() / (valuesNumber - 1))
     }
 
-    fun save(path: Path) {
+    fun save(path: Path, metric_col: String = "metric") {
         val keys = data.keys()
         keys.sort()
         DataFrame()
-            .with("metric", keys)
+            .with(metric_col, keys)
             .with("count", keys.map { data[it] }.toIntArray())
             .save(path)
     }

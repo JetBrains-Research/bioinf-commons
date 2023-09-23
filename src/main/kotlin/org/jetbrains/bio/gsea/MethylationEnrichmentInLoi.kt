@@ -188,53 +188,56 @@ object MethylationEnrichmentInLoi {
                 val zeroBasedBg = "bg-zero" in options
                 LOG.info("0-BASED OFFSETS IN BACKGROUND: $zeroBasedBg")
 
-                val sharedOpts = EnrichmentInLoi.processSharedOptions(options, metrics, LOG)
-                doCalculations(sharedOpts, samplingWithReplacement, zeroBasedBg)
+                val sharedOpts = EnrichmentInLoi.processSharedSamplingOptions(options, LOG)
+                val sharedEnrichmentOpts = EnrichmentInLoi.processSharedEnrichmentOptions(options, metrics, LOG)
+
+                doCalculations(sharedOpts, sharedEnrichmentOpts, samplingWithReplacement, zeroBasedBg)
             }
         }
     }
 
     fun doCalculations(
-        sharedOpts: EnrichmentInLoi.SharedOptions,
+        opts: EnrichmentInLoi.SharedSamplingOptions,
+        enrichmentOpts: EnrichmentInLoi.SharedEnrichmentOptions,
         samplingWithReplacement: Boolean,
         zeroBasedBg: Boolean
     ) {
-        val loiFolderPath = sharedOpts.loiFolderPath
-        val outputBasename = sharedOpts.outputBaseName
-        val limitResultsToSpecificLocation = sharedOpts.limitResultsToSpecificLocation
-        val gq = sharedOpts.genome.toQuery()
+        val loiFolderPath = enrichmentOpts.loiFolderPath
+        val outputBasename = opts.outputBaseName
+        val limitResultsToSpecificLocation = opts.limitResultsToSpecificLocation
+        val gq = opts.genome.toQuery()
 
-        val reportPath = "${outputBasename}${sharedOpts.metric.column}.tsv".toPath()
+        val reportPath = "${outputBasename}${enrichmentOpts.metric.column}.tsv".toPath()
         val detailedReportFolder =
-            if (sharedOpts.detailedReport) "${outputBasename}${sharedOpts.metric.column}_stats".toPath() else null
+            if (enrichmentOpts.detailedReport) "${outputBasename}${enrichmentOpts.metric.column}_stats".toPath() else null
 
         val limitResultsToSpecificLocationFilter: LocationsMergingList? = limitResultsToSpecificLocation?.let {
             LocationsMergingList.create(gq, listOf(limitResultsToSpecificLocation))
         }
         val loiInfos: List<LoiInfo> = EnrichmentInLoi.loiLocationBaseFilterList(
-            sharedOpts,
+            opts,
+            enrichmentOpts.loiNameSuffix,
             gq,
             limitResultsToSpecificLocationFilter,
             loiFolderPath
         )
 
         RegionShuffleStatsFromMethylomeCoverage(
-            sharedOpts.simulationsNumber,
-            sharedOpts.getChunkSize(), sharedOpts.retries,
+            opts.simulationsNumber, opts.getChunkSize(), opts.retries,
             zeroBasedBg = zeroBasedBg,
         ).calcStatistics(
             gq,
-            sharedOpts.inputRegions, // DMRs
-            sharedOpts.backgroundPath, // Methylome background
+            opts.inputRegions, // DMRs
+            enrichmentOpts.backgroundPath, // Methylome background
             loiInfos,
             detailedReportFolder,
-            metric = sharedOpts.metric,
-            hypAlt = sharedOpts.hypAlt,
-            aSetIsRegions = sharedOpts.aSetIsRegions,
-            mergeOverlapped = sharedOpts.mergeOverlapped,
+            metric = enrichmentOpts.metric,
+            hypAlt = enrichmentOpts.hypAlt,
+            aSetIsRegions = enrichmentOpts.aSetIsRegions,
+            mergeOverlapped = opts.mergeOverlapped,
             intersectionFilter = limitResultsToSpecificLocationFilter,
-            genomeMaskedAreaPath = sharedOpts.genomeMaskedAreaPath,
-            genomeAllowedAreaPath = sharedOpts.genomeAllowedAreaPath,
+            genomeMaskedAreaPath = opts.genomeMaskedAreaPath,
+            genomeAllowedAreaPath = opts.genomeAllowedAreaPath,
             mergeRegionsToBg = false, // N/A
             samplingWithReplacement = samplingWithReplacement
         ).save(reportPath)

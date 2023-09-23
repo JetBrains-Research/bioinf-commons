@@ -47,7 +47,7 @@ class RegionShuffleStatsFromBedCoverage(
                 inputRegionsPath, backgroundPath, mergeRegionsToBg, genomeMaskedAreaPath, genomeAllowedAreaPath, genomeQuery
             )
         },
-        loiOverlapWithBgFun = {loiFiltered, background ->
+        loiOverlapWithBgFun = { loiFiltered, background ->
             OverlapNumberMetric().calcMetric(loiFiltered, background).toInt()
         },
         samplingFun = { genomeQuery, regions, background, maxRetries, withReplacement ->
@@ -61,65 +61,65 @@ class RegionShuffleStatsFromBedCoverage(
         }
     )
 
-    private fun loadInputRegionsAndBedLikeBackground(
-        inputRegionsPath: Path,
-        backgroundRegionsPath: Path?,
-        mergeRegionsToBg: Boolean,
-        genomeMaskedAreaPath: Path?,
-        genomeAllowedAreaPath: Path?,
-        gq: GenomeQuery
-    ): Pair<List<Location>, LocationsMergingList> {
-        val inputRegions = readLocationsIgnoringStrand(inputRegionsPath, gq).first
-        LOG.info("Input regions: ${inputRegions.size.formatLongNumber()} regions")
-
-        val bgRegions = if (backgroundRegionsPath != null) {
-            val bgLocations = readLocationsIgnoringStrand(backgroundRegionsPath, gq).first.toMutableList()
-            if (mergeRegionsToBg) {
-                // merge source loci into background
-                bgLocations.addAll(inputRegions)
-            }
-            val bgLoci = LocationsMergingList.create(
-                gq,
-                bgLocations
-            )
-            LOG.info("Background regions: ${bgLoci.size} regions")
-
-            inputRegions.forEach {
-                require(bgLoci.includes(it)) {
-                    "Background $backgroundRegionsPath regions are required to include all loci of interest, but the " +
-                            "region is missing in bg: ${it.toChromosomeRange()}"
-                }
-            }
-            bgLoci
-        } else {
-            // whole genome as bg
-            val bgLoci = LocationsMergingList.create(
-                gq, gq.get().map { Location(0, it.length, it) }
-            )
-            LOG.info("Using whole genome as background. Background regions: ${bgLoci.size} regions")
-
-            bgLoci
-        }
-
-        val allowedGenomeFilter = makeAllowedRegionsFilter(
-            genomeMaskedAreaPath, genomeAllowedAreaPath, gq
-        )
-
-        @Suppress("FoldInitializerAndIfToElvis")
-        if (allowedGenomeFilter == null) {
-            return inputRegions to bgRegions
-        }
-
-        LOG.info("Applying allowed regions filters...")
-        val allowedBg = bgRegions.intersectRanges(allowedGenomeFilter) as LocationsMergingList
-        val allowedInputRegions = inputRegions.filter { allowedGenomeFilter.includes(it) }
-
-        LOG.info("Background regions (all filters applied): ${allowedBg.size.formatLongNumber()} regions of ${bgRegions.size.formatLongNumber()}")
-        LOG.info("Input regions (all filters applied): ${allowedInputRegions.size.formatLongNumber()} regions of ${inputRegions.size.formatLongNumber()}")
-        return allowedInputRegions to allowedBg
-    }
-
     companion object {
         private val LOG = LoggerFactory.getLogger(RegionShuffleStatsFromBedCoverage::class.java)
+
+        fun loadInputRegionsAndBedLikeBackground(
+            inputRegionsPath: Path,
+            backgroundRegionsPath: Path?,
+            mergeRegionsToBg: Boolean,
+            genomeMaskedAreaPath: Path?,
+            genomeAllowedAreaPath: Path?,
+            gq: GenomeQuery
+        ): Pair<List<Location>, LocationsMergingList> {
+            val inputRegions = readLocationsIgnoringStrand(inputRegionsPath, gq).first
+            LOG.info("Input regions: ${inputRegions.size.formatLongNumber()} regions")
+
+            val bgRegions = if (backgroundRegionsPath != null) {
+                val bgLocations = readLocationsIgnoringStrand(backgroundRegionsPath, gq).first.toMutableList()
+                if (mergeRegionsToBg) {
+                    // merge source loci into background
+                    bgLocations.addAll(inputRegions)
+                }
+                val bgLoci = LocationsMergingList.create(
+                    gq,
+                    bgLocations
+                )
+                LOG.info("Background regions: ${bgLoci.size} regions")
+
+                inputRegions.forEach {
+                    require(bgLoci.includes(it)) {
+                        "Background $backgroundRegionsPath regions are required to include all loci of interest, but the " +
+                                "region is missing in bg: ${it.toChromosomeRange()}"
+                    }
+                }
+                bgLoci
+            } else {
+                // whole genome as bg
+                val bgLoci = LocationsMergingList.create(
+                    gq, gq.get().map { Location(0, it.length, it) }
+                )
+                LOG.info("Using whole genome as background. Background regions: ${bgLoci.size} regions")
+
+                bgLoci
+            }
+
+            val allowedGenomeFilter = makeAllowedRegionsFilter(
+                genomeMaskedAreaPath, genomeAllowedAreaPath, gq
+            )
+
+            @Suppress("FoldInitializerAndIfToElvis")
+            if (allowedGenomeFilter == null) {
+                return inputRegions to bgRegions
+            }
+
+            LOG.info("Applying allowed regions filters...")
+            val allowedBg = bgRegions.intersectRanges(allowedGenomeFilter) as LocationsMergingList
+            val allowedInputRegions = inputRegions.filter { allowedGenomeFilter.includes(it) }
+
+            LOG.info("Background regions (all filters applied): ${allowedBg.size.formatLongNumber()} regions of ${bgRegions.size.formatLongNumber()}")
+            LOG.info("Input regions (all filters applied): ${allowedInputRegions.size.formatLongNumber()} regions of ${inputRegions.size.formatLongNumber()}")
+            return allowedInputRegions to allowedBg
+        }
     }
 }

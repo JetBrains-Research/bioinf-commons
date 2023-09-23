@@ -33,40 +33,43 @@ object EnrichmentInLoi {
     private val LOG = LoggerFactory.getLogger(EnrichmentInLoi::class.java)
 
     fun doCalculations(
-        sharedOpts: SharedOptions,
+        opts: SharedSamplingOptions,
+        enrichmentOpts: SharedEnrichmentOptions,
         mergeRegionsToBg: Boolean, // add input regions to background if they are missing there
     ) {
-        val loiFolderPath = sharedOpts.loiFolderPath
-        val outputBasename = sharedOpts.outputBaseName
-        val limitResultsToSpecificLocation = sharedOpts.limitResultsToSpecificLocation
+        val loiFolderPath = enrichmentOpts.loiFolderPath
+        val outputBasename = opts.outputBaseName
+        val limitResultsToSpecificLocation = opts.limitResultsToSpecificLocation
 
-        val reportPath = "${outputBasename}${sharedOpts.metric.column}.tsv".toPath()
+        val reportPath = "${outputBasename}${enrichmentOpts.metric.column}.tsv".toPath()
         val detailedReportFolder =
-            if (sharedOpts.detailedReport) "${outputBasename}${sharedOpts.metric.column}_stats".toPath() else null
+            if (enrichmentOpts.detailedReport) "${outputBasename}${enrichmentOpts.metric.column}_stats".toPath() else null
 
-        val gq = sharedOpts.genome.toQuery()
+        val gq = opts.genome.toQuery()
 
         val limitResultsToSpecificLocationFilter: LocationsMergingList? = limitResultsToSpecificLocation?.let {
             LocationsMergingList.create(gq, listOf(limitResultsToSpecificLocation))
         }
-        val loiInfos: List<LoiInfo> = loiLocationBaseFilterList(sharedOpts, gq, limitResultsToSpecificLocationFilter, loiFolderPath)
+        val loiInfos: List<LoiInfo> = loiLocationBaseFilterList(
+            opts, enrichmentOpts.loiNameSuffix, gq, limitResultsToSpecificLocationFilter, loiFolderPath
+        )
 
         RegionShuffleStatsFromBedCoverage(
-            sharedOpts.simulationsNumber,
-            sharedOpts.getChunkSize(), sharedOpts.retries
+            opts.simulationsNumber,
+            opts.getChunkSize(), opts.retries
         ).calcStatistics(
             gq,
-            sharedOpts.inputRegions,
-            sharedOpts.backgroundPath,
+            opts.inputRegions,
+            enrichmentOpts.backgroundPath,
             loiInfos,
             detailedReportFolder,
-            metric = sharedOpts.metric,
-            hypAlt = sharedOpts.hypAlt,
-            aSetIsRegions = sharedOpts.aSetIsRegions,
-            mergeOverlapped = sharedOpts.mergeOverlapped,
+            metric = enrichmentOpts.metric,
+            hypAlt = enrichmentOpts.hypAlt,
+            aSetIsRegions = enrichmentOpts.aSetIsRegions,
+            mergeOverlapped = opts.mergeOverlapped,
             intersectionFilter = limitResultsToSpecificLocationFilter,
-            genomeMaskedAreaPath = sharedOpts.genomeMaskedAreaPath,
-            genomeAllowedAreaPath = sharedOpts.genomeAllowedAreaPath,
+            genomeMaskedAreaPath = opts.genomeMaskedAreaPath,
+            genomeAllowedAreaPath = opts.genomeAllowedAreaPath,
             mergeRegionsToBg = mergeRegionsToBg,
             samplingWithReplacement = false
         ).save(reportPath)
@@ -78,13 +81,14 @@ object EnrichmentInLoi {
     }
 
     fun loiLocationBaseFilterList(
-        sharedOpts: SharedOptions,
+        opt: SharedSamplingOptions,
+        loiNameSuffix: String?,
         gq: GenomeQuery,
         loiLocationBaseFilterList: LocationsMergingList?,
         loiFolderPath: Path
     ): List<LoiInfo> {
         val allowedGenomeFilter: LocationsMergingList? = RegionShuffleStats.makeAllowedRegionsFilter(
-            sharedOpts.genomeMaskedAreaPath, sharedOpts.genomeAllowedAreaPath, gq
+            opt.genomeMaskedAreaPath, opt.genomeAllowedAreaPath, gq
         )
         val loiFilter = when {
             loiLocationBaseFilterList == null -> allowedGenomeFilter
@@ -94,7 +98,7 @@ object EnrichmentInLoi {
 
         val filesStream = if (loiFolderPath.isDirectory) Files.list(loiFolderPath) else Stream.of(loiFolderPath)
         val loiInfosFiltered: List<LoiInfo> = collectLoiFrom(
-            filesStream, gq, sharedOpts.mergeOverlapped, loiFilter, sharedOpts.loiNameSuffix
+            filesStream, gq, opt.mergeOverlapped, loiFilter, loiNameSuffix
         )
 
         require(loiInfosFiltered.isNotEmpty()) {
@@ -297,9 +301,10 @@ object EnrichmentInLoi {
                 val mergeRegionsToBg = options.has("add-regions-to-bg")
                 LOG.info("MERGE REGIONS INTO BACKGROUND: $mergeRegionsToBg")
 
-                val sharedOpts = processSharedOptions(options, metrics, LOG)
+                val sharedOpts = processSharedSamplingOptions(options, LOG)
+                val sharedEnrichmentOpts = processSharedEnrichmentOptions(options, metrics, LOG)
 
-                doCalculations(sharedOpts, mergeRegionsToBg)
+                doCalculations(sharedOpts, sharedEnrichmentOpts, mergeRegionsToBg)
             }
         }
     }
@@ -348,39 +353,39 @@ object EnrichmentInLoi {
         return Location(startOffset, endOffset, chromosome)
     }
 
-    class SharedOptions(
-        val aSetIsRegions: Boolean,
-        val mergeOverlapped: Boolean,
-        val metric: RegionsMetric,
-        val retries: Int,
-        val detailedReport: Boolean,
-        private val chunkSize: Int,
-        val hypAlt: PermutationAltHypothesis,
-        val parallelism: Int?,
-        val simulationsNumber: Int,
-        val outputBaseName: Path,
-        val limitResultsToSpecificLocation: Location?,
-        val backgroundPath: Path?,
+    class SharedSamplingOptions(
         val genome: Genome,
+        val outputBaseName: Path,
+        private val chunkSize: Int,
+        val simulationsNumber: Int,
+        val retries: Int,
+        val limitResultsToSpecificLocation: Location?,
         val inputRegions: Path,
-        val loiFolderPath: Path,
-        val loiNameSuffix: String?,
+        val mergeOverlapped: Boolean,
         val genomeMaskedAreaPath: Path?,
         val genomeAllowedAreaPath: Path?,
-    ) {
+        val parallelism: Int?) {
         fun getChunkSize(): Int = if (chunkSize == 0) simulationsNumber else chunkSize
     }
+    class SharedEnrichmentOptions(
+        val aSetIsRegions: Boolean,
+        val metric: RegionsMetric,
+        val detailedReport: Boolean,
+        val hypAlt: PermutationAltHypothesis,
+        val backgroundPath: Path?,
+        val loiFolderPath: Path,
+        val loiNameSuffix: String?,
+    )
 
-    fun processSharedOptions(
+    fun processSharedSamplingOptions(
         options: OptionSet,
-        metrics: List<String>,
         logger: Logger
-    ): SharedOptions {
+    ): SharedSamplingOptions {
         val chromSizesPath = options.valueOf("chrom.sizes") as Path
-        LOG.info("CHROM.SIZES: $chromSizesPath")
+        logger.info("CHROM.SIZES: $chromSizesPath")
 
         val chrMapStr = options.valuesOf("chrmap").filterIsInstance<String>()
-        LOG.info("CHROM MAPPING: $chrMapStr")
+        logger.info("CHROM MAPPING: $chrMapStr")
 
         // val twoBitPath = options.valueOf("reference") as Path
         // LOG.info("GENOME REFERENCE: $twoBitPath")
@@ -389,54 +394,78 @@ object EnrichmentInLoi {
             chromSizesPath,
             chrAltName2CanonicalMapping = parseChrNamesMapping(chrMapStr)
         )
-        LOG.info("GENOME BUILD: ${genome.build}")
-
-        val inputRegions = options.valueOf("regions") as Path
-        LOG.info("INPUT REGIONS: $inputRegions")
-
-        val genomeMaskedAreaPath = options.valueOf("genome-masked") as Path?
-        LOG.info("GENOME MASKED AREA: $genomeMaskedAreaPath")
-        val genomeAllowedAreaPath = options.valueOf("genome-allowed") as Path?
-        LOG.info("GENOME ALLOWED AREA: $genomeAllowedAreaPath")
-
-        val backGroundPath = options.valueOf("background") as Path?
-        LOG.info("BACKGROUND: $backGroundPath")
+        logger.info("GENOME BUILD: ${genome.build}")
 
         val baseName = options.valueOf("basename") as String
         val outputBaseName = FileSystems.getDefault().getPath(baseName).normalize().toAbsolutePath()
         logger.info("OUTPUT_BASENAME: $outputBaseName")
 
-        val loiFolderPath = options.valueOf("loi") as Path
-        LOG.info("LOI TO TEST: $loiFolderPath")
+        val simulationsNumber = options.valueOf("simulations") as Int
+        logger.info("SIMULATIONS: $simulationsNumber")
 
-        val loiNameSuffix = options.valueOf("loi-filter") as String?
-        LOG.info("LOI FNAME SUFFIX: ${loiNameSuffix ?: "N/A"}")
+        val chunkSize = options.valueOf("chunk-size") as Int
+        logger.info("SIMULATIONS CHUNK SIZE: $chunkSize")
+
+        val retries = options.valueOf("retries") as Int
+        logger.info("MAX RETRIES: $retries")
 
         val limitResultsToSpecificLocation = (options.valueOf("limit-intersect") as String?)?.let {
             parseLocation(
                 it, genome, chromSizesPath
             )
         }
-        LOG.info("INTERSECT LOI WITH RANGE: ${limitResultsToSpecificLocation ?: "N/A"}")
+        logger.info("INTERSECT LOI & SAMPLED REGIONS WITH RANGE: ${limitResultsToSpecificLocation ?: "N/A"}")
+
+        val inputRegions = options.valueOf("regions") as Path
+        logger.info("INPUT REGIONS: $inputRegions")
+
+        val mergeOverlapped = options.has("merge")
+        logger.info("MERGE OVERLAPPED: $mergeOverlapped")
+
+        val genomeMaskedAreaPath = options.valueOf("genome-masked") as Path?
+        logger.info("GENOME MASKED AREA: $genomeMaskedAreaPath")
+        val genomeAllowedAreaPath = options.valueOf("genome-allowed") as Path?
+        logger.info("GENOME ALLOWED AREA: $genomeAllowedAreaPath")
 
         val parallelism = options.valueOf("parallelism") as Int?
         configureParallelism(parallelism)
         logger.info("THREADS: $parallelism (use #threads=${parallelismLevel()})")
 
+
+        return SharedSamplingOptions(
+            genome = genome,
+            outputBaseName = outputBaseName,
+            chunkSize = chunkSize,
+            simulationsNumber = simulationsNumber,
+            retries = retries,
+            limitResultsToSpecificLocation = limitResultsToSpecificLocation,
+            inputRegions = inputRegions,
+            mergeOverlapped = mergeOverlapped,
+            genomeMaskedAreaPath = genomeMaskedAreaPath,
+            genomeAllowedAreaPath = genomeAllowedAreaPath,
+            parallelism = parallelism,
+        );
+    }
+
+    fun processSharedEnrichmentOptions(
+        options: OptionSet,
+        metrics: List<String>,
+        logger: Logger
+    ): SharedEnrichmentOptions {
+        val backGroundPath = options.valueOf("background") as Path?
+        logger.info("BACKGROUND: $backGroundPath")
+
+        val loiFolderPath = options.valueOf("loi") as Path
+        logger.info("LOI TO TEST: $loiFolderPath")
+
+        val loiNameSuffix = options.valueOf("loi-filter") as String?
+        logger.info("LOI FNAME SUFFIX: ${loiNameSuffix ?: "N/A"}")
+
         val hypAlt = options.valueOf("h1") as PermutationAltHypothesis
-        LOG.info("Alt Hypothesis: $hypAlt")
-
-        val simulationsNumber = options.valueOf("simulations") as Int
-        LOG.info("SIMULATIONS: $simulationsNumber")
-
-        val chunkSize = options.valueOf("chunk-size") as Int
-        LOG.info("SIMULATIONS CHUNK SIZE: $chunkSize")
+        logger.info("Alt Hypothesis: $hypAlt")
 
         val detailedReport = options.has("detailed")
-        LOG.info("DETAILED_REPORT_FLAG: $detailedReport")
-
-        val retries = options.valueOf("retries") as Int
-        logger.info("MAX RETRIES: $retries")
+        logger.info("DETAILED_REPORT_FLAG: $detailedReport")
 
         val aSetIsRegions = !options.has("a-loi")
         if (aSetIsRegions) {
@@ -448,9 +477,6 @@ object EnrichmentInLoi {
         val aSetFlankedBothSides = options.valueOf("a-flanked") as Int
         logger.info("A FLANKED: $aSetFlankedBothSides")
 
-        val mergeOverlapped = options.has("merge")
-        logger.info("MERGE OVERLAPPED: $mergeOverlapped")
-
         val metricStr = options.valueOf("metric") as String
         val metric = when (metricStr) {
             "overlap" -> OverlapNumberMetric(aSetFlankedBothSides)
@@ -461,25 +487,14 @@ object EnrichmentInLoi {
         }
         logger.info("METRIC: ${metric.column}")
 
-        return SharedOptions(
+        return SharedEnrichmentOptions(
             aSetIsRegions = aSetIsRegions,
-            mergeOverlapped = mergeOverlapped,
             metric = metric,
-            retries = retries,
             detailedReport = detailedReport,
-            chunkSize = chunkSize,
             hypAlt = hypAlt,
-            parallelism = parallelism,
-            simulationsNumber = simulationsNumber,
-            outputBaseName = outputBaseName,
-            limitResultsToSpecificLocation = limitResultsToSpecificLocation,
             backgroundPath = backGroundPath,
-            genome = genome,
-            inputRegions = inputRegions,
             loiFolderPath = loiFolderPath,
             loiNameSuffix = loiNameSuffix,
-            genomeMaskedAreaPath = genomeMaskedAreaPath,
-            genomeAllowedAreaPath = genomeAllowedAreaPath
         )
     }
 }

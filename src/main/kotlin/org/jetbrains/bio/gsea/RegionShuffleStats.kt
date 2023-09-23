@@ -73,13 +73,13 @@ abstract class RegionShuffleStats(
         outputFolderPath?.createDirectories()
         val dumpDetails = outputFolderPath != null
 
-        val (inputRegions, bgRegionsList) = inputRegionsAndBackgroundProvider(gq)
-        require(inputRegions.isNotEmpty()) {
+        val (inputRegionsFiltered, bgRegionsList) = inputRegionsAndBackgroundProvider(gq)
+        require(inputRegionsFiltered.isNotEmpty()) {
             "Regions file is empty or all regions were removed by filters."
         }
         val inputRegionsListFiltered = when {
-            mergeOverlapped -> LocationsMergingList.create(gq, inputRegions)
-            else -> LocationsSortedList.create(gq, inputRegions)
+            mergeOverlapped -> LocationsMergingList.create(gq, inputRegionsFiltered)
+            else -> LocationsSortedList.create(gq, inputRegionsFiltered)
         }
 
         LOG.info("LOI sets to test: ${loiInfos.size}")
@@ -117,7 +117,7 @@ abstract class RegionShuffleStats(
 
             val sampledRegions: List<List<LocationsList<out RangesList>>> =
                 sampleRegions(
-                    simulationsInChunk, intersectionFilter, inputRegions, bgRegionsList,
+                    simulationsInChunk, maxRetries, intersectionFilter, inputRegionsFiltered, bgRegionsList,
                     gq,
                     parallelismLevel(),
                     samplingFun=samplingFun,
@@ -210,7 +210,7 @@ abstract class RegionShuffleStats(
             .with("n_loi_records", loiLabels.map { label2RecordsNumber[it]!! }.toIntArray())
             .with("n_loi_loaded", loiLabels.map { label2LoadedRegionsNumber[it]!! }.toIntArray())
             .with("n_loi_filtered_merged", loiFilteredAndMergedRangesNumber)
-            .with("n_regions", IntArray(loiLabels.size) { inputRegions.size })
+            .with("n_regions", IntArray(loiLabels.size) { inputRegionsFiltered.size })
             .with("metric", loiLabels.map { "${metric.column}($metricArgString)" }.toTypedArray())
             .with("n_regions_filtered", IntArray(loiLabels.size) { inputRegionsListFiltered.size })
             .with("loi_filtered_merged_bg_overlap", infoOverlapWithBg)
@@ -225,53 +225,53 @@ abstract class RegionShuffleStats(
             .reorder("pValue")
     }
 
-    private fun <T> sampleRegions(
-        simulationsNumber: Int,
-        intersectionFilter: LocationsList<out RangesList>?,
-        srcLoci: List<Location>,
-        background: T,
-        gq: GenomeQuery,
-        threadsNum: Int,
-        withReplacement: Boolean,
-        samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Boolean) -> List<Location>
-    ): List<List<LocationsList<out RangesList>>> {
-        // Sample:
-        val progress = Progress { title = "Loci Sampling" }.bounded(simulationsNumber.toLong())
-        val loci = srcLoci.map { it.toChromosomeRange() }
-
-        // Compute different simulations in parallel, they are independent
-        val sampled = IntStream.range(0, simulationsNumber).parallel().mapToObj { _ ->
-            val randLoci = samplingFun(gq, loci, background, maxRetries, withReplacement)
-
-            progress.report()
-
-            if (withReplacement) {
-                LocationsSortedList.create(gq, randLoci)
-            } else {
-                // XXX: shuffled regions not intersect by def of our shuffle procedure
-                LocationsMergingList.create(gq, randLoci)
-            }
-
-        }.collect(Collectors.toList())
-        progress.done()
-
-        val chunked = sampled.chunked(threadsNum)
-        if (intersectionFilter == null) {
-            return chunked
-        }
-
-        // Apply Filters:
-        return chunked.map { chunk ->
-            chunk.map { ll ->
-                val filtered = ll.intersectRanges(intersectionFilter)
-                LocationsMergingList.create(filtered.genomeQuery, filtered.locationIterator())
-            }
-        }
-    }
-
-
     companion object {
         private val LOG = LoggerFactory.getLogger(RegionShuffleStats::class.java)
+
+        fun <T> sampleRegions(
+            simulationsNumber: Int,
+            maxRetries: Int,
+            intersectionFilter: LocationsList<out RangesList>?,
+            srcLoci: List<Location>,
+            background: T,
+            gq: GenomeQuery,
+            threadsNum: Int,
+            withReplacement: Boolean,
+            samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Boolean) -> List<Location>
+        ): List<List<LocationsList<out RangesList>>> {
+            // Sample:
+            val progress = Progress { title = "Loci Sampling" }.bounded(simulationsNumber.toLong())
+            val loci = srcLoci.map { it.toChromosomeRange() }
+
+            // Compute different simulations in parallel, they are independent
+            val sampled = IntStream.range(0, simulationsNumber).parallel().mapToObj { _ ->
+                val randLoci = samplingFun(gq, loci, background, maxRetries, withReplacement)
+
+                progress.report()
+
+                if (withReplacement) {
+                    LocationsSortedList.create(gq, randLoci)
+                } else {
+                    // XXX: shuffled regions not intersect by def of our shuffle procedure
+                    LocationsMergingList.create(gq, randLoci)
+                }
+
+            }.collect(Collectors.toList())
+            progress.done()
+
+            val chunked = sampled.chunked(threadsNum)
+            if (intersectionFilter == null) {
+                return chunked
+            }
+
+            // Apply Filters:
+            return chunked.map { chunk ->
+                chunk.map { ll ->
+                    val filtered = ll.intersectRanges(intersectionFilter)
+                    LocationsMergingList.create(filtered.genomeQuery, filtered.locationIterator())
+                }
+            }
+        }
 
         /**
          * Reads locations from a given path, ignoring strand information.

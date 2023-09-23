@@ -52,9 +52,8 @@ class RegionShuffleStatsFromMethylomeCoverage(
             mergeOverlapped,
             intersectionFilter,
             inputRegionsAndBackgroundProvider = { genomeQuery ->
-                loadInputRegionsAndMethylomeCovBackground(
-                    inputRegionsPath, backgroundPath, zeroBasedBg, genomeMaskedAreaPath, genomeAllowedAreaPath, genomeQuery
-                )
+                inputRegionsAndBackgroundProviderFun(inputRegionsPath, backgroundPath, zeroBasedBg, gq,
+                    genomeMaskedAreaPath, genomeAllowedAreaPath)
             },
             loiOverlapWithBgFun = {loiFiltered, background ->
                 loiFiltered.asLocationSequence().count {
@@ -114,6 +113,25 @@ class RegionShuffleStatsFromMethylomeCoverage(
                 }
             }
             throw RuntimeException("Too many shuffle attempts")
+        }
+
+        fun inputRegionsAndBackgroundProviderFun(
+            inputRegionsPath: Path,
+            backgroundPath: Path?,
+            zeroBasedBg: Boolean,
+            gq: GenomeQuery,
+            genomeMaskedAreaPath: Path?,
+            genomeAllowedAreaPath: Path?
+        ): Pair<List<Location>, BasePairCoverage> {
+            val (inputRegions, methylomeCov) = loadInputRegionsAndMethylomeCovBackground(
+                inputRegionsPath, backgroundPath!!, zeroBasedBg, gq
+            )
+            val (inputRegionsFiltered, methylomeCovFiltered) = filterInputRegionsAndMethylomeCovBackground(
+                inputRegions, methylomeCov, genomeMaskedAreaPath,
+                genomeAllowedAreaPath, gq
+            )
+            ensureInputRegionsMatchesBackgound(inputRegionsFiltered, methylomeCovFiltered, backgroundPath)
+            return inputRegionsFiltered to methylomeCovFiltered
         }
 
         private fun tryShuffle(
@@ -259,8 +277,6 @@ class RegionShuffleStatsFromMethylomeCoverage(
             inputRegionsPath: Path,
             backgroundRegionsPath: Path,
             zeroBasedBg: Boolean,
-            genomeMaskedAreaPath: Path?,
-            genomeAllowedAreaPath: Path?,
             gq: GenomeQuery
         ): Pair<List<Location>, BasePairCoverage> {
             val inputRegions = readLocationsIgnoringStrand(inputRegionsPath, gq).first
@@ -273,13 +289,22 @@ class RegionShuffleStatsFromMethylomeCoverage(
             )
             LOG.info("Background coverage: ${methCovData.depth.formatLongNumber()} offsets")
 
+            return inputRegions to methCovData
+        }
+
+        fun filterInputRegionsAndMethylomeCovBackground(
+            inputRegions: List<Location>,
+            methCovData: BasePairCoverage,
+            genomeMaskedAreaPath: Path?,
+            genomeAllowedAreaPath: Path?,
+            gq: GenomeQuery
+        ): Pair<List<Location>, BasePairCoverage> {
             val allowedGenomeFilter = makeAllowedRegionsFilter(
                 genomeMaskedAreaPath, genomeAllowedAreaPath, gq
             )
 
             @Suppress("FoldInitializerAndIfToElvis")
             if (allowedGenomeFilter == null) {
-                ensureInputRegionsMatchesBackgound(inputRegions, methCovData, backgroundRegionsPath)
                 return inputRegions to methCovData
             }
 
@@ -291,11 +316,10 @@ class RegionShuffleStatsFromMethylomeCoverage(
             val allowedInputRegions = inputRegions.filter { allowedGenomeFilter.includes(it) }
             LOG.info("Input regions (all filters applied): ${allowedInputRegions.size.formatLongNumber()} regions of ${inputRegions.size.formatLongNumber()}")
 
-            ensureInputRegionsMatchesBackgound(allowedInputRegions, allowedMethCovData, backgroundRegionsPath)
             return allowedInputRegions to allowedMethCovData
         }
 
-        private fun ensureInputRegionsMatchesBackgound(
+        fun ensureInputRegionsMatchesBackgound(
             inputRegions: List<Location>,
             methCovData: BasePairCoverage,
             backgroundRegionsPath: Path
