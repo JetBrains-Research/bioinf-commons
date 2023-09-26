@@ -151,6 +151,14 @@ object MethylationEnrichmentInLoi {
                 .ofType(Int::class.java)
                 .defaultsTo(10_000)
 
+            // Sampled distribution correction
+            acceptsAll(
+                listOf("length-correction"),
+                "Optional setting that allow to do a correction of sampled length distribution. Use " +
+                        "'dist' to make sampling result closer to input length distribution. Use int value as a " +
+                        "threshold of maximum allowed length."
+            )
+                .withRequiredArg()
 
             accepts(
                 "a-loi",
@@ -190,16 +198,20 @@ object MethylationEnrichmentInLoi {
                 BioinfToolsCLA.configureLogging("quiet" in options, "debug" in options)
                 LOG.info("Tool [${tool.command}]: ${tool.description} (vers: ${BioinfToolsCLA.version()})")
 
-                val samplingWithReplacement = options.has("replace")
-                LOG.info("SAMPLE WITH REPLACEMENT: $samplingWithReplacement")
-
                 val zeroBasedBg = "bg-zero" in options
                 LOG.info("0-BASED OFFSETS IN BACKGROUND: $zeroBasedBg")
 
                 val sharedOpts = EnrichmentInLoi.processSharedSamplingOptions(options, LOG)
                 val sharedEnrichmentOpts = EnrichmentInLoi.processSharedEnrichmentOptions(options, metrics, LOG)
 
-                doCalculations(sharedOpts, sharedEnrichmentOpts, samplingWithReplacement, zeroBasedBg)
+                val lengthCorrectionMethod = options.valueOf("length-correction") as String?
+                LOG.info("SAMPLED REGIONS LENGTH CORRECTION: $lengthCorrectionMethod")
+
+                doCalculations(
+                    sharedOpts, sharedEnrichmentOpts,
+                    zeroBasedBg = zeroBasedBg,
+                    lengthCorrectionMethod = lengthCorrectionMethod
+                )
             }
         }
     }
@@ -207,8 +219,8 @@ object MethylationEnrichmentInLoi {
     fun doCalculations(
         opts: EnrichmentInLoi.SharedSamplingOptions,
         enrichmentOpts: EnrichmentInLoi.SharedEnrichmentOptions,
-        samplingWithReplacement: Boolean,
-        zeroBasedBg: Boolean
+        zeroBasedBg: Boolean,
+        lengthCorrectionMethod: String?
     ) {
         val loiFolderPath = enrichmentOpts.loiFolderPath
         val outputBasename = opts.outputBaseName
@@ -246,8 +258,9 @@ object MethylationEnrichmentInLoi {
             intersectionFilter = limitResultsToSpecificLocationFilter,
             genomeMaskedAreaPath = opts.genomeMaskedAreaPath,
             genomeAllowedAreaPath = opts.genomeAllowedAreaPath,
-            mergeRegionsToBg = false, // N/A
-            samplingWithReplacement = samplingWithReplacement
+            samplingWithReplacement = opts.samplingWithReplacement,
+            lengthCorrectionMethod = lengthCorrectionMethod
+            // N/A
         ).save(reportPath)
 
         LOG.info("Report saved to: $reportPath")

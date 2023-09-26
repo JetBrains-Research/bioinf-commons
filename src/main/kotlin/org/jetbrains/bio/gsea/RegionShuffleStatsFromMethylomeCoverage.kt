@@ -25,7 +25,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
     val zeroBasedBg: Boolean
 ) : RegionShuffleStats(simulationsNumber, chunkSize, setMaxRetries, regionMaxRetries) {
 
-    override fun calcStatistics(
+    fun calcStatistics(
         gq: GenomeQuery,
         inputRegionsPath: Path,
         backgroundPath: Path?,
@@ -38,8 +38,8 @@ class RegionShuffleStatsFromMethylomeCoverage(
         intersectionFilter: LocationsList<out RangesList>?,
         genomeMaskedAreaPath: Path?,
         genomeAllowedAreaPath: Path?,
-        mergeRegionsToBg: Boolean,
         samplingWithReplacement: Boolean,
+        lengthCorrectionMethod: String?
     ): DataFrame {
         requireNotNull(backgroundPath) { "Background should be provided" }
 
@@ -52,6 +52,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
             aSetIsRegions,
             mergeOverlapped,
             intersectionFilter,
+            samplingWithReplacement = samplingWithReplacement,
             inputRegionsAndBackgroundProvider = { genomeQuery ->
                 inputRegionsAndBackgroundProviderFun(inputRegionsPath, backgroundPath, zeroBasedBg, gq,
                     genomeMaskedAreaPath, genomeAllowedAreaPath)
@@ -69,7 +70,10 @@ class RegionShuffleStatsFromMethylomeCoverage(
                     setMaxRetries = setMaxRetries,
                     regionMaxRetries = regionMaxRetries,
                     withReplacement = withReplacement,
-                    candidateFilterPredicate = null
+                    candidateFilterPredicate = SamplingMethylationValidation.getCandidateFilterPredicate(
+                        lengthCorrectionMethod,
+                        regions
+                    )
                 ).map { it.on(Strand.PLUS) }
             }
         )

@@ -71,7 +71,7 @@ object EnrichmentInLoi {
             genomeMaskedAreaPath = opts.genomeMaskedAreaPath,
             genomeAllowedAreaPath = opts.genomeAllowedAreaPath,
             mergeRegionsToBg = mergeRegionsToBg,
-            samplingWithReplacement = false
+            samplingWithReplacement = opts.samplingWithReplacement
         ).save(reportPath)
 
         LOG.info("Report saved to: $reportPath")
@@ -373,7 +373,9 @@ object EnrichmentInLoi {
         val mergeOverlapped: Boolean,
         val genomeMaskedAreaPath: Path?,
         val genomeAllowedAreaPath: Path?,
-        val parallelism: Int?) {
+        val parallelism: Int?,
+        val samplingWithReplacement: Boolean
+    ) {
         fun getChunkSize(): Int = if (chunkSize == 0) simulationsNumber else chunkSize
     }
     class SharedEnrichmentOptions(
@@ -443,6 +445,8 @@ object EnrichmentInLoi {
         configureParallelism(parallelism)
         logger.info("THREADS: $parallelism (use #threads=${parallelismLevel()})")
 
+        val samplingWithReplacement = options.has("replace")
+        LOG.info("SAMPLE WITH REPLACEMENT: $samplingWithReplacement")
 
         return SharedSamplingOptions(
             genome = genome,
@@ -457,6 +461,7 @@ object EnrichmentInLoi {
             genomeMaskedAreaPath = genomeMaskedAreaPath,
             genomeAllowedAreaPath = genomeAllowedAreaPath,
             parallelism = parallelism,
+            samplingWithReplacement = samplingWithReplacement
         );
     }
 

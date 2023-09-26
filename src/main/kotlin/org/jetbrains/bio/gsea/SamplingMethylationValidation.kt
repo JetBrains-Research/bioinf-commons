@@ -19,10 +19,13 @@ import java.nio.file.Path
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.random.Random
 
 object SamplingMethylationValidation {
     private val LOG = LoggerFactory.getLogger(SamplingMethylationValidation::class.java)
     private val SUPPORTED_ALGS = listOf("METH", "BED")
+    private const val DIST_CORRECTION_MAX_REGION_SIZE = 5000 // # TODO: customize?
+    private const val DIST_CORRECTION_APPROACH_NAME = "dist"
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -166,6 +169,15 @@ object SamplingMethylationValidation {
                 "Merge input regions into background before sampling if background doesn't cover all input regions."
             )
 
+            // Sampled distribution correction
+            acceptsAll(
+                listOf("length-correction"),
+                "Optional setting that allow to do a correction of sampled length distribution. Use " +
+                        "'dist' to make sampling result closer to input length distribution. Use int value as a " +
+                        "threshold of maximum allowed length. Is supported only by `METH` simulation alg."
+            )
+                .withRequiredArg()
+
             // Logging level:
             acceptsAll(listOf("d", "debug"), "Print all the debug info")
 
@@ -173,9 +185,6 @@ object SamplingMethylationValidation {
             parse(args, description = tool.description) { options ->
                 BioinfToolsCLA.configureLogging("quiet" in options, "debug" in options)
                 LOG.info("Tool [${tool.command}]: ${tool.description} (vers: ${BioinfToolsCLA.version()})")
-
-                val samplingWithReplacement = options.has("replace")
-                LOG.info("SAMPLE WITH REPLACEMENT: $samplingWithReplacement")
 
                 val  methylomePath = options.valueOf("methylome") as Path
                 LOG.info("METHYLOME: $methylomePath")
@@ -203,16 +212,22 @@ object SamplingMethylationValidation {
                     mergeRegionsToBedBg = false
                 }
 
+                val lengthCorrectionMethod = options.valueOf("length-correction") as String?
+                LOG.info("SAMPLED REGIONS LENGTH CORRECTION: $lengthCorrectionMethod")
+                require(lengthCorrectionMethod == null || !sampleFromBEDBackground) {
+                    "Length correction is supported only for `METH` algorithm but was: $algStr"
+                }
+
                 val sharedOpts = EnrichmentInLoi.processSharedSamplingOptions(options, LOG)
 
                 doCalculations(
                     sharedOpts,
-                    samplingWithReplacement = samplingWithReplacement,
                     methylomePath = methylomePath,
                     zeroBasedMethylome = zeroBasedMethylome,
                     sampleFromBEDBackground = sampleFromBEDBackground,
                     bedBgFlnk = bedBgFlnk,
-                    mergeRegionsToBedBg = mergeRegionsToBedBg
+                    mergeRegionsToBedBg = mergeRegionsToBedBg,
+                    lengthCorrectionMethod = lengthCorrectionMethod
                 )
             }
         }
@@ -220,12 +235,12 @@ object SamplingMethylationValidation {
 
     fun doCalculations(
         opts: EnrichmentInLoi.SharedSamplingOptions,
-        samplingWithReplacement: Boolean,
         methylomePath: Path,
         zeroBasedMethylome: Boolean,
         sampleFromBEDBackground: Boolean,
         bedBgFlnk: Int,
-        mergeRegionsToBedBg: Boolean
+        mergeRegionsToBedBg: Boolean,
+        lengthCorrectionMethod: String?
     ) {
 
         //-------------------
@@ -274,30 +289,6 @@ object SamplingMethylationValidation {
         // Sample regions
         val inputRegionsPreprocessed = inputRegionsListFiltered.asLocationSequence().toList()
         if (!sampleFromBEDBackground) {
-            val MAX_REGION_LEN_THR = 5000
-            val inputLen = inputRegionsPreprocessed.map { min(MAX_REGION_LEN_THR, it.length()) }.toIntArray()
-            val regionsWithMaxSupportedLen = inputLen.count { it == MAX_REGION_LEN_THR }
-            require ((regionsWithMaxSupportedLen / inputLen.size) < 0.05) {
-                // XXX: add an option to ignore it?
-                "Too many regions (more than 5%) with length >= $MAX_REGION_LEN_THR bp. #Regions exceed treshold = $regionsWithMaxSupportedLen of ${inputLen.size}. Consider changing threshold."
-            }
-            inputLen.sort() // sort from min to max
-            val minLen = inputLen.first()
-            val maxLen = min(MAX_REGION_LEN_THR, inputLen.last())
-            val resampleProb = DoubleArray(maxLen+2)
-            resampleProb[maxLen+1] = 1.0
-            for (idx in 0 until minLen){
-                resampleProb[idx] = 1.0
-            }
-            val medianIdx = inputLen.size / 2.0
-            for (idx in minLen .. maxLen) {
-                val cntAbove = inputLen.count { it <= idx }
-                val cntBelow = inputLen.count { idx <= it }
-                val pval = min(cntAbove, cntBelow) / medianIdx
-                resampleProb[idx] = 1.0 - pval
-            }
-
-            val randomGen = kotlin.random.Random(100)
             sampleAndCollectMetrics(
                 inputRegionsPreprocessed,
                 simulationsNumber = opts.simulationsNumber,
@@ -307,7 +298,7 @@ object SamplingMethylationValidation {
                 gq = gq,
                 outputFolderPath = detailedReportFolder,
                 intersectionFilter = limitResultsToSpecificLocationFilter,
-                samplingWithReplacement = samplingWithReplacement,
+                samplingWithReplacement = opts.samplingWithReplacement,
                 methylomeBackground = methylomeCovFiltered,
                 samplingBackground = methylomeCovFiltered,
                 samplingFun = { genomeQuery, regions, background, setMaxRetries, regionMaxRetries, withReplacement ->
@@ -318,25 +309,10 @@ object SamplingMethylationValidation {
                         regionMaxRetries = regionMaxRetries,
                         setMaxRetries = setMaxRetries,
                         withReplacement = withReplacement,
-
-                        // candidateFilterPredicate = null, // XXX: default
-
-//                        candidateFilterPredicate = {
-//                            val candLen = it.length()
-//                            val lenThreshold = 2300.0 // UP: 2218, DOWN: 1261/1472
-//                            if (candLen <= lenThreshold) 0.0 else min(1.0, candLen / lenThreshold)
-//                        }
-                        candidateFilterPredicate = {
-                            // TODO based sampling dist
-                            val candLen = it.length()
-                            val prob = if (candLen > maxLen) {
-                                1.0
-                            } else {
-                                resampleProb[candLen]
-                            }
-                            val accepted = randomGen.nextDouble() >= prob
-                            if (accepted) 0.0 else prob
-                        }
+                        candidateFilterPredicate = getCandidateFilterPredicate(
+                            lengthCorrectionMethod,
+                            regions
+                        )
                     ).map { it.on(Strand.PLUS) }
                 }
             )
@@ -350,7 +326,7 @@ object SamplingMethylationValidation {
                 gq = gq,
                 outputFolderPath = detailedReportFolder,
                 intersectionFilter = limitResultsToSpecificLocationFilter,
-                samplingWithReplacement = samplingWithReplacement,
+                samplingWithReplacement = opts.samplingWithReplacement,
                 methylomeBackground = methylomeCovFiltered,
                 samplingBackground = filteredBedBackground!!,
                 samplingFun = { genomeQuery, regions, background, setMaxRetries, regionMaxRetries, withReplacement ->
@@ -365,6 +341,75 @@ object SamplingMethylationValidation {
                 }
             )
         }
+    }
+
+    fun getCandidateFilterPredicate(
+        lengthCorrectionMethod: String?,
+        inputRegionsPreprocessed: List<ChromosomeRange>
+    ): ((ChromosomeRange) -> Double)? {
+        return when (lengthCorrectionMethod) {
+            null -> null // XXX: default
+            DIST_CORRECTION_APPROACH_NAME -> makeFilterByLengthProbability(inputRegionsPreprocessed)
+            else -> {
+                // By fixed threshold:
+                val lenThreshold = lengthCorrectionMethod.toInt().toDouble() // UP: 2218, DOWN: 1261/1472
+
+                ({ chrRange ->
+                    val candLen = chrRange.length()
+                    if (candLen <= lenThreshold) 0.0 else min(1.0, candLen / lenThreshold)
+                })
+            }
+        }
+    }
+
+    private fun makeFilterByLengthProbability(
+        inputRegionsPreprocessed: List<ChromosomeRange>,
+    ): ((ChromosomeRange) -> Double) {
+        // Get features of input regions distribution for fast filter calculation
+        val resampleProb = determineResampleProbabilities(inputRegionsPreprocessed)
+        val maxProcessedLen = resampleProb.size - 1 // last index of array
+
+        // Filter
+        val randomGen = Random(100)
+        return { chromosomeRange ->
+            // XXX based on sampling dist
+            val candLen = chromosomeRange.length()
+            val prob = if (candLen > maxProcessedLen) {
+                1.0
+            } else {
+                resampleProb[candLen]
+            }
+            val accepted = randomGen.nextDouble() >= prob
+            if (accepted) 0.0 else prob
+        }
+    }
+
+    private fun determineResampleProbabilities(inputRegionsPreprocessed: List<ChromosomeRange>): DoubleArray {
+        val inputLen = inputRegionsPreprocessed.map { min(DIST_CORRECTION_MAX_REGION_SIZE, it.length()) }.toIntArray()
+        val regionsWithMaxSupportedLen = inputLen.count { it == DIST_CORRECTION_MAX_REGION_SIZE }
+        require((regionsWithMaxSupportedLen / inputLen.size) < 0.01) { // if >=1% of unsupported lengths
+            // TODO: add an option to ignore it?
+            "Too many regions (more than 5%) with length >= $DIST_CORRECTION_MAX_REGION_SIZE bp." +
+                    " #Regions exceed threshold = $regionsWithMaxSupportedLen of ${inputLen.size}." +
+                    " Consider changing threshold."
+        }
+        inputLen.sort() // sort from min to max
+        val minLen = inputLen.first()
+        val maxLen = min(DIST_CORRECTION_MAX_REGION_SIZE, inputLen.last())
+        val resampleProb = DoubleArray(maxLen + 2)
+        resampleProb[maxLen + 1] = 1.0
+        for (idx in 0 until minLen) {
+            resampleProb[idx] = 1.0
+        }
+        val medianIdx = inputLen.size / 2.0
+        for (idx in minLen..maxLen) {
+            val cntAbove = inputLen.count { it <= idx }
+            val cntBelow = inputLen.count { idx <= it }
+            val pval = min(cntAbove, cntBelow) / medianIdx
+            resampleProb[idx] = 1.0 - pval
+        }
+        resampleProb[maxLen + 1] = 1.0
+        return resampleProb
     }
 
     private fun makeFilteredBEDBackgroundFromMethylome(
@@ -493,8 +538,13 @@ object SamplingMethylationValidation {
 
             val sampledRegions: List<List<LocationsList<out RangesList>>> =
                 sampleRegions(
-                    simulationsInChunk, setMaxRetries, regionMaxRetries, intersectionFilter, inputRegions, samplingBackground,
-                    gq,
+                    simulationsInChunk,
+                    setMaxRetries = setMaxRetries,
+                    regionMaxRetries = regionMaxRetries,
+                    intersectionFilter = intersectionFilter,
+                    srcLoci = inputRegions,
+                    background = samplingBackground,
+                    gq = gq,
                     parallelismLevel(),
                     samplingFun = samplingFun,
                     withReplacement = samplingWithReplacement
