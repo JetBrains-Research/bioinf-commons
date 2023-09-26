@@ -16,8 +16,9 @@ import java.nio.file.Path
 class RegionShuffleStatsFromBedCoverage(
     simulationsNumber: Int,
     chunkSize: Int,
-    maxRetries: Int
-) : RegionShuffleStats(simulationsNumber, chunkSize, maxRetries) {
+    setMaxRetries: Int,
+    regionMaxRetries: Int
+) : RegionShuffleStats(simulationsNumber, chunkSize, setMaxRetries, regionMaxRetries) {
     override fun calcStatistics(
         gq: GenomeQuery,
         inputRegionsPath: Path,
@@ -50,12 +51,13 @@ class RegionShuffleStatsFromBedCoverage(
         loiOverlapWithBgFun = { loiFiltered, background ->
             OverlapNumberMetric().calcMetric(loiFiltered, background).toInt()
         },
-        samplingFun = { genomeQuery, regions, background, maxRetries, withReplacement ->
+        samplingFun = { genomeQuery, regions, background, setMaxRetries, regionMaxRetries, withReplacement ->
             shuffleChromosomeRanges(
                 genomeQuery,
                 regions,
                 background.asLocationSequence().map { it.toChromosomeRange() }.toList(),
-                maxRetries = maxRetries,
+                setMaxRetries = setMaxRetries,
+                regionMaxRetries = regionMaxRetries,
                 withReplacement = withReplacement
             ).map { it.on(Strand.PLUS) }
         }

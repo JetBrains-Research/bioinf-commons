@@ -23,8 +23,9 @@ fun shuffleChromosomeRanges(
     genomeQuery: GenomeQuery,
     regions: List<ChromosomeRange>,
     background: List<ChromosomeRange>? = null,
-    maxRetries: Int = 100,
-    withReplacement: Boolean
+    setMaxRetries: Int = 100,
+    regionMaxRetries: Int = 100,
+    withReplacement: Boolean,
 ): List<ChromosomeRange> {
     val lengths = regions.map { it.length() }.toIntArray()
 
@@ -41,13 +42,13 @@ fun shuffleChromosomeRanges(
         prefixSum[i] = s
     }
 
-    for (i in 1..maxRetries) {
-        val result = tryShuffle(genomeQuery, backgroundRegions, lengths, prefixSum, maxRetries, withReplacement)
+    for (i in 1..setMaxRetries) {
+        val result = tryShuffle(genomeQuery, backgroundRegions, lengths, prefixSum, regionMaxRetries, withReplacement)
         if (result != null) {
             return result
         }
     }
-    throw RuntimeException("Too many shuffle attempts")
+    throw RuntimeException("Too many shuffle attempts. Max limit is: $setMaxRetries")
 }
 
 fun hasIntersection(regionsMap: GenomeMap<MutableList<Range>>, chromosomeRange: ChromosomeRange): Boolean {
@@ -66,7 +67,7 @@ private fun tryShuffle(
     background: List<ChromosomeRange>,
     lengths: IntArray,
     prefixSum: LongArray,
-    maximalReTries: Int = 100,
+    regionMaxRetries: Int = 100,
     withReplacement: Boolean
 ): List<ChromosomeRange>? {
     val maskedGenomeMap = when {
@@ -85,7 +86,7 @@ private fun tryShuffle(
     for (i in lengths.indices) {
         var nextRange: ChromosomeRange? = null
 
-        for (rangeTry in 1..maximalReTries) {
+        for (rangeTry in 1..regionMaxRetries) {
             val rVal = r.nextLong(sum)
 
             val index = prefixSum.binarySearch(rVal)

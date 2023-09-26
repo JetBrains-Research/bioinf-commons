@@ -56,7 +56,7 @@ object EnrichmentInLoi {
 
         RegionShuffleStatsFromBedCoverage(
             opts.simulationsNumber,
-            opts.getChunkSize(), opts.retries
+            opts.getChunkSize(), opts.setRetries, opts.regionRetries
         ).calcStatistics(
             gq,
             opts.inputRegions,
@@ -259,11 +259,19 @@ object EnrichmentInLoi {
                 .ofType(Int::class.java)
                 .defaultsTo(50_000)
 
-            acceptsAll(listOf("retries"), "Regions shuffling max retries. Used because is not always possible to" +
-                    " shuffle non-interested regions of given size.")
+            acceptsAll(
+                listOf("set_retries"), "Regions set sampling max retries. Used because is not always possible to" +
+                        " sample the whole set.")
                 .withRequiredArg()
                 .ofType(Int::class.java)
                 .defaultsTo(1_000)
+
+            acceptsAll(
+                listOf("region_retries"), "Individual region sampling max retries. Used because is not always" +
+                        " possible to sample region with given constraints on length.")
+                .withRequiredArg()
+                .ofType(Int::class.java)
+                .defaultsTo(10_000)
 
             accepts(
                 "a-loi",
@@ -358,7 +366,8 @@ object EnrichmentInLoi {
         val outputBaseName: Path,
         private val chunkSize: Int,
         val simulationsNumber: Int,
-        val retries: Int,
+        val setRetries: Int,
+        val regionRetries: Int,
         val limitResultsToSpecificLocation: Location?,
         val inputRegions: Path,
         val mergeOverlapped: Boolean,
@@ -406,8 +415,11 @@ object EnrichmentInLoi {
         val chunkSize = options.valueOf("chunk-size") as Int
         logger.info("SIMULATIONS CHUNK SIZE: $chunkSize")
 
-        val retries = options.valueOf("retries") as Int
-        logger.info("MAX RETRIES: $retries")
+        val setRetries = options.valueOf("set_retries") as Int
+        logger.info("SET MAX RETRIES: $setRetries")
+
+        val regionRetries = options.valueOf("region_retries") as Int
+        logger.info("REGION MAX RETRIES: $regionRetries")
 
         val limitResultsToSpecificLocation = (options.valueOf("limit-intersect") as String?)?.let {
             parseLocation(
@@ -437,7 +449,8 @@ object EnrichmentInLoi {
             outputBaseName = outputBaseName,
             chunkSize = chunkSize,
             simulationsNumber = simulationsNumber,
-            retries = retries,
+            setRetries = setRetries,
+            regionRetries = regionRetries,
             limitResultsToSpecificLocation = limitResultsToSpecificLocation,
             inputRegions = inputRegions,
             mergeOverlapped = mergeOverlapped,

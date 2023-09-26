@@ -22,14 +22,16 @@ import kotlin.math.ceil
 /**
  * @param simulationsNumber Simulations number
  * @param chunkSize Size of chunk
- * @param maxRetries Max retries when cannot shuffle region from background
+ * @param setMaxRetries Max retries when cannot shuffle whole set of regions from background
+ * @param regionMaxRetries Max retries when cannot shuffle one region from background
  *
  * Loci file path will be added to background
  */
 abstract class RegionShuffleStats(
     protected  val simulationsNumber: Int,
     protected  val chunkSize: Int,
-    protected  val maxRetries: Int
+    protected  val setMaxRetries: Int,
+    protected  val regionMaxRetries: Int
 ) {
     /**
      * Strand is ignore in all files
@@ -68,7 +70,7 @@ abstract class RegionShuffleStats(
         samplingWithReplacement: Boolean = false,
         inputRegionsAndBackgroundProvider: (GenomeQuery) -> Pair<List<Location>, T>,
         loiOverlapWithBgFun: (LocationsList<out RangesList>, T) -> Int,
-        samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Boolean) -> List<Location>
+        samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Int, Boolean) -> List<Location>
     ): DataFrame {
         outputFolderPath?.createDirectories()
         val dumpDetails = outputFolderPath != null
@@ -117,7 +119,7 @@ abstract class RegionShuffleStats(
 
             val sampledRegions: List<List<LocationsList<out RangesList>>> =
                 sampleRegions(
-                    simulationsInChunk, maxRetries, intersectionFilter, inputRegionsFiltered, bgRegionsList,
+                    simulationsInChunk, setMaxRetries, regionMaxRetries, intersectionFilter, inputRegionsFiltered, bgRegionsList,
                     gq,
                     parallelismLevel(),
                     samplingFun=samplingFun,
@@ -230,14 +232,15 @@ abstract class RegionShuffleStats(
 
         fun <T> sampleRegions(
             simulationsNumber: Int,
-            maxRetries: Int,
+            setMaxRetries: Int,
+            regionMaxRetries: Int,
             intersectionFilter: LocationsList<out RangesList>?,
             srcLoci: List<Location>,
             background: T,
             gq: GenomeQuery,
             threadsNum: Int,
             withReplacement: Boolean,
-            samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Boolean) -> List<Location>
+            samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Int, Boolean) -> List<Location>
         ): List<List<LocationsList<out RangesList>>> {
             // Sample:
             val progress = Progress { title = "Loci Sampling" }.bounded(simulationsNumber.toLong())
@@ -245,7 +248,7 @@ abstract class RegionShuffleStats(
 
             // Compute different simulations in parallel, they are independent
             val sampled = IntStream.range(0, simulationsNumber).parallel().mapToObj { _ ->
-                val randLoci = samplingFun(gq, loci, background, maxRetries, withReplacement)
+                val randLoci = samplingFun(gq, loci, background, setMaxRetries, regionMaxRetries, withReplacement)
 
                 progress.report()
 
