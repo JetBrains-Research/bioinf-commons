@@ -17,6 +17,8 @@ import org.junit.Test
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
+import java.text.NumberFormat
+import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -323,93 +325,98 @@ class ParallelProgressTest : ProgressTest() {
 
     @Test
     fun testParallel() {
-        val progress = Progress { period = 1 to TimeUnit.SECONDS }.unbounded()
-        val pool = Executors.newFixedThreadPool(THREADS)
-        val adder = LongAdder()
+        withLocaleUS {
+            val progress = Progress { period = 1 to TimeUnit.SECONDS }.unbounded()
+            val pool = Executors.newFixedThreadPool(THREADS)
+            val adder = LongAdder()
 
-        val endTime = System.nanoTime() + TEST_DURATION
-        val callables = (0..THREADS).map {
-            Callable<Void> {
-                var lastTime = System.nanoTime()
-                while (lastTime < endTime) {
-                    while (System.nanoTime() - lastTime < WAIT_NANOS) {
-                        // busy wait here, woo-hoo
+            val endTime = System.nanoTime() + TEST_DURATION
+            val callables = (0..THREADS).map {
+                Callable<Void> {
+                    var lastTime = System.nanoTime()
+                    while (lastTime < endTime) {
+                        while (System.nanoTime() - lastTime < WAIT_NANOS) {
+                            // busy wait here, woo-hoo
+                        }
+                        adder.add(1)
+                        progress.report()
+                        lastTime = System.nanoTime()
                     }
-                    adder.add(1)
-                    progress.report()
-                    lastTime = System.nanoTime()
+
+                    null
                 }
-
-                null
             }
+
+            pool.invokeAll(callables)
+            progress.done()
+            progress.done() // to ensure that this doesn't make any difference
+
+            val uniqueSeconds = parts.asSequence().map { it.elapsedSeconds }.distinct().count()
+            println(
+                "Unique seconds: $uniqueSeconds\n" +
+                        "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
+            )
+
+            val allSeconds = parts.size
+            assertTrue(
+                abs(allSeconds - uniqueSeconds) <= 3,
+                "shouldn't report progress more often than once in second, except [done]"
+            )
+            assertTrue("[done]" in logStrings[logStrings.size - 1])
+            assertEquals(
+                adder.sum(), parts[parts.size - 1].itemsDone.toLong(),
+                "should report all progress"
+            )
         }
-
-        pool.invokeAll(callables)
-        progress.done()
-        progress.done() // to ensure that this doesn't make any difference
-
-        val uniqueSeconds = parts.asSequence().map { it.elapsedSeconds }.distinct().count()
-        println(
-            "Unique seconds: $uniqueSeconds\n" +
-                    "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
-        )
-
-        val allSeconds = parts.size
-        assertTrue(
-            abs(allSeconds - uniqueSeconds) <= 3,
-            "shouldn't report progress more often than once in second, except [done]"
-        )
-        assertTrue("[done]" in logStrings[logStrings.size - 1])
-        assertEquals(
-            adder.sum(), parts[parts.size - 1].itemsDone.toLong(),
-            "should report all progress"
-        )
     }
 
     @Retry
     @Test
     fun testParallelIncremental() {
-        val progress = Progress { period = 1 to TimeUnit.SECONDS }.unbounded()
-        val pool = Executors.newFixedThreadPool(THREADS)
-        val adder = LongAdder()
+        withLocaleUS {
+            val progress = Progress { period = 1 to TimeUnit.SECONDS }.unbounded()
+            val pool = Executors.newFixedThreadPool(THREADS)
+            val adder = LongAdder()
 
-        val endTime = System.nanoTime() + TEST_DURATION
-        val callables = (0..THREADS).map {
-            Callable<Void> {
-                var lastTime = System.nanoTime()
-                while (lastTime < endTime) {
-                    while (System.nanoTime() - lastTime < WAIT_NANOS) {
-                        // busy wait here, woo-hoo
+            val endTime = System.nanoTime() + TEST_DURATION
+            val callables = (0..THREADS).map {
+                Callable<Void> {
+                    var lastTime = System.nanoTime()
+                    while (lastTime < endTime) {
+                        while (System.nanoTime() - lastTime < WAIT_NANOS) {
+                            // busy wait here, woo-hoo
+                        }
+                        adder.add(1)
+                        progress.report()
+                        lastTime = System.nanoTime()
                     }
-                    adder.add(1)
-                    progress.report()
-                    lastTime = System.nanoTime()
+
+                    null
                 }
-
-                null
             }
+
+            pool.invokeAll(callables)
+            progress.done()
+            progress.done() // to ensure that this doesn't make any difference
+
+
+            val uniqueSeconds = parts.asSequence().map { it.elapsedSeconds }.distinct().count()
+            println(
+                "Unique seconds: $uniqueSeconds\n" +
+                        "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
+            )
+
+            assertEquals(
+                parts.size, uniqueSeconds + 1,
+                "shouldn't report progress more often than once in second, except [done].\n" +
+                        "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
+            )
+            assertTrue("[done]" in logStrings[logStrings.size - 1])
+            assertEquals(
+                adder.sum(), parts.last().itemsDone.toLong(),
+                "should report all progress"
+            )
         }
-
-        pool.invokeAll(callables)
-        progress.done()
-        progress.done() // to ensure that this doesn't make any difference
-
-        val uniqueSeconds = parts.asSequence().map { it.elapsedSeconds }.distinct().count()
-        println(
-            "Unique seconds: $uniqueSeconds\n" +
-                    "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
-        )
-
-        assertEquals(
-            parts.size, uniqueSeconds + 1,
-            "shouldn't report progress more often than once in second, except [done].\n" +
-                    "Actual parts: ${parts.joinToString { "${it.elapsedSeconds} {$it}" }}"
-        )
-        assertTrue("[done]" in logStrings[logStrings.size - 1])
-        assertEquals(
-            adder.sum(), parts.last().itemsDone.toLong(),
-            "should report all progress"
-        )
     }
 
     companion object {
@@ -438,7 +445,31 @@ class MultiTaskProgressTest {
     }
 
     @Test
-    fun testFinish() {
+    fun testFinish_LocaleUS() {
+        withLocaleUS {
+            doFinishTaskTest()
+        }
+        val log = logStream.toString()
+
+        assertTrue("Running 9 tasks: 0.00% (0/459)" in log)
+        assertTrue("Running 2 tasks: 61.95% (280/452)" in log)
+        assertTrue("100.00% (360/360)" in log)
+
+    }
+
+    @Test
+    fun testFinish_LocaleEU() {
+        withLocaleEU {
+            doFinishTaskTest()
+        }
+        val log = logStream.toString()
+        assertTrue("Running 9 tasks: 0,00% (0/459)" in log)
+        assertTrue("Running 2 tasks: 61,95% (280/452)" in log)
+        assertTrue("100,00% (360/360)" in log)
+
+    }
+
+    private fun doFinishTaskTest() {
         val tasks = 10
         val numbers = LongArray(tasks) { (10 * it + 1).toLong() }
         (0 until tasks).forEach {
@@ -451,10 +482,6 @@ class MultiTaskProgressTest {
             Thread.sleep(100)
         }
         MultitaskProgress.finishTask("task_${tasks - 1}")
-        val log = logStream.toString()
-        assertTrue("Running 9 tasks: 0.00% (0/459)" in log)
-        assertTrue("Running 2 tasks: 61.95% (280/452)" in log)
-        assertTrue("100.00% (360/360)" in log)
     }
 }
 
