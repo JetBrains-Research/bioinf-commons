@@ -18,8 +18,10 @@ import org.junit.rules.ExpectedException
 import java.awt.Color
 import java.io.IOException
 import java.io.StringWriter
+import java.lang.IllegalStateException
 import java.nio.file.Path
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -261,7 +263,7 @@ Fields number in BED file is between 3 and 15, but was 2"""
 
         withBedFile(content) { path ->
             val autoFormat = BedFormat.auto(path)
-            assertEquals(BedFormat.from("bed11+", ' '), autoFormat)
+            assertEquals(BedFormat.from("bed11", ' '), autoFormat)
 
 
 
@@ -407,23 +409,30 @@ Fields number in BED file is between 3 and 15, but was 2"""
     }
 
     @Test
-    fun testAuto_FromBed() {
+    fun testAuto_FromBed12() {
         withResource(BedParserTest::class.java, "bed12.bed") { path ->
-            assertEquals("(bed12+, '\t')", BedFormat.auto(path).toString())
+            assertEquals("(bed12, '\t')", BedFormat.auto(path).toString())
+        }
+    }
+
+    @Test
+    fun testAuto_FromBed12Plus() {
+        withResource(BedParserTest::class.java, "bed12+3.bed") { path ->
+            assertEquals("(bed12+3, '\t')", BedFormat.auto(path).toString())
         }
     }
 
     @Test
     fun testAuto_FromBedZip() {
         withResource(BedParserTest::class.java, "bed12.bed.zip") { path ->
-            assertEquals("(bed12+, '\t')", BedFormat.auto(path).toString())
+            assertEquals("(bed12, '\t')", BedFormat.auto(path).toString())
         }
     }
 
     @Test
     fun testAuto_FromBedGz() {
         withResource(BedParserTest::class.java, "bed12.bed.gz") { path ->
-            assertEquals("(bed12+, '\t')", BedFormat.auto(path).toString())
+            assertEquals("(bed12, '\t')", BedFormat.auto(path).toString())
         }
     }
 
@@ -744,28 +753,64 @@ Fields number in BED file is between 3 and 15, but was 2"""
 
     @Test
     fun parseFormatString() {
-        assertEquals(6.toByte(), BedFormat.parseFormatString("bed6+"))
-        assertEquals(6.toByte(), BedFormat.parseFormatString("bed6+3"))
-        assertEquals(3.toByte(), BedFormat.parseFormatString("bed3"))
-        assertEquals(15.toByte(), BedFormat.parseFormatString("bed15"))
+        assertEquals(BedFormat(6, '\t', true, null), BedFormat.parseFormatString("bed6+", '\t'))
+        assertEquals(BedFormat(6, '\t', true, 3), BedFormat.parseFormatString("bed6+3", '\t'))
+        assertEquals(BedFormat(3, '\t', false, null), BedFormat.parseFormatString("bed3", '\t'))
+        assertEquals(BedFormat(15, '\t', false, null), BedFormat.parseFormatString("bed15", '\t'))
 
-        assertEquals(2.toByte(), BedFormat.parseFormatString("bed2"))
-        assertEquals(16.toByte(), BedFormat.parseFormatString("bed16"))
+        assertFailsWith(
+            java.lang.IllegalArgumentException::class,
+            "Fields number in BED file is between 3 and 15, but was 2"
+        ) {
+            assertEquals(BedFormat(2, '\t', false, null), BedFormat.parseFormatString("bed2", '\t'))
+        }
+        assertFailsWith(
+            java.lang.IllegalArgumentException::class,
+            "Fields number in BED file is between 3 and 15, but was 16"
+        ) {
+            assertEquals(BedFormat(16, '\t', false, null), BedFormat.parseFormatString("bed16", '\t'))
+        }
     }
 
-    @Test(expected = IllegalStateException::class)
+    @Test
     fun parseFormatStringMalformated1() {
-        BedFormat.parseFormatString("3+3")
+        assertFailsWith(
+            IllegalStateException::class,
+            "Format name is required to start with 'bed' prefix, e.g. bed3, bed6+ or bed3+6, but was: 3+3"
+        ) {
+            BedFormat.parseFormatString("3+3", '\t')
+        }
     }
 
-    @Test(expected = NumberFormatException::class)
+    @Test
     fun parseFormatStringMalformated2() {
-        BedFormat.parseFormatString("bedX")
+        assertFailsWith(
+            NumberFormatException::class,
+            "Format name is required to start with 'bed' prefix, e.g. bed3, bed6+ or bed3+6, but was: 3+3"
+        ) {
+            BedFormat.parseFormatString("bedX", '\t')
+        }
     }
 
-    @Test(expected = NumberFormatException::class)
+    @Test
     fun parseFormatStringMalformated3() {
-        BedFormat.parseFormatString("bed3p4")
+        assertFailsWith(
+            NumberFormatException::class,
+            "Format name is required to start with 'bed' prefix, e.g. bed3, bed6+ or bed3+6, but was: 3+3"
+        ) {
+
+            BedFormat.parseFormatString("bed3p4", '\t')
+        }
+    }
+
+    @Test
+    fun parseFormatStringMalformated4() {
+        assertFailsWith(
+            IllegalArgumentException::class,
+            "In BED file with detected extra fields, the number of fields is allowed to be null (unknown) or a positive integer, but was: 0"
+        ) {
+            BedFormat.parseFormatString("bed3+0", '\t')
+        }
     }
 
     @Test
@@ -806,8 +851,8 @@ Fields number in BED file is between 3 and 15, but was 2"""
 
     @Test
     fun bedFormatFromField() {
-        assertEquals("bed6+", BedFormat(BedField.STRAND).fmtStr)
-        assertEquals("bed9+", BedFormat(BedField.ITEM_RGB).fmtStr)
+        assertEquals("bed6", BedFormat(BedField.STRAND).fmtStr)
+        assertEquals("bed9", BedFormat(BedField.ITEM_RGB).fmtStr)
     }
 
     @Test
@@ -1020,8 +1065,14 @@ Fields number in BED file is between 3 and 15, but was 2"""
     @Test
     fun fromHomerPeakCallerBedFiles() {
         withBedFile(HOMER_FORMAT) { path ->
-            assertEquals("(bed6+, '\t')", BedFormat.auto(path).toString())
+            assertEquals("(bed6, '\t')", BedFormat.auto(path).toString())
         }
+    }
+
+    @Test
+    fun testPredefinedFormats() {
+        assertEquals(BedFormat(6, '\t', true, 3), BedFormat.MACS2)
+        assertEquals(BedFormat(9, '\t', false, null), BedFormat.RGB)
     }
 
     private fun withBedFile(contents: String = "", block: (Path) -> Unit) = withFile("bed", contents, block)

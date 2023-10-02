@@ -29,8 +29,8 @@ import java.nio.file.Path
  * help you fight the chaos, allowing for various subsets
  * of fields (aka columns) to be included or excluded.
  *
- * We consider all BED files as having a bedN+ format, where 3 <= N <= 15. Thus, we don't pose any limit
- * on the number (and existence) of the extra fields.
+ * We consider all BED files as having a bedN, bedN+ or bedN+K format, where 3 <= N <= 15.
+ * When the number of extra fields is unknown, we use bedN+ format.
  *
  * If you have a good BED file, just use [auto].
  *
@@ -39,10 +39,23 @@ import java.nio.file.Path
  *
  * @author Oleg Shpynov
  * @author Sergei Lebedev
+ * @author Roman Cherniatchik
+ */
+
+/**
+ * Represents a format specification for a BED file.
+ *
+ * @property fieldsNumber The number of standard fields in the BED file from BED specification (max 12).
+ * @property delimiter The delimiter character used to separate fields.
+ * @property extraFieldsPresent Indicates whether extra fields are found in the BED file, e.g. '+' in bed format name
+ * @property extraFieldsNumber The non-negative number of extra fields found in the BED file, if the number is known otherwise null.
+ * @property fmtStr The string representation of the format.
  */
 data class BedFormat(
     val fieldsNumber: Byte = 6,
-    val delimiter: Char = '\t'
+    val delimiter: Char = '\t',
+    val extraFieldsPresent: Boolean = false,
+    val extraFieldsNumber: Int? = null
 ) {
 
     val fmtStr: String
@@ -58,7 +71,19 @@ data class BedFormat(
             "Fields number in BED file is between 3 and 15, but was $fieldsNumber"
         }
 
-        fmtStr = "bed$fieldsNumber+"
+        fmtStr = buildString {
+            append("bed$fieldsNumber")
+            if (extraFieldsPresent) {
+                append('+')
+                if (extraFieldsNumber != null) {
+                    require(extraFieldsNumber > 0) {
+                        "In BED file with detected extra fields, the number of fields is allowed to be null (unknown)" +
+                                " or a positive integer, but was: $extraFieldsNumber"
+                    }
+                    append(extraFieldsNumber.toString())
+                }
+            }
+        }
     }
 
     fun <T> parse(reader: Reader, src: String = "unknown source", f: (BedParser) -> T) = parse(
@@ -69,7 +94,7 @@ data class BedFormat(
         path.bufferedReader(), path.toAbsolutePath().toString(), f
     )
 
-    fun parseLocations(path: Path, genome: Genome) = parse(
+    fun parseLocations(path: Path, genome: Genome): List<Location> = parse(
         path.bufferedReader(),
         path.toAbsolutePath().toString()
     ) {
@@ -115,8 +140,8 @@ data class BedFormat(
          */
         fun from(
             fmtStr: String,
-            delimiter: Char = '\t'
-        ) = BedFormat(parseFormatString(fmtStr), delimiter = delimiter)
+            delimiter: Char = '\t',
+        ) = parseFormatString(fmtStr, delimiter)
 
         fun fromString(s: String): BedFormat {
             if (s.first() == '(' && s.last() == ')') {
@@ -135,7 +160,7 @@ data class BedFormat(
         /**
          * @param fmtStr: E.g. bed9 or bed6+3
          */
-        fun parseFormatString(fmtStr: String): Byte {
+        fun parseFormatString(fmtStr: String, delimiter: Char): BedFormat {
             var s = fmtStr.lowercase()
             check(s.startsWith("bed")) {
                 "Format name is required to start with 'bed' prefix, e.g. bed3, bed6+ or bed3+6, but was: $fmtStr"
@@ -145,7 +170,13 @@ data class BedFormat(
             check(chunks.size <= 2) {
                 "No more than one '+' is expected, but was: $fmtStr"
             }
-            return chunks[0].toByte()
+            val bedSpecFields = chunks[0].toByte()
+            val extraFields = if (chunks.size < 2) null else chunks[1].toIntOrNull()
+            val extraFieldsDetected = s.contains('+')
+            return BedFormat(
+                fieldsNumber = bedSpecFields, delimiter=delimiter,
+                extraFieldsPresent =extraFieldsDetected, extraFieldsNumber = extraFields
+            )
         }
 
         fun detectDelimiter(path: Path) = detectDelimiter(path.toUri())
@@ -297,17 +328,20 @@ data class BedFormat(
                 }
             }
 
-            val fieldsNumber = ci
+            val bedSpecFieldsNumber = ci
 
-            require(fieldsNumber in 3..15) {
+            require(bedSpecFieldsNumber in 3..15) {
                 val fileInfo = if (source != null) "Source: $source\nUnknown BED format:\n" else ""
-                "$fileInfo$line\nFields number in BED file is between 3 and 15, but was $fieldsNumber"
+                "$fileInfo$line\nFields number in BED file is between 3 and 15, but was $bedSpecFieldsNumber"
             }
+            val extraFieldsFound = bedSpecFieldsNumber < chunks.size
+            val extraFieldsNumber = chunks.size - bedSpecFieldsNumber
 
-            return BedFormat(ci.toByte(), delimiter)
+            return BedFormat(
+                ci.toByte(), delimiter, extraFieldsFound,
+                if (extraFieldsFound) extraFieldsNumber else null,
+            )
         }
-
-
     }
 }
 
