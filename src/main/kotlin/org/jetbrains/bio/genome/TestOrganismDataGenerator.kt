@@ -28,8 +28,9 @@ import kotlin.math.min
 object TestOrganismDataGenerator {
     private val LOG = LoggerFactory.getLogger(TestOrganismDataGenerator::class.java)
 
+    val RANDOM_SEED: Long = 42
     private val RANDOM = Random().apply {
-        setSeed(42)
+        setSeed(RANDOM_SEED)
     }
 
     private val CHROMOSOMES_SIZES = mapOf(
@@ -91,6 +92,8 @@ object TestOrganismDataGenerator {
      * Creates genome.chrom.sizes file.
      */
     private fun generateChromSizes(chromSizesPath: Path) {
+        //XXX: no randomization here
+
         LOG.info("Generating chrom.sizes path")
         CSVFormat.TDF.print(chromSizesPath.bufferedWriter()).use { csvPrinter ->
             CHROMOSOMES_SIZES.forEach { (name, size) ->
@@ -107,6 +110,8 @@ object TestOrganismDataGenerator {
      * @param maxGapLength maximum gap length.
      */
     private fun generateSequence(genome: Genome, twoBitPath: Path, maxGaps: Int = 10, maxGapLength: Int = 100) {
+        RANDOM.setSeed(RANDOM_SEED) // allows changing several generate* functions w/o affecting each other
+
         LOG.info("Generating FASTA sequence")
         withTempFile(genome.build, ".fa") { fastaPath ->
             CHROMOSOMES_SIZES.map { (name, length) ->
@@ -140,6 +145,8 @@ object TestOrganismDataGenerator {
      * @see Transcripts
      */
     private fun generateTranscripts(genome: Genome, genesGtfPath: Path, genesDescriptionPath: Path) {
+        RANDOM.setSeed(RANDOM_SEED) // allows changing several generate* functions w/o affecting each other
+
         LOG.info("Generating transcript annotations")
 
         val transcripts = arrayListOf<Transcript>()
@@ -265,6 +272,8 @@ object TestOrganismDataGenerator {
      * @see Gaps
      */
     private fun generateCentromere(genome: Genome, gapsPath: Path) {
+        //XXX: no randomization here
+
         LOG.info("Generating centromere annotations")
         gapsPath.bufferedWriter().use {
             val printer = Gaps.FORMAT.print(it)
@@ -286,6 +295,8 @@ object TestOrganismDataGenerator {
      * @see CytoBands
      */
     private fun generateCytobands(genome: Genome, cytobandsPath: Path) {
+        //XXX: no randomization here
+
         LOG.info("Generating cytoband annotations")
         cytobandsPath.bufferedWriter().use {
             val printer = CytoBands.FORMAT.print(it)
@@ -307,6 +318,8 @@ object TestOrganismDataGenerator {
      * @see Repeats
      */
     private fun generateRepeats(repeatsPath: Path) {
+        //XXX: no randomization here
+
         LOG.info("Generating repeat annotations (stub)")
         repeatsPath.bufferedWriter().use { w ->
             // This is the first line from mm9 annotations.
@@ -323,6 +336,8 @@ object TestOrganismDataGenerator {
      * @see Repeats
      */
     private fun generateCGI(cpgIslandsPath: Path) {
+        //XXX: no randomization here
+
         LOG.info("Generating repeat annotations (stub)")
         cpgIslandsPath.bufferedWriter().use { w ->
             // This is the first line from hg19 annotations.
@@ -344,6 +359,8 @@ object TestOrganismDataGenerator {
      * This is done to test that the genome mean substitution for no-data chromosome works correctly.
      */
     private fun generateMapability(genome: Genome, mappabilityPath: Path) {
+        RANDOM.setSeed(RANDOM_SEED) // allows changing several generate* functions w/o affecting each other
+
         LOG.info("Generating mapability bigWig")
         val gq = genome.toQuery()
         val chrX = gq["chrX"]!!
@@ -358,6 +375,8 @@ object TestOrganismDataGenerator {
     }
 
     private fun generateSA(genome: Genome, saPath: Path) {
+        RANDOM.setSeed(RANDOM_SEED) // allows changing several generate* functions w/o affecting each other
+
         LOG.info("Processing SA indexes and FASTQ mismatched reads")
         for (chromosome in genome.chromosomes) {
             SuffixArray.create(chromosome)
