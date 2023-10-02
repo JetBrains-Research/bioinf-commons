@@ -76,15 +76,30 @@ object TestOrganismDataGenerator {
         }
 
         LOG.info("Generating genome $build files...")
+
+        RANDOM.setSeed(RANDOM_SEED) // allows changing several generate* functions w/o affecting each other
         generateChromSizes(chromSizesPath)
         generateSequence(genome, twoBitPath)
         generateTranscripts(genome, genesGtfPath, genesDescriptionPath)
+
+        RANDOM.setSeed(RANDOM_SEED) // allows changing several generate* functions w/o affecting each other
         generateCentromere(genome, gapsPath)
+
+        RANDOM.setSeed(RANDOM_SEED) // allows changing several generate* functions w/o affecting each other
         generateCytobands(genome, cytobandsPath)
+
+        RANDOM.setSeed(RANDOM_SEED) // allows changing several generate* functions w/o affecting each other
         generateRepeats(repeatsPath)
+
+        RANDOM.setSeed(RANDOM_SEED) // allows changing several generate* functions w/o affecting each other
         generateCGI(cpgIslandsPath)
+
+        RANDOM.setSeed(RANDOM_SEED) // allows changing several generate* functions w/o affecting each other
         generateMapability(genome, mappabilityPath)
+
+        RANDOM.setSeed(RANDOM_SEED) // allows changing several generate* functions w/o affecting each other
         generateSA(genome, saPath)
+
         LOG.info("Done")
     }
 
@@ -110,7 +125,7 @@ object TestOrganismDataGenerator {
      * @param maxGapLength maximum gap length.
      */
     private fun generateSequence(genome: Genome, twoBitPath: Path, maxGaps: Int = 10, maxGapLength: Int = 100) {
-        RANDOM.setSeed(RANDOM_SEED) // allows changing several generate* functions w/o affecting each other
+        // XXX: Uses randomization
 
         LOG.info("Generating FASTA sequence")
         withTempFile(genome.build, ".fa") { fastaPath ->
@@ -145,7 +160,7 @@ object TestOrganismDataGenerator {
      * @see Transcripts
      */
     private fun generateTranscripts(genome: Genome, genesGtfPath: Path, genesDescriptionPath: Path) {
-        RANDOM.setSeed(RANDOM_SEED) // allows changing several generate* functions w/o affecting each other
+        // XXX: Uses randomization
 
         LOG.info("Generating transcript annotations")
 
@@ -359,7 +374,7 @@ object TestOrganismDataGenerator {
      * This is done to test that the genome mean substitution for no-data chromosome works correctly.
      */
     private fun generateMapability(genome: Genome, mappabilityPath: Path) {
-        RANDOM.setSeed(RANDOM_SEED) // allows changing several generate* functions w/o affecting each other
+        // XXX: Uses randomization
 
         LOG.info("Generating mapability bigWig")
         val gq = genome.toQuery()
@@ -375,7 +390,7 @@ object TestOrganismDataGenerator {
     }
 
     private fun generateSA(genome: Genome, saPath: Path) {
-        RANDOM.setSeed(RANDOM_SEED) // allows changing several generate* functions w/o affecting each other
+        // XXX: Uses randomization
 
         LOG.info("Processing SA indexes and FASTQ mismatched reads")
         for (chromosome in genome.chromosomes) {
