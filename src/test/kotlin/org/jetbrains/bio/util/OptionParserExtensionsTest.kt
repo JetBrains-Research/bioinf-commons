@@ -452,7 +452,7 @@ class OptionParserExtensionsTest {
                 }
             }
 
-            assertIn("ERROR: Expected at least first 4 BED fields, but format is [bed3+]", stdErr)
+            assertIn("ERROR: Expected at least first 4 BED fields, but format is [bed3]", stdErr)
             assertEquals("", stdOut)
         }
     }

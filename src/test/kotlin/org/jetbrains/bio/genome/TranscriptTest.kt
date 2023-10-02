@@ -158,7 +158,9 @@ class TranscriptTest {
 
     @Test
     fun associatedTranscriptsEquidistant() {
-        val transcripts = chromosome.transcripts
+        // equidistant are only original transcripts, not additional splicing variants
+        val transcripts = chromosome.transcripts.filter { it.ensemblId.endsWith("_1") }
+
         for (i in 0..transcripts.size - 2) {
             val firstTSS = transcripts[i].location.get5Bound()
             val secondTSS = transcripts[i + 1].location.get5Bound()
@@ -193,6 +195,10 @@ class TranscriptTest {
                 2, associatedTranscripts.size,
                 "Expected to get both TSS framing $midpoint, but got ${associatedTranscripts.size}"
             )
+//            val expectedList = arrayListOf<Transcript>()
+//            for (k in 0 until associatedTranscripts.size) {
+//                expectedList.add(transcripts[i+k])
+//            }
             assertEquals(
                 arrayListOf(transcripts[i], transcripts[i + 1]), associatedTranscripts,
                 "Expected ${transcripts[i].ensemblId} and ${transcripts[i + 1].ensemblId}, but got " +
@@ -401,11 +407,11 @@ class TranscriptTest {
         // (e.g. if Transcript was changed, but to wasn't re-created)
 
         val chr = Chromosome(Genome["to1"], "chr1")
-        var t = chr.transcripts.stream().filter { it.ensemblId == "ENSTSIMGENE.CHR1.0" }.findFirst().get()
-        assertTrue(!t.isCoding, "ENSTSIMGENE.CHR1.0 should be non-coding")
+        var t = chr.transcripts.stream().filter { it.ensemblId == "ENSTSIMGENE.CHR1.0_1" }.findFirst().get()
+        assertTrue(!t.isCoding, "ENSTSIMGENE.CHR1.0_1 should be non-coding")
         assertNull(t.cdsRange, "CDS of a non-coding gene should be null")
 
-        t = chr.transcripts.stream().filter { it.ensemblId == "ENSTSIMGENE.CHR1.1" }.findFirst().get()
+        t = chr.transcripts.stream().filter { it.ensemblId == "ENSTSIMGENE.CHR1.1_1" }.findFirst().get()
         assertTrue(t.isCoding, "ENSTSIMGENE.CHR1.1 should be coding")
         assertNotNull(t.cdsRange, "CDS of a coding gene shouldn't be null")
     }
