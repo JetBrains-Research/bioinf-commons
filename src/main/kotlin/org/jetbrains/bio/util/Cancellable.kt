@@ -1,6 +1,7 @@
 package org.jetbrains.bio.util
 
 import com.google.common.base.MoreObjects
+import org.jetbrains.annotations.TestOnly
 import org.slf4j.LoggerFactory
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -51,6 +52,16 @@ class CancellableState private constructor() {
         private val THREAD_LOCALS = ThreadLocal<CancellableState>()
 
         fun current() = THREAD_LOCALS.getOrSet(::CancellableState)
+
+        /**
+         * Creates a new instance of `CancellableState` that isn't connect to thread locals. It is needed
+         * for parallel tests execution to remove tests interference.
+         * Should not be used outside tests.
+         *
+         * @return The newly created `CancellableState` object.
+         */
+        @TestOnly
+        fun fake() = CancellableState()
     }
 }
 
