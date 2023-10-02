@@ -22,6 +22,7 @@ import java.util.*
 import java.util.stream.Collectors
 import kotlin.math.abs
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 /** A generator for the fake "to1" genome build. */
 @Suppress("unused")
@@ -166,9 +167,10 @@ object TestOrganismDataGenerator {
 
         val transcripts = arrayListOf<Transcript>()
 
-        genesGtfPath.bufferedWriter().use { w ->
+        val chrs = CHROMOSOMES_SIZES.keys.sorted()
 
-            for (name in CHROMOSOMES_SIZES.keys.sorted()) {
+        genesGtfPath.bufferedWriter().use { w ->
+            for (name in chrs) {
                 val chromosome = Chromosome(genome, name)
                 val length = CHROMOSOMES_SIZES[name]!!
 
@@ -181,7 +183,8 @@ object TestOrganismDataGenerator {
                     val strand = if (RANDOM.nextBoolean()) Strand.PLUS else Strand.MINUS
                     val transcript = generateTranscript(
                         geneNumber, geneSymbol, chromosome, strand,
-                        currentStart, currentLength
+                        currentStart, currentLength,
+                        ensemblId = "ENST${geneSymbol}_1"
                     )
                     transcripts.add(transcript)
 
@@ -190,6 +193,34 @@ object TestOrganismDataGenerator {
                 }
             }
 
+            // add alt spliced transcripts
+            var geneNumber = 0
+            for (name in chrs) {
+                val chromosome = Chromosome(genome, name)
+                val length = CHROMOSOMES_SIZES[name]!!
+
+                val chrTranscripts = transcripts.filter { it.chromosome == chromosome }
+
+                chrTranscripts.forEachIndexed { i, tr ->
+
+                    if (i % 10 == 9) {
+                        for (k in 2..5) {
+                            geneNumber++
+                            val direction = if (RANDOM.nextBoolean()) +1 else -1
+                            val trLoc = tr.location
+                            val currentStart = trLoc.startOffset + direction * (trLoc.length() * 0.2).roundToInt() * direction
+                            val currentLength = trLoc.length() + direction * (trLoc.length() * 0.2).roundToInt() * direction
+                            val geneSymbol = tr.geneSymbol
+                            val transcript = generateTranscript(
+                                geneNumber, geneSymbol, chromosome,
+                                tr.strand, currentStart, min(length - currentStart, currentLength),
+                                ensemblId = "ENST${geneSymbol}_$k"
+                            )
+                            transcripts.add(transcript)
+                        }
+                    }
+                }
+            }
             writeGtf(w, transcripts)
         }
 
@@ -205,10 +236,9 @@ object TestOrganismDataGenerator {
     private fun generateTranscript(
         geneNumber: Int, geneSymbol: String,
         chromosome: Chromosome, strand: Strand,
-        offset: Int, length: Int
+        offset: Int, length: Int,
+        ensemblId: String
     ): Transcript {
-        val ensemblId = "ENST$geneSymbol"
-
         val minExonLength = 3
         val minIntronLength = 2
         val exonCount = 1 + RANDOM.nextInt(8)
