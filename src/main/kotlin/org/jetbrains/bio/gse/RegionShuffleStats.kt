@@ -441,8 +441,6 @@ class RegionShuffleStats(
     }
 }
 
-fun Int.asPercentOf(total: Int, digitsAfterDot: Int = 2) = Precision.round(100.0 * this / total, digitsAfterDot)
-
 data class PerThreadStats(
     val countSetsWithMetricsAboveThr: Int,
     val countSetsWithMetricsBelowThr: Int,
