@@ -208,8 +208,14 @@ object TestOrganismDataGenerator {
                             geneNumber++
                             val direction = if (RANDOM.nextBoolean()) +1 else -1
                             val trLoc = tr.location
-                            val currentStart = trLoc.startOffset + direction * (trLoc.length() * 0.2).roundToInt() * direction
-                            val currentLength = trLoc.length() + direction * (trLoc.length() * 0.2).roundToInt() * direction
+
+                            // In rare case make for k=2, k=3 transcripts of equal size,
+                            // for k>3 make transcripts slightly different
+                            val startShiftCoef = if (k <= 3) 0.2 else RANDOM.nextInt(10) * 0.02
+                            val lenShiftCoef = if (k <= 3) 0.2 else RANDOM.nextInt(10) * 0.02
+
+                            val currentStart = trLoc.startOffset + direction * (trLoc.length() * startShiftCoef).roundToInt()
+                            val currentLength = trLoc.length() + direction * (trLoc.length() * lenShiftCoef).roundToInt()
                             val geneSymbol = tr.geneSymbol
                             val transcript = generateTranscript(
                                 geneNumber, geneSymbol, chromosome,
