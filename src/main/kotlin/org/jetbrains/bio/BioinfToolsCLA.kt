@@ -3,6 +3,7 @@ package org.jetbrains.bio
 import org.jetbrains.bio.gsea.EnrichmentInLoi
 import org.jetbrains.bio.gsea.MethylationEnrichmentInLoi
 import org.jetbrains.bio.gsea.OverlapLoiWithEachRegion
+import org.jetbrains.bio.gsea.SamplingMethylationValidation
 import org.jetbrains.bio.util.Logs
 import org.slf4j.event.Level
 
@@ -84,6 +85,13 @@ object BioinfToolsCLA {
             "Loci of interest enrichment in given region sets compared to similar simulated regions from methylome background." +
                     "E.g. loci of interest could be CGIs, simulated regions could be CGIs.", { args ->
                 MethylationEnrichmentInLoi.main(args)
+            }),
+
+        METHYLATION_SAMPLING_VALIDATION_IN_LOI(
+            "dmrs_sampling_validation",
+            "Validates different algorithms of DMRs sampling depending on input methylome and observed DMRs set." +
+                    " These sampling is used in enrichment analysis.", { args ->
+                SamplingMethylationValidation.main(args)
             }),
 
         OVERLAP_LOI_WITH_EACH_REGION(

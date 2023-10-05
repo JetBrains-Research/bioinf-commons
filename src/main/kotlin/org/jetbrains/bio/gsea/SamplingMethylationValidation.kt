@@ -181,7 +181,7 @@ object SamplingMethylationValidation {
             // Logging level:
             acceptsAll(listOf("d", "debug"), "Print all the debug info")
 
-            val tool = BioinfToolsCLA.Tools.METHYLATION_ENRICHMENT_IN_LOI
+            val tool = BioinfToolsCLA.Tools.METHYLATION_SAMPLING_VALIDATION_IN_LOI
             parse(args, description = tool.description) { options ->
                 BioinfToolsCLA.configureLogging("quiet" in options, "debug" in options)
                 LOG.info("Tool [${tool.command}]: ${tool.description} (vers: ${BioinfToolsCLA.version()})")
