@@ -11,6 +11,8 @@ buildscript {
     }
 }
 
+apply plugin: "application"
+apply plugin: "com.github.johnrengelman.shadow"
 apply plugin: "kotlin"
 apply plugin: "org.jetbrains.kotlin.jvm"
 
@@ -133,4 +135,13 @@ test {
     systemProperty "genomes.path", settingsFolder("genomes.path", "genomes")
 
     include "**/*Test.class"
+}
+
+
+mainClassName = "org.jetbrains.bio.BioinfToolsCLA"
+shadowJar {
+    archiveBaseName.set("bioinf-commons")
+    archiveVersion.set("${project.version}.${project.buildCounter}")
+    archiveClassifier.set("")
+    zip64 true
 }
