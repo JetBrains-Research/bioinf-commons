@@ -46,6 +46,7 @@ fun shuffleChromosomeRanges(
     for (i in 1..regionSetMaxRetries) {
         val result = tryShuffle(genomeQuery, backgroundRegions, lengths, prefixSum, singleRegionMaxRetries, withReplacement)
         if (result != null) {
+            // TODO: report max retries!!!!!!!!!!!!!!!!!!!!!!!!!!!
             return result
         }
     }
