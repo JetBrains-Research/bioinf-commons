@@ -387,6 +387,10 @@ object Transcripts {
         if (abs(bounds5[low] - midpoint) >= limit) {
             return emptyList()
         }
+
+        // [GREAT] Then, a genomic region is associated with all genes whose regulatory region it overlaps.
+        // See https://great-help.atlassian.net/wiki/spaces/GREAT/pages/655443/Association+Rules
+        // TODO: fix it as part of https://github.com/JetBrains-Research/epigenome/issues/1511
         return (low..high).map { transcripts[it] }
     }
 
@@ -395,9 +399,9 @@ object Transcripts {
         limit: Int = 1000000,
         codingOnly: Boolean = false
     ): List<Transcript> {
-        // XXX GREAT: "two nearest genes" strategy
+        // XXX GREAT: "two nearest genes" strategy (http://great.stanford.edu/)
 
-        // Description from http://bejerano.stanford.edu/help/display/GREAT/Association+Rules :
+        // Description from https://great-help.atlassian.net/wiki/spaces/GREAT/pages/655443/Association+Rules
         // "GREAT calculates statistics by associating genomic regions with nearby genes and applying the gene
         // annotations to the regions. Association is a two step process. First, every gene is assigned a
         // regulatory domain. Then, each genomic region is associated with all genes whose regulatory domain
@@ -424,7 +428,22 @@ object Transcripts {
             check(transcripts.isEmpty())
             return emptyList()
         }
-        return (low..high).filter { abs(bounds5[it] - midpoint) <= limit }.map { transcripts[it] }
+
+        // [GREAT] Then, a genomic region is associated with all genes whose regulatory region it overlaps.
+        // See https://great-help.atlassian.net/wiki/spaces/GREAT/pages/655443/Association+Rules
+
+        // TODO: seems is incorrect behaviour,
+        //  instead of two nearest transcripts of same gene it should be two different nearest genes
+        val candidates = (low..high)
+            .filter { abs(bounds5[it] - midpoint) <= limit }
+            .map { transcripts[it] }
+
+        if (candidates.size <= 2) {
+            return candidates
+        }
+
+        // TODO: fix it as part of https://github.com/JetBrains-Research/epigenome/issues/1511
+        return candidates.sortedByDescending { it.location.get5Bound() }.take(2)
     }
 
     fun associatedTranscriptsMultiple(
