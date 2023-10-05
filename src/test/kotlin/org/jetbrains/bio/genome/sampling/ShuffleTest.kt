@@ -45,7 +45,7 @@ class ShuffleTest {
             ChromosomeRange(2000, 3000, chromosomes[2])
         )
 
-        val shuffled = shuffleChromosomeRanges(genomeQuery, regions, background, withReplacement = false)
+        val shuffled = shuffleChromosomeRanges(genomeQuery, regions, background, withReplacement = false).first
 
         checkShuffled(regions, shuffled)
         for (r in shuffled) {
@@ -73,7 +73,7 @@ class ShuffleTest {
             ChromosomeRange(2000, 3000, chromosomes[2])
         )
 
-        val shuffled = shuffleChromosomeRanges(genomeQuery, regions, background, withReplacement = true)
+        val shuffled = shuffleChromosomeRanges(genomeQuery, regions, background, withReplacement = true).first
 
         val l1 = regions.map { it.length() }.sorted().toList()
         val l2 = shuffled.map { it.length() }.sorted().toList()
@@ -98,7 +98,7 @@ class ShuffleTest {
             ChromosomeRange(0, 300, chromosomes[2])
         )
 
-        val shuffled = shuffleChromosomeRanges(genomeQuery, regions, withReplacement = false)
+        val shuffled = shuffleChromosomeRanges(genomeQuery, regions, withReplacement = false).first
         checkShuffled(regions, shuffled)
     }
 
@@ -110,7 +110,7 @@ class ShuffleTest {
             ChromosomeRange(0, 300, chromosomes[2])
         )
 
-        val shuffled = shuffleChromosomeRanges(genomeQuery, regions, withReplacement = true)
+        val shuffled = shuffleChromosomeRanges(genomeQuery, regions, withReplacement = true).first
         checkShuffled(regions, shuffled)
     }
 
