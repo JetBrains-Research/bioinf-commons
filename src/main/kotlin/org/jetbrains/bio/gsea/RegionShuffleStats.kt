@@ -22,41 +22,17 @@ import kotlin.math.ceil
 /**
  * @param simulationsNumber Simulations number
  * @param chunkSize Size of chunk
- * @param setMaxRetries Max retries when cannot shuffle whole set of regions from background
- * @param regionMaxRetries Max retries when cannot shuffle one region from background
+ * @param regionSetMaxRetries Max retries when cannot shuffle whole set of regions from background
+ * @param singleRegionMaxRetries Max retries when cannot shuffle one region from background
  *
  * Loci file path will be added to background
  */
 abstract class RegionShuffleStats(
     protected  val simulationsNumber: Int,
     protected  val chunkSize: Int,
-    protected  val setMaxRetries: Int,
-    protected  val regionMaxRetries: Int
+    protected  val regionSetMaxRetries: Int,
+    protected  val singleRegionMaxRetries: Int
 ) {
-    /**
-     * Strand is ignore in all files
-     *
-     * @param loiInfos  Test sampled loci vs given regions lists (label, loci, initial #regions in loci) using given metric
-     * @param outputFolderPath Results path
-     * @param metric Metric will be applied to  `(sampledLoci, lociToTest)`
-     */
-    abstract fun calcStatistics(
-        gq: GenomeQuery,
-        inputRegionsPath: Path,
-        backgroundPath: Path?,
-        loiInfos: List<LoiInfo>,
-        outputFolderPath: Path? = null,
-        metric: RegionsMetric,
-        hypAlt: PermutationAltHypothesis = PermutationAltHypothesis.GREATER,
-        aSetIsRegions: Boolean = true,
-        mergeOverlapped: Boolean = true,
-        intersectionFilter: LocationsList<out RangesList>? = null,
-        genomeMaskedAreaPath: Path? = null,
-        genomeAllowedAreaPath: Path? = null,
-        mergeRegionsToBg: Boolean = false,
-        samplingWithReplacement: Boolean = false
-    ): DataFrame
-
 
     protected fun <T> doCalcStatistics(
         gq: GenomeQuery,
@@ -70,7 +46,7 @@ abstract class RegionShuffleStats(
         samplingWithReplacement: Boolean = false,
         inputRegionsAndBackgroundProvider: (GenomeQuery) -> Pair<List<Location>, T>,
         loiOverlapWithBgFun: (LocationsList<out RangesList>, T) -> Int,
-        samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Int, Boolean) -> List<Location>
+        samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Int, Boolean) -> Pair<List<Location>, IntHistogram>
     ): DataFrame {
         outputFolderPath?.createDirectories()
         val dumpDetails = outputFolderPath != null
@@ -107,6 +83,7 @@ abstract class RegionShuffleStats(
             nChunks.toLong()
         )
 
+        val finalRegionAttemptsHist = IntHistogram()
         (0 until nChunks).forEach { chunkId ->
             val start = chunkId * chunkSize
             val end = minOf(simulationsNumber, (chunkId + 1) * chunkSize)
@@ -117,15 +94,15 @@ abstract class RegionShuffleStats(
                         "${start.formatLongNumber()}..${end.formatLongNumber()} of ${simulationsNumber.formatLongNumber()}"
             )
 
-            val sampledRegions: List<List<LocationsList<out RangesList>>> =
+            val (sampledRegions: List<List<LocationsList<out RangesList>>>, regionAttemptsHist) =
                 sampleRegions(
-                    simulationsInChunk, setMaxRetries, regionMaxRetries, intersectionFilter, inputRegionsFiltered, bgRegionsList,
+                    simulationsInChunk, regionSetMaxRetries, singleRegionMaxRetries, intersectionFilter, inputRegionsFiltered, bgRegionsList,
                     gq,
                     parallelismLevel(),
                     samplingFun=samplingFun,
                     withReplacement = samplingWithReplacement
                 )
-
+            finalRegionAttemptsHist += regionAttemptsHist
 
             /*
             // XXX: optional save sampledRegions (flatmap)
@@ -167,6 +144,13 @@ abstract class RegionShuffleStats(
         }
 
         progress.done()
+
+        // Save attempts Histogram
+        if (outputFolderPath != null) {
+            val path = outputFolderPath / "sampled_${simulationsNumber}.region_attempts.hist.tsv"
+            finalRegionAttemptsHist.save(path, metric_col = "attempt")
+            LOG.info("[DONE]: $path")
+        }
 
         // Save results to DataFrame:
         val loiLabels = loiInfos.map { it.label }
@@ -232,48 +216,63 @@ abstract class RegionShuffleStats(
 
         fun <T> sampleRegions(
             simulationsNumber: Int,
-            setMaxRetries: Int,
-            regionMaxRetries: Int,
+            regionSetMaxRetries: Int,
+            singleRegionMaxRetries: Int,
             intersectionFilter: LocationsList<out RangesList>?,
             srcLoci: List<Location>,
             background: T,
             gq: GenomeQuery,
             threadsNum: Int,
             withReplacement: Boolean,
-            samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Int, Boolean) -> List<Location>
-        ): List<List<LocationsList<out RangesList>>> {
+            samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Int, Boolean) -> Pair<List<Location>, IntHistogram>
+        ): Pair<List<List<LocationsList<out RangesList>>>, IntHistogram> {
             // Sample:
             val progress = Progress { title = "Loci Sampling" }.bounded(simulationsNumber.toLong())
             val loci = srcLoci.map { it.toChromosomeRange() }
 
             // Compute different simulations in parallel, they are independent
             val sampled = IntStream.range(0, simulationsNumber).parallel().mapToObj { _ ->
-                val randLoci = samplingFun(gq, loci, background, setMaxRetries, regionMaxRetries, withReplacement)
-
+                val res = samplingFun(gq, loci, background, regionSetMaxRetries, singleRegionMaxRetries, withReplacement)
+                val randLoci = res.first
                 progress.report()
 
-                if (withReplacement) {
+                val ll = if (withReplacement) {
                     LocationsSortedList.create(gq, randLoci)
                 } else {
                     // XXX: shuffled regions not intersect by def of our shuffle procedure
                     LocationsMergingList.create(gq, randLoci)
                 }
+                ll to res.second
 
             }.collect(Collectors.toList())
             progress.done()
 
             val chunked = sampled.chunked(threadsNum)
+
+            val finalHist = IntHistogram()
+            chunked.forEach { chunk ->
+                chunk.forEach { (ll, hist) ->
+                    finalHist += hist
+                }
+            }
+
             if (intersectionFilter == null) {
-                return chunked
+                return chunked.map { chunk ->
+                    chunk.map { (ll, hist) ->
+                        finalHist += hist
+                        ll
+                    }
+                } to finalHist
             }
 
             // Apply Filters:
             return chunked.map { chunk ->
-                chunk.map { ll ->
+                chunk.map { (ll, hist) ->
+                    finalHist += hist
                     val filtered = ll.intersectRanges(intersectionFilter)
                     LocationsMergingList.create(filtered.genomeQuery, filtered.locationIterator())
                 }
-            }
+            } to finalHist
         }
 
         /**

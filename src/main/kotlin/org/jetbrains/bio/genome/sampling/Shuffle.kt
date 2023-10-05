@@ -5,6 +5,7 @@ import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Range
 import org.jetbrains.bio.genome.containers.GenomeMap
 import org.jetbrains.bio.genome.containers.genomeMap
+import org.jetbrains.bio.gsea.IntHistogram
 import java.util.concurrent.ThreadLocalRandom
 
 
@@ -23,10 +24,10 @@ fun shuffleChromosomeRanges(
     genomeQuery: GenomeQuery,
     regions: List<ChromosomeRange>,
     background: List<ChromosomeRange>? = null,
-    setMaxRetries: Int = 100,
-    regionMaxRetries: Int = 100,
+    regionSetMaxRetries: Int = 100,
+    singleRegionMaxRetries: Int = 100,
     withReplacement: Boolean,
-): List<ChromosomeRange> {
+): Pair<List<ChromosomeRange>, IntHistogram> {
     val lengths = regions.map { it.length() }.toIntArray()
 
     val backgroundRegions = background ?: genomeQuery.get().map {
@@ -42,13 +43,13 @@ fun shuffleChromosomeRanges(
         prefixSum[i] = s
     }
 
-    for (i in 1..setMaxRetries) {
-        val result = tryShuffle(genomeQuery, backgroundRegions, lengths, prefixSum, regionMaxRetries, withReplacement)
+    for (i in 1..regionSetMaxRetries) {
+        val result = tryShuffle(genomeQuery, backgroundRegions, lengths, prefixSum, singleRegionMaxRetries, withReplacement)
         if (result != null) {
             return result
         }
     }
-    throw RuntimeException("Too many shuffle attempts. Max limit is: $setMaxRetries")
+    throw RuntimeException("Too many shuffle attempts. Max limit is: $regionSetMaxRetries")
 }
 
 fun hasIntersection(regionsMap: GenomeMap<MutableList<Range>>, chromosomeRange: ChromosomeRange): Boolean {
@@ -67,9 +68,9 @@ private fun tryShuffle(
     background: List<ChromosomeRange>,
     lengths: IntArray,
     prefixSum: LongArray,
-    regionMaxRetries: Int = 100,
+    singleRegionMaxRetries: Int = 100,
     withReplacement: Boolean
-): List<ChromosomeRange>? {
+): Pair<List<ChromosomeRange>, IntHistogram>? {
     val maskedGenomeMap = when {
         withReplacement -> null
         // mask positions already used for sampled loci:
@@ -78,7 +79,7 @@ private fun tryShuffle(
         }
     }
     val result = ArrayList<ChromosomeRange>(lengths.size)
-
+    val attemptsHistogram = IntHistogram()
     val r = ThreadLocalRandom.current()
 
     val sum = prefixSum.last()
@@ -86,7 +87,9 @@ private fun tryShuffle(
     for (i in lengths.indices) {
         var nextRange: ChromosomeRange? = null
 
-        for (rangeTry in 1..regionMaxRetries) {
+        var lastRangeTry = 0
+        for (rangeTry in 1..singleRegionMaxRetries) {
+            lastRangeTry = rangeTry
             val rVal = r.nextLong(sum)
 
             val index = prefixSum.binarySearch(rVal)
@@ -130,7 +133,8 @@ private fun tryShuffle(
             maskedGenomeMap!![nextRange.chromosome].add(nextRange.toRange())
         }
         result.add(nextRange)
+        attemptsHistogram.increment(lastRangeTry)
     }
 
-    return result
+    return result to attemptsHistogram
 }

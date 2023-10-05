@@ -197,22 +197,22 @@ object OverlapLoiWithEachRegion {
                 DataFrame()
                     .with(
                         "chr",
-                        regions2RangesList.map { (regin, _) -> regin.location.chromosome.name }.toTypedArray()
+                        regions2RangesList.map { (region, _) -> region.location.chromosome.name }.toTypedArray()
                     )
                     .with(
                         "startOffset",
-                        regions2RangesList.map { (regin, _) -> regin.location.startOffset }.toIntArray()
+                        regions2RangesList.map { (region, _) -> region.location.startOffset }.toIntArray()
                     )
                     .with(
                         "endOffset",
-                        regions2RangesList.map { (regin, _) -> regin.location.endOffset }.toIntArray()
+                        regions2RangesList.map { (region, _) -> region.location.endOffset }.toIntArray()
                     ).let { df ->
                         when {
                             inputRegionsBedFormat.fieldsNumber >= 4 -> {
                                 df.with(
                                     "name",
-                                    regions2RangesList.map { (regin, _) ->
-                                        (regin as NamedLocation).name
+                                    regions2RangesList.map { (region, _) ->
+                                        (region as NamedLocation).name
                                     }.toTypedArray()
                                 )
                             }

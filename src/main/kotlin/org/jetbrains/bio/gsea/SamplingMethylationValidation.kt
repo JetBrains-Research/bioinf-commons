@@ -16,10 +16,10 @@ import org.jetbrains.bio.gsea.RegionShuffleStatsFromMethylomeCoverage.Companion.
 import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
+import java.util.concurrent.ThreadLocalRandom
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.random.Random
 
 object SamplingMethylationValidation {
     private val LOG = LoggerFactory.getLogger(SamplingMethylationValidation::class.java)
@@ -293,27 +293,28 @@ object SamplingMethylationValidation {
                 inputRegionsPreprocessed,
                 simulationsNumber = opts.simulationsNumber,
                 chunkSize = opts.getChunkSize(),
-                setMaxRetries = opts.setRetries,
-                regionMaxRetries = opts.regionRetries,
+                regionSetMaxRetries = opts.setRetries,
+                singleRegionMaxRetries = opts.regionRetries,
                 gq = gq,
                 outputFolderPath = detailedReportFolder,
                 intersectionFilter = limitResultsToSpecificLocationFilter,
                 samplingWithReplacement = opts.samplingWithReplacement,
                 methylomeBackground = methylomeCovFiltered,
                 samplingBackground = methylomeCovFiltered,
-                samplingFun = { genomeQuery, regions, background, setMaxRetries, regionMaxRetries, withReplacement ->
-                    RegionShuffleStatsFromMethylomeCoverage.shuffleChromosomeRanges(
+                samplingFun = { genomeQuery, regions, background, regionSetMaxRetries, singleRegionMaxRetries, withReplacement ->
+                    val res = RegionShuffleStatsFromMethylomeCoverage.shuffleChromosomeRanges(
                         genomeQuery,
                         regions,
                         background,
-                        regionMaxRetries = regionMaxRetries,
-                        setMaxRetries = setMaxRetries,
+                        singleRegionMaxRetries = singleRegionMaxRetries,
+                        regionSetMaxRetries = regionSetMaxRetries,
                         withReplacement = withReplacement,
                         candidateFilterPredicate = getCandidateFilterPredicate(
                             lengthCorrectionMethod,
                             regions
                         )
-                    ).map { it.on(Strand.PLUS) }
+                    )
+                    res.first.map { it.on(Strand.PLUS) } to res.second
                 }
             )
         } else {
@@ -321,23 +322,24 @@ object SamplingMethylationValidation {
                 inputRegionsPreprocessed,
                 simulationsNumber = opts.simulationsNumber,
                 chunkSize = opts.getChunkSize(),
-                setMaxRetries = opts.setRetries,
-                regionMaxRetries = opts.regionRetries,
+                regionSetMaxRetries = opts.setRetries,
+                singleRegionMaxRetries = opts.regionRetries,
                 gq = gq,
                 outputFolderPath = detailedReportFolder,
                 intersectionFilter = limitResultsToSpecificLocationFilter,
                 samplingWithReplacement = opts.samplingWithReplacement,
                 methylomeBackground = methylomeCovFiltered,
                 samplingBackground = filteredBedBackground!!,
-                samplingFun = { genomeQuery, regions, background, setMaxRetries, regionMaxRetries, withReplacement ->
-                    shuffleChromosomeRanges(
+                samplingFun = { genomeQuery, regions, background, regionSetMaxRetries, singleRegionMaxRetries, withReplacement ->
+                    val res = shuffleChromosomeRanges(
                         genomeQuery,
                         regions,
                         background.asLocationSequence().map { it.toChromosomeRange() }.toList(),
-                        setMaxRetries = setMaxRetries,
-                        regionMaxRetries = regionMaxRetries,
+                        regionSetMaxRetries = regionSetMaxRetries,
+                        singleRegionMaxRetries = singleRegionMaxRetries,
                         withReplacement = withReplacement
-                    ).map { it.on(Strand.PLUS) }
+                    )
+                    res.first.map { it.on(Strand.PLUS) } to res.second
                 }
             )
         }
@@ -370,7 +372,6 @@ object SamplingMethylationValidation {
         val maxProcessedLen = resampleProb.size - 1 // last index of array
 
         // Filter
-        val randomGen = Random(100)
         return { chromosomeRange ->
             // XXX based on sampling dist
             val candLen = chromosomeRange.length()
@@ -379,7 +380,8 @@ object SamplingMethylationValidation {
             } else {
                 resampleProb[candLen]
             }
-            val accepted = randomGen.nextDouble() >= prob
+            val r = ThreadLocalRandom.current()
+            val accepted = r.nextDouble() >= prob
             if (accepted) 0.0 else prob
         }
     }
@@ -490,15 +492,15 @@ object SamplingMethylationValidation {
         inputRegions: List<Location>,
         simulationsNumber: Int,
         chunkSize: Int,
-        setMaxRetries: Int,
-        regionMaxRetries: Int,
+        regionSetMaxRetries: Int,
+        singleRegionMaxRetries: Int,
         gq: GenomeQuery,
         outputFolderPath: Path,
         intersectionFilter: LocationsList<out RangesList>? = null,
         samplingWithReplacement: Boolean = false,
         methylomeBackground: BasePairCoverage,
         samplingBackground: T,
-        samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Int, Boolean) -> List<Location>
+        samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Int, Boolean) -> Pair<List<Location>, IntHistogram>
     ) {
         outputFolderPath.createDirectories()
 
@@ -526,6 +528,7 @@ object SamplingMethylationValidation {
         )
         val sampledCummulativeLengthDist = IntHistogram()
         val sampledCummulativeBgOverlapDist = IntHistogram()
+        val finalRegionAttemptsHist = IntHistogram()
         (0 until nChunks).forEach { chunkId ->
             val start = chunkId * chunkSize
             val end = minOf(simulationsNumber, (chunkId + 1) * chunkSize)
@@ -536,11 +539,11 @@ object SamplingMethylationValidation {
                         "${start.formatLongNumber()}..${end.formatLongNumber()} of ${simulationsNumber.formatLongNumber()}"
             )
 
-            val sampledRegions: List<List<LocationsList<out RangesList>>> =
+            val (sampledRegions: List<List<LocationsList<out RangesList>>>, regionAttemptsHist) =
                 sampleRegions(
                     simulationsInChunk,
-                    setMaxRetries = setMaxRetries,
-                    regionMaxRetries = regionMaxRetries,
+                    regionSetMaxRetries = regionSetMaxRetries,
+                    singleRegionMaxRetries = singleRegionMaxRetries,
                     intersectionFilter = intersectionFilter,
                     srcLoci = inputRegions,
                     background = samplingBackground,
@@ -549,6 +552,7 @@ object SamplingMethylationValidation {
                     samplingFun = samplingFun,
                     withReplacement = samplingWithReplacement
                 )
+            finalRegionAttemptsHist += regionAttemptsHist
 
             val chunkProgress = Progress { title = "Calculate stats for sampled chunk data" }.bounded(
                 sampledRegions.sumOf { chunk -> chunk.sumOf { ll -> ll.size.toLong() } }
@@ -569,6 +573,10 @@ object SamplingMethylationValidation {
         progress.done()
 
         // ----------------
+        path = outputFolderPath / "sampled_${simulationsNumber}.region_attempts.hist.tsv"
+        finalRegionAttemptsHist.save(path, metric_col = "attempt")
+        LOG.info("[DONE]: $path")
+
         path = outputFolderPath / "sampled_${simulationsNumber}.length.hist.tsv"
         sampledCummulativeLengthDist.save(path, metric_col = "length")
         LOG.info("[DONE]: $path")

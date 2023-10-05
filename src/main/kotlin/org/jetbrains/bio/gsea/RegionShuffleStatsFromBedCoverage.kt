@@ -16,9 +16,9 @@ import java.nio.file.Path
 class RegionShuffleStatsFromBedCoverage(
     simulationsNumber: Int,
     chunkSize: Int,
-    setMaxRetries: Int,
-    regionMaxRetries: Int
-) : RegionShuffleStats(simulationsNumber, chunkSize, setMaxRetries, regionMaxRetries) {
+    regionSetMaxRetries: Int,
+    singleRegionMaxRetries: Int
+) : RegionShuffleStats(simulationsNumber, chunkSize, regionSetMaxRetries, singleRegionMaxRetries) {
     fun calcStatistics(
         gq: GenomeQuery,
         inputRegionsPath: Path,
@@ -52,15 +52,16 @@ class RegionShuffleStatsFromBedCoverage(
         loiOverlapWithBgFun = { loiFiltered, background ->
             OverlapNumberMetric().calcMetric(loiFiltered, background).toInt()
         },
-        samplingFun = { genomeQuery, regions, background, setMaxRetries, regionMaxRetries, withReplacement ->
-            shuffleChromosomeRanges(
+        samplingFun = { genomeQuery, regions, background, regionSetMaxRetries, singleRegionMaxRetries, withReplacement ->
+            val res = shuffleChromosomeRanges(
                 genomeQuery,
                 regions,
                 background.asLocationSequence().map { it.toChromosomeRange() }.toList(),
-                setMaxRetries = setMaxRetries,
-                regionMaxRetries = regionMaxRetries,
+                regionSetMaxRetries = regionSetMaxRetries,
+                singleRegionMaxRetries = singleRegionMaxRetries,
                 withReplacement = withReplacement
-            ).map { it.on(Strand.PLUS) }
+            )
+            res.first.map { it.on(Strand.PLUS) } to res.second
         }
     )
 

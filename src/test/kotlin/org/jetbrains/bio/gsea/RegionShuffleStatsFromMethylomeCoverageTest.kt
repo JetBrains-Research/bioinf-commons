@@ -47,8 +47,9 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
             ChromosomeRange(22, 27, chr3),
         )
         val newRegions = RegionShuffleStatsFromMethylomeCoverage.shuffleChromosomeRanges(
-            gq, regions, background, maxRetries = 4, endPositionShift = 2, withReplacement = true
-        )
+            gq, regions, background, singleRegionMaxRetries = 4, regionSetMaxRetries = 4, endPositionShift = 2, withReplacement = true,
+            candidateFilterPredicate = null
+        ).first
 
         assertEquals(regions.size, newRegions.size)
         assertEquals(
@@ -66,8 +67,9 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
             ChromosomeRange(22, 27, chr3),
         )
         val shuffled = RegionShuffleStatsFromMethylomeCoverage.shuffleChromosomeRanges(
-            gq, regions, background, maxRetries = 4, endPositionShift = 2, withReplacement = false
-        )
+            gq, regions, background, singleRegionMaxRetries = 4, regionSetMaxRetries = 4, endPositionShift = 2, withReplacement = false,
+            candidateFilterPredicate = null
+        ).first
 
         assertEquals(regions.size, shuffled.size)
         assertEquals(
@@ -98,8 +100,9 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
         )
         assertFailsWith(RuntimeException::class, message = "Too many shuffle attempts") {
             RegionShuffleStatsFromMethylomeCoverage.shuffleChromosomeRanges(
-                gq, regions, background, maxRetries = 4, endPositionShift = 2, withReplacement = false
-            )
+                gq, regions, background, singleRegionMaxRetries = 4, regionSetMaxRetries = 4, endPositionShift = 2, withReplacement = false,
+                candidateFilterPredicate = null
+            ).first
         }
     }
 
@@ -117,8 +120,9 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
             message = "Background was made for different genome query. This query=[to1], background genome query=[to1[chr3]]"
         ) {
             RegionShuffleStatsFromMethylomeCoverage.shuffleChromosomeRanges(
-                gq, regions, background, maxRetries = 4, endPositionShift = 2, withReplacement = false
-            )
+                gq, regions, background, singleRegionMaxRetries = 4, regionSetMaxRetries = 4, endPositionShift = 2, withReplacement = false,
+                candidateFilterPredicate = null
+            ).first
         }
     }
 

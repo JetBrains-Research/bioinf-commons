@@ -20,10 +20,10 @@ import kotlin.math.min
 class RegionShuffleStatsFromMethylomeCoverage(
     simulationsNumber: Int,
     chunkSize: Int,
-    setMaxRetries: Int,
-    regionMaxRetries: Int,
+    regionSetMaxRetries: Int,
+    singleRegionMaxRetries: Int,
     val zeroBasedBg: Boolean
-) : RegionShuffleStats(simulationsNumber, chunkSize, setMaxRetries, regionMaxRetries) {
+) : RegionShuffleStats(simulationsNumber, chunkSize, regionSetMaxRetries, singleRegionMaxRetries) {
 
     fun calcStatistics(
         gq: GenomeQuery,
@@ -62,19 +62,20 @@ class RegionShuffleStatsFromMethylomeCoverage(
                     background.getCoverage(it) > 0
                 }
             },
-            samplingFun = { genomeQuery, regions, background, setMaxRetries, regionMaxRetries, withReplacement ->
-                shuffleChromosomeRanges(
+            samplingFun = { genomeQuery, regions, background, regionSetMaxRetries, singleRegionMaxRetries, withReplacement ->
+                val res = shuffleChromosomeRanges(
                     genomeQuery,
                     regions,
                     background,
-                    setMaxRetries = setMaxRetries,
-                    regionMaxRetries = regionMaxRetries,
+                    regionSetMaxRetries = regionSetMaxRetries,
+                    singleRegionMaxRetries = singleRegionMaxRetries,
                     withReplacement = withReplacement,
                     candidateFilterPredicate = SamplingMethylationValidation.getCandidateFilterPredicate(
                         lengthCorrectionMethod,
                         regions
                     )
-                ).map { it.on(Strand.PLUS) }
+                )
+                res.first.map { it.on(Strand.PLUS) } to res.second
             }
         )
     }
@@ -86,12 +87,12 @@ class RegionShuffleStatsFromMethylomeCoverage(
             genomeQuery: GenomeQuery,
             regions: List<ChromosomeRange>,
             background: BasePairCoverage,
-            setMaxRetries: Int = 100,
-            regionMaxRetries: Int = 100,
-            endPositionShift: Int = 2, // For if 'k' is index of latest CpG in candidate, use 'k+2' to get 'exclusive' bound after latest CpG bounds
+            regionSetMaxRetries: Int = 100,
+            singleRegionMaxRetries: Int = 100,
+            endPositionShift: Int = 2, // For if 'k' is index of latest CpG in candidate, use 'k+2' to get 'exclusive' bound after the latest CpG bounds
             withReplacement: Boolean,
             candidateFilterPredicate: ((ChromosomeRange) -> Double)?
-        ): List<ChromosomeRange> {
+        ): Pair<List<ChromosomeRange>, IntHistogram> {
 
             // Use coverage of input regions for sampling instead of region lengths in basepairs
             val expectedCoverages = regions.map { background.getCoverage(it.on(Strand.PLUS)) }.toIntArray()
@@ -105,14 +106,14 @@ class RegionShuffleStatsFromMethylomeCoverage(
 
             val (backgroundChrs, prefixSum) = calculatePrefixSum(background)
 
-            for (i in 1..setMaxRetries) {
+            for (i in 1..regionSetMaxRetries) {
                 val result = tryShuffle(
                     genomeQuery,
                     background,
                     backgroundChrs,
                     expectedCoverages,
                     prefixSum,
-                    regionMaxRetries,
+                    singleRegionMaxRetries,
                     endPositionShift,
                     withReplacement,
                     candidateFilterPredicate = candidateFilterPredicate
@@ -123,7 +124,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
                     return result
                 }
             }
-            throw RuntimeException("Too many shuffle attempts, max limit is: $setMaxRetries")
+            throw RuntimeException("Too many shuffle attempts, max limit is: $regionSetMaxRetries")
         }
 
         fun inputRegionsAndBackgroundProviderFun(
@@ -151,11 +152,11 @@ class RegionShuffleStatsFromMethylomeCoverage(
             backgroundChromosomes: List<Chromosome>,
             expectedCoverages: IntArray,
             prefixSum: LongArray, // should be w/o duplicated values
-            regionMaxRetries: Int = 100,
+            singleRegionMaxRetries: Int = 100,
             endPositionShift: Int, // E.g. if 'k' is index of latest CpG in candidate, use 'k+2' (endPositionShift = 2) to get 'exclusive' bound after latest CpG bounds
             withReplacement: Boolean,
             candidateFilterPredicate: ((ChromosomeRange) -> Double)?
-        ): List<ChromosomeRange>? {
+        ): Pair<List<ChromosomeRange>, IntHistogram>? {
             val maskedGenomeMap = when {
                 withReplacement -> null
                 // mask positions already used for sampled loci:
@@ -164,6 +165,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
                 }
             }
             val result = ArrayList<ChromosomeRange>(expectedCoverages.size)
+            val attemptsHistogram = IntHistogram()
 
             val r = ThreadLocalRandom.current()
 
@@ -175,7 +177,10 @@ class RegionShuffleStatsFromMethylomeCoverage(
 
                 var smalestPenalty: Double = Double.POSITIVE_INFINITY
                 var bestCandidate: ChromosomeRange? = null
-                for (rangeTry in 1..regionMaxRetries) {
+
+                var lastRangeTry = 0
+                for (rangeTry in 1..singleRegionMaxRetries) {
+                    lastRangeTry = rangeTry
                     val rVal = r.nextLong(sum)
 
 
@@ -227,9 +232,10 @@ class RegionShuffleStatsFromMethylomeCoverage(
                     maskedGenomeMap!![nextRange.chromosome].add(nextRange.toRange())
                 }
                 result.add(nextRange)
+                attemptsHistogram.increment(lastRangeTry)
             }
 
-            return result
+            return result to attemptsHistogram
         }
 
         fun generateShuffledRegion(
