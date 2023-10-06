@@ -36,6 +36,9 @@ object EnrichmentInLoi {
         opts: SharedSamplingOptions,
         enrichmentOpts: SharedEnrichmentOptions,
         mergeRegionsToBg: Boolean, // add input regions to background if they are missing there
+        backgroundIsMethylome: Boolean,
+        zeroBasedBackground: Boolean,
+        bedBgFlnk: Int,
     ) {
         val loiFolderPath = enrichmentOpts.loiFolderPath
         val outputBasename = opts.outputBaseName
@@ -71,7 +74,10 @@ object EnrichmentInLoi {
             genomeMaskedAreaPath = opts.genomeMaskedAreaPath,
             genomeAllowedAreaPath = opts.genomeAllowedAreaPath,
             mergeRegionsToBg = mergeRegionsToBg,
-            samplingWithReplacement = opts.samplingWithReplacement
+            samplingWithReplacement = opts.samplingWithReplacement,
+            backgroundIsMethylome = backgroundIsMethylome,
+            zeroBasedBackground = zeroBasedBackground,
+            bedBgFlnk = bedBgFlnk,
         ).save(reportPath)
 
         LOG.info("Report saved to: $reportPath")
@@ -96,7 +102,10 @@ object EnrichmentInLoi {
             else -> allowedGenomeFilter.intersectRanges(loiLocationBaseFilterList) as LocationsMergingList
         }
 
-        val filesStream = if (loiFolderPath.isDirectory) Files.list(loiFolderPath) else Stream.of(loiFolderPath)
+        val filesStream = when {
+            loiFolderPath.isDirectory -> Files.list(loiFolderPath)
+            else -> Stream.of(loiFolderPath)
+        }
         val loiInfosFiltered: List<LoiInfo> = collectLoiFrom(
             filesStream, gq, opt.mergeOverlapped, loiFilter, loiNameSuffix
         )
@@ -167,6 +176,22 @@ object EnrichmentInLoi {
                 .withRequiredArg()
                 .withValuesConvertedBy(PathConverter.noCheck())
 
+            accepts(
+                "bg-methylome",
+                "Treat background path as methylome. In this case background will " +
+                        " be a set of merged regions, where each cytosine offset will be converted to a region" +
+                        " [offset - flnk, offset + flnk]. `flnk` is flanking region radius and configured by" +
+                        " `methylome-flnk` option."
+            )
+            // Force methylome to have 0-based offsets
+            accepts(
+                "methylome-zero",
+                "If background is methylome and methylome offsets are in 0-based format instead of 1-based."
+            )
+            acceptsAll(listOf("methylome-flnk"), "Flanking region radius for methylome background. (default: 50)")
+                .withRequiredArg()
+                .ofType(Int::class.java)
+                .defaultsTo(50)
 
             accepts(
                 "add-regions-to-bg",
@@ -312,7 +337,27 @@ object EnrichmentInLoi {
                 val sharedOpts = processSharedSamplingOptions(options, LOG)
                 val sharedEnrichmentOpts = processSharedEnrichmentOptions(options, metrics, LOG)
 
-                doCalculations(sharedOpts, sharedEnrichmentOpts, mergeRegionsToBg)
+                val backgroundIsMethylome = "bg-methylome" in options
+                LOG.info("BACKGROUND IS METHYLOME: $backgroundIsMethylome")
+
+                val bedBgFlnk: Int
+                val zeroBasedBackground: Boolean
+                if (backgroundIsMethylome) {
+                    zeroBasedBackground = "methylome-zero" in options
+                    LOG.info("0-BASED OFFSETS IN METHYLOME: $zeroBasedBackground")
+
+                    bedBgFlnk = options.valueOf("methylome-flnk") as Int
+                    LOG.info("BED BACKGROUND FLANKING RADIUS: $bedBgFlnk")
+                } else {
+                    bedBgFlnk = 0
+                    zeroBasedBackground = true
+                }
+                doCalculations(
+                    sharedOpts, sharedEnrichmentOpts, mergeRegionsToBg,
+                    backgroundIsMethylome = backgroundIsMethylome,
+                    zeroBasedBackground = zeroBasedBackground,
+                    bedBgFlnk = bedBgFlnk,
+                )
             }
         }
     }

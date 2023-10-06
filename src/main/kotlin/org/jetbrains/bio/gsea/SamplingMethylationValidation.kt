@@ -12,7 +12,6 @@ import org.jetbrains.bio.genome.sampling.shuffleChromosomeRanges
 import org.jetbrains.bio.gsea.RegionShuffleStats.Companion.sampleRegions
 import org.jetbrains.bio.gsea.RegionShuffleStatsFromMethylomeCoverage.Companion.ensureInputRegionsMatchesBackgound
 import org.jetbrains.bio.gsea.RegionShuffleStatsFromMethylomeCoverage.Companion.filterInputRegionsAndMethylomeCovBackground
-import org.jetbrains.bio.gsea.RegionShuffleStatsFromMethylomeCoverage.Companion.loadInputRegionsAndMethylomeCovBackground
 import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
@@ -254,9 +253,11 @@ object SamplingMethylationValidation {
         }
 
         // Load Input regions, methylome + filter allowed regions / methylome
-        val (inputRegions, methylomeCov) = loadInputRegionsAndMethylomeCovBackground(
-            opts.inputRegions, methylomePath, zeroBasedMethylome, gq
+        val inputRegions = RegionShuffleStatsFromMethylomeCoverage.loadInputRegions(opts.inputRegions, gq)
+        val methylomeCov = RegionShuffleStatsFromMethylomeCoverage.loadMethylomeCovBackground(
+                methylomePath, zeroBasedMethylome, gq
         )
+
         val (inputRegionsFiltered, methylomeCovFiltered) = filterInputRegionsAndMethylomeCovBackground(
             inputRegions, methylomeCov, opts.genomeMaskedAreaPath,
             opts.genomeAllowedAreaPath, gq
@@ -448,7 +449,7 @@ object SamplingMethylationValidation {
         }
     }
 
-    private fun makeBEDBackgroundFromMethylome(
+    fun makeBEDBackgroundFromMethylome(
         gq: GenomeQuery,
         methylomeCov: BasePairCoverage,
         bedBgFlnk: Int,

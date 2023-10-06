@@ -33,7 +33,10 @@ class RegionShuffleStatsFromBedCoverage(
         genomeMaskedAreaPath: Path?,
         genomeAllowedAreaPath: Path?,
         mergeRegionsToBg: Boolean,
-        samplingWithReplacement: Boolean
+        samplingWithReplacement: Boolean,
+        backgroundIsMethylome: Boolean,
+        zeroBasedBackground: Boolean,
+        bedBgFlnk: Int,
     ) = doCalcStatistics(
         gq,
         loiInfos,
@@ -46,7 +49,15 @@ class RegionShuffleStatsFromBedCoverage(
         samplingWithReplacement = samplingWithReplacement,
         inputRegionsAndBackgroundProvider = { genomeQuery ->
             loadInputRegionsAndBedLikeBackground(
-                inputRegionsPath, backgroundPath, mergeRegionsToBg, genomeMaskedAreaPath, genomeAllowedAreaPath, genomeQuery
+                inputRegionsPath = inputRegionsPath,
+                mergeRegionsToBg = mergeRegionsToBg,
+                genomeMaskedAreaPath = genomeMaskedAreaPath,
+                genomeAllowedAreaPath =  genomeAllowedAreaPath,
+                gq = genomeQuery,
+                backgroundPath = backgroundPath,
+                backgroundIsMethylome=backgroundIsMethylome,
+                zeroBasedBackground=zeroBasedBackground,
+                bedBgFlnk=bedBgFlnk
             )
         },
         loiOverlapWithBgFun = { loiFiltered, background ->
@@ -70,30 +81,47 @@ class RegionShuffleStatsFromBedCoverage(
 
         fun loadInputRegionsAndBedLikeBackground(
             inputRegionsPath: Path,
-            backgroundRegionsPath: Path?,
+            backgroundPath: Path?,
             mergeRegionsToBg: Boolean,
             genomeMaskedAreaPath: Path?,
             genomeAllowedAreaPath: Path?,
-            gq: GenomeQuery
+            gq: GenomeQuery,
+            backgroundIsMethylome: Boolean,
+            zeroBasedBackground: Boolean,
+            bedBgFlnk: Int,
         ): Pair<List<Location>, LocationsMergingList> {
             val inputRegions = readLocationsIgnoringStrand(inputRegionsPath, gq).first
             LOG.info("Input regions: ${inputRegions.size.formatLongNumber()} regions")
 
-            val bgRegions = if (backgroundRegionsPath != null) {
-                val bgLocations = readLocationsIgnoringStrand(backgroundRegionsPath, gq).first.toMutableList()
-                if (mergeRegionsToBg) {
-                    // merge source loci into background
-                    bgLocations.addAll(inputRegions)
+            val bgRegions = if (backgroundPath != null) {
+                val bgLoci = if (backgroundIsMethylome) {
+                    val methylomeCov = RegionShuffleStatsFromMethylomeCoverage.loadMethylomeCovBackground(
+                        backgroundPath,
+                        zeroBasedBackground,
+                        gq
+                    )
+                     SamplingMethylationValidation.makeBEDBackgroundFromMethylome(
+                        gq, methylomeCov, bedBgFlnk,
+                        if (mergeRegionsToBg) inputRegions else emptyList()
+                    )
+                } else {
+                    require(zeroBasedBackground) { "1-based regions not yet supported here" }
+                    require(bedBgFlnk == 0) { "Flanking not yet supported here" }
+                    val bgLocations = readLocationsIgnoringStrand(backgroundPath, gq).first.toMutableList()
+                    if (mergeRegionsToBg) {
+                        // merge source loci into background
+                        bgLocations.addAll(inputRegions)
+                    }
+                    LocationsMergingList.create(
+                        gq,
+                        bgLocations
+                    )
                 }
-                val bgLoci = LocationsMergingList.create(
-                    gq,
-                    bgLocations
-                )
                 LOG.info("Background regions: ${bgLoci.size} regions")
 
                 inputRegions.forEach {
                     require(bgLoci.includes(it)) {
-                        "Background $backgroundRegionsPath regions are required to include all loci of interest, but the " +
+                        "Background $backgroundPath regions are required to include all loci of interest, but the " +
                                 "region is missing in bg: ${it.toChromosomeRange()}"
                     }
                 }

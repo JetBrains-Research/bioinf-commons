@@ -53,7 +53,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
             mergeOverlapped,
             intersectionFilter,
             samplingWithReplacement = samplingWithReplacement,
-            inputRegionsAndBackgroundProvider = { genomeQuery ->
+            inputRegionsAndBackgroundProvider = { _ ->
                 inputRegionsAndBackgroundProviderFun(inputRegionsPath, backgroundPath, zeroBasedBg, gq,
                     genomeMaskedAreaPath, genomeAllowedAreaPath)
             },
@@ -135,9 +135,8 @@ class RegionShuffleStatsFromMethylomeCoverage(
             genomeMaskedAreaPath: Path?,
             genomeAllowedAreaPath: Path?
         ): Pair<List<Location>, BasePairCoverage> {
-            val (inputRegions, methylomeCov) = loadInputRegionsAndMethylomeCovBackground(
-                inputRegionsPath, backgroundPath!!, zeroBasedBg, gq
-            )
+            val inputRegions = loadInputRegions(inputRegionsPath, gq)
+            val methylomeCov = loadMethylomeCovBackground(backgroundPath!!, zeroBasedBg, gq)
             val (inputRegionsFiltered, methylomeCovFiltered) = filterInputRegionsAndMethylomeCovBackground(
                 inputRegions, methylomeCov, genomeMaskedAreaPath,
                 genomeAllowedAreaPath, gq
@@ -314,15 +313,20 @@ class RegionShuffleStatsFromMethylomeCoverage(
             return Pair(backgroundChrs, prefixSum)
         }
 
-        fun loadInputRegionsAndMethylomeCovBackground(
+        fun loadInputRegions(
             inputRegionsPath: Path,
-            backgroundRegionsPath: Path,
-            zeroBasedBg: Boolean,
             gq: GenomeQuery
-        ): Pair<List<Location>, BasePairCoverage> {
+        ): List<Location> {
             val inputRegions = readLocationsIgnoringStrand(inputRegionsPath, gq).first
             LOG.info("Input regions: ${inputRegions.size.formatLongNumber()} regions")
 
+            return inputRegions
+        }
+        fun loadMethylomeCovBackground(
+            backgroundRegionsPath: Path,
+            zeroBasedBg: Boolean,
+            gq: GenomeQuery
+        ): BasePairCoverage {
             val methCovData = BasePairCoverage.loadFromTSV(
                 gq, backgroundRegionsPath,
                 offsetIsOneBased = !zeroBasedBg,
@@ -330,7 +334,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
             )
             LOG.info("Background coverage: ${methCovData.depth.formatLongNumber()} offsets")
 
-            return inputRegions to methCovData
+            return methCovData
         }
 
         fun filterInputRegionsAndMethylomeCovBackground(
