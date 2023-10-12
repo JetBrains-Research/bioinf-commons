@@ -10,6 +10,7 @@ import org.jetbrains.bio.genome.containers.LocationsSortedList
 import org.jetbrains.bio.genome.containers.RangesList
 import org.jetbrains.bio.genome.containers.intersection.RegionsMetric
 import org.jetbrains.bio.genome.format.BedFormat
+import org.jetbrains.bio.gsea.EnrichmentInLoi.processInputRegions
 import org.jetbrains.bio.statistics.hypothesis.BenjaminiHochberg
 import org.jetbrains.bio.util.*
 import org.jetbrains.bio.viktor.asF64Array
@@ -35,23 +36,30 @@ abstract class RegionShuffleStats(
 ) {
 
     protected fun <T> doCalcStatistics(
+        inputRegionsPath: Path,
         gq: GenomeQuery,
+        genomeAllowedAreaFilter: LocationsMergingList?,
+        genomeMaskedAreaFilter: LocationsMergingList?,
         loiInfos: List<LoiInfo>,
         outputFolderPath: Path? = null,
         metric: RegionsMetric,
         hypAlt: PermutationAltHypothesis = PermutationAltHypothesis.GREATER,
         aSetIsRegions: Boolean = true,
         mergeOverlapped: Boolean = true,
-        intersectionFilter: LocationsList<out RangesList>? = null,
+        truncateFilter: LocationsList<out RangesList>? = null,
         samplingWithReplacement: Boolean = false,
-        inputRegionsAndBackgroundProvider: (GenomeQuery) -> Pair<List<Location>, T>,
+        backgroundProvider: (GenomeQuery, List<Location>) -> T, // by genome query & input regions
         loiOverlapWithBgFun: (LocationsList<out RangesList>, T) -> Int,
         samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Int, Boolean) -> Pair<List<Location>, IntHistogram>
     ): DataFrame {
         outputFolderPath?.createDirectories()
         val dumpDetails = outputFolderPath != null
 
-        val (inputRegionsFiltered, bgRegionsList) = inputRegionsAndBackgroundProvider(gq)
+        val inputRegionsFiltered = processInputRegions(
+            inputRegionsPath, gq,
+            genomeAllowedAreaFilter = genomeAllowedAreaFilter,
+            genomeMaskedAreaFilter = genomeMaskedAreaFilter
+        )
         require(inputRegionsFiltered.isNotEmpty()) {
             "Regions file is empty or all regions were removed by filters."
         }
@@ -59,6 +67,9 @@ abstract class RegionShuffleStats(
             mergeOverlapped -> LocationsMergingList.create(gq, inputRegionsFiltered)
             else -> LocationsSortedList.create(gq, inputRegionsFiltered)
         }
+        
+        val bgRegionsList = backgroundProvider(gq, inputRegionsFiltered)
+        
 
         LOG.info("LOI sets to test: ${loiInfos.size}")
 
@@ -96,7 +107,7 @@ abstract class RegionShuffleStats(
 
             val (sampledRegions: List<List<LocationsList<out RangesList>>>, regionAttemptsHist) =
                 sampleRegions(
-                    simulationsInChunk, regionSetMaxRetries, singleRegionMaxRetries, intersectionFilter, inputRegionsFiltered, bgRegionsList,
+                    simulationsInChunk, regionSetMaxRetries, singleRegionMaxRetries, truncateFilter, inputRegionsFiltered, bgRegionsList,
                     gq,
                     parallelismLevel(),
                     samplingFun=samplingFun,
@@ -218,7 +229,7 @@ abstract class RegionShuffleStats(
             simulationsNumber: Int,
             regionSetMaxRetries: Int,
             singleRegionMaxRetries: Int,
-            intersectionFilter: LocationsList<out RangesList>?,
+            truncateFilter: LocationsList<out RangesList>?,
             srcLoci: List<Location>,
             background: T,
             gq: GenomeQuery,
@@ -256,7 +267,7 @@ abstract class RegionShuffleStats(
                 }
             }
 
-            if (intersectionFilter == null) {
+            if (truncateFilter == null) {
                 return chunked.map { chunk ->
                     chunk.map { (ll, hist) ->
                         finalHist += hist
@@ -269,7 +280,7 @@ abstract class RegionShuffleStats(
             return chunked.map { chunk ->
                 chunk.map { (ll, hist) ->
                     finalHist += hist
-                    val filtered = ll.intersectRanges(intersectionFilter)
+                    val filtered = ll.intersectRanges(truncateFilter)
                     LocationsMergingList.create(filtered.genomeQuery, filtered.locationIterator())
                 }
             } to finalHist
@@ -353,51 +364,30 @@ abstract class RegionShuffleStats(
             LOG.info("Genome masked loci (merged): ${maskedGenomeLocations.size.formatLongNumber()} regions")
 
             // complementary regions
-            return maskedGenomeLocations.apply { rl, chr, _strand -> rl.complementaryRanges(chr.length) }
+            return maskedGenomeLocations.makeComplementary()
         }
 
         /**
          * Loads the genome allowed locations filter from the specified genome allowed loci file and genome query.
          *
-         * @param genomeAllowedLociPath The path to the genome allowed loci file. File is TAB-separated BED with at least 3 fields. Strand is ignored.
+         * @param lociPath The path to the genome allowed loci file. File is TAB-separated BED with at least 3 fields. Strand is ignored.
          * @param gq The genome query.
          * @return The loaded genome allowed locations filter as a LocationsMergingList.
          */
-        fun loadGenomeAllowedLocationsFilter(
-            genomeAllowedLociPath: Path,
+        fun readGenomeAreaFilter(
+            lociPath: Path,
             gq: GenomeQuery
         ): LocationsMergingList {
-            val allowedGenome = genomeAllowedLociPath.let {
-                readLocationsIgnoringStrand(it, gq).first
+            val (loci, recordsNumber) = lociPath.let {
+                readLocationsIgnoringStrand(it, gq)
             }
 
-            LOG.info("Genome allowed loci: ${allowedGenome.size.formatLongNumber()} regions")
-            val allowedGenomeLocations = LocationsMergingList.create(gq, allowedGenome)
+            LOG.info("Genome area filter [${lociPath.fileName}]: ${loci.size.formatLongNumber()} regions of $recordsNumber lines")
+            val ll = LocationsMergingList.create(gq, loci)
 
-            LOG.info("Genome allowed loci (merged): ${allowedGenomeLocations.size.formatLongNumber()} regions")
-            return allowedGenomeLocations
+            LOG.info("Genome area filter [${lociPath.fileName}]: ${ll.size.formatLongNumber()} merged regions")
+            return ll
         }
-
-        fun makeAllowedRegionsFilter(
-            genomeMaskedLociPath: Path?,
-            genomeAllowedLociPath: Path?,
-            gq: GenomeQuery
-        ): LocationsMergingList? {
-            // complementary to masked list
-            val genomeMaskedComplementaryFilter = genomeMaskedLociPath?.let {
-                loadComplementaryToMaskedGenomeRegionsFilter(it, gq)
-            }
-
-            // allowed list
-            val genomeAllowedFilter = genomeAllowedLociPath?.let { loadGenomeAllowedLocationsFilter(it, gq) }
-
-            return when {
-                genomeAllowedFilter == null -> genomeMaskedComplementaryFilter
-                genomeMaskedComplementaryFilter == null -> genomeAllowedFilter
-                else -> genomeAllowedFilter.intersectRanges(genomeMaskedComplementaryFilter) as LocationsMergingList
-            }
-        }
-
 
         fun calcMetric(
             sampledLoci: LocationsList<out RangesList>,

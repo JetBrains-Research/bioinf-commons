@@ -153,6 +153,18 @@ data class ChromosomeRange(
         .result()
 
     override fun toString() = "${chromosome.name}:[$startOffset, $endOffset)"
+
+    companion object {
+        fun intersects(l1: ChromosomeRange?, l2: ChromosomeRange?): Boolean {
+            if (l1 == null || l2 == null) {
+                return false
+            }
+            if (l1.chromosome != l2.chromosome) {
+                return false
+            }
+            return l1.toRange().intersects(l2.toRange())
+        }
+    }
 }
 
 data class Location(

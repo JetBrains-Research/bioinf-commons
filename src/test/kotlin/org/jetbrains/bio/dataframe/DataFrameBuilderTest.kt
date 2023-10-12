@@ -1,11 +1,7 @@
 package org.jetbrains.bio.dataframe
 
 import org.jetbrains.bio.Tests
-import org.jetbrains.bio.util.checkAccessible
-import org.jetbrains.bio.util.toUri
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -56,8 +52,8 @@ class DataFrameBuilderTest {
         val builder = DataFrameSpec().ints("v").builder()
 
         Tests.assertThrowsWithMessage(
-            "Wrong type: 0-th arg (column: v) value 1 is expected to be of type Integer",
             IllegalArgumentException::class.java,
+            "Wrong type: 0-th arg (column: v) value 1 is expected to be of type Integer",
         ) {
             builder.add(1.toLong())
             builder.build()
@@ -69,8 +65,8 @@ class DataFrameBuilderTest {
         val builder = DataFrameSpec().longs("v").builder()
 
         Tests.assertThrowsWithMessage(
-            "Wrong type: 0-th arg (column: v) value 1 is expected to be of type Long",
             IllegalArgumentException::class.java,
+            "Wrong type: 0-th arg (column: v) value 1 is expected to be of type Long",
         ) {
             builder.add(1)
             builder.build()
@@ -82,8 +78,8 @@ class DataFrameBuilderTest {
         val builder = DataFrameSpec().bytes("v").builder()
 
         Tests.assertThrowsWithMessage(
-            "Wrong type: 0-th arg (column: v) value 1 is expected to be of type Byte",
             IllegalArgumentException::class.java,
+            "Wrong type: 0-th arg (column: v) value 1 is expected to be of type Byte",
         ) {
             builder.add(1)
             builder.build()
@@ -95,8 +91,9 @@ class DataFrameBuilderTest {
         val builder = DataFrameSpec().doubles("v").builder()
 
         Tests.assertThrowsWithMessage(
+            IllegalArgumentException::class.java,
             "is expected to be of type Double",
-            IllegalArgumentException::class.java, partialMessageMatch = true
+            partialMessageMatch = true
         ) {
             builder.add(1)
             builder.build()
@@ -109,8 +106,8 @@ class DataFrameBuilderTest {
         val builder = DataFrameSpec().strings("v").builder()
 
         Tests.assertThrowsWithMessage(
-            "Wrong type: 0-th arg (column: v) value 1 is expected to be of type String",
             IllegalArgumentException::class.java,
+            "Wrong type: 0-th arg (column: v) value 1 is expected to be of type String",
         ) {
             builder.add(1)
             builder.build()

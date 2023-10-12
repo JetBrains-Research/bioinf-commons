@@ -160,7 +160,7 @@ object OverlapLoiWithEachRegion {
         val threadsNumber = parallelismLevel()
         val filesStream = if (loiFolderPath.isDirectory) Files.list(loiFolderPath) else Stream.of(loiFolderPath)
         val chunkedLoiInfos: List<List<LoiInfo>>  = EnrichmentInLoi.collectLoiFrom(
-            filesStream, gq, mergeOverlapped, null, loiNameSuffix
+            filesStream, gq, mergeOverlapped, null, null, null, loiNameSuffix
         ).chunked(threadsNumber)
 
         val totalSetsToTest = chunkedLoiInfos.sumOf { it.size }

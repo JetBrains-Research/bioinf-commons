@@ -211,20 +211,87 @@ class LocationTest {
     }
 
     @Test
-    fun testIntersects() {
+    fun testIntersectsWithNull() {
         assertFalse(Location.intersects(null, null))
 
         assertFalse(Location.intersects(null, Location(1, 5, chromosome, PLUS)))
         assertFalse(Location.intersects(Location(1, 5, chromosome, PLUS), null))
+    }
+    @Test
+    fun testIntersectsWithOtherChr() {
         assertFalse(
             Location.intersects(
                 Location(1, 5, chromosome, PLUS),
                 Location(1, 5, Chromosome(Genome["to1"], "chr2"), PLUS)
             )
         )
+    }
 
-        assertTrue(Location.intersects(Location(1, 5, chromosome, PLUS), Location(1, 5, chromosome, MINUS)))
-        assertTrue(Location.intersects(Location(1, 5, chromosome, PLUS), Location(4, 6, chromosome, PLUS)))
+    @Test
+    fun testIntersectsWithOtherStand() {
+        assertTrue(Location.intersects(
+            Location(11, 15, chromosome, PLUS),
+            Location(11, 15, chromosome, MINUS)
+        ))
+        assertTrue(Location.intersects(
+            Location(11, 15, chromosome, PLUS),
+            Location(14, 18, chromosome, MINUS)
+        ))
+        assertTrue(Location.intersects(
+            Location(4, 12, chromosome, MINUS),
+            Location(11, 15, chromosome, PLUS),
+        ))
+        assertFalse(Location.intersects(
+            Location(11, 15, chromosome, PLUS),
+            Location(15, 18, chromosome, MINUS)
+        ))
+        assertFalse(Location.intersects(
+            Location(11, 15, chromosome, PLUS),
+            Location(4, 11, chromosome, MINUS)
+        ))
+    }
+    @Test
+    fun testIntersects() {
+        val l1 = Location(11, 15, chromosome, PLUS)
+        assertTrue(Location.intersects(l1, l1))
+        assertTrue(Location.intersects(l1, Location(14, 16, chromosome, PLUS)))
+        assertFalse(Location.intersects(l1, Location(15, 16, chromosome, PLUS)))
+        assertTrue(Location.intersects(l1, Location(4, 12, chromosome, PLUS)))
+        assertFalse(Location.intersects(l1, Location(4, 11, chromosome, PLUS)))
+
+        val l2 = Location(11, 15, chromosome, MINUS)
+        assertTrue(Location.intersects(l2, l2))
+        assertTrue(Location.intersects(l2, Location(14, 16, chromosome, MINUS)))
+        assertFalse(Location.intersects(l2, Location(15, 16, chromosome, MINUS)))
+        assertTrue(Location.intersects(l2, Location(4, 12, chromosome, MINUS)))
+        assertFalse(Location.intersects(l2, Location(4, 11, chromosome, MINUS)))
+    }
+
+    @Test
+    fun testChromosomeRangeIntersectsWithNull() {
+        assertFalse(ChromosomeRange.intersects(null, null))
+        assertFalse(ChromosomeRange.intersects(null, ChromosomeRange(1, 5, chromosome)))
+        assertFalse(ChromosomeRange.intersects(ChromosomeRange(1, 5, chromosome), null))
+    }
+    @Test
+    fun testChromosomeRangeIntersectsWithOtherChr() {
+        assertFalse(
+            ChromosomeRange.intersects(
+                ChromosomeRange(1, 5, chromosome),
+                ChromosomeRange(1, 5, Chromosome(Genome["to1"], "chr2"))
+            )
+        )
+    }
+
+    @Test
+    fun testChromosomeRangeIntersects() {
+        val range1 = ChromosomeRange(11, 15, chromosome)
+
+        assertTrue(ChromosomeRange.intersects(range1, range1))
+        assertTrue(ChromosomeRange.intersects(range1, ChromosomeRange(14, 16, chromosome)))
+        assertFalse(ChromosomeRange.intersects(range1, ChromosomeRange(15, 16, chromosome)))
+        assertTrue(ChromosomeRange.intersects(range1, ChromosomeRange(4, 12, chromosome)))
+        assertFalse(ChromosomeRange.intersects(range1, ChromosomeRange(4, 11, chromosome)))
     }
 
 }

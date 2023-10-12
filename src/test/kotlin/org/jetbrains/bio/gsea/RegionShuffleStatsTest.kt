@@ -8,14 +8,14 @@ import kotlin.test.assertEquals
 
 class RegionShuffleStatsTest {
     @Test
-    fun loadGenomeAllowedLocationsFilter() {
+    fun readGenomeAreaFilter() {
         val ll: LocationsMergingList = withTempBedFile(
             listOf(
                 Location(10, 100, chr1, Strand.PLUS),
                 Location(50, 130, chr1, Strand.PLUS),
             )
         ) { bedPath ->
-            RegionShuffleStats.loadGenomeAllowedLocationsFilter(bedPath, gq)
+            RegionShuffleStats.readGenomeAreaFilter(bedPath, gq)
         }
         assertEquals(listOf(Location(10,130, chr1)), ll.toList())
     }
@@ -72,78 +72,6 @@ class RegionShuffleStatsTest {
             expected.add(Location(0, chr.length, chr, Strand.PLUS))
             expected.add(Location(0, chr.length, chr, Strand.MINUS))
         }
-        assertEquals(
-            expected.sorted(),
-            ll.toList().sorted()
-        )
-    }
-
-    @Test
-    fun makeAllowedRegionsFilterOnlyAllowed() {
-        val loci = listOf(
-            Location(10, 100, chr1),
-        )
-        val llActual = withTempBedFile(
-            loci
-        ) { path ->
-            RegionShuffleStats.makeAllowedRegionsFilter(null, path, gq)
-        }!!
-
-        val llExpected = withTempBedFile(
-            loci
-        ) { path ->
-            RegionShuffleStats.loadGenomeAllowedLocationsFilter(path, gq)
-        }
-
-        assertEquals(
-            llExpected.toList().sorted(),
-            llActual.toList().sorted()
-        )
-    }
-
-    @Test
-    fun makeAllowedRegionsFilterOnlyMasked() {
-        val loci = listOf(
-            Location(10, 100, chr1),
-        )
-        val llActual = withTempBedFile(
-            loci
-        ) { path ->
-            RegionShuffleStats.makeAllowedRegionsFilter(path, null, gq)
-        }!!
-
-        val llExpected = withTempBedFile(
-            loci
-        ) { path ->
-            RegionShuffleStats.loadComplementaryToMaskedGenomeRegionsFilter(path, gq)
-        }
-
-        assertEquals(
-            llExpected.toList().sorted(),
-            llActual.toList().sorted()
-        )
-    }
-
-    @Test
-    fun makeAllowedRegionsFilter() {
-        val ll = withTempBedFile(
-            listOf(
-                Location(10, 100, chr1),
-            )
-        ) { genomeAllowedMaskedLociPath ->
-            withTempBedFile(
-                listOf(
-                    Location(50, 80, chr1, Strand.PLUS),
-                )
-            ) { genomeMaskedLociPath ->
-                RegionShuffleStats.makeAllowedRegionsFilter(genomeMaskedLociPath, genomeAllowedMaskedLociPath, gq)
-            }
-        }!!
-
-        val expected = arrayListOf(
-            Location(10, 50, chr1),
-            Location(80, 100, chr1),
-        )
         assertEquals(
             expected.sorted(),
             ll.toList().sorted()

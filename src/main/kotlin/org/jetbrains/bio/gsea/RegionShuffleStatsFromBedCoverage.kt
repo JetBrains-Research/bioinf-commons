@@ -12,6 +12,8 @@ import org.jetbrains.bio.genome.sampling.shuffleChromosomeRanges
 import org.jetbrains.bio.util.formatLongNumber
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
+import java.util.concurrent.ThreadLocalRandom
+import kotlin.random.asKotlinRandom
 
 class RegionShuffleStatsFromBedCoverage(
     simulationsNumber: Int,
@@ -29,32 +31,35 @@ class RegionShuffleStatsFromBedCoverage(
         hypAlt: PermutationAltHypothesis,
         aSetIsRegions: Boolean,
         mergeOverlapped: Boolean,
-        intersectionFilter: LocationsList<out RangesList>?,
-        genomeMaskedAreaPath: Path?,
-        genomeAllowedAreaPath: Path?,
-        mergeRegionsToBg: Boolean,
+        truncateFilter: LocationsList<out RangesList>?,
+        genomeAllowedAreaFilter: LocationsMergingList?,
+        genomeMaskedAreaFilter: LocationsMergingList?,
+        mergeInputRegionsToBg: Boolean,
         samplingWithReplacement: Boolean,
         backgroundIsMethylome: Boolean,
         zeroBasedBackground: Boolean,
         bedBgFlnk: Int,
     ) = doCalcStatistics(
+        inputRegionsPath,
         gq,
+        genomeAllowedAreaFilter,
+        genomeMaskedAreaFilter,
         loiInfos,
         outputFolderPath,
         metric,
         hypAlt,
         aSetIsRegions,
         mergeOverlapped,
-        intersectionFilter,
+        truncateFilter,
         samplingWithReplacement = samplingWithReplacement,
-        inputRegionsAndBackgroundProvider = { genomeQuery ->
-            loadInputRegionsAndBedLikeBackground(
-                inputRegionsPath = inputRegionsPath,
-                mergeRegionsToBg = mergeRegionsToBg,
-                genomeMaskedAreaPath = genomeMaskedAreaPath,
-                genomeAllowedAreaPath =  genomeAllowedAreaPath,
-                gq = genomeQuery,
+        backgroundProvider = { genomeQuery, inputRegionsFiltered ->
+            backgroundProviderFun(
+                inputRegionsFiltered = inputRegionsFiltered,
                 backgroundPath = backgroundPath,
+                mergeInputRegionsToBg = mergeInputRegionsToBg,
+                genomeAllowedAreaFilter = genomeAllowedAreaFilter,
+                genomeMaskedAreaFilter = genomeMaskedAreaFilter,
+                gq = genomeQuery,
                 backgroundIsMethylome=backgroundIsMethylome,
                 zeroBasedBackground=zeroBasedBackground,
                 bedBgFlnk=bedBgFlnk
@@ -64,13 +69,16 @@ class RegionShuffleStatsFromBedCoverage(
             OverlapNumberMetric().calcMetric(loiFiltered, background).toInt()
         },
         samplingFun = { genomeQuery, regions, background, regionSetMaxRetries, singleRegionMaxRetries, withReplacement ->
+            val threadLocalRandom = ThreadLocalRandom.current().asKotlinRandom()
             val res = shuffleChromosomeRanges(
                 genomeQuery,
                 regions,
                 background.asLocationSequence().map { it.toChromosomeRange() }.toList(),
                 regionSetMaxRetries = regionSetMaxRetries,
                 singleRegionMaxRetries = singleRegionMaxRetries,
-                withReplacement = withReplacement
+                withReplacement = withReplacement,
+                genomeMaskedAreaFilter = genomeMaskedAreaFilter,
+                randomGen = threadLocalRandom
             )
             res.first.map { it.on(Strand.PLUS) } to res.second
         }
@@ -79,21 +87,20 @@ class RegionShuffleStatsFromBedCoverage(
     companion object {
         private val LOG = LoggerFactory.getLogger(RegionShuffleStatsFromBedCoverage::class.java)
 
-        fun loadInputRegionsAndBedLikeBackground(
-            inputRegionsPath: Path,
+        fun backgroundProviderFun(
+            inputRegionsFiltered: List<Location>,
             backgroundPath: Path?,
-            mergeRegionsToBg: Boolean,
-            genomeMaskedAreaPath: Path?,
-            genomeAllowedAreaPath: Path?,
+            mergeInputRegionsToBg: Boolean,
+            genomeAllowedAreaFilter: LocationsMergingList?,
+            genomeMaskedAreaFilter: LocationsMergingList?,
             gq: GenomeQuery,
             backgroundIsMethylome: Boolean,
             zeroBasedBackground: Boolean,
             bedBgFlnk: Int,
-        ): Pair<List<Location>, LocationsMergingList> {
-            val inputRegions = readLocationsIgnoringStrand(inputRegionsPath, gq).first
-            LOG.info("Input regions: ${inputRegions.size.formatLongNumber()} regions")
+        ): LocationsMergingList {
+            // Here no need in intersecting background with `SharedSamplingOptions.truncateRangesToSpecificLocation`
 
-            val bgRegions = if (backgroundPath != null) {
+            var bgRegions = if (backgroundPath != null) {
                 val bgLoci = if (backgroundIsMethylome) {
                     val methylomeCov = RegionShuffleStatsFromMethylomeCoverage.loadMethylomeCovBackground(
                         backgroundPath,
@@ -102,15 +109,15 @@ class RegionShuffleStatsFromBedCoverage(
                     )
                      SamplingMethylationValidation.makeBEDBackgroundFromMethylome(
                         gq, methylomeCov, bedBgFlnk,
-                        if (mergeRegionsToBg) inputRegions else emptyList()
+                        if (mergeInputRegionsToBg) inputRegionsFiltered else emptyList()
                     )
                 } else {
                     require(zeroBasedBackground) { "1-based regions not yet supported here" }
                     require(bedBgFlnk == 0) { "Flanking not yet supported here" }
                     val bgLocations = readLocationsIgnoringStrand(backgroundPath, gq).first.toMutableList()
-                    if (mergeRegionsToBg) {
+                    if (mergeInputRegionsToBg) {
                         // merge source loci into background
-                        bgLocations.addAll(inputRegions)
+                        bgLocations.addAll(inputRegionsFiltered)
                     }
                     LocationsMergingList.create(
                         gq,
@@ -119,7 +126,7 @@ class RegionShuffleStatsFromBedCoverage(
                 }
                 LOG.info("Background regions: ${bgLoci.size} regions")
 
-                inputRegions.forEach {
+                inputRegionsFiltered.forEach {
                     require(bgLoci.includes(it)) {
                         "Background $backgroundPath regions are required to include all loci of interest, but the " +
                                 "region is missing in bg: ${it.toChromosomeRange()}"
@@ -131,27 +138,42 @@ class RegionShuffleStatsFromBedCoverage(
                 val bgLoci = LocationsMergingList.create(
                     gq, gq.get().map { Location(0, it.length, it) }
                 )
-                LOG.info("Using whole genome as background. Background regions: ${bgLoci.size} regions")
+                LOG.info("Background regions: Using whole genome as background. ${bgLoci.size} regions")
 
                 bgLoci
             }
 
-            val allowedGenomeFilter = makeAllowedRegionsFilter(
-                genomeMaskedAreaPath, genomeAllowedAreaPath, gq
-            )
+            if (genomeAllowedAreaFilter != null) {
+                LOG.info("Background regions: Applying allowed area filter...")
 
-            @Suppress("FoldInitializerAndIfToElvis")
-            if (allowedGenomeFilter == null) {
-                return inputRegions to bgRegions
+                val beforeFilteringBgRegionsNum = bgRegions.size
+
+                // In bedtools shuffle, it is important to find a random point in an allowed background, and
+                // a sampled region could just intersect but not be included in the allowed area
+                // this corresponds to sampling alg used for a BED-based background.
+                // I.e. we need intersected BG only to place an anchor,
+                // then the resulting region could go out of allowed genome and bg.
+
+                // For the consistency with sampling results let's expect that input regions also intersect
+                // the background and could be not fully included into bg:
+                bgRegions = bgRegions.intersectRanges(genomeAllowedAreaFilter) as LocationsMergingList
+
+                LOG.info("Background regions: Allowed regions: ${bgRegions.size.formatLongNumber()} regions of ${beforeFilteringBgRegionsNum.formatLongNumber()}")
             }
 
-            LOG.info("Applying allowed regions filters...")
-            val allowedBg = bgRegions.intersectRanges(allowedGenomeFilter) as LocationsMergingList
-            val allowedInputRegions = inputRegions.filter { allowedGenomeFilter.includes(it) }
+            if (genomeMaskedAreaFilter != null) {
+                LOG.info("Background regions: Applying masked area filter...")
 
-            LOG.info("Background regions (all filters applied): ${allowedBg.size.formatLongNumber()} regions of ${bgRegions.size.formatLongNumber()}")
-            LOG.info("Input regions (all filters applied): ${allowedInputRegions.size.formatLongNumber()} regions of ${inputRegions.size.formatLongNumber()}")
-            return allowedInputRegions to allowedBg
+                val beforeFilteringBgRegionsNum = bgRegions.size
+
+                // These points are anchor points, if they are in `genomeMaskedAreaFilter`, then resulting regions
+                // will be dismissed after sampling => we could remove them now.
+                // But later checks still required because region started in valid location could intersect some masked.
+                bgRegions = bgRegions.intersectRanges(genomeMaskedAreaFilter.makeComplementary()) as LocationsMergingList
+
+                LOG.info("Background regions: W/o masked regions: ${bgRegions.size.formatLongNumber()} regions of ${beforeFilteringBgRegionsNum.formatLongNumber()}")
+            }
+            return bgRegions
         }
     }
 }

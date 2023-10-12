@@ -35,14 +35,14 @@ object EnrichmentInLoi {
     fun doCalculations(
         opts: SharedSamplingOptions,
         enrichmentOpts: SharedEnrichmentOptions,
-        mergeRegionsToBg: Boolean, // add input regions to background if they are missing there
+        mergeInputRegionsToBg: Boolean, // add input regions to background if they are missing there
         backgroundIsMethylome: Boolean,
         zeroBasedBackground: Boolean,
         bedBgFlnk: Int,
     ) {
         val loiFolderPath = enrichmentOpts.loiFolderPath
         val outputBasename = opts.outputBaseName
-        val limitResultsToSpecificLocation = opts.limitResultsToSpecificLocation
+        val truncateRangesToSpecificLocation = opts.truncateRangesToSpecificLocation
 
         val reportPath = "${outputBasename}${enrichmentOpts.metric.column}.tsv".toPath()
         val detailedReportFolder =
@@ -50,11 +50,24 @@ object EnrichmentInLoi {
 
         val gq = opts.genome.toQuery()
 
-        val limitResultsToSpecificLocationFilter: LocationsMergingList? = limitResultsToSpecificLocation?.let {
-            LocationsMergingList.create(gq, listOf(limitResultsToSpecificLocation))
+        val truncateRangesToSpecificLocationFilter: LocationsMergingList? = truncateRangesToSpecificLocation?.let {
+            LocationsMergingList.create(gq, listOf(truncateRangesToSpecificLocation))
         }
+        val genomeAllowedAreaFilter = opts.genomeAllowedAreaPath?.let {
+            RegionShuffleStats.readGenomeAreaFilter(it, gq)
+        }
+        val genomeMaskedAreaFilter = opts.genomeMaskedAreaPath?.let {
+            RegionShuffleStats.readGenomeAreaFilter(it, gq)
+        }
+
         val loiInfos: List<LoiInfo> = loiLocationBaseFilterList(
-            opts, enrichmentOpts.loiNameSuffix, gq, limitResultsToSpecificLocationFilter, loiFolderPath
+            opts,
+            enrichmentOpts.loiNameSuffix,
+            gq,
+            genomeAllowedAreaFilter,
+            genomeMaskedAreaFilter,
+            truncateRangesToSpecificLocationFilter,
+            loiFolderPath
         )
 
         RegionShuffleStatsFromBedCoverage(
@@ -70,10 +83,10 @@ object EnrichmentInLoi {
             hypAlt = enrichmentOpts.hypAlt,
             aSetIsRegions = enrichmentOpts.aSetIsRegions,
             mergeOverlapped = opts.mergeOverlapped,
-            intersectionFilter = limitResultsToSpecificLocationFilter,
-            genomeMaskedAreaPath = opts.genomeMaskedAreaPath,
-            genomeAllowedAreaPath = opts.genomeAllowedAreaPath,
-            mergeRegionsToBg = mergeRegionsToBg,
+            truncateFilter = truncateRangesToSpecificLocationFilter,
+            genomeAllowedAreaFilter = genomeAllowedAreaFilter,
+            genomeMaskedAreaFilter = genomeMaskedAreaFilter,
+            mergeInputRegionsToBg = mergeInputRegionsToBg,
             samplingWithReplacement = opts.samplingWithReplacement,
             backgroundIsMethylome = backgroundIsMethylome,
             zeroBasedBackground = zeroBasedBackground,
@@ -90,24 +103,21 @@ object EnrichmentInLoi {
         opt: SharedSamplingOptions,
         loiNameSuffix: String?,
         gq: GenomeQuery,
-        loiLocationBaseFilterList: LocationsMergingList?,
+        genomeAllowedAreaFilter: LocationsMergingList?,
+        genomeMaskedAreaFilter: LocationsMergingList?,
+        truncateFilter: LocationsMergingList?,
         loiFolderPath: Path
     ): List<LoiInfo> {
-        val allowedGenomeFilter: LocationsMergingList? = RegionShuffleStats.makeAllowedRegionsFilter(
-            opt.genomeMaskedAreaPath, opt.genomeAllowedAreaPath, gq
-        )
-        val loiFilter = when {
-            loiLocationBaseFilterList == null -> allowedGenomeFilter
-            allowedGenomeFilter == null -> loiLocationBaseFilterList
-            else -> allowedGenomeFilter.intersectRanges(loiLocationBaseFilterList) as LocationsMergingList
-        }
-
         val filesStream = when {
             loiFolderPath.isDirectory -> Files.list(loiFolderPath)
             else -> Stream.of(loiFolderPath)
         }
         val loiInfosFiltered: List<LoiInfo> = collectLoiFrom(
-            filesStream, gq, opt.mergeOverlapped, loiFilter, loiNameSuffix
+            filesStream, gq, opt.mergeOverlapped,
+            genomeAllowedAreaFilter = genomeAllowedAreaFilter,
+            genomeMaskedAreaFilter = genomeMaskedAreaFilter,
+            truncateFilter = truncateFilter,
+            loiNameSuffix = loiNameSuffix
         )
 
         require(loiInfosFiltered.isNotEmpty()) {
@@ -116,11 +126,69 @@ object EnrichmentInLoi {
         return loiInfosFiltered
     }
 
+    fun processInputRegions(
+        inputRegionsPath: Path,
+        gq: GenomeQuery,
+        genomeAllowedAreaFilter: LocationsMergingList?,
+        genomeMaskedAreaFilter: LocationsMergingList?,
+    ): List<Location> {
+        val (inputRegions, recordsNumber) = RegionShuffleStats.readLocationsIgnoringStrand(inputRegionsPath, gq)
+        LOG.info("Loaded input regions: ${inputRegions.size.formatLongNumber()} regions of ${recordsNumber.formatLongNumber()} lines.")
+
+        return filterRegions(
+            "Input Regions", inputRegions,
+            genomeAllowedAreaFilter = genomeAllowedAreaFilter,
+            genomeMaskedAreaFilter = genomeMaskedAreaFilter
+        )
+    }
+
+    fun filterRegions(
+        regionTypeLabel: String,
+        regions: List<Location>,
+        genomeAllowedAreaFilter: LocationsMergingList?,
+        genomeMaskedAreaFilter: LocationsMergingList?
+    ): List<Location> {
+        // Here no need in intersecting input with `SharedSamplingOptions.truncateRangesToSpecificLocation`
+
+        LOG.info("$regionTypeLabel: ${regions.size.formatLongNumber()} regions")
+
+        val allowed = if (genomeAllowedAreaFilter != null) {
+            LOG.info("$regionTypeLabel: Applying allowed area filter...")
+
+            val filtered = regions.filter { genomeAllowedAreaFilter.intersects(it) }
+            LOG.info("$regionTypeLabel: [DONE] Allowed-filtered regions: ${filtered.size.formatLongNumber()} regions of ${regions.size.formatLongNumber()}")
+
+            filtered
+        } else {
+            regions
+        }
+
+        val allowedAndMasked = if (genomeMaskedAreaFilter != null) {
+            LOG.info("$regionTypeLabel: Applying masked area filter...")
+
+            // In bedtools shuffle rejects sampled regions if they intersect masked area => let's exclude input
+            // regions intersecting masked area for the consistency with sampling.
+            // Let's keep the background unchanged and verify intersection with masked area later after the candidate
+            // region is sampled
+            val filtered = allowed.filterNot { genomeMaskedAreaFilter.intersects(it) }
+
+            LOG.info("$regionTypeLabel: [DONE] w/o masked: ${filtered.size.formatLongNumber()} regions of ${allowed.size.formatLongNumber()}")
+
+            filtered
+        } else {
+            allowed
+        }
+
+        return allowedAndMasked
+    }
+
     fun collectLoiFrom(
         filesStream: Stream<Path>,
         gq: GenomeQuery,
         mergeOverlapped: Boolean,
-        loiFilter: LocationsMergingList?,
+        genomeAllowedAreaFilter: LocationsMergingList?,
+        genomeMaskedAreaFilter: LocationsMergingList?,
+        truncateFilter: LocationsMergingList?,
         loiNameSuffix: String?
     ): List<LoiInfo> = filesStream.filter { path ->
         loiNameSuffix == null || path.name.endsWith(loiNameSuffix)
@@ -130,14 +198,19 @@ object EnrichmentInLoi {
         val (locList, nLoadedLoi, nRecords) = RegionShuffleStats.readLocationsIgnoringStrand(
             path, gq, mergeOverlapped
         )
-        val filteredLocList = if (loiFilter == null) {
-            locList
-        } else {
-            val filteredIterator = locList.intersectRanges(loiFilter).locationIterator()
-            when {
-                mergeOverlapped -> LocationsMergingList.create(gq, filteredIterator)
-                else -> LocationsSortedList.create(gq, filteredIterator)
-            }
+
+        val filteredLoi = filterRegions(
+            "LOI [${path.fileName}]", locList.asLocationSequence().toList(), 
+            genomeAllowedAreaFilter, genomeMaskedAreaFilter
+        )
+
+        var filteredLocList: LocationsList<out RangesList> = when {
+            mergeOverlapped -> LocationsMergingList.create(gq, filteredLoi)
+            else -> LocationsSortedList.create(gq, filteredLoi)
+        }
+        
+        if (truncateFilter != null) {
+            filteredLocList = filteredLocList.intersectRanges(truncateFilter)
         }
         // LOG.warn("DEBUG REGIONS=${locList.asLocationSequence().joinToString { it.toString() }}")
 
@@ -240,9 +313,12 @@ object EnrichmentInLoi {
 
             acceptsAll(
                 listOf("limit-intersect"),
-                "Intersect LOI & simulated results with given range 'chromosome:start-end'" +
+                "Truncate LOI & simulated results by range 'chromosome:start-end'" +
                         " before over-representation test. 'start' offset 0-based, 'end' offset exclusive, i.e" +
-                        " [start, end)"
+                        " [start, end). Regions will be simulated from background and truncated before metric " +
+                        " calculation. E.g. could be used to estimate over-representation in context of specific " +
+                        " region, e.g. HLA locus. It is not the same as limit background only to HLA locus and " +
+                        " sample input regions that also overlap the locus."
             )
                 .withRequiredArg()
 
@@ -302,6 +378,11 @@ object EnrichmentInLoi {
                 "a-loi",
                 "Metric is applied to (a,b) where by default 'a' is input/simulated regions regions set," +
                         " 'b' is LOI to check set. This option swaps a and b."
+            )
+
+            accepts(
+                "replace",
+                "Sample with replacement, i.e. sampled regions could intersect each other. By default w/o replacement"
             )
 
             acceptsAll(listOf("a-flanked"), "Flank 'a' ranges at both sides (non-negative dist in bp)")
@@ -413,7 +494,7 @@ object EnrichmentInLoi {
         val simulationsNumber: Int,
         val setRetries: Int,
         val regionRetries: Int,
-        val limitResultsToSpecificLocation: Location?,
+        val truncateRangesToSpecificLocation: Location?,
         val inputRegions: Path,
         val mergeOverlapped: Boolean,
         val genomeMaskedAreaPath: Path?,
@@ -473,6 +554,8 @@ object EnrichmentInLoi {
                 it, genome, chromSizesPath
             )
         }
+        // TODO: LOI, SAMPLED & INPUT , e.g. lightweitgh allowed regions ?
+        // TODO: or just LOI ?
         logger.info("INTERSECT LOI & SAMPLED REGIONS WITH RANGE: ${limitResultsToSpecificLocation ?: "N/A"}")
 
         val inputRegions = options.valueOf("regions") as Path
@@ -500,7 +583,7 @@ object EnrichmentInLoi {
             simulationsNumber = simulationsNumber,
             setRetries = setRetries,
             regionRetries = regionRetries,
-            limitResultsToSpecificLocation = limitResultsToSpecificLocation,
+            truncateRangesToSpecificLocation = limitResultsToSpecificLocation,
             inputRegions = inputRegions,
             mergeOverlapped = mergeOverlapped,
             genomeMaskedAreaPath = genomeMaskedAreaPath,

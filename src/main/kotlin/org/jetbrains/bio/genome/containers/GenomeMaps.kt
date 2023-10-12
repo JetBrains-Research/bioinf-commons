@@ -1,8 +1,6 @@
 package org.jetbrains.bio.genome.containers
 
-import org.jetbrains.bio.genome.Chromosome
-import org.jetbrains.bio.genome.GenomeQuery
-import org.jetbrains.bio.genome.Strand
+import org.jetbrains.bio.genome.*
 import org.jetbrains.bio.util.await
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
@@ -175,4 +173,15 @@ class GenomeStrandMap<T> internal constructor(
         result = 31 * result + data.hashCode()
         return result
     }
+}
+
+fun ChromosomeRange.intersectMap(regionsMap: GenomeMap<MutableList<Range>>): Boolean {
+    val list = regionsMap[chromosome]
+    val range = this.toRange()
+    for (r in list) {
+        if (r intersects range) {
+            return true
+        }
+    }
+    return false
 }

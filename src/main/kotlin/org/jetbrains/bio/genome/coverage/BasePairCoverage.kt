@@ -3,6 +3,7 @@ package org.jetbrains.bio.genome.coverage
 import com.google.common.base.MoreObjects
 import gnu.trove.list.TIntList
 import gnu.trove.list.array.TIntArrayList
+import gnu.trove.map.hash.TIntIntHashMap
 import gnu.trove.set.hash.TIntHashSet
 import kotlinx.support.jdk7.use
 import org.apache.commons.csv.CSVFormat
@@ -137,11 +138,54 @@ class BasePairCoverage private constructor(
         }
     }
 
+    /**
+     * Builds an index mapping from a subset coverage to the original full coverage, based on the provided coverage data.
+     * Assumes that this coverage is subset.
+     *
+     * @param fullCov The coverage data of the original full methylome.
+     * @return A map of chromosome to index mapping, where the mapping represents the corresponding indices between the subset methylome and the full methylome.
+     * @throws IllegalArgumentException If the subset methylome does not cover all chromosomes in the full methylome.
+     */
+    fun buildIndexMappingTo(
+        fullCov: BasePairCoverage
+    ): Map<Chromosome, TIntIntHashMap> {
+
+        val chrs = genomeQuery.get().filter { data.contains(it) }
+
+        val mapping: Map<Chromosome, TIntIntHashMap> = chrs.map { chr ->
+            val initialCapacity = data[chr].size()
+            chr to TIntIntHashMap(initialCapacity)
+        }.toMap()
+
+        val fullCovData = fullCov.data
+        chrs.forEach { chr ->
+            require(chr in fullCovData) {
+                "Subset methylome should be part of full methylome, but chromosome not covered: $chr"
+            }
+            val anchorOffsets = data[chr]
+            val origOffsets = fullCovData[chr]
+            val chrMapping = mapping[chr]!!
+            var idxOrig: Int = 0
+            for (idxAnchor in 0 until anchorOffsets.size()) {
+                val anchorOffset = anchorOffsets[idxAnchor]
+                while (origOffsets[idxOrig] < anchorOffset) {
+                    idxOrig++
+                }
+                require(anchorOffset == origOffsets[idxOrig]) {
+                    "Subset methylome should be part of full, but subset offset[idx=$idxAnchor]:$anchorOffset" +
+                            " not found in original methylome and doesn't match to offset[idx=$idxOrig]:${origOffsets[idxOrig]}"
+                }
+                chrMapping.put(idxAnchor, idxOrig)
+            }
+        }
+        return mapping
+    }
+
+
     class Builder(val genomeQuery: GenomeQuery, val offsetIsOneBased: Boolean) {
         val data: GenomeMap<TIntList> = genomeMap(genomeQuery) { TIntArrayList() }
 
         private var basePairsCount = 0L
-
 
         /**
          * Add an offset to the coverage being built.

@@ -9,9 +9,8 @@ import org.jetbrains.bio.genome.containers.LocationsSortedList
 import org.jetbrains.bio.genome.containers.RangesList
 import org.jetbrains.bio.genome.coverage.BasePairCoverage
 import org.jetbrains.bio.genome.sampling.shuffleChromosomeRanges
+import org.jetbrains.bio.gsea.EnrichmentInLoi.processInputRegions
 import org.jetbrains.bio.gsea.RegionShuffleStats.Companion.sampleRegions
-import org.jetbrains.bio.gsea.RegionShuffleStatsFromMethylomeCoverage.Companion.ensureInputRegionsMatchesBackgound
-import org.jetbrains.bio.gsea.RegionShuffleStatsFromMethylomeCoverage.Companion.filterInputRegionsAndMethylomeCovBackground
 import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
@@ -19,6 +18,8 @@ import java.util.concurrent.ThreadLocalRandom
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.random.Random
+import kotlin.random.asKotlinRandom
 
 object SamplingMethylationValidation {
     private val LOG = LoggerFactory.getLogger(SamplingMethylationValidation::class.java)
@@ -90,9 +91,12 @@ object SamplingMethylationValidation {
 
             acceptsAll(
                 listOf("limit-intersect"),
-                "Intersect LOI & simulated results with given range 'chromosome:start-end'" +
+                "Truncate LOI & simulated results by range 'chromosome:start-end'" +
                         " before over-representation test. 'start' offset 0-based, 'end' offset exclusive, i.e" +
-                        " [start, end)"
+                        " [start, end). Regions will be simulated from background and truncated before metric " +
+                        " calculation. E.g. could be used to estimate over-representation in context of specific " +
+                        " region, e.g. HLA locus. It is not the same as limit background only to HLA locus and " +
+                        " sample input regions that also overlap the locus."
             )
                 .withRequiredArg()
 
@@ -242,40 +246,47 @@ object SamplingMethylationValidation {
         lengthCorrectionMethod: String?
     ) {
 
-        //-------------------
-        val limitResultsToSpecificLocation = opts.limitResultsToSpecificLocation
+        val truncateRangesToSpecificLocation = opts.truncateRangesToSpecificLocation
         val gq = opts.genome.toQuery()
 
         val detailedReportFolder = "${opts.outputBaseName}sampling${opts.simulationsNumber}_stats".toPath()
 
-        val limitResultsToSpecificLocationFilter: LocationsMergingList? = limitResultsToSpecificLocation?.let {
-            LocationsMergingList.create(gq, listOf(limitResultsToSpecificLocation))
+        //-------------------
+        val truncateRangesToSpecificLocationFilter: LocationsMergingList? = truncateRangesToSpecificLocation?.let {
+            LocationsMergingList.create(gq, listOf(truncateRangesToSpecificLocation))
+        }
+        val genomeAllowedAreaFilter = opts.genomeAllowedAreaPath?.let {
+            RegionShuffleStats.readGenomeAreaFilter(it, gq)
+        }
+        val genomeMaskedAreaFilter = opts.genomeMaskedAreaPath?.let {
+            RegionShuffleStats.readGenomeAreaFilter(it, gq)
         }
 
-        // Load Input regions, methylome + filter allowed regions / methylome
-        val inputRegions = RegionShuffleStatsFromMethylomeCoverage.loadInputRegions(opts.inputRegions, gq)
-        val methylomeCov = RegionShuffleStatsFromMethylomeCoverage.loadMethylomeCovBackground(
-                methylomePath, zeroBasedMethylome, gq
-        )
+        //-------------------
 
-        val (inputRegionsFiltered, methylomeCovFiltered) = filterInputRegionsAndMethylomeCovBackground(
-            inputRegions, methylomeCov, opts.genomeMaskedAreaPath,
-            opts.genomeAllowedAreaPath, gq
+        // Load Input regions, methylome + filter allowed regions / methylome
+        val inputRegionsFiltered = processInputRegions(
+            opts.inputRegions, gq,
+            genomeAllowedAreaFilter = genomeAllowedAreaFilter,
+            genomeMaskedAreaFilter = genomeMaskedAreaFilter
         )
-        ensureInputRegionsMatchesBackgound(inputRegionsFiltered, methylomeCovFiltered, methylomePath)
         require(inputRegionsFiltered.isNotEmpty()) {
             "Regions file is empty or all regions were removed by filters."
         }
 
-        // Make a filtered BED background from methylome if required
-        val filteredBedBackground = if (sampleFromBEDBackground) {
+        val backgroundMethSampling = RegionShuffleStatsFromMethylomeCoverage.backgroundProviderFun(
+            inputRegionsFiltered, methylomePath, zeroBasedMethylome, gq,
+            genomeAllowedAreaFilter = genomeAllowedAreaFilter,
+            genomeMaskedAreaFilter = genomeMaskedAreaFilter,
+        )
+
+        // Make a filtered BED backgroundMethSampling from methylome if required
+        val filteredBedBackgroundFromMethylome = if (sampleFromBEDBackground) {
             makeFilteredBEDBackgroundFromMethylome(
                 gq,
-                methylomeCov,
+                backgroundMethSampling.anchorMethylome,
                 bedBgFlnk,
-                inputRegions,
-                opts.genomeMaskedAreaPath,
-                opts.genomeAllowedAreaPath,
+                inputRegionsFiltered,
                 mergeRegionsToBedBg
             )
         } else {
@@ -286,10 +297,15 @@ object SamplingMethylationValidation {
             opts.mergeOverlapped -> LocationsMergingList.create(gq, inputRegionsFiltered)
             else -> LocationsSortedList.create(gq, inputRegionsFiltered)
         }
+        val inputRegionsPreprocessed = inputRegionsListFiltered.asLocationSequence().toList()
+
+        // Use full methylome, not anchor. Because finally sampled regions will be sampled from full methylome
+        // with a point from anchor methylome
+        val methylomeForRegionsCoverageHistograms = backgroundMethSampling.fullMethylome
 
         // Sample regions
-        val inputRegionsPreprocessed = inputRegionsListFiltered.asLocationSequence().toList()
         if (!sampleFromBEDBackground) {
+            // Sample from methylome BG
             sampleAndCollectMetrics(
                 inputRegionsPreprocessed,
                 simulationsNumber = opts.simulationsNumber,
@@ -298,11 +314,12 @@ object SamplingMethylationValidation {
                 singleRegionMaxRetries = opts.regionRetries,
                 gq = gq,
                 outputFolderPath = detailedReportFolder,
-                intersectionFilter = limitResultsToSpecificLocationFilter,
+                truncateFilter = truncateRangesToSpecificLocationFilter,
                 samplingWithReplacement = opts.samplingWithReplacement,
-                methylomeBackground = methylomeCovFiltered,
-                samplingBackground = methylomeCovFiltered,
+                methylomeForRegionsCoverageHistograms = methylomeForRegionsCoverageHistograms,
+                samplingBackground = backgroundMethSampling,
                 samplingFun = { genomeQuery, regions, background, regionSetMaxRetries, singleRegionMaxRetries, withReplacement ->
+                    val threadLocalRandom = ThreadLocalRandom.current().asKotlinRandom()
                     val res = RegionShuffleStatsFromMethylomeCoverage.shuffleChromosomeRanges(
                         genomeQuery,
                         regions,
@@ -312,13 +329,16 @@ object SamplingMethylationValidation {
                         withReplacement = withReplacement,
                         candidateFilterPredicate = getCandidateFilterPredicate(
                             lengthCorrectionMethod,
-                            regions
-                        )
+                            regions,
+                            randomGen = threadLocalRandom
+                        ),
+                        genomeMaskedAreaFilter = genomeMaskedAreaFilter
                     )
                     res.first.map { it.on(Strand.PLUS) } to res.second
-                }
+                },
             )
         } else {
+            // Sample from BED bg
             sampleAndCollectMetrics(
                 inputRegionsPreprocessed,
                 simulationsNumber = opts.simulationsNumber,
@@ -327,18 +347,21 @@ object SamplingMethylationValidation {
                 singleRegionMaxRetries = opts.regionRetries,
                 gq = gq,
                 outputFolderPath = detailedReportFolder,
-                intersectionFilter = limitResultsToSpecificLocationFilter,
+                truncateFilter = truncateRangesToSpecificLocationFilter,
                 samplingWithReplacement = opts.samplingWithReplacement,
-                methylomeBackground = methylomeCovFiltered,
-                samplingBackground = filteredBedBackground!!,
+                methylomeForRegionsCoverageHistograms = methylomeForRegionsCoverageHistograms,
+                samplingBackground = filteredBedBackgroundFromMethylome!!,
                 samplingFun = { genomeQuery, regions, background, regionSetMaxRetries, singleRegionMaxRetries, withReplacement ->
+                    val threadLocalRandom = ThreadLocalRandom.current().asKotlinRandom()
                     val res = shuffleChromosomeRanges(
                         genomeQuery,
                         regions,
                         background.asLocationSequence().map { it.toChromosomeRange() }.toList(),
                         regionSetMaxRetries = regionSetMaxRetries,
                         singleRegionMaxRetries = singleRegionMaxRetries,
-                        withReplacement = withReplacement
+                        withReplacement = withReplacement,
+                        genomeMaskedAreaFilter = genomeMaskedAreaFilter,
+                        randomGen = threadLocalRandom
                     )
                     res.first.map { it.on(Strand.PLUS) } to res.second
                 }
@@ -348,25 +371,28 @@ object SamplingMethylationValidation {
 
     fun getCandidateFilterPredicate(
         lengthCorrectionMethod: String?,
-        inputRegionsPreprocessed: List<ChromosomeRange>
+        inputRegionsPreprocessed: List<ChromosomeRange>,
+        randomGen: Random
     ): ((ChromosomeRange) -> Double)? {
         return when (lengthCorrectionMethod) {
             null -> null // XXX: default
-            DIST_CORRECTION_APPROACH_NAME -> makeFilterByLengthProbability(inputRegionsPreprocessed)
+            DIST_CORRECTION_APPROACH_NAME -> makeFilterByLengthProbability(inputRegionsPreprocessed, randomGen)
             else -> {
                 // By fixed threshold:
-                val lenThreshold = lengthCorrectionMethod.toInt().toDouble() // UP: 2218, DOWN: 1261/1472
+                val lenThreshold = lengthCorrectionMethod.toInt().toDouble() //e.g. UP: 2218, DOWN: 1261/1472
 
-                ({ chrRange ->
+                val f: (ChromosomeRange) -> Double = { chrRange ->
                     val candLen = chrRange.length()
                     if (candLen <= lenThreshold) 0.0 else min(1.0, candLen / lenThreshold)
-                })
+                }
+                f
             }
         }
     }
 
     private fun makeFilterByLengthProbability(
         inputRegionsPreprocessed: List<ChromosomeRange>,
+        randomGen: Random
     ): ((ChromosomeRange) -> Double) {
         // Get features of input regions distribution for fast filter calculation
         val resampleProb = determineResampleProbabilities(inputRegionsPreprocessed)
@@ -381,8 +407,7 @@ object SamplingMethylationValidation {
             } else {
                 resampleProb[candLen]
             }
-            val r = ThreadLocalRandom.current()
-            val accepted = r.nextDouble() >= prob
+            val accepted = randomGen.nextDouble() >= prob
             if (accepted) 0.0 else prob
         }
     }
@@ -420,33 +445,23 @@ object SamplingMethylationValidation {
         methylomeCov: BasePairCoverage,
         bedBgFlnk: Int,
         inputRegions: List<Location>,
-        genomeMaskedAreaPath: Path?,
-        genomeAllowedAreaPath: Path?,
         mergeRegionsToBg: Boolean
     ): LocationsMergingList {
+        // Here no need in intersecting input or background with `SharedSamplingOptions.truncateRangesToSpecificLocation`
+
         val bgLoci = makeBEDBackgroundFromMethylome(
             gq, methylomeCov, bedBgFlnk,
             if (mergeRegionsToBg) inputRegions else emptyList()
         )
 
         inputRegions.forEach {
-            require(bgLoci.includes(it)) {
-                "BED Background regions are required to include all loci of interest, but the " +
+            require(bgLoci.intersects(it)) {
+                "BED Background regions are supposed to intersect all loci of interest, but the " +
                         "region is missing in bg: ${it.toChromosomeRange()}"
             }
         }
-        val allowedGenomeFilter = RegionShuffleStats.makeAllowedRegionsFilter(
-            genomeMaskedAreaPath, genomeAllowedAreaPath, gq
-        )
 
-        return if (allowedGenomeFilter == null) {
-            bgLoci
-        } else {
-            LOG.info("Applying allowed regions filters to BED background...")
-            val allowedBg = bgLoci.intersectRanges(allowedGenomeFilter) as LocationsMergingList
-            LOG.info("BED background regions (all filters applied): ${allowedBg.size.formatLongNumber()} regions of ${bgLoci.size.formatLongNumber()}")
-            allowedBg
-        }
+        return bgLoci
     }
 
     fun makeBEDBackgroundFromMethylome(
@@ -497,9 +512,9 @@ object SamplingMethylationValidation {
         singleRegionMaxRetries: Int,
         gq: GenomeQuery,
         outputFolderPath: Path,
-        intersectionFilter: LocationsList<out RangesList>? = null,
+        truncateFilter: LocationsList<out RangesList>? = null,
         samplingWithReplacement: Boolean = false,
-        methylomeBackground: BasePairCoverage,
+        methylomeForRegionsCoverageHistograms: BasePairCoverage,
         samplingBackground: T,
         samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Int, Boolean) -> Pair<List<Location>, IntHistogram>
     ) {
@@ -517,7 +532,7 @@ object SamplingMethylationValidation {
         LOG.info("Calc input regions overlap with background distribution...")
         path = outputFolderPath / "input_regions.bg_overlap.hist.tsv"
         IntHistogram.create(
-            inputRegions.map { methylomeBackground.getCoverage(it) }.toIntArray()
+            inputRegions.map { methylomeForRegionsCoverageHistograms.getCoverage(it) }.toIntArray()
         ).save(path, metric_col = "n_cpg")
         LOG.info("[DONE]: $path")
 
@@ -545,7 +560,7 @@ object SamplingMethylationValidation {
                     simulationsInChunk,
                     regionSetMaxRetries = regionSetMaxRetries,
                     singleRegionMaxRetries = singleRegionMaxRetries,
-                    intersectionFilter = intersectionFilter,
+                    truncateFilter = truncateFilter,
                     srcLoci = inputRegions,
                     background = samplingBackground,
                     gq = gq,
@@ -562,7 +577,7 @@ object SamplingMethylationValidation {
                 chunk.forEach { sampledSet ->
                     sampledSet.asLocationSequence().forEach { loc ->
                         sampledCummulativeLengthDist.increment(loc.length())
-                        sampledCummulativeBgOverlapDist.increment(methylomeBackground.getCoverage(loc))
+                        sampledCummulativeBgOverlapDist.increment(methylomeForRegionsCoverageHistograms.getCoverage(loc))
 
                         chunkProgress.report()
                     }

@@ -93,9 +93,12 @@ object MethylationEnrichmentInLoi {
 
             acceptsAll(
                 listOf("limit-intersect"),
-                "Intersect LOI & simulated results with given range 'chromosome:start-end'" +
+                "Truncate LOI & simulated results by range 'chromosome:start-end'" +
                         " before over-representation test. 'start' offset 0-based, 'end' offset exclusive, i.e" +
-                        " [start, end)"
+                        " [start, end). Regions will be simulated from background and truncated before metric " +
+                        " calculation. E.g. could be used to estimate over-representation in context of specific " +
+                        " region, e.g. HLA locus. It is not the same as limit background only to HLA locus and " +
+                        " sample input regions that also overlap the locus."
             )
                 .withRequiredArg()
 
@@ -224,21 +227,30 @@ object MethylationEnrichmentInLoi {
     ) {
         val loiFolderPath = enrichmentOpts.loiFolderPath
         val outputBasename = opts.outputBaseName
-        val limitResultsToSpecificLocation = opts.limitResultsToSpecificLocation
+        val truncateRangesToSpecificLocation = opts.truncateRangesToSpecificLocation
         val gq = opts.genome.toQuery()
 
         val reportPath = "${outputBasename}${enrichmentOpts.metric.column}.tsv".toPath()
         val detailedReportFolder =
             if (enrichmentOpts.detailedReport) "${outputBasename}${enrichmentOpts.metric.column}_stats".toPath() else null
 
-        val limitResultsToSpecificLocationFilter: LocationsMergingList? = limitResultsToSpecificLocation?.let {
-            LocationsMergingList.create(gq, listOf(limitResultsToSpecificLocation))
+        val truncateRangesToSpecificLocationFilter: LocationsMergingList? = truncateRangesToSpecificLocation?.let {
+            LocationsMergingList.create(gq, listOf(truncateRangesToSpecificLocation))
         }
+        val genomeAllowedAreaFilter = opts.genomeAllowedAreaPath?.let {
+            RegionShuffleStats.readGenomeAreaFilter(it, gq)
+        }
+        val genomeMaskedAreaFilter = opts.genomeMaskedAreaPath?.let {
+            RegionShuffleStats.readGenomeAreaFilter(it, gq)
+        }
+
         val loiInfos: List<LoiInfo> = EnrichmentInLoi.loiLocationBaseFilterList(
             opts,
             enrichmentOpts.loiNameSuffix,
             gq,
-            limitResultsToSpecificLocationFilter,
+            genomeAllowedAreaFilter,
+            genomeMaskedAreaFilter,
+            truncateRangesToSpecificLocationFilter,
             loiFolderPath
         )
 
@@ -255,9 +267,9 @@ object MethylationEnrichmentInLoi {
             hypAlt = enrichmentOpts.hypAlt,
             aSetIsRegions = enrichmentOpts.aSetIsRegions,
             mergeOverlapped = opts.mergeOverlapped,
-            intersectionFilter = limitResultsToSpecificLocationFilter,
-            genomeMaskedAreaPath = opts.genomeMaskedAreaPath,
-            genomeAllowedAreaPath = opts.genomeAllowedAreaPath,
+            truncateFilter = truncateRangesToSpecificLocationFilter,
+            genomeAllowedAreaFilter = genomeAllowedAreaFilter,
+            genomeMaskedAreaFilter = genomeMaskedAreaFilter,
             samplingWithReplacement = opts.samplingWithReplacement,
             lengthCorrectionMethod = lengthCorrectionMethod
             // N/A

@@ -9,12 +9,9 @@ import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.Strand
-import org.jetbrains.bio.genome.methylome.CytosineContext
 import org.jetbrains.bio.util.*
 import org.junit.Assert.assertArrayEquals
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import java.awt.Color
 import java.io.IOException
 import java.io.StringWriter
@@ -237,9 +234,7 @@ class BedParserTest {
 Unknown BED format:
 chr1 2000 cloneB - 2000 6000 2 0,3601
 Fields number in BED file is between 3 and 15, but was 2"""
-            Tests.assertThrowsWithMessage(
-                msg, IllegalArgumentException::class.java,
-            ) {
+            Tests.assertThrowsWithMessage(IllegalArgumentException::class.java, msg) {
                 BedFormat.auto(path)
             }
         }
@@ -266,8 +261,8 @@ Fields number in BED file is between 3 and 15, but was 2"""
 
 
             Tests.assertThrowsWithMessage(
-                "Unpacking BED entry failed at field 5. Reason: score value 3.14 is not an integer",
                 BedEntryUnpackException::class.java,
+                "Unpacking BED entry failed at field 5. Reason: score value 3.14 is not an integer",
             ) {
                 autoFormat.parse(path) {
                     it.forEach { entry ->

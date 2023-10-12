@@ -2,11 +2,7 @@ package org.jetbrains.bio.dataframe
 
 import org.jetbrains.bio.Tests
 import org.jetbrains.bio.genome.Range
-import org.jetbrains.bio.util.checkAccessible
-import org.jetbrains.bio.util.toUri
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
@@ -18,8 +14,8 @@ class BitListTest {
     @Test
     fun setIOOB() {
         Tests.assertThrowsWithMessage(
-            "bitIndex >= size: 10 >= 10",
             IndexOutOfBoundsException::class.java,
+            "bitIndex >= size: 10 >= 10",
         ) {
             BitList(10).set(10)
         }
@@ -28,8 +24,8 @@ class BitListTest {
     @Test
     fun setIOOB2() {
         Tests.assertThrowsWithMessage(
-            "toIndex > size: 0 > 10",
             IndexOutOfBoundsException::class.java,
+            "toIndex > size: 0 > 10",
         ) {
             BitList(10).set(0, 11, true)
         }
@@ -38,8 +34,8 @@ class BitListTest {
     @Test
     fun clearIOOB() {
         Tests.assertThrowsWithMessage(
-            "bitIndex >= size: 10 >= 10",
             IndexOutOfBoundsException::class.java,
+            "bitIndex >= size: 10 >= 10",
         ) {
             BitList(10).clear(10)
         }
@@ -49,8 +45,8 @@ class BitListTest {
     @Test
     fun clearIOOB2() {
         Tests.assertThrowsWithMessage(
-            "toIndex > size: 0 > 10",
             IndexOutOfBoundsException::class.java,
+            "toIndex > size: 0 > 10",
         ) {
             BitList(10).clear(0, 11)
         }

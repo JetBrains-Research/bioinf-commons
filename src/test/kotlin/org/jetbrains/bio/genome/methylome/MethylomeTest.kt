@@ -1,19 +1,14 @@
 package org.jetbrains.bio.genome.methylome
 
 import com.google.common.math.IntMath
-import com.google.gson.JsonParseException
 import org.apache.commons.math3.distribution.BinomialDistribution
 import org.jetbrains.bio.Tests
 import org.jetbrains.bio.dataframe.dumpHead
 import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Strand
-import org.jetbrains.bio.statistics.model.Boo
-import org.jetbrains.bio.statistics.model.ClassificationModel
 import org.jetbrains.bio.util.withTempFile
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -169,8 +164,8 @@ class MethylomeTest {
         builder.add(chromosome, Strand.PLUS, 42, CytosineContext.CG, 15, 20)
 
         Tests.assertThrowsWithMessage(
-            "Cannot access minus strand in strand-independent methylome",
             IllegalArgumentException::class.java,
+            "Cannot access minus strand in strand-independent methylome",
         ) {
             builder.build()[chromosome, Strand.MINUS]
         }
@@ -182,8 +177,9 @@ class MethylomeTest {
         val chromosome = genomeQuery.get().first()
 
         Tests.assertThrowsWithMessage(
+            IllegalArgumentException::class.java,
             "Cannot add data to minus strand in strand-independent methylome",
-            IllegalArgumentException::class.java, partialMessageMatch = true
+            partialMessageMatch = true
         ) {
             builder.add(chromosome, Strand.MINUS, 43, CytosineContext.CG, 5, 20)
         }
@@ -196,8 +192,9 @@ class MethylomeTest {
         val chromosome = genomeQuery.get().first()
 
         Tests.assertThrowsWithMessage(
+            IllegalArgumentException::class.java,
             "CHH context isn't allowed in strand-independent methylome",
-            IllegalArgumentException::class.java, partialMessageMatch = true
+            partialMessageMatch = true
         ) {
             builder.add(chromosome, Strand.PLUS, 42, CytosineContext.CHH, 10, 20)
         }

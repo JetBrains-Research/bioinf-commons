@@ -1,11 +1,7 @@
 package org.jetbrains.bio.util
 
 import org.jetbrains.bio.Tests.assertThrowsWithMessage
-import org.junit.Assert
-import org.junit.Rule
 import org.junit.Test
-import org.junit.function.ThrowingRunnable
-import org.junit.rules.ExpectedException
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -34,8 +30,8 @@ class StringCompressorTest {
         assertTrue(chunk.finished, "Chunk should be finished after finish() invocation.")
 
         assertThrowsWithMessage(
-            "finished StringCompressorChunk",
             IllegalStateException::class.java,
+            "finished StringCompressorChunk",
             partialMessageMatch = true
         ) {
             chunk.compress("bar")
@@ -51,8 +47,8 @@ class StringCompressorTest {
         assertTrue(chunk.finished, "Chunk should be finished after reaching flush threshold.")
 
         assertThrowsWithMessage(
-            "finished StringCompressorChunk",
             IllegalStateException::class.java,
+            "finished StringCompressorChunk",
             partialMessageMatch = true
         ) {
             chunk.compress("foo")

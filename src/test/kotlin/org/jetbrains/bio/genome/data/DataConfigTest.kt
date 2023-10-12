@@ -1,5 +1,6 @@
 package org.jetbrains.bio.genome.data
 
+import org.jetbrains.bio.Tests
 import org.jetbrains.bio.util.bufferedWriter
 import org.jetbrains.bio.util.stem
 import org.jetbrains.bio.util.withTempDirectory
@@ -7,7 +8,10 @@ import org.jetbrains.bio.util.withTempFile
 import org.junit.Test
 import java.io.StringWriter
 import java.util.regex.Pattern
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class DataConfigTest {
     @Suppress("UNCHECKED_CAST")
@@ -133,7 +137,7 @@ tracks:
 
     @Test
     fun testNonExistentFile() {
-        assertFailsWith<IllegalStateException> {
+        Tests.assertThrowsWithMessage(IllegalStateException::class.java) {
             val config = """genome: to1
 tracks:
    methylation:

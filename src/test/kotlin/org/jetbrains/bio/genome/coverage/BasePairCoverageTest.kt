@@ -89,8 +89,8 @@ class BasePairCoverageTest {
             trackPath.write(COVERAGE_WRONG_CHR)
 
             Tests.assertThrowsWithMessage(
+                IllegalArgumentException::class.java,
                 "Unknown chromosome 'chrA' for genome: 'Test Organism: to1 [test]'",
-                IllegalArgumentException::class.java
             ) {
                 BasePairCoverage.loadFromTSV(gq, trackPath, false)
             }
@@ -154,27 +154,27 @@ class BasePairCoverageTest {
     @Test
     fun testBuilderRangeCheck() {
         Tests.assertThrowsWithMessage(
+            IllegalArgumentException::class.java,
             "Zero-based offset should be >= 1, but was: -1",
-            IllegalArgumentException::class.java
         ) {
             BasePairCoverage.builder(gq, offsetIsOneBased = false).process(chr1, -1)
         }
         Tests.assertThrowsWithMessage(
+            IllegalArgumentException::class.java,
             "One-based offset should be < 10000000 (chr1 size), but was: 10000000",
-            IllegalArgumentException::class.java
         ) {
             BasePairCoverage.builder(gq, offsetIsOneBased = false).process(chr1, chr1.length)
         }
 
         Tests.assertThrowsWithMessage(
+            IllegalArgumentException::class.java,
             "One-based offset should be >= 1, but was: 0",
-            IllegalArgumentException::class.java
         ) {
             BasePairCoverage.builder(gq, offsetIsOneBased = true).process(chr1, 0)
         }
         Tests.assertThrowsWithMessage(
+            IllegalArgumentException::class.java,
             "One-based offset should be <= 10000000 (chr1 size), but was: 10000001",
-            IllegalArgumentException::class.java
         ) {
             BasePairCoverage.builder(gq, offsetIsOneBased = true).process(chr1, chr1.length + 1)
         }
@@ -672,5 +672,76 @@ class BasePairCoverageTest {
         assertEquals(5, cov.depth)
         assertEquals("{2, 5, 10}", cov.data[chr1].toString())
         assertEquals("{3, 15}", cov.data[chr2].toString())
+    }
+
+    @Test
+    fun testBuildIndexMappingTo() {
+        val filter = LocationsMergingList.create(
+            gq,
+            listOf(
+                Location(0, 2, chr1),
+                Location(3, 21, chr1, Strand.MINUS),
+                Location(24, 30, chr1),
+            )
+        )
+        val cov = BasePairCoverage.builder(gq, offsetIsOneBased = false)
+            .process(chr1, 9)
+            .process(chr1, 0)
+            .process(chr1, 1)
+            .process(chr1, 2)
+            .process(chr1, 8)
+            .process(chr1, 5)
+            .process(chr1, 24)
+            .process(chr1, 25)
+            .process(chr1, 29)
+            .process(chr1, 30)
+            .process(chr1, 31)
+            .build(unique = false)
+
+        val filteredCov = cov.filter(filter, includeRegions = false)
+
+        val filteredDepth = filteredCov.depth.toInt()
+        require(filteredDepth == 6) { "Actual: $filteredDepth"}
+
+        Tests.assertThrowsWithMessage(
+            java.lang.IllegalArgumentException::class.java,
+            message = "Subset methylome should be part of full, but subset offset[idx=0]:0 not found in original methylome and doesn't match to offset[idx=0]:2",
+        ) {
+            cov.buildIndexMappingTo(filteredCov)
+        }
+
+        val mapping = filteredCov.buildIndexMappingTo(cov)
+        for (i in 0 until filteredDepth) {
+            val j = mapping[chr1]!![i]
+            assertEquals(filteredCov.data[chr1][i], cov.data[chr1][j], "Offset: $i -> $j")
+        }
+
+        assertEquals(gq.get().size, mapping.size)
+        assertEquals(0, mapping[chr2]!!.size())
+
+        assertEquals(6, mapping[chr1]!!.size())
+        assertEquals(2, mapping[chr1]!![0])
+        assertEquals(3, mapping[chr1]!![1])
+        assertEquals(4, mapping[chr1]!![2])
+        assertEquals(5, mapping[chr1]!![3])
+        assertEquals(9, mapping[chr1]!![4])
+        assertEquals(10, mapping[chr1]!![5])
+    }
+
+    @Test
+    fun testBuildIndexMappingToIdentical() {
+        val cov = BasePairCoverage.builder(gq, offsetIsOneBased = false)
+            .process(chr1, 9)
+            .process(chr1, 0)
+            .process(chr1, 5)
+            .build(unique = false)
+
+        val mapping = cov.buildIndexMappingTo(cov)
+        assertEquals(gq.get().size, mapping.size)
+        assertEquals(3, mapping[chr1]!!.size())
+        assertEquals(0, mapping[chr2]!!.size())
+        assertEquals(0, mapping[chr1]!![0])
+        assertEquals(1, mapping[chr1]!![1])
+        assertEquals(2, mapping[chr1]!![2])
     }
 }

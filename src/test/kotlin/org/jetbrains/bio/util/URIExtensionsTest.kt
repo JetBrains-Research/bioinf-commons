@@ -2,9 +2,7 @@ package org.jetbrains.bio.util
 
 import org.jetbrains.bio.Tests
 import org.junit.Assume
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import java.io.File
 import java.io.InputStreamReader
 import java.net.URI
@@ -83,8 +81,8 @@ class URIExtensionsTest {
         val url = "http://www.encodeproject.org/files/@@download/foo.bigWig"
 
         Tests.assertThrowsWithMessage(
-            "Cannot convert URL to path: $url",
             IllegalArgumentException::class.java,
+            "Cannot convert URL to path: $url",
         ) {
             URI.create(url).toPath()
         }
@@ -218,8 +216,8 @@ class URIExtensionsTest {
         Assume.assumeTrue(isWindows())
 
         Tests.assertThrowsWithMessage(
-            "Illegal character in path at index 10: file:///C:\\mnt\\stripe\\foo.bw",
             IllegalArgumentException::class.java,
+            "Illegal character in path at index 10: file:///C:\\mnt\\stripe\\foo.bw",
         ) {
             "file:///C:\\mnt\\stripe\\foo.bw".toUri()
         }
@@ -247,8 +245,8 @@ class URIExtensionsTest {
             path.deleteIfExists()
 
             Tests.assertThrowsWithMessage(
-                "Track file doesn't exist: $path",
                 IllegalStateException::class.java,
+                "Track file doesn't exist: $path",
             ) {
                 path.toUri().checkAccessible()
             }
@@ -266,8 +264,8 @@ class URIExtensionsTest {
     @Test
     fun checkAccessibleURI() {
         Tests.assertThrowsWithMessage(
-            "URL not supported: foo://boo",
             IllegalStateException::class.java,
+            "URL not supported: foo://boo",
         ) {
             "foo://boo".toUri().checkAccessible()
         }

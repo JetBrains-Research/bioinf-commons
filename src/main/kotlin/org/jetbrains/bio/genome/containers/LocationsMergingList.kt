@@ -69,6 +69,9 @@ class LocationsMergingList private constructor(
         return builder.build()
     }
 
+    fun makeComplementary(): LocationsMergingList =
+        this.apply { rl, chr, _strand -> rl.complementaryRanges(chr.length) }
+
     class Builder(gq: GenomeQuery) : LocationsListBuilder<LocationsMergingList>(gq) {
         override fun build() = LocationsMergingList(genomeStrandMap(genomeQuery) { chromosome, strand ->
             ranges[chromosome, strand].toRangeMergingList()

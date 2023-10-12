@@ -111,6 +111,34 @@ class LocationsMergingListTest {
         assertEquals(2, locationList.intersectBothStrands(Location(90, 310, chromosome, Strand.MINUS)).size)
     }
 
+    @Test
+    fun testMakeComplementary() {
+        val ll = testList(
+            Location(10, 100, chromosome, Strand.PLUS),
+            Location(50, 130, chromosome, Strand.MINUS),
+            Location(200, 230, chromosome, Strand.PLUS),
+            Location(200, 280, chromosome, Strand.PLUS),
+        ).makeComplementary()
+
+        val gq = ll.genomeQuery
+
+
+        val expected = arrayListOf(
+            Location(0, 10, chromosome),
+            Location(100, 200, chromosome),
+            Location(280, chromosome.length, chromosome),
+            Location(0, 50, chromosome, Strand.MINUS),
+            Location(130, chromosome.length, chromosome, Strand.MINUS)
+        )
+        gq.get().drop(1).forEach { chr ->
+            expected.add(Location(0, chr.length, chr, Strand.PLUS))
+            expected.add(Location(0, chr.length, chr, Strand.MINUS))
+        }
+        assertEquals(
+            expected.sorted(),
+            ll.toList().sorted()
+        )
+    }
     companion object {
         private val chromosome = Chromosome(Genome["to1"], "chr1")
     }
