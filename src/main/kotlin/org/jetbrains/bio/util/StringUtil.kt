@@ -1,8 +1,18 @@
 package org.jetbrains.bio.util
 
 import org.apache.commons.math3.util.Precision
+import java.io.File
 import java.util.*
 
+fun String.separatorsToSystem(): String {
+    return if (File.separatorChar == '\\') {
+        // From Windows to Linux/Mac
+        this.replace('/', File.separatorChar)
+    } else {
+        // From Linux/Mac to Windows
+        this.replace('\\', File.separatorChar)
+    }
+}
 fun Long.formatLongNumber(universalThousandsSeparator:Boolean=false): String {
     // XXX: Depending on country the thousands separator could be '.'
     // (e.g. Germany) or ',' (e.g. US).
