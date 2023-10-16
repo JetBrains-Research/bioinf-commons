@@ -261,9 +261,9 @@ object EnrichmentInLoi {
                 "methylome-zero",
                 "If background is methylome and methylome offsets are in 0-based format instead of 1-based."
             )
-            acceptsAll(listOf("methylome-flnk"), "Flanking region radius for methylome background. (default: 50)")
+            acceptsAll(listOf("methylome-flnk"), "Flanking region radius for methylome background.")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(50)
 
             accepts(
@@ -349,7 +349,7 @@ object EnrichmentInLoi {
 
             acceptsAll(listOf("s", "simulations"), "Sampled regions sets number")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(100_000)
 
             acceptsAll(
@@ -357,21 +357,21 @@ object EnrichmentInLoi {
                         " provided simulations number per chunk. Use 0 to sample all sets at once."
             )
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(50_000)
 
             acceptsAll(
                 listOf("set_retries"), "Regions set sampling max retries. Used because is not always possible to" +
                         " sample the whole set.")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(1_000)
 
             acceptsAll(
                 listOf("region_retries"), "Individual region sampling max retries. Used because is not always" +
                         " possible to sample region with given constraints on length.")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(10_000)
 
             accepts(
@@ -387,12 +387,12 @@ object EnrichmentInLoi {
 
             acceptsAll(listOf("a-flanked"), "Flank 'a' ranges at both sides (non-negative dist in bp)")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(0)
 
             acceptsAll(listOf("parallelism"), "parallelism level")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
 
             accepts(
                 "detailed",
@@ -428,7 +428,7 @@ object EnrichmentInLoi {
                     LOG.info("0-BASED OFFSETS IN METHYLOME: $zeroBasedBackground")
 
                     bedBgFlnk = options.valueOf("methylome-flnk") as Int
-                    LOG.info("BED BACKGROUND FLANKING RADIUS: $bedBgFlnk")
+                    LOG.info("BED BACKGROUND FLANKING RADIUS: ${bedBgFlnk.formatLongNumber()}")
                 } else {
                     bedBgFlnk = 0
                     zeroBasedBackground = true
@@ -538,16 +538,16 @@ object EnrichmentInLoi {
         logger.info("OUTPUT_BASENAME: $outputBaseName")
 
         val simulationsNumber = options.valueOf("simulations") as Int
-        logger.info("SIMULATIONS: $simulationsNumber")
+        logger.info("SIMULATIONS: ${simulationsNumber.formatLongNumber()}")
 
         val chunkSize = options.valueOf("chunk-size") as Int
-        logger.info("SIMULATIONS CHUNK SIZE: $chunkSize")
+        logger.info("SIMULATIONS CHUNK SIZE: ${chunkSize.formatLongNumber()}")
 
         val setRetries = options.valueOf("set_retries") as Int
-        logger.info("SET MAX RETRIES: $setRetries")
+        logger.info("SET MAX RETRIES: ${setRetries.formatLongNumber()}")
 
         val regionRetries = options.valueOf("region_retries") as Int
-        logger.info("REGION MAX RETRIES: $regionRetries")
+        logger.info("REGION MAX RETRIES: ${regionRetries.formatLongNumber()}")
 
         val limitResultsToSpecificLocation = (options.valueOf("limit-intersect") as String?)?.let {
             parseLocation(

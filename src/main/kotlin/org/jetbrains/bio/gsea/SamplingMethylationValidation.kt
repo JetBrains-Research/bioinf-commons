@@ -111,7 +111,7 @@ object SamplingMethylationValidation {
 
             acceptsAll(listOf("s", "simulations"), "Sampled regions sets number")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(100_000)
 
             acceptsAll(
@@ -119,21 +119,21 @@ object SamplingMethylationValidation {
                         " provided simulations number per chunk. Use 0 to sample all sets at once."
             )
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(50_000)
 
             acceptsAll(
                 listOf("set_retries"), "Regions set sampling max retries. Used because is not always possible to" +
                     " sample the whole set.")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(1_000)
 
             acceptsAll(
                 listOf("region_retries"), "Individual region sampling max retries. Used because is not always" +
                         " possible to sample region with given constraints on length.")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(10_000)
 
             accepts(
@@ -143,7 +143,7 @@ object SamplingMethylationValidation {
 
             acceptsAll(listOf("parallelism"), "parallelism level")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
 
             acceptsAll(
                 listOf("m", "merge"),
@@ -165,7 +165,7 @@ object SamplingMethylationValidation {
 
             acceptsAll(listOf("flnk"), "BED background ")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(50)
             accepts(
                 "add-regions-to-bg",
@@ -206,7 +206,7 @@ object SamplingMethylationValidation {
                 val mergeRegionsToBedBg: Boolean
                 if (sampleFromBEDBackground) {
                     bedBgFlnk = options.valueOf("flnk") as Int
-                    LOG.info("BED BACKGROUND FLANKING RADIUS: $bedBgFlnk")
+                    LOG.info("BED BACKGROUND FLANKING RADIUS: ${bedBgFlnk.formatLongNumber()}")
 
                     mergeRegionsToBedBg = options.has("add-regions-to-bg")
                     LOG.info("MERGE REGIONS INTO BED BACKGROUND: $mergeRegionsToBedBg")

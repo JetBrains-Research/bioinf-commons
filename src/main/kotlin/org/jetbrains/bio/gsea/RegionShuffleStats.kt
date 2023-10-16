@@ -203,23 +203,25 @@ abstract class RegionShuffleStats(
 
         val metricArgString = if (aSetIsRegions) "regions, loi" else "loi, regions"
         return DataFrame()
-            .with("loi", loiLabels.toTypedArray())
-            .with("n_loi_records", loiLabels.map { label2RecordsNumber[it]!! }.toIntArray())
-            .with("n_loi_loaded", loiLabels.map { label2LoadedRegionsNumber[it]!! }.toIntArray())
-            .with("n_loi_filtered_merged", loiFilteredAndMergedRangesNumber)
-            .with("n_regions", IntArray(loiLabels.size) { inputRegionsFiltered.size })
-            .with("metric", loiLabels.map { "${metric.column}($metricArgString)" }.toTypedArray())
-            .with("n_regions_filtered", IntArray(loiLabels.size) { inputRegionsListFiltered.size })
-            .with("loi_filtered_merged_bg_overlap", infoOverlapWithBg)
-            .with("input_${metric.column}", metricValuesForInput.toLongArray())
-            .with("sampled_median_${metric.column}", sampledSetsMetricMedian.toIntArray())
-            .with("sampled_mean_${metric.column}", sampledSetsMetricMean.toDoubleArray())
-            .with("sampled_var_${metric.column}", sampledSetsMetricVar.toDoubleArray())
-            .with("sampled_sets_n", IntArray(loiLabels.size) { simulationsNumber })
-            .with("test_H1", loiLabels.map { hypAlt.name }.toTypedArray())
-            .with("pValue", pValues)
-            .with("qValue", qValues)
-            .reorder("pValue")
+            .with("loi", loiLabels.toTypedArray()) // #1
+            .with("n_loi_records", loiLabels.map { label2RecordsNumber[it]!! }.toIntArray())  // #2
+            .with("n_loi_loaded", loiLabels.map { label2LoadedRegionsNumber[it]!! }.toIntArray()) // #3
+            .with("n_loi_filtered_merged", loiFilteredAndMergedRangesNumber) // #4
+            .with("n_regions", IntArray(loiLabels.size) { inputRegionsFiltered.size }) // #5
+            .with("metric", loiLabels.map { "${metric.column}($metricArgString)" }.toTypedArray()) // #6
+            .with("n_regions_filtered", IntArray(loiLabels.size) { inputRegionsListFiltered.size }) // #7
+            .with("loi_filtered_merged_bg_overlap", infoOverlapWithBg) // #8
+            .with("input_${metric.column}", metricValuesForInput.toLongArray()) // #9
+            .with("sampled_median_${metric.column}", sampledSetsMetricMedian.toIntArray()) // #10
+            .with("sampled_mean_${metric.column}", sampledSetsMetricMean.toDoubleArray()) // #11
+            .with("sampled_var_${metric.column}", sampledSetsMetricVar.toDoubleArray()) // #12
+            .with("sampled_sets_n", IntArray(loiLabels.size) { simulationsNumber }) // #13
+            .with("test_H1", loiLabels.map { hypAlt.name }.toTypedArray()) // #14
+            .with("pValue", pValues) // #15
+            .with("qValue", qValues) // #16
+            .with("ratio_obs_2_input",  metricValuesForInput.map { obs -> obs.toFloat() / inputRegionsListFiltered.size }.toFloatArray()) // #17
+            .with("ratio_obs_2_exp",  metricValuesForInput.zip(sampledSetsMetricMedian).map { (obs, n) -> obs.toFloat() / n }.toFloatArray()) // #18
+            .reorder("qValue")
     }
 
     companion object {
@@ -262,7 +264,7 @@ abstract class RegionShuffleStats(
 
             val finalHist = IntHistogram()
             chunked.forEach { chunk ->
-                chunk.forEach { (ll, hist) ->
+                chunk.forEach { (_, hist) ->
                     finalHist += hist
                 }
             }

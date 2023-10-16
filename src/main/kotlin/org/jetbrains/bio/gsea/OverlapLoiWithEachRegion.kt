@@ -64,7 +64,7 @@ object OverlapLoiWithEachRegion {
 
             acceptsAll(listOf("a-flanked"), "Flank 'a' ranges at both sides (non-negative dist in bp)")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(0)
 
             // Output
@@ -77,7 +77,7 @@ object OverlapLoiWithEachRegion {
 
             acceptsAll(listOf("parallelism"), "parallelism level")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
 
 //            accepts(
 //                "detailed",

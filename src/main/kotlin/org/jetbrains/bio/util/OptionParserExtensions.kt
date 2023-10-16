@@ -254,3 +254,25 @@ class FragmentConverter : ValueConverter<Fragment> {
 
     override fun valuePattern(): String? = null
 }
+
+/**
+ * Converts an integer number i with decimal separator char: '_', ',', '.'
+ */
+object IntConverter : ValueConverter<Int> {
+
+    @Throws(ValueConversionException::class)
+    override fun convert(value: String): Int {
+        try {
+            return value.replace("_", "").replace(".", "").replace(",", "").toInt()
+        } catch (e: NumberFormatException) {
+            throw ValueConversionException("Expected an integer number with decimal separator char: '_', ',', '.', got $value", e)
+        }
+    }
+
+    /**
+     * It seems impossible to just write Optional<Int>::class.java, but the class of an instance works fine.
+     */
+    override fun valueType() = Int::class.java
+
+    override fun valuePattern(): String? = null
+}

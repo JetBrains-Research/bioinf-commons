@@ -127,8 +127,8 @@ class RegionShuffleStatsFromBedCoverage(
                 LOG.info("Background regions: ${bgLoci.size} regions")
 
                 inputRegionsFiltered.forEach {
-                    require(bgLoci.includes(it)) {
-                        "Background $backgroundPath regions are required to include all loci of interest, but the " +
+                    require(bgLoci.intersects(it)) {
+                        "Background $backgroundPath regions are required to intersect all loci of interest, but the " +
                                 "region is missing in bg: ${it.toChromosomeRange()}"
                     }
                 }

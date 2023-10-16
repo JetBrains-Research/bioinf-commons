@@ -4,10 +4,7 @@ import joptsimple.OptionParser
 import org.jetbrains.bio.BioinfToolsCLA
 import org.jetbrains.bio.genome.containers.LocationsMergingList
 import org.jetbrains.bio.genome.toQuery
-import org.jetbrains.bio.util.PathConverter
-import org.jetbrains.bio.util.contains
-import org.jetbrains.bio.util.parse
-import org.jetbrains.bio.util.toPath
+import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
 
 object MethylationEnrichmentInLoi {
@@ -129,7 +126,7 @@ object MethylationEnrichmentInLoi {
 
             acceptsAll(listOf("s", "simulations"), "Sampled regions sets number")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(100_000)
 
             acceptsAll(
@@ -137,21 +134,21 @@ object MethylationEnrichmentInLoi {
                         " provided simulations number per chunk. Use 0 to sample all sets at once."
             )
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(50_000)
 
             acceptsAll(
                 listOf("set_retries"), "Regions set sampling max retries. Used because is not always possible to" +
                         " sample the whole set.")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(1_000)
 
             acceptsAll(
                 listOf("region_retries"), "Individual region sampling max retries. Used because is not always" +
                         " possible to sample region with given constraints on length.")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(10_000)
 
             // Sampled distribution correction
@@ -176,12 +173,12 @@ object MethylationEnrichmentInLoi {
 
             acceptsAll(listOf("a-flanked"), "Flank 'a' ranges at both sides (non-negative dist in bp)")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
                 .defaultsTo(0)
 
             acceptsAll(listOf("parallelism"), "parallelism level")
                 .withRequiredArg()
-                .ofType(Int::class.java)
+                .withValuesConvertedBy(IntConverter)
 
             accepts(
                 "detailed",
