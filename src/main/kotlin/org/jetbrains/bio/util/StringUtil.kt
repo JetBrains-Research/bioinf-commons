@@ -4,13 +4,13 @@ import org.apache.commons.math3.util.Precision
 import java.io.File
 import java.util.*
 
-fun String.separatorsToSystem(): String {
-    return if (File.separatorChar == '\\') {
-        // From Windows to Linux/Mac
-        this.replace('/', File.separatorChar)
+fun String.separatorsToSystem(separator: Char = File.separatorChar): String {
+    return if (separator == '\\') {
+        // From Linux/Mac to current system separator
+        this.replace('/', separator)
     } else {
-        // From Linux/Mac to Windows
-        this.replace('\\', File.separatorChar)
+        // From Windows to current system separator
+        this.replace('\\', separator)
     }
 }
 fun Long.formatLongNumber(universalThousandsSeparator:Boolean=false): String {
