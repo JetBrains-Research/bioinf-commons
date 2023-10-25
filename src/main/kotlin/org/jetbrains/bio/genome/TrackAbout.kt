@@ -31,7 +31,7 @@ class TrackAboutStringColumnType(
     override fun valueClass() = String::class.java
 
     override fun comparator() = Comparator<String> { o1, o2 ->
-        o1.compareTo(o2)
+        o1.lowercase().compareTo(o2.lowercase())
     }
 
     infix fun to(path: Path?) = TrackAboutMetricValue(this, path?.toString() ?: "n/a")
@@ -53,6 +53,21 @@ class TrackAboutLongColumnType(
     }
 
     infix fun to(value: Int) = TrackAboutMetricValue(this, value.toLong())
+}
+
+class TrackAboutIntegerColumnType(
+    override val name: String
+) : TrackAboutColumnType<Int> {
+    override fun valueClass() = Int::class.java
+
+    override fun render(value: Any?) = when (value) {
+        is Int -> value.toLong().formatLongNumber()
+        else -> super.render(value)
+    }
+
+    override fun comparator() = Comparator<Int> { o1, o2 ->
+        o1.compareTo(o2)
+    }
 }
 
 open class TrackAboutDoubleColumnType(
