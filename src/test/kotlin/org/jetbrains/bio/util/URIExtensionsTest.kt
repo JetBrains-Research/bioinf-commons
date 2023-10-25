@@ -29,6 +29,26 @@ class URIExtensionsTest {
     }
 
     @Test
+    fun extension() {
+        assertEquals("span", "file:///mnt/stripe/foo.span".toUri().extension())
+        assertEquals("narrowPeak", "file:///mnt/stripe/f.o.o.narrowPeak".toUri().extension())
+        assertEquals("bigWig", ("https://www.encodeproject.org/files/@@download/foo.bigWig").toUri().extension())
+        assertEquals("bw", "ftp://hgdownload.soe.ucsc.edu/goldenPath/foo.bw".toUri().extension())
+        assertEquals("bw", "file:///mnt/stripe/boo%20doo%20foo.bw".toUri().extension())
+        assertEquals("bigBed", "file:/C:/mnt/stripe/foo.bigBed".toUri().extension())
+        assertEquals("gz", "file:/C:/mnt/stripe/foo.tsv.gz".toUri().extension())
+        assertEquals("tsv", "file:///C:/mnt/stripe/foo.tsv".toUri().extension())
+        assertEquals("peak", "file:/C:/mnt/stripe/boo%20foo.peak".toUri().extension())
+
+        // Decode url:
+        assertEquals("bw", "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSM3074498&format=file&file=GSM3074498%5FCC%5FGVO%5FRNAseq%5Frep1%2Ebw".toUri().extension())
+
+        // Not extension:
+        assertEquals("org?request_id=foo", "https://www.doo.org?request_id=foo".toUri().extension())
+        assertEquals("", "file:///mnt/stripe/foo".toUri().extension())
+        assertEquals("", "file:/C:/mnt/stripe/bigBed".toUri().extension())
+    }
+    @Test
     fun isSupportedURL() {
         assertTrue(URI.create("ftp://hgdownload.soe.ucsc.edu/goldenPath/foo.bw").isSupportedURL())
         assertTrue(URI.create("https://www.encodeproject.org/files/@@download/foo.bigWig").isSupportedURL())
