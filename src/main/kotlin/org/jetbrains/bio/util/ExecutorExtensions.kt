@@ -30,6 +30,17 @@ fun configureParallelism(parallelism: Int?) {
 }
 
 /**
+ * Creates a parallel thread pool, honoring total configured parallelism.
+ * See [parallelismLevel].
+ *
+ * @return an ExecutorService representing the parallel thread pool,
+ * or null if the parallelism level is 1 or below.
+ */
+fun createParallelThreadPool(): ExecutorService? =
+    if (parallelismLevel() > 1) Executors.newWorkStealingPool(parallelismLevel()) else null
+
+
+/**
  * Executes tasks re-throwing any exception occurred.
  */
 fun ExecutorService.awaitAll(tasks: Iterable<Callable<*>>, ignoreInterrupted: Boolean = false) {
@@ -56,11 +67,16 @@ fun ExecutorService.awaitAll(tasks: Iterable<Callable<*>>, ignoreInterrupted: Bo
  * IMPORTANT: limited thread pool can cause deadlocks, e.g. when using countdown latch
  * with number of tasks bigger than thread pool size.
  */
-fun <T> List<Callable<T>>.await(parallel: Boolean) {
-    if (parallel) {
-        val executor = Executors.newWorkStealingPool(min(size, parallelismLevel()))
+fun <T> List<Callable<T>>.await(parallel: Boolean, externalExecutor: ExecutorService? = null) {
+    if (parallel && size > 1 && parallelismLevel() > 1) {
+        val executor = if (externalExecutor != null)
+            externalExecutor
+        else
+            Executors.newWorkStealingPool(min(size, parallelismLevel()))
         executor.awaitAll(this)
-        check(executor.shutdownNow().isEmpty())
+        if (externalExecutor == null) {
+            check(executor.shutdownNow().isEmpty())
+        }
     } else {
         forEach { it.call() }
     }

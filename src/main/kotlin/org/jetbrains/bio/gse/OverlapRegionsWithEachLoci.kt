@@ -14,6 +14,7 @@ import org.jetbrains.bio.util.*
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.Callable
 import java.util.stream.Stream
 
 object OverlapRegionsWithEachLoci {
@@ -178,42 +179,45 @@ object OverlapRegionsWithEachLoci {
         val progress = Progress { title = "Overlap(region set, locus) progress" }.bounded(
             regionsSetsToTestNumber.toLong()
         )
-        regionLabelAndLociToTest.parallelStream().forEach { chunk ->
-            for ((regionTypeLabel, regionLociToTest) in chunk) {
-                progress.report()
+        val tasks = regionLabelAndLociToTest.map { chunk ->
+            Callable {
+                for ((regionTypeLabel, regionLociToTest) in chunk) {
+                    progress.report()
 
-                val values = LongArray(sourceLoci2RangeList.size)
-                sourceLoci2RangeList.forEachIndexed { i, (namedLocus, lociAsRangeList) ->
-                    val metricValueForSrc = regionLociToTest.calcAdditiveMetricDouble(
-                        lociAsRangeList, namedLocus.location.chromosome, namedLocus.location.strand,
-                        metric::calcMetric
-                    ).toLong()
-                    values[i] = metricValueForSrc
+                    val values = LongArray(sourceLoci2RangeList.size)
+                    sourceLoci2RangeList.forEachIndexed { i, (namedLocus, lociAsRangeList) ->
+                        val metricValueForSrc = regionLociToTest.calcAdditiveMetricDouble(
+                            lociAsRangeList, namedLocus.location.chromosome, namedLocus.location.strand,
+                            metric::calcMetric
+                        ).toLong()
+                        values[i] = metricValueForSrc
+                    }
+
+                    val path = outputFolderPath / "${regionTypeLabel}_${metric.column}.tsv"
+                    // Save:
+                    DataFrame()
+                        .with("chr", sourceLoci2RangeList.map { it.first.location.chromosome.name }.toTypedArray())
+                        .with("startOffset", sourceLoci2RangeList.map { it.first.location.startOffset }.toIntArray())
+                        .with("endOffset", sourceLoci2RangeList.map { it.first.location.endOffset }.toIntArray()).let {
+                            if (sourceLociBedFormat.fieldsNumber >= 4) {
+                                it.with(
+                                    "name",
+                                    sourceLoci2RangeList.map { (it.first as NamedLocation).name }.toTypedArray()
+                                )
+                            } else {
+                                it
+                            }
+                        }.with(metric.column, values)
+                        .save(path)
+                    LOG.info("Report saved to: $path")
                 }
-
-                val path = outputFolderPath / "${regionTypeLabel}_${metric.column}.tsv"
-                // Save:
-                DataFrame()
-                    .with("chr", sourceLoci2RangeList.map { it.first.location.chromosome.name }.toTypedArray())
-                    .with("startOffset", sourceLoci2RangeList.map { it.first.location.startOffset }.toIntArray())
-                    .with("endOffset", sourceLoci2RangeList.map { it.first.location.endOffset }.toIntArray()).let {
-                        if (sourceLociBedFormat.fieldsNumber >= 4) {
-                            it.with(
-                                "name",
-                                sourceLoci2RangeList.map { (it.first as NamedLocation).name }.toTypedArray()
-                            )
-                        } else {
-                            it
-                        }
-                    }.with(metric.column, values)
-                    .save(path)
-                LOG.info("Report saved to: $path")
             }
         }
+        tasks.await(parallel = true)
         progress.done("Done.")
     }
 
-    fun readNamedLocationsIgnoringStrand(
+    private fun readNamedLocationsIgnoringStrand(
         path: Path,
         gq: GenomeQuery,
         bedFormat: BedFormat = BedFormat.auto(path)

@@ -1,7 +1,6 @@
 package org.jetbrains.bio.statistics.mixture
 
 import org.jetbrains.bio.dataframe.DataFrame
-import org.jetbrains.bio.statistics.chunked
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor._I
 
@@ -40,17 +39,10 @@ object MixtureInternals {
         df: DataFrame,
         logJointProbabilities: F64Array
     ): Double {
-// IMPORTANT: F64Array.V is not thread safe and when it is used in chunked mode, there is a high probability of race
-// TODO more investigation required: if we add .toArray() call before .sum() we reproducible get the exception:
-// java.lang.IllegalStateException: size passed to Sink.begin exceeds array length
-        return (0 until df.rowsNumber).chunked().mapToDouble { chunk ->
-            val v = F64Array.Viewer(logJointProbabilities)
-            var acc = 0.0
-            for (t in chunk.lo until chunk.hi) {
-                acc += v[t].logSumExp()
-            }
-            acc
-        }.sum()
+        val v = F64Array.Viewer(logJointProbabilities)
+        return (0 until df.rowsNumber).sumOf {
+            v[it].logSumExp()
+        }
     }
 }
 

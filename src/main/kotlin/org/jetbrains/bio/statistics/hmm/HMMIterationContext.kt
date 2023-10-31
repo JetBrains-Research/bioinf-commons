@@ -1,10 +1,8 @@
 package org.jetbrains.bio.statistics.hmm
 
 import org.jetbrains.bio.dataframe.DataFrame
-import org.jetbrains.bio.statistics.chunked
 import org.jetbrains.bio.statistics.model.IterationContext
 import org.jetbrains.bio.viktor.F64Array
-import java.util.concurrent.ForkJoinTask
 
 /**
  * Iteration context for the both frequentist and Bayesian hidden
@@ -54,22 +52,17 @@ abstract class HMMIterationContext(
      *     \xi_{ij}(t) = E[I{s_{t - 1} = i} I{s_t = j}]
      */
     override fun expect() {
-        ForkJoinTask.invokeAll(
-            ForkJoinTask.adapt {
-                HMMInternals.logForward(
-                    df, numStates, logPriorProbabilities,
-                    logTransitionProbabilities,
-                    logObservationProbabilities,
-                    logForwardProbabilities
-                )
-            },
-            ForkJoinTask.adapt {
-                HMMInternals.logBackward(
-                    df, numStates, logTransitionProbabilities,
-                    logObservationProbabilities,
-                    logBackwardProbabilities
-                )
-            })
+        HMMInternals.logForward(
+            df, numStates, logPriorProbabilities,
+            logTransitionProbabilities,
+            logObservationProbabilities,
+            logForwardProbabilities
+        )
+        HMMInternals.logBackward(
+            df, numStates, logTransitionProbabilities,
+            logObservationProbabilities,
+            logBackwardProbabilities
+        )
 
         val negativeInfinity = F64Array.full(
             numStates, numStates,
@@ -77,27 +70,18 @@ abstract class HMMIterationContext(
         )
 
         val res = negativeInfinity.copy()
-
-        // Parallel for loop
-        (1 until df.rowsNumber).chunked().forEach { chunk ->
-            val localLogXiSums = negativeInfinity.copy()
+        (1 until df.rowsNumber).forEach { s ->
             val logXit = negativeInfinity.copy()
-
-            for (s in chunk.lo until chunk.hi) {
-                for (priorState in 0 until numStates) {
-                    for (nextState in 0 until numStates) {
-                        logXit[priorState, nextState] = logForwardProbabilities[s - 1, priorState] +
-                                logTransitionProbabilities[priorState, nextState] +
-                                logObservationProbabilities[s, nextState] +
-                                logBackwardProbabilities[s, nextState]
-                    }
+            for (priorState in 0 until numStates) {
+                for (nextState in 0 until numStates) {
+                    logXit[priorState, nextState] = logForwardProbabilities[s - 1, priorState] +
+                            logTransitionProbabilities[priorState, nextState] +
+                            logObservationProbabilities[s, nextState] +
+                            logBackwardProbabilities[s, nextState]
                 }
-
-                logXit.logRescale()
-                localLogXiSums.logAddExpAssign(logXit)
             }
-
-            res.logAddExpAssign(localLogXiSums)
+            logXit.logRescale()
+            res.logAddExpAssign(logXit)
         }
         res.copyTo(logXiSums)
 

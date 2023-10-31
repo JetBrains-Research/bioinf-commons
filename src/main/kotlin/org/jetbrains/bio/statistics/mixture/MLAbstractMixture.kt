@@ -4,12 +4,14 @@ import com.google.common.base.MoreObjects
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.statistics.Preprocessed
 import org.jetbrains.bio.statistics.distribution.CategoricalDistribution
-import org.jetbrains.bio.statistics.forking
 import org.jetbrains.bio.statistics.model.ClassificationModel
 import org.jetbrains.bio.statistics.model.MLMonitor
 import org.jetbrains.bio.statistics.model.SamplingChain
-import org.jetbrains.bio.util.MultitaskProgress
+import org.jetbrains.bio.util.*
 import org.jetbrains.bio.viktor.F64Array
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import kotlin.math.ln
 
 /**
@@ -19,6 +21,8 @@ import kotlin.math.ln
  * @since 06/09/13
  */
 abstract class MLAbstractMixture(protected val numComponents: Int, weights: F64Array) : ClassificationModel {
+
+
     val logWeights: F64Array = weights.log()
 
     val weights: F64Array get() = logWeights.exp()
@@ -98,10 +102,10 @@ abstract class MLAbstractMixture(protected val numComponents: Int, weights: F64A
 
         override fun refill() {
             val numObservations = df.rowsNumber
-            (0 until numComponents).forking { i ->
+            (0 until numComponents).forEach { state ->
                 for (observation in 0 until numObservations) {
-                    logJointProbabilities[observation, i] =
-                        logProbability(i, df, observation) + logWeights[i]
+                    logJointProbabilities[observation, state] =
+                        logProbability(state, df, observation) + logWeights[state]
                 }
             }
         }
