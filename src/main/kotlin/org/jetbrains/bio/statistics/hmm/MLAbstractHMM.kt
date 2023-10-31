@@ -8,12 +8,12 @@ import org.jetbrains.bio.statistics.distribution.CategoricalDistribution
 import org.jetbrains.bio.statistics.model.ClassificationModel
 import org.jetbrains.bio.statistics.model.MLMonitor
 import org.jetbrains.bio.statistics.model.SamplingChain
-import org.jetbrains.bio.util.*
+import org.jetbrains.bio.util.MultitaskProgress
+import org.jetbrains.bio.util.await
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor._I
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 /**
  * A generic HMM with parameters estimated via ML.
@@ -30,9 +30,6 @@ abstract class MLAbstractHMM(
     init {
         require(numStates > 1) { "expected at least two states" }
     }
-
-    @delegate:Transient
-    private val executorService: ExecutorService? by lazy { createParallelThreadPool() }
 
     val logPriorProbabilities: F64Array = priorProbabilities.log()
     val logTransitionProbabilities: F64Array = transitionProbabilities.log()
@@ -95,7 +92,7 @@ abstract class MLAbstractHMM(
         val contexts = dfs.map { context(it) }
         val monitor = MLMonitor(title, threshold, maxIterations)
         while (true) {
-            contexts.map { Callable { it.iterate() } }.await(parallel = true, executorService)
+            contexts.map { Callable { it.iterate() } }.await(parallel = true)
 
             var logLikelihood = 0.0
             for ((df, context) in dfs.zip(contexts)) {

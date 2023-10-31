@@ -76,12 +76,11 @@ object Preprocessors {
         return Preprocessor { df ->
             val rowsNumber = df.rowsNumber
             val logbcs = DoubleArray(rowsNumber)
-            IntStream.range(0, rowsNumber).parallel().forEach { i ->
+            (0 until rowsNumber).forEach { i ->
                 val k = df.getAsShort(i, kField).toInt()
                 val n = df.getAsShort(i, nField).toInt()
                 logbcs[i] = CombinatoricsUtils.binomialCoefficientLog(n, k)
             }
-
             Preprocessed.of(df.with(toField, logbcs))
         }
     }
