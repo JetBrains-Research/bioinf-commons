@@ -60,6 +60,9 @@ if (rootProject == project) {
     }
 } else {
     project(":bioinf-commons") {
+        configurations {
+            testOutput.extendsFrom(testCompile)
+        }
         dependencies {
             compile("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
             compile("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version")
@@ -90,6 +93,7 @@ if (rootProject == project) {
 
             testCompile("junit:junit:4.13.2")
             testCompile("org.jetbrains.kotlin:kotlin-test:$kotlin_version")
+            testOutput sourceSets.main.output, sourceSets.test.output
         }
     }
 }
