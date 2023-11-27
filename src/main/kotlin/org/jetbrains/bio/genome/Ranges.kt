@@ -200,6 +200,8 @@ data class Location(
 
     override fun toString() = "${chromosome.name}:$strand[$startOffset, $endOffset)"
 
+    fun getAsFormattedString() = "${chromosome.name}:$startOffset-$endOffset"
+
     override fun compareTo(other: Location) = ComparisonChain.start()
         // sort locs by chr name, strand, start, end offset
         .compare(chromosome.name, other.chromosome.name)
