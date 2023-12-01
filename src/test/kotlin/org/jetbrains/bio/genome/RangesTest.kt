@@ -4,6 +4,8 @@ import com.google.common.math.IntMath
 import org.jetbrains.bio.genome.Strand.MINUS
 import org.jetbrains.bio.genome.Strand.PLUS
 import org.jetbrains.bio.genome.sequence.asNucleotideSequence
+import org.jetbrains.bio.util.withLocaleEU
+import org.jetbrains.bio.util.withLocaleUS
 import org.junit.Test
 import java.math.RoundingMode
 import kotlin.test.*
@@ -197,12 +199,24 @@ class LocationTest {
     }
 
     @Test
-    fun testChromosomeString() {
-        val location = Location(100, 200, chromosome, MINUS)
+    fun testPresentableName() {
         assertEquals(
             "chr1:100-200",
-            location.getAsChromosomeString()
+            Location(100, 200, chromosome, MINUS).presentableName()
         )
+        val locLargeOffset = Location(100000, 20011111, chromosome, MINUS)
+        withLocaleUS {
+            assertEquals(
+                "chr1:100,000-20,011,111",
+                locLargeOffset.presentableName()
+            )
+        }
+        withLocaleEU {
+            assertEquals(
+                "chr1:100.000-20.011.111",
+                locLargeOffset.presentableName()
+            )
+        }
     }
 
     @Test

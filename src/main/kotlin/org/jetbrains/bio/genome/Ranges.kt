@@ -6,6 +6,7 @@ import com.google.common.primitives.Ints
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
+import org.jetbrains.bio.util.formatLongNumber
 import java.math.RoundingMode
 import java.util.stream.IntStream
 import java.util.stream.Stream
@@ -200,7 +201,7 @@ data class Location(
 
     override fun toString() = "${chromosome.name}:$strand[$startOffset, $endOffset)"
 
-    fun getAsChromosomeString() = "${chromosome.name}:$startOffset-$endOffset"
+    fun presentableName() = "${chromosome.name}:${startOffset.formatLongNumber()}-${endOffset.formatLongNumber()}"
 
     override fun compareTo(other: Location) = ComparisonChain.start()
         // sort locs by chr name, strand, start, end offset
