@@ -4,6 +4,8 @@ import com.google.common.math.IntMath
 import org.jetbrains.bio.genome.Strand.MINUS
 import org.jetbrains.bio.genome.Strand.PLUS
 import org.jetbrains.bio.genome.sequence.asNucleotideSequence
+import org.jetbrains.bio.util.withLocaleEU
+import org.jetbrains.bio.util.withLocaleUS
 import org.junit.Test
 import java.math.RoundingMode
 import kotlin.test.*
@@ -98,9 +100,9 @@ class LocationTest {
         assertEquals(1, Location(1, 5, chromosome, PLUS).get5Bound(0))
         assertEquals(2, Location(1, 5, chromosome, PLUS).get5Bound(1))
 
-        assertEquals(5, Location(1, 5, chromosome, Strand.MINUS).get5Bound(-1))
-        assertEquals(4, Location(1, 5, chromosome, Strand.MINUS).get5Bound(0))
-        assertEquals(3, Location(1, 5, chromosome, Strand.MINUS).get5Bound(1))
+        assertEquals(5, Location(1, 5, chromosome, MINUS).get5Bound(-1))
+        assertEquals(4, Location(1, 5, chromosome, MINUS).get5Bound(0))
+        assertEquals(3, Location(1, 5, chromosome, MINUS).get5Bound(1))
     }
 
     @Test
@@ -109,17 +111,17 @@ class LocationTest {
         assertEquals(4, Location(1, 5, chromosome, PLUS).get3Bound(0))
         assertEquals(5, Location(1, 5, chromosome, PLUS).get3Bound(1))
 
-        assertEquals(2, Location(1, 5, chromosome, Strand.MINUS).get3Bound(-1))
-        assertEquals(1, Location(1, 5, chromosome, Strand.MINUS).get3Bound(0))
-        assertEquals(0, Location(1, 5, chromosome, Strand.MINUS).get3Bound(1))
+        assertEquals(2, Location(1, 5, chromosome, MINUS).get3Bound(-1))
+        assertEquals(1, Location(1, 5, chromosome, MINUS).get3Bound(0))
+        assertEquals(0, Location(1, 5, chromosome, MINUS).get3Bound(1))
     }
 
     @Test
     fun testGetSequence() {
         val plusSequence = Location(1, 10, chromosome, PLUS).sequence
         val rcSequence = plusSequence.asNucleotideSequence()
-            .substring(0, plusSequence.length, Strand.MINUS)
-        assertEquals(rcSequence, Location(1, 10, chromosome, Strand.MINUS).sequence)
+            .substring(0, plusSequence.length, MINUS)
+        assertEquals(rcSequence, Location(1, 10, chromosome, MINUS).sequence)
     }
 
     @Test
@@ -141,7 +143,7 @@ class LocationTest {
 
     @Test
     fun testAroundStart_Minus() {
-        val location = Location(100, 200, chromosome, Strand.MINUS)
+        val location = Location(100, 200, chromosome, MINUS)
         assertEquals(
             "chr1:-[194, 200)",
             RelativePosition.FIVE_PRIME.of(location, 0, 6).toString()
@@ -167,7 +169,7 @@ class LocationTest {
 
     @Test
     fun testAroundEnd_Minus() {
-        val location = Location(100, 200, chromosome, Strand.MINUS)
+        val location = Location(100, 200, chromosome, MINUS)
         assertEquals(
             "chr1:-[95, 101)",
             RelativePosition.THREE_PRIME.of(location, 0, 6).toString()
@@ -189,7 +191,7 @@ class LocationTest {
 
     @Test
     fun testAroundWhole_End() {
-        val location = Location(100, 200, chromosome, Strand.MINUS)
+        val location = Location(100, 200, chromosome, MINUS)
         assertEquals(
             "chr1:-[100, 200)",
             RelativePosition.ALL.of(location, 0, 1).toString()
@@ -197,9 +199,30 @@ class LocationTest {
     }
 
     @Test
+    fun testPresentableName() {
+        assertEquals(
+            "chr1:100-200",
+            Location(100, 200, chromosome, MINUS).presentableName()
+        )
+        val locLargeOffset = Location(100000, 20011111, chromosome, MINUS)
+        withLocaleUS {
+            assertEquals(
+                "chr1:100,000-20,011,111",
+                locLargeOffset.presentableName()
+            )
+        }
+        withLocaleEU {
+            assertEquals(
+                "chr1:100.000-20.011.111",
+                locLargeOffset.presentableName()
+            )
+        }
+    }
+
+    @Test
     fun testComparator() {
         val location1 = Location(0, 100, chromosome, PLUS)
-        val location2 = Location(0, 100, chromosome, Strand.MINUS)
+        val location2 = Location(0, 100, chromosome, MINUS)
         assertNotEquals(0, location1.compareTo(location2))
 
         val location3 = Location(0, 100, chromosome, PLUS)
