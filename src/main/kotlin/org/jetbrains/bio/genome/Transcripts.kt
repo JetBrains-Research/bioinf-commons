@@ -255,7 +255,7 @@ object Transcripts {
         }
     }
 
-    internal fun all(genome: Genome): ListMultimap<Chromosome, Transcript> {
+    fun all(genome: Genome): ListMultimap<Chromosome, Transcript> {
         return TRANSCRIPTS_CACHE.get(genome) {
             try {
                 loadTranscripts(genome, false)

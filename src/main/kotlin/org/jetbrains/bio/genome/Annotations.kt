@@ -321,7 +321,7 @@ object CpGIslands {
 
     internal const val ISLANDS_FILE_NAME = "cpgIslandExt.txt.gz"
 
-    internal fun all(genome: Genome): ListMultimap<Chromosome, CpGIsland> {
+    fun all(genome: Genome): ListMultimap<Chromosome, CpGIsland> {
         return CACHE.get(genome) {
             val path = genome.cpgIslandsPath
             if (path == null) {
