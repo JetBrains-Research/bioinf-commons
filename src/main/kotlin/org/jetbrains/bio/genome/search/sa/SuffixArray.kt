@@ -1,6 +1,5 @@
 package org.jetbrains.bio.genome.search.sa
 
-import org.apache.log4j.Logger
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.sequence.NucleotideSequence
 import org.jetbrains.bio.npy.NpzFile
@@ -8,6 +7,8 @@ import org.jetbrains.bio.util.createDirectories
 import org.jetbrains.bio.util.div
 import org.jsuffixarrays.Algorithm
 import org.jsuffixarrays.BPR
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
 /**
@@ -21,7 +22,7 @@ class SuffixArray(val sequence: NucleotideSequence, val sa: IntArray) {
     fun index(suffix: Int): Int = sa[suffix]
 
     companion object {
-        val LOG: Logger = Logger.getLogger(SuffixArray::class.java)
+        val LOG: Logger = LoggerFactory.getLogger(SuffixArray::class.java)
         const val VERSION = 1
 
         @JvmStatic
