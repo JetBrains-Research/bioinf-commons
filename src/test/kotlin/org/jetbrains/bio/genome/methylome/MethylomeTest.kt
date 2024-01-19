@@ -1,19 +1,14 @@
 package org.jetbrains.bio.genome.methylome
 
 import com.google.common.math.IntMath
-import com.google.gson.JsonParseException
 import org.apache.commons.math3.distribution.BinomialDistribution
 import org.jetbrains.bio.Tests
 import org.jetbrains.bio.dataframe.dumpHead
 import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Strand
-import org.jetbrains.bio.statistics.model.Boo
-import org.jetbrains.bio.statistics.model.ClassificationModel
 import org.jetbrains.bio.util.withTempFile
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

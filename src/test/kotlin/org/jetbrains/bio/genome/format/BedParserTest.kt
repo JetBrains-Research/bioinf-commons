@@ -9,12 +9,9 @@ import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.Strand
-import org.jetbrains.bio.genome.methylome.CytosineContext
 import org.jetbrains.bio.util.*
 import org.junit.Assert.assertArrayEquals
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import java.awt.Color
 import java.io.IOException
 import java.io.StringWriter

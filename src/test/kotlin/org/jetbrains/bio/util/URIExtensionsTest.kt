@@ -2,9 +2,7 @@ package org.jetbrains.bio.util
 
 import org.jetbrains.bio.Tests
 import org.junit.Assume
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import java.io.File
 import java.io.InputStreamReader
 import java.net.URI

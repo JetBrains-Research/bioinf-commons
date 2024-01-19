@@ -8,16 +8,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * In my sincerest opinion, [assertTrue] without a custom message should not be used
- * under any circumstances. There's nothing more annoying than seeing a test fail
- * with an oh-so-informative message of "Expected the value to be true." Yeah, and I
- * expected the message to help me identify the problem. Guess we're both disappointed.
- *
- * So, I've collected a few assert helper methods which cover popular use cases of [assertTrue].
- *
- * This object is not visible from outside of "bioinf-commons" and is thus partially copied to other repositories;
- * for the reasons see the comments to
- * https://github.com/JetBrains-Research/span/commit/fabb0b91827dd098dd3b96760b540b337018a6b2
+ * Collection of testing helper methods.
  */
 object Tests {
 
@@ -83,19 +74,22 @@ object Tests {
      * @param runnable The code block to be tested.
      * @throws AssertionFailedError if the expected exception is not thrown or the message does not match.
      */
-    fun <T: Throwable> assertThrowsWithMessage(
-        message: String, expectedThrowable: Class<T>,
+    fun <T : Throwable> assertThrowsWithMessage(
+        message: String? = null,
+        expectedThrowable: Class<T>,
         partialMessageMatch: Boolean = false,
         runnable: ThrowingRunnable
     ) {
         val e = Assert.assertThrows(message, expectedThrowable, runnable)
-        if (partialMessageMatch) {
-            assertTrue(
-                e.message?.contains(message) ?: false,
-                message="Actual message is: <${e.message}>, expected fragment not found: <$message>"
-            )
-        } else {
-            assertEquals(message, e.message)
+        if (message != null) {
+            if (partialMessageMatch) {
+                assertTrue(
+                    e.message?.contains(message) ?: false,
+                    message = "Actual message is: <${e.message}>, expected fragment not found: <$message>"
+                )
+            } else {
+                assertEquals(message, e.message)
+            }
         }
     }
 }

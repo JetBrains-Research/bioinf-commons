@@ -8,9 +8,7 @@ import org.jetbrains.bio.statistics.Preprocessed
 import org.jetbrains.bio.util.*
 import org.jetbrains.bio.viktor.F64Array
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import java.util.*
 import kotlin.test.assertEquals
 

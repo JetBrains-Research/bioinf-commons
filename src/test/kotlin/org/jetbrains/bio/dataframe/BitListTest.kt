@@ -2,11 +2,7 @@ package org.jetbrains.bio.dataframe
 
 import org.jetbrains.bio.Tests
 import org.jetbrains.bio.genome.Range
-import org.jetbrains.bio.util.checkAccessible
-import org.jetbrains.bio.util.toUri
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
