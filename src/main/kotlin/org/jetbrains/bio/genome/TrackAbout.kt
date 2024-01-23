@@ -21,7 +21,7 @@ interface TrackAboutColumnType<T> {
 }
 
 object TrackAboutColumnTypes {
-    val CT_SOURCE = TrackAboutStringColumnType("Source")
+    val CT_FILE = TrackAboutStringColumnType("File")
     val CT_FILE_SIZE = TrackAboutFileSizeColumnType("File size")
 }
 

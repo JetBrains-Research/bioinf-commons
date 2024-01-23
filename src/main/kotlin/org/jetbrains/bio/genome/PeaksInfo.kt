@@ -42,7 +42,7 @@ object PeaksInfo {
 
         val result = arrayListOf<TrackAboutMetricValue<*>>()
         if (src != null) {
-            result.add(TrackAboutColumnTypes.CT_SOURCE to src)
+            result.add(TrackAboutColumnTypes.CT_FILE to src)
             result.add(TrackAboutColumnTypes.CT_FILE_SIZE to src.size)
         }
         result.add(CT_COUNT to peaksCount)
