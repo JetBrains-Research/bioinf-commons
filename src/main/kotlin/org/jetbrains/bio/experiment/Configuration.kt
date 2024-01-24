@@ -162,3 +162,26 @@ private fun Properties.getPath(name: String): Path {
     }
     return path
 }
+
+/**
+ * Initialize [Configuration] with given paths
+ */
+fun configurePaths(workDir: Path, genomesPath: Path? = null, chromSizesPath: Path? = null, logPath: Path? = null) {
+    workDir.createDirectories()
+    Configuration.experimentsPath = workDir
+    if (chromSizesPath != null) {
+        Configuration.genomesPath = chromSizesPath.parent
+    } else
+        if (genomesPath != null) {
+            Configuration.genomesPath = genomesPath
+        } else
+            Configuration.genomesPath = workDir
+
+    Configuration.rawDataPath = workDir
+    Configuration.cachesPath = workDir
+    if (logPath != null) {
+        Configuration.logsPath = logPath.parent
+    } else {
+        Configuration.logsPath = workDir
+    }
+}
