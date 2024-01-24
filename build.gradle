@@ -108,6 +108,10 @@ private String settingsFolder(final String propertyName, final String folderName
 
 task generateTestOrganism(type: JavaExec) {
     systemProperty "genomes.path", settingsFolder("genomes.path", "genomes")
+    systemProperty "experiments.path", settingsFolder("experiments.path", "experiments")
+    systemProperty "raw.data.path", settingsFolder("experiments.path", "rawdata")
+    systemProperty "caches.path", settingsFolder("genomes.path", "caches")
+    systemProperty "logs.path", settingsFolder("experiments.path", "logs")
 
     description "Generates sequences/indexes/genes/etc for test organism"
     configure {
@@ -131,11 +135,12 @@ tasks.withType(Test) {
 
     systemProperty "genomes.path", settingsFolder("genomes.path", "genomes")
     systemProperty "experiments.path", settingsFolder("experiments.path", "experiments")
+    systemProperty "raw.data.path", settingsFolder("experiments.path", "rawdata")
+    systemProperty "caches.path", settingsFolder("genomes.path", "caches")
+    systemProperty "logs.path", settingsFolder("experiments.path", "logs")
     systemProperty "teamcity.build.checkoutDir", System.getProperty("teamcity.build.checkoutDir")
 }
 
 test {
-    systemProperty "genomes.path", settingsFolder("genomes.path", "genomes")
-
     include "**/*Test.class"
 }
