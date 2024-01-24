@@ -42,7 +42,7 @@ abstract class MethylomeQuery protected constructor(
     }
 
     override fun getUncached(): Methylome {
-        val binaryPath = Configuration.cachePath / "methylome" / "$id.npz"
+        val binaryPath = Configuration.cachesPath / "methylome" / "$id.npz"
         binaryPath.checkOrRecalculate("Methylome") { output ->
             read(genomeQuery).save(output.path)
         }

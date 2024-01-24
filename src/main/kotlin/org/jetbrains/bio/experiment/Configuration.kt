@@ -35,29 +35,23 @@ object Configuration {
     private const val GENOME_PATHS_PROPERTY = "genomes.path"
     private const val RAW_DATA_PATH_PROPERTY = "raw.data.path"
     private const val EXPERIMENTS_PATH_PROPERTY = "experiments.path"
+    private const val CACHES_PATH_PROPERTY = "caches.path"
+    private const val LOGS_PATH_PROPERTY = "logs.path"
 
     /** Path to genome-specific annotation, e.g. chrom.sizes file. */
     var genomesPath: Path by PropertyPathDelegate(GENOME_PATHS_PROPERTY)
 
-    val genomesPathConfigured: Boolean
-        get() = System.getProperties().containsKey(GENOME_PATHS_PROPERTY)
-
-
     /** Path to raw data, e.g. raw reads in FASTQ format. */
     var rawDataPath: Path by PropertyPathDelegate(RAW_DATA_PATH_PROPERTY)
-
-    val rawDataPathConfigured: Boolean
-        get() = System.getProperties().containsKey(RAW_DATA_PATH_PROPERTY)
 
     /** Path to the work/experiments folder. */
     var experimentsPath: Path by PropertyPathDelegate(EXPERIMENTS_PATH_PROPERTY)
 
-    val experimentsPathConfigured: Boolean
-        get() = System.getProperties().containsKey(EXPERIMENTS_PATH_PROPERTY)
+    /** Path to caches data. */
+    var cachesPath: Path by PropertyPathDelegate(CACHES_PATH_PROPERTY)
 
-    /** Path to cache data. */
-    val cachePath: Path
-        get() = experimentsPath / "cache"
+    /** Path to logs. */
+    var logsPath: Path by PropertyPathDelegate(LOGS_PATH_PROPERTY)
 
     @Volatile
     private var initialized: Boolean = false
@@ -111,6 +105,12 @@ object Configuration {
             }
             if (properties.containsKey(EXPERIMENTS_PATH_PROPERTY)) {
                 experimentsPath = properties.getPath(EXPERIMENTS_PATH_PROPERTY)
+            }
+            if (properties.containsKey(CACHES_PATH_PROPERTY)) {
+                cachesPath = properties.getPath(CACHES_PATH_PROPERTY)
+            }
+            if (properties.containsKey(LOGS_PATH_PROPERTY)) {
+                logsPath = properties.getPath(LOGS_PATH_PROPERTY)
             }
         } finally {
             // Mark as initialized even if something went wrong

@@ -47,7 +47,7 @@ class ReadsQuery(
      * Coverage is stored as Numpy array, with tags positions after optional fragment size shift
      */
     fun npzPath() =
-        Configuration.cachePath / "coverage_${
+        Configuration.cachesPath / "coverage_${
             idStem + (if (fragment is FixedFragment) "_raw" else "")
         }${path.sha}.npz"
 

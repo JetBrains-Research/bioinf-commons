@@ -16,7 +16,7 @@ import java.nio.file.Path
  */
 abstract class Experiment @JvmOverloads constructor(
     /** Folder, the data produced by this experiment should be stored. */
-    open val experimentFolder: String,
+    open val experimentFolder: String?,
     /** Prefix of the log-file. */
     experimentName: String? = null
 ) {
@@ -28,7 +28,10 @@ abstract class Experiment @JvmOverloads constructor(
     /** A human-readable description of this experiment. */
     var description: String? = null
 
-    val experimentPath: Path get() = Configuration.experimentsPath / experimentFolder
+    val experimentPath: Path get() = if (experimentFolder.isNullOrBlank())
+        Configuration.experimentsPath
+    else
+        Configuration.experimentsPath / experimentFolder!!
 
     /**
      * Main entry point of each experiment, called from the [run] method.
@@ -38,7 +41,7 @@ abstract class Experiment @JvmOverloads constructor(
 
     // Please use the property above in Kotlin.
     fun getExperimentPath(vararg chunks: String): Path {
-        return Configuration.experimentsPath.resolve(experimentFolder, *chunks)
+        return experimentPath.resolve(*chunks)
     }
 
     fun run() {
