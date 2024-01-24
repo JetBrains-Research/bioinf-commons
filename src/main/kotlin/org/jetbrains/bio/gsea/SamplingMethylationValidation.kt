@@ -171,6 +171,11 @@ object SamplingMethylationValidation {
                 "add-regions-to-bg",
                 "Merge input regions into background before sampling if background doesn't cover all input regions."
             )
+            accepts(
+                "ignore-regions-out-of-bg",
+                "Do not use in analysis the input region that don't intersect background."
+            )
+
 
             // Sampled distribution correction
             acceptsAll(
@@ -204,15 +209,21 @@ object SamplingMethylationValidation {
 
                 val bedBgFlnk: Int
                 val mergeRegionsToBedBg: Boolean
+                val ignoreRegionsOutOfBg: Boolean
                 if (sampleFromBEDBackground) {
                     bedBgFlnk = options.valueOf("flnk") as Int
                     LOG.info("BED BACKGROUND FLANKING RADIUS: ${bedBgFlnk.formatLongNumber()}")
 
                     mergeRegionsToBedBg = options.has("add-regions-to-bg")
                     LOG.info("MERGE REGIONS INTO BED BACKGROUND: $mergeRegionsToBedBg")
+
+                    ignoreRegionsOutOfBg = options.has("ignore-regions-out-of-bg")
+                    LOG.info("IGNORE REGIONS OUT OF BACKGROUND: $ignoreRegionsOutOfBg")
                 } else {
                     bedBgFlnk = 0
+                    // if not only DMRs are used as input, it could be useful to support it:
                     mergeRegionsToBedBg = false
+                    ignoreRegionsOutOfBg = false
                 }
 
                 val lengthCorrectionMethod = options.valueOf("length-correction") as String?
@@ -230,6 +241,7 @@ object SamplingMethylationValidation {
                     sampleFromBEDBackground = sampleFromBEDBackground,
                     bedBgFlnk = bedBgFlnk,
                     mergeRegionsToBedBg = mergeRegionsToBedBg,
+                    ignoreRegionsOutOfBg = ignoreRegionsOutOfBg,
                     lengthCorrectionMethod = lengthCorrectionMethod
                 )
             }
@@ -243,6 +255,7 @@ object SamplingMethylationValidation {
         sampleFromBEDBackground: Boolean,
         bedBgFlnk: Int,
         mergeRegionsToBedBg: Boolean,
+        ignoreRegionsOutOfBg: Boolean,
         lengthCorrectionMethod: String?
     ) {
 
@@ -265,19 +278,21 @@ object SamplingMethylationValidation {
         //-------------------
 
         // Load Input regions, methylome + filter allowed regions / methylome
-        val inputRegionsFiltered = processInputRegions(
+        var inputRegionsFiltered = processInputRegions(
             opts.inputRegions, gq,
             genomeAllowedAreaFilter = genomeAllowedAreaFilter,
             genomeMaskedAreaFilter = genomeMaskedAreaFilter
         )
-        require(inputRegionsFiltered.isNotEmpty()) {
-            "Regions file is empty or all regions were removed by filters."
-        }
 
         val backgroundMethSampling = RegionShuffleStatsFromMethylomeCoverage.backgroundProviderFun(
-            inputRegionsFiltered, methylomePath, zeroBasedMethylome, gq,
+            methylomePath, zeroBasedMethylome, gq,
             genomeAllowedAreaFilter = genomeAllowedAreaFilter,
             genomeMaskedAreaFilter = genomeMaskedAreaFilter,
+        )
+        RegionShuffleStatsFromMethylomeCoverage.ensureInputRegionsMatchesBackgound(
+            inputRegionsFiltered,
+            backgroundMethSampling,
+            methylomePath
         )
 
         // Make a filtered BED backgroundMethSampling from methylome if required
@@ -291,6 +306,32 @@ object SamplingMethylationValidation {
             )
         } else {
             null
+        }
+
+        if (mergeRegionsToBedBg) {
+            require(!ignoreRegionsOutOfBg) { "Cannot merge & ignore region at the same time." }
+        }
+
+        if (filteredBedBackgroundFromMethylome != null) {
+            if (ignoreRegionsOutOfBg) {
+                val nRegionsBeforeBgFilter = inputRegionsFiltered.size
+                inputRegionsFiltered = inputRegionsFiltered.filter {
+                    filteredBedBackgroundFromMethylome.intersects(it)
+                }
+                LOG.info("Filtering input regions that doesn't intersect background. Removed " +
+                        "${nRegionsBeforeBgFilter-inputRegionsFiltered.size} of $nRegionsBeforeBgFilter regions")
+            }
+
+            // validate rest regions:
+            inputRegionsFiltered.forEach {
+                require(filteredBedBackgroundFromMethylome.intersects(it)) {
+                    "BED Background regions are supposed to intersect all loci of interest, but the " +
+                            "region is missing in bg: ${it.toChromosomeRange()}"
+                }
+            }
+        }
+        require(inputRegionsFiltered.isNotEmpty()) {
+            "Regions file is empty or all regions were removed by filters."
         }
 
         val inputRegionsListFiltered = when {
@@ -445,7 +486,7 @@ object SamplingMethylationValidation {
         methylomeCov: BasePairCoverage,
         bedBgFlnk: Int,
         inputRegions: List<Location>,
-        mergeRegionsToBg: Boolean
+        mergeRegionsToBg: Boolean,
     ): LocationsMergingList {
         // Here no need in intersecting input or background with `SharedSamplingOptions.truncateRangesToSpecificLocation`
 
@@ -453,13 +494,6 @@ object SamplingMethylationValidation {
             gq, methylomeCov, bedBgFlnk,
             if (mergeRegionsToBg) inputRegions else emptyList()
         )
-
-        inputRegions.forEach {
-            require(bgLoci.intersects(it)) {
-                "BED Background regions are supposed to intersect all loci of interest, but the " +
-                        "region is missing in bg: ${it.toChromosomeRange()}"
-            }
-        }
 
         return bgLoci
     }

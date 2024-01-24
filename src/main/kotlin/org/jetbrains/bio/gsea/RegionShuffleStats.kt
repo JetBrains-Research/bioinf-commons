@@ -48,6 +48,9 @@ abstract class RegionShuffleStats(
         mergeOverlapped: Boolean = true,
         truncateFilter: LocationsList<out RangesList>? = null,
         samplingWithReplacement: Boolean = false,
+        mergeInputRegionsToBg: Boolean,
+        ignoreInputRegionsOutOfBg: Boolean,
+        intersectsWithBgFun: (Location, T) -> Boolean,
         backgroundProvider: (GenomeQuery, List<Location>) -> T, // by genome query & input regions
         loiOverlapWithBgFun: (LocationsList<out RangesList>, T) -> Int,
         samplingFun: (GenomeQuery, List<ChromosomeRange>, T, Int, Int, Boolean) -> Pair<List<Location>, IntHistogram>
@@ -55,21 +58,49 @@ abstract class RegionShuffleStats(
         outputFolderPath?.createDirectories()
         val dumpDetails = outputFolderPath != null
 
-        val inputRegionsFiltered = processInputRegions(
+        var inputRegionsFiltered = processInputRegions(
             inputRegionsPath, gq,
             genomeAllowedAreaFilter = genomeAllowedAreaFilter,
             genomeMaskedAreaFilter = genomeMaskedAreaFilter
         )
+
+        // Calculate BG
+        val backgroundData = backgroundProvider(gq, inputRegionsFiltered)
+
+        // Validate that input in Background or optionlally filer input regions
+        if (mergeInputRegionsToBg) {
+            require(!ignoreInputRegionsOutOfBg) { "Cannot merge & ignore region at the same time." }
+        }
+
+        if (backgroundData != null) {
+            if (ignoreInputRegionsOutOfBg) {
+                val nRegionsBeforeBgFilter = inputRegionsFiltered.size
+                inputRegionsFiltered = inputRegionsFiltered.filter {
+                    intersectsWithBgFun(it, backgroundData)
+                }
+                LOG.info("Filtering input regions that doesn't intersect background. Removed " +
+                        "${nRegionsBeforeBgFilter-inputRegionsFiltered.size} of $nRegionsBeforeBgFilter regions")
+            }
+
+            // validate rest regions:
+            inputRegionsFiltered.forEach {
+                require(intersectsWithBgFun(it, backgroundData)) {
+                    "Background regions are supposed to intersect all loci of interest, but the " +
+                            "region is missing in background: ${it.toChromosomeRange()}"
+                }
+            }
+            LOG.info("[OK] Input Regions matches background")
+        }
+
         require(inputRegionsFiltered.isNotEmpty()) {
             "Regions file is empty or all regions were removed by filters."
         }
+
+        // Ready for next steps:
         val inputRegionsListFiltered = when {
             mergeOverlapped -> LocationsMergingList.create(gq, inputRegionsFiltered)
             else -> LocationsSortedList.create(gq, inputRegionsFiltered)
         }
-        
-        val bgRegionsList = backgroundProvider(gq, inputRegionsFiltered)
-        
 
         LOG.info("LOI sets to test: ${loiInfos.size}")
 
@@ -86,8 +117,8 @@ abstract class RegionShuffleStats(
 
         val nChunks = ceil(simulationsNumber.toDouble() / chunkSize).toInt()
 
-        LOG.info("Calc LOI overlap with BG: ${loiInfos.size}")
-        val infoOverlapWithBg = loiInfos.map { info -> loiOverlapWithBgFun(info.lociFiltered, bgRegionsList) }.toIntArray()
+        LOG.info("Calc LOI overlap with BG...")
+        val infoOverlapWithBg = loiInfos.map { info -> loiOverlapWithBgFun(info.lociFiltered, backgroundData) }.toIntArray()
 
         LOG.info("Do overrepresented check...")
         val progress = Progress { title = "Over/Under-representation check progress (all chunks)" }.bounded(
@@ -107,7 +138,7 @@ abstract class RegionShuffleStats(
 
             val (sampledRegions: List<List<LocationsList<out RangesList>>>, regionAttemptsHist) =
                 sampleRegions(
-                    simulationsInChunk, regionSetMaxRetries, singleRegionMaxRetries, truncateFilter, inputRegionsFiltered, bgRegionsList,
+                    simulationsInChunk, regionSetMaxRetries, singleRegionMaxRetries, truncateFilter, inputRegionsFiltered, backgroundData,
                     gq,
                     parallelismLevel(),
                     samplingFun=samplingFun,
@@ -169,7 +200,7 @@ abstract class RegionShuffleStats(
         val pValuesList = ArrayList<Double>()
         val metricValuesForInput = ArrayList<Long>()
         val sampledSetsMetricMedian = ArrayList<Int>()
-        val sampledSetsMetricVar = ArrayList<Double>()
+        val sampledSetsMetricStdev = ArrayList<Double>()
         val sampledSetsMetricMean = ArrayList<Double>()
 
         loiLabels.forEach { loiLabel ->
@@ -196,7 +227,7 @@ abstract class RegionShuffleStats(
 
             sampledSetsMetricMedian.add(medianValue)
             sampledSetsMetricMean.add(metricMean)
-            sampledSetsMetricVar.add(metricSd * metricSd)
+            sampledSetsMetricStdev.add(metricSd)
         }
         val pValues = pValuesList.toDoubleArray()
         val qValues = BenjaminiHochberg.adjust(pValues.asF64Array()).toDoubleArray()
@@ -214,13 +245,13 @@ abstract class RegionShuffleStats(
             .with("input_${metric.column}", metricValuesForInput.toLongArray()) // #9
             .with("sampled_median_${metric.column}", sampledSetsMetricMedian.toIntArray()) // #10
             .with("sampled_mean_${metric.column}", sampledSetsMetricMean.toDoubleArray()) // #11
-            .with("sampled_var_${metric.column}", sampledSetsMetricVar.toDoubleArray()) // #12
+            .with("sampled_stdev_${metric.column}", sampledSetsMetricStdev.toDoubleArray()) // #12
             .with("sampled_sets_n", IntArray(loiLabels.size) { simulationsNumber }) // #13
             .with("test_H1", loiLabels.map { hypAlt.name }.toTypedArray()) // #14
             .with("pValue", pValues) // #15
             .with("qValue", qValues) // #16
             .with("ratio_obs_2_input",  metricValuesForInput.map { obs -> obs.toFloat() / inputRegionsListFiltered.size }.toFloatArray()) // #17
-            .with("ratio_obs_2_exp",  metricValuesForInput.zip(sampledSetsMetricMedian).map { (obs, n) -> obs.toFloat() / n }.toFloatArray()) // #18
+            .with("ratio_obs_2_exp",  metricValuesForInput.zip(sampledSetsMetricMean).map { (obs, exp) -> obs.toFloat() / exp.toFloat() }.toFloatArray()) // #18
             .reorder("qValue")
     }
 

@@ -819,7 +819,6 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
             createBasePairCoverage(COVERAGE_EX2, gq).saveToTSV(bgRegionsPath)
 
             RegionShuffleStatsFromMethylomeCoverage.backgroundProviderFun(
-                inputRegionsFiltered,
                 bgRegionsPath,
                 zeroBasedBg = false,
                 gq,
@@ -852,18 +851,21 @@ class RegionShuffleStatsFromMethylomeCoverageTest {
         withTempFile("bgcov", ".tsv") { bgRegionsPath ->
             createBasePairCoverage(COVERAGE_EX, gq).saveToTSV(bgRegionsPath)
 
+            val bg = RegionShuffleStatsFromMethylomeCoverage.backgroundProviderFun(
+                bgRegionsPath,
+                zeroBasedBg = false,
+                gq,
+                genomeAllowedAreaFilter = genomeAllowedAreaFilter,
+                genomeMaskedAreaFilter = null
+            )
+
             Tests.assertThrowsWithMessage(
                 java.lang.IllegalArgumentException::class.java,
                 "overage should cover all input regions, but the region is missing in background: chr1:[90, 105)",
                 partialMessageMatch = true
             ) {
-                RegionShuffleStatsFromMethylomeCoverage.backgroundProviderFun(
-                    inputRegionsFiltered,
-                    bgRegionsPath,
-                    zeroBasedBg = false,
-                    gq,
-                    genomeAllowedAreaFilter = genomeAllowedAreaFilter,
-                    genomeMaskedAreaFilter = null
+                RegionShuffleStatsFromMethylomeCoverage.ensureInputRegionsMatchesBackgound(
+                    inputRegionsFiltered, bg, bgRegionsPath
                 )
             }
         }

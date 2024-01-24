@@ -87,6 +87,7 @@ object EnrichmentInLoi {
             genomeAllowedAreaFilter = genomeAllowedAreaFilter,
             genomeMaskedAreaFilter = genomeMaskedAreaFilter,
             mergeInputRegionsToBg = mergeInputRegionsToBg,
+            ignoreRegionsOutOfBg = enrichmentOpts.ignoreRegionsOutOfBg,
             samplingWithReplacement = opts.samplingWithReplacement,
             backgroundIsMethylome = backgroundIsMethylome,
             zeroBasedBackground = zeroBasedBackground,
@@ -271,6 +272,11 @@ object EnrichmentInLoi {
                 "Merge input regions into background before sampling if background doesn't cover all input regions."
             )
 
+            accepts(
+                "ignore-regions-out-of-bg",
+                "Do not use in analysis the input region that don't intersect background."
+            )
+
             acceptsAll(
                 listOf("genome-masked"),
                 "Path to masked genome area file: Input regions intersecting masked area are skipped, masked area" +
@@ -340,7 +346,7 @@ object EnrichmentInLoi {
 
             acceptsAll(
                 listOf("h1"),
-                "Alternative hypothesis: Input regions abundance in LOI is greater/less/different(two-sided) compared " +
+                "Alternative hypothesis: Input regions abundance in LOI is greater/less/two-sided compared " +
                         "to simulated regions with similar lengths."
             )
                 .withRequiredArg().ofType(PermutationAltHypothesis::class.java)
@@ -434,7 +440,8 @@ object EnrichmentInLoi {
                     zeroBasedBackground = true
                 }
                 doCalculations(
-                    sharedOpts, sharedEnrichmentOpts, mergeRegionsToBg,
+                    sharedOpts, sharedEnrichmentOpts,
+                    mergeInputRegionsToBg  = mergeRegionsToBg,
                     backgroundIsMethylome = backgroundIsMethylome,
                     zeroBasedBackground = zeroBasedBackground,
                     bedBgFlnk = bedBgFlnk,
@@ -512,6 +519,7 @@ object EnrichmentInLoi {
         val backgroundPath: Path?,
         val loiFolderPath: Path,
         val loiNameSuffix: String?,
+        val ignoreRegionsOutOfBg: Boolean,
     )
 
     fun processSharedSamplingOptions(
@@ -566,6 +574,7 @@ object EnrichmentInLoi {
 
         val genomeMaskedAreaPath = options.valueOf("genome-masked") as Path?
         logger.info("GENOME MASKED AREA: $genomeMaskedAreaPath")
+
         val genomeAllowedAreaPath = options.valueOf("genome-allowed") as Path?
         logger.info("GENOME ALLOWED AREA: $genomeAllowedAreaPath")
 
@@ -633,6 +642,9 @@ object EnrichmentInLoi {
         }
         logger.info("METRIC: ${metric.column}")
 
+        val ignoreRegionsOutOfBg = options.has("ignore-regions-out-of-bg")
+        LOG.info("IGNORE REGIONS OUT OF BACKGROUND: $ignoreRegionsOutOfBg")
+
         return SharedEnrichmentOptions(
             aSetIsRegions = aSetIsRegions,
             metric = metric,
@@ -641,6 +653,7 @@ object EnrichmentInLoi {
             backgroundPath = backGroundPath,
             loiFolderPath = loiFolderPath,
             loiNameSuffix = loiNameSuffix,
+            ignoreRegionsOutOfBg = ignoreRegionsOutOfBg
         )
     }
 }

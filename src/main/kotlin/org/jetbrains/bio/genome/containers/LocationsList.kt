@@ -119,7 +119,7 @@ abstract class LocationsList<T : RangesList> : GenomeStrandMapLike<List<Location
     fun contains(offset: Int, chr: Chromosome, strand: Strand): Boolean = rangeLists[chr, strand].includesRange(offset)
 
     @Throws(IOException::class)
-    fun save(path: Path, format: BedFormat = BedFormat()) {
+    fun save(path: Path, format: BedFormat = BedFormat(fieldsNumber = 4)) {
         format.print(path).use { printer ->
             locationIterator().forEach { printer.print(it.toBedEntry()) }
         }

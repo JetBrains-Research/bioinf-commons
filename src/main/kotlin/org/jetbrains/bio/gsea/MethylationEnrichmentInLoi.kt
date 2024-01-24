@@ -48,6 +48,11 @@ object MethylationEnrichmentInLoi {
                 "Background offsets in 0-based format instead of 1-based."
             )
 
+            accepts(
+                "ignore-regions-out-of-bg",
+                "Do not use in analysis the input region that don't intersect background."
+            )
+
             acceptsAll(
                 listOf("genome-masked"),
                 "Path to masked genome area file: Input regions intersecting masked area are skipped, masked area" +
@@ -117,7 +122,7 @@ object MethylationEnrichmentInLoi {
 
             acceptsAll(
                 listOf("h1"),
-                "Alternative hypothesis: Input regions abundance in LOI is greater/less/different(two-sided) compared " +
+                "Alternative hypothesis: Input regions abundance in LOI is greater/less/two-sided compared " +
                         "to simulated regions with similar lengths."
             )
                 .withRequiredArg().ofType(PermutationAltHypothesis::class.java)
@@ -267,6 +272,7 @@ object MethylationEnrichmentInLoi {
             truncateFilter = truncateRangesToSpecificLocationFilter,
             genomeAllowedAreaFilter = genomeAllowedAreaFilter,
             genomeMaskedAreaFilter = genomeMaskedAreaFilter,
+            ignoreRegionsOutOfBg = enrichmentOpts.ignoreRegionsOutOfBg,
             samplingWithReplacement = opts.samplingWithReplacement,
             lengthCorrectionMethod = lengthCorrectionMethod
             // N/A

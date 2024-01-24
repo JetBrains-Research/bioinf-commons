@@ -38,6 +38,7 @@ class RegionShuffleStatsFromMethylomeCoverage(
         truncateFilter: LocationsList<out RangesList>?,
         genomeAllowedAreaFilter: LocationsMergingList?,
         genomeMaskedAreaFilter: LocationsMergingList?,
+        ignoreRegionsOutOfBg: Boolean,
         samplingWithReplacement: Boolean,
         lengthCorrectionMethod: String?
     ): DataFrame {
@@ -55,10 +56,15 @@ class RegionShuffleStatsFromMethylomeCoverage(
             aSetIsRegions,
             mergeOverlapped,
             truncateFilter,
+            mergeInputRegionsToBg = false, //XXX: Not supported
+            ignoreInputRegionsOutOfBg= ignoreRegionsOutOfBg, // e.g. BG intersection with some allowed region could be empty => input region that coveres the region will not intersect filtered background
             samplingWithReplacement = samplingWithReplacement,
+            intersectsWithBgFun = { region, background ->
+                background.anchorMethylome.getCoverage(region) > 0
+            },
             backgroundProvider = { _, inputRegionsFiltered ->
                 backgroundProviderFun(
-                    inputRegionsFiltered, backgroundPath, zeroBasedBg, gq,
+                    backgroundPath, zeroBasedBg, gq,
                     genomeAllowedAreaFilter = genomeAllowedAreaFilter,
                     genomeMaskedAreaFilter = genomeMaskedAreaFilter
                 )
@@ -144,7 +150,6 @@ class RegionShuffleStatsFromMethylomeCoverage(
 
 
         fun backgroundProviderFun(
-            inputRegionsFiltered: List<Location>,
             backgroundPath: Path?,
             zeroBasedBg: Boolean,
             gq: GenomeQuery,
@@ -159,7 +164,6 @@ class RegionShuffleStatsFromMethylomeCoverage(
                 // also exclude, such points cannot be an anchor and will be dismissed after sampling!
                 genomeMaskedAreaFilter = genomeMaskedAreaFilter
             )
-            ensureInputRegionsMatchesBackgound(inputRegionsFiltered, anchorMethylomeCov, backgroundPath)
             return MethylomeSamplingBackground(methylomeCov, anchorMethylomeCov)
         }
 
@@ -419,11 +423,11 @@ class RegionShuffleStatsFromMethylomeCoverage(
 
         fun ensureInputRegionsMatchesBackgound(
             inputRegions: List<Location>,
-            methCovData: BasePairCoverage,
+            background: MethylomeSamplingBackground,
             backgroundRegionsPath: Path
         ) {
             inputRegions.forEach { loc ->
-                require(methCovData.getCoverage(loc) > 0) {
+                require(background.anchorMethylome.getCoverage(loc) > 0) {
                     "Background $backgroundRegionsPath coverage should cover all input regions, but the " +
                             "region is missing in background: ${loc.toChromosomeRange()}"
                 }

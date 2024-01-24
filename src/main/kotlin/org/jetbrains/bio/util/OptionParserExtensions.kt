@@ -215,6 +215,9 @@ abstract class PathConverter : ValueConverter<Path> {
                     if (path.notExists) {
                         throw ValueConversionException("Path $path does not exist")
                     }
+                    if (path.isDirectory) {
+                        throw ValueConversionException("Path $path is directory, but should be a regular file")
+                    }
                     if (ext != null && path.extension.lowercase() != ext.lowercase()) {
                         throw ValueConversionException("Expected *.$ext file, but was ${path.fileName}")
                     }
