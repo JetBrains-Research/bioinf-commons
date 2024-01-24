@@ -60,6 +60,10 @@ object Configuration {
             field = true
         }
 
+    /**
+     * Initialize config by system properties.
+     * For tests parameters are configured in build.gradle test tasks.
+     */
     private fun initialize() {
         if (initialized) {
             return
