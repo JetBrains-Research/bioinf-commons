@@ -72,7 +72,7 @@ object Tests {
      * @param expectedThrowable The expected type of the exception.
      * @param partialMessageMatch Indicates whether the full message should match partially or exactly (default: false).
      * @param runnable The code block to be tested.
-     * @throws AssertionFailedError if the expected exception is not thrown or the message does not match.
+     * @throws [AssertionError] if the expected exception is not thrown or the message does not match.
      */
     fun <T : Throwable> assertThrowsWithMessage(
         message: String? = null,
