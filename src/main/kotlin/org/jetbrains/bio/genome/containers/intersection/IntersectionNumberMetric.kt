@@ -1,5 +1,6 @@
 package org.jetbrains.bio.genome.containers.intersection
 
+import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.containers.LocationsList
 import org.jetbrains.bio.genome.containers.RangesList
 
@@ -15,4 +16,8 @@ class IntersectionNumberMetric(val aSetFlankedBothSides: Int = 0) : RegionsMetri
 
     override fun calcMetric(ra: RangesList, rb: RangesList): Double =
         ra.intersectRangesNumber(rb, flankBothSides = aSetFlankedBothSides).toDouble()
+
+    //TODO implement to calculate proper regions
+    override fun calcRegions(a: LocationsList<out RangesList>, b: LocationsList<out RangesList>) =
+        a.calcMarkedLocations(b) {ra , rb -> ra.intersectRanges(rb)}
 }
