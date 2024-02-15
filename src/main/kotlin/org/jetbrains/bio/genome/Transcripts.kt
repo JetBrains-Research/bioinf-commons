@@ -267,12 +267,7 @@ object Transcripts {
     }
 
     fun allFromFile(gtfFile: Path, genome: Genome): ListMultimap<Chromosome, Transcript> {
-        return try {
-            loadTranscripts(genome, gtfFile, false)
-        } catch (e: Exception) {
-            LOG.warn("Failed to load transcripts for ${genome.build}. Trying to clear caches. Error:", e)
-            loadTranscripts(genome, gtfFile, true)
-        }
+        return loadTranscripts(genome, gtfFile, true)
     }
 
     /**
@@ -286,7 +281,7 @@ object Transcripts {
     }
 
     private fun loadTranscripts(genome: Genome, inputGtfFile: Path?, cleanCache: Boolean): ListMultimap<Chromosome, Transcript> {
-        val gtfFile = inputGtfFile?: genome.genesGtfPath(false)
+        val gtfFile = inputGtfFile ?: genome.genesGtfPath(false)
         val cachedTranscripts = cachedTranscriptsJsonPath(gtfFile)
 
         if (cleanCache) {
