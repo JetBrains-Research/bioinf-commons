@@ -49,7 +49,7 @@ interface RangesList : Iterable<Range> {
      * Intersect each list interval with requested [range], empty intervals not reported
      */
     fun intersectRanges(range: Range) = intersectRanges(range.startOffset, range.endOffset)
-    infix fun intersectRanges(other: RangesList): List<Range>
+    fun intersectRanges(other: RangesList, flankBothSides: Int = 0): List<Range>
 
     /**
      * If intersected ranges not needed use this function to do less GS
@@ -85,11 +85,17 @@ abstract class BaseRangesList(
         return acc
     }
 
-    override infix fun intersectRanges(other: RangesList): List<Range> {
+    override fun intersectRanges(other: RangesList, flankBothSides: Int): List<Range> {
         val acc = ArrayList<Range>()
 
+
         for (idx in 0 until size) {
-            acc.addAll(other.intersectRanges(startOffsets[idx], endOffsets[idx]))
+            val startOffset = startOffsets[idx]
+            val endOffset = endOffsets[idx]
+
+            val startOffsetFlnk = kotlin.math.max(0, startOffset - flankBothSides)
+            val endOffsetFlnk = endOffset + flankBothSides
+            acc.addAll(other.intersectRanges(startOffsetFlnk, endOffsetFlnk))
         }
 
         return acc
