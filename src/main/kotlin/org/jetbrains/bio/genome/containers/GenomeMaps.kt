@@ -110,6 +110,10 @@ interface GenomeStrandMapLike<T> : Iterable<T> {
         Strand.values().map { strand -> this[chromosome, strand] }
     }.iterator()
 
+    fun iteratorWithKeys(): Iterator<Pair<Pair<Chromosome,Strand>, T>> = genomeQuery.get().flatMap { chromosome ->
+        Strand.values().map { strand -> (chromosome to strand) to this[chromosome, strand] }
+    }.iterator()
+
     fun entries(): Iterable<Triple<Chromosome, Strand, T>> = genomeQuery.get().flatMap { chromosome ->
         Strand.values().map { strand ->
             Triple(chromosome, strand, this[chromosome, strand])

@@ -91,16 +91,16 @@ class RangesMergingListTest {
         val rl1 = rangeMergingList(Range(0, 10))
         val rl2 = rangeMergingList(Range(20, 30))
         assertEquals(
-            rangeMergingList(Range(0, 10), Range(20, 30)).toList(),
-            (rl1 or rl2).toList()
+                rangeMergingList(Range(0, 10), Range(20, 30)).toList(),
+                (rl1 or rl2).toList()
         )
     }
 
     @Test
     fun orWithIntersections() {
         assertEquals(
-            rangeMergingList(Range(0, 30)).toList(),
-            (rangeMergingList(Range(0, 10)) or rangeMergingList(Range(5, 30))).toList()
+                rangeMergingList(Range(0, 30)).toList(),
+                (rangeMergingList(Range(0, 10)) or rangeMergingList(Range(5, 30))).toList()
         )
     }
 
@@ -122,25 +122,40 @@ class RangesMergingListTest {
         val rl2 = rangeMergingList(Range(5, 30))
         doCheckIntersectRanges(rangeMergingList(Range(5, 10)).toList(), rl1, rl2)
         doCheckIntersectRanges(
-            rangeMergingList(Range(5, 10), Range(25, 30)).toList(),
-            rl1 or rangeMergingList(Range(25, 30)),
-            rl2
+                rangeMergingList(Range(5, 10), Range(25, 30)).toList(),
+                rl1 or rangeMergingList(Range(25, 30)),
+                rl2
         )
         doCheckIntersectRanges(
-            rangeMergingList(Range(5, 10), Range(25, 30)).toList(),
-            rl2,
-            rl1 or rangeMergingList(Range(25, 30))
+                rangeMergingList(Range(5, 10), Range(25, 30)).toList(),
+                rl2,
+                rl1 or rangeMergingList(Range(25, 30))
         )
 
         doCheckIntersectRanges(rangeMergingList(Range(6, 8)).toList(), rangeMergingList(Range(0, 2), Range(6, 8)), rl2)
     }
 
+    @Test
+    fun intersectRangesFlnk() {
+        val rl1 = rangeMergingList(Range(0, 10), Range(20, 25))
+        val rl2 = rangeMergingList(Range(0, 30))
+        assertEquals(listOf(Range(0, 12), Range(18, 27)), (rl1.intersectRanges(rl2, 2)).toList())
+        assertEquals(listOf(Range(11, 12), Range(18, 20)), (rl1.intersectRanges(rangeMergingList(Range(11, 20)), 2)))
+    }
+
+    @Test
+    fun intersectRangesFlnkOverlapAfterFlanking() {
+        val rl1 = rangeMergingList(Range(0, 11), Range(13, 25))
+        val rl2 = rangeMergingList(Range(0, 30))
+        assertEquals(listOf(Range(0, 14), Range(10, 28)), (rl1.intersectRanges(rl2, 3)).toList())
+    }
+
     private fun doCheckIntersectRanges(
-        expected: List<Range>,
-        rl1: RangesMergingList,
-        rl2: RangesMergingList
+            expected: List<Range>,
+            rl1: RangesMergingList,
+            rl2: RangesMergingList
     ) {
-        assertEquals(expected, (rl1 intersectRanges rl2).toList())
+        assertEquals(expected, (rl1.intersectRanges(rl2)).toList())
         assertEquals(expected.size, (rl1.intersectRangesNumber(rl2)))
     }
 
@@ -186,10 +201,10 @@ class RangesMergingListTest {
     }
 
     private fun checkOverlap(
-        expected: List<Range>,
-        a: RangesMergingList,
-        b: RangesMergingList,
-        flankBothSides: Int = 0
+            expected: List<Range>,
+            a: RangesMergingList,
+            b: RangesMergingList,
+            flankBothSides: Int = 0
     ) {
         assertEquals(expected, (a.overlapRanges(b, flankBothSides)).toList())
         assertEquals(expected.size, a.overlapRangesNumber(b, flankBothSides))
@@ -201,14 +216,14 @@ class RangesMergingListTest {
         val universe = Range(0, 100)
         assertEquals(listOf(universe), universe - emptyList())
         assertEquals(
-            listOf(Range(0, 20), Range(40, 100)),
-            universe - listOf(Range(20, 40))
+                listOf(Range(0, 20), Range(40, 100)),
+                universe - listOf(Range(20, 40))
         )
         assertEquals(listOf(Range(40, 100)), universe - listOf(Range(0, 40)))
         assertEquals(listOf(Range(0, 40)), universe - listOf(Range(40, 100)))
         assertEquals(
-            emptyList<Range>(),
-            universe - listOf(Range(0, 40), Range(40, 100))
+                emptyList<Range>(),
+                universe - listOf(Range(0, 40), Range(40, 100))
         )
     }
 
@@ -218,21 +233,21 @@ class RangesMergingListTest {
         assertEquals(listOf(Range(10, 90)), rangeMergingList(Range(0, 100)).intersectRanges(Range(10, 90)))
         assertEquals(listOf(Range(10, 90)), rangeMergingList(Range(10, 90)).intersectRanges(Range(0, 100)))
         assertEquals(
-            listOf(Range(20, 40), Range(50, 70)),
-            rangeMergingList(Range(0, 40), Range(50, 100)).intersectRanges(Range(20, 70))
+                listOf(Range(20, 40), Range(50, 70)),
+                rangeMergingList(Range(0, 40), Range(50, 100)).intersectRanges(Range(20, 70))
         )
     }
 
     @Test
     fun lookup() {
         val data = listOf(
-            Range(1, 2),
-            Range(4, 6),
-            Range(4, 9),
-            Range(4, 7),
-            Range(6, 10),
-            Range(20, 30),
-            Range(40, 50)
+                Range(1, 2),
+                Range(4, 6),
+                Range(4, 9),
+                Range(4, 7),
+                Range(6, 10),
+                Range(20, 30),
+                Range(40, 50)
         ).toRangeMergingList()
         assertEquals(-1, data.internalLookup(0))
         assertEquals(0, data.internalLookup(1))
@@ -247,34 +262,34 @@ class RangesMergingListTest {
     @Test
     fun complementaryRanges() {
         checkComplement(
-            listOf(),
-            listOf(Range(0, 100))
+                listOf(),
+                listOf(Range(0, 100))
         )
         checkComplement(
-            listOf(Range(4, 6)),
-            listOf(Range(0, 4), Range(6, 100))
+                listOf(Range(4, 6)),
+                listOf(Range(0, 4), Range(6, 100))
         )
         checkComplement(
-            listOf(Range(3, 6), Range(14, 16), Range(40, 90)),
-            listOf(Range(0, 3), Range(6, 14), Range(16, 40), Range(90, 100))
+                listOf(Range(3, 6), Range(14, 16), Range(40, 90)),
+                listOf(Range(0, 3), Range(6, 14), Range(16, 40), Range(90, 100))
         )
         checkComplement(
-            listOf(Range(1, 2), Range(4, 6), Range(10, 99)),
-            listOf(Range(0, 1), Range(2, 4), Range(6, 10), Range(99, 100))
+                listOf(Range(1, 2), Range(4, 6), Range(10, 99)),
+                listOf(Range(0, 1), Range(2, 4), Range(6, 10), Range(99, 100))
         )
         checkComplement(
-            listOf(Range(0, 2), Range(4, 6), Range(10, 100)),
-            listOf(Range(2, 4), Range(6, 10))
+                listOf(Range(0, 2), Range(4, 6), Range(10, 100)),
+                listOf(Range(2, 4), Range(6, 10))
         )
         checkComplement(
-            listOf(Range(0, 100)),
-            listOf()
+                listOf(Range(0, 100)),
+                listOf()
         )
     }
 
     private fun checkComplement(
-        data: List<Range>,
-        expected: List<Range>
+            data: List<Range>,
+            expected: List<Range>
     ) {
         val actual = data.toRangeMergingList().complementaryRanges(100).toList()
         assertEquals(expected, actual)

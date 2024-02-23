@@ -81,6 +81,27 @@ abstract class LocationsList<T : RangesList> : GenomeStrandMapLike<List<Location
      * 'inline' is important here otherwise each method usage will
      * create new instance of anonymous 'metric' class
      */
+    inline fun calcMarkedLocations(
+        other: LocationsList<out RangesList>,
+        metric: (RangesList, RangesList) -> List<Range>
+    ): List<Location> {
+        require(genomeQuery == other.genomeQuery)
+
+        val acc = mutableListOf<Location>()
+        genomeQuery.get().forEach { chromosome ->
+            Strand.values().forEach { strand ->
+                val ranges = metric(rangeLists[chromosome, strand], other. rangeLists[chromosome, strand])
+                acc.addAll(ranges.map { Location(it.startOffset, it.endOffset, chromosome, strand) })
+            }
+        }
+
+        return acc
+    }
+
+    /**
+     * 'inline' is important here otherwise each method usage will
+     * create new instance of anonymous 'metric' class
+     */
     inline fun calcAdditiveMetricDouble(
         other: RangesList, otherChromosome: Chromosome, otherStrand: Strand,
         metric: (RangesList, RangesList) -> Double
