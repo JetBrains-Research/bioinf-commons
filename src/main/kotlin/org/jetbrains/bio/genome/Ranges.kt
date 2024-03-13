@@ -93,7 +93,7 @@ data class Range(
         }
     }
 
-    override fun toString() = "[$startOffset, $endOffset)"
+    override fun toString() = "[${startOffset.formatLongNumber()}, ${endOffset.formatLongNumber()})"
 
     override fun compareTo(other: Range) = ComparisonChain.start()
         .compare(startOffset, other.startOffset)
