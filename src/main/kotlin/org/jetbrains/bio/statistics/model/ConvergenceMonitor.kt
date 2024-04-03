@@ -17,8 +17,8 @@ abstract class ConvergenceMonitor(
     private val level: Level
 ) {
     init {
-        require(maxIterations > 1) { "maximum number of iterations must be greater than one" }
-        require(threshold >= 0) { "threshold must be >= 0" }
+        require(maxIterations > 1) { "maximum number of iterations must be greater than one, got $maxIterations" }
+        require(0 < threshold && threshold < 1.0) { "threshold must be in 0..1, got $threshold" }
     }
 
     fun finish(model: ClassificationModel) = log(model)

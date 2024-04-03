@@ -35,14 +35,14 @@ class MLMonitor(title: String, threshold: Double, maxIterations: Int, level: Lev
         val iter = logLikelihoods.size()
         val curr = logLikelihoods[iter - 1]
         if (iter <= 1 || iter == maxIterations) {
-            log("iteration: %03d  LL: %.6f".format(iter, curr))
+            log("iteration: %03d  LL: %.2f".format(iter, curr))
             return iter == maxIterations
         }
 
         val prev = logLikelihoods[iter - 2]
-        val status = if (Precision.compareTo(curr, prev, threshold) < 0) " *" else ""
-        log("iteration: %03d  LL: %.6f%s".format(iter, curr, status))
-
-        return abs(curr - prev) < threshold
+        val result = abs((curr - prev) / (curr + prev)) < threshold
+        val status = if (result) " *" else ""
+        log("iteration: %03d  LL: %.2f%s".format(iter, curr, status))
+        return result
     }
 }
