@@ -80,15 +80,15 @@ class BitList(private val universe: Int) : BitSet() {
     override fun size() = universe
 
     /**
-     * Returns a list of 1-bit consequent blocks.
+     * Returns a list of 1-bit runs in this set using gap.
      *
-     * For example the following bit set has 2 blocks
+     * For example the following bit set has 2 runs with gap = 0, and 1 run with gap = 1
      *
      *     110111100
      *
      * The first run is [0, 2) and the second [3, 8).
      */
-    fun aggregate(): List<Range> {
+    fun aggregate(gap: Int = 0): List<Range> {
         val ranges = arrayListOf<Range>()
         var offset = 0
         while (offset < size()) {
@@ -96,14 +96,21 @@ class BitList(private val universe: Int) : BitSet() {
             if (left == -1) {
                 break
             }
-            val right = min(nextClearBit(left + 1), size())
+            var right = min(nextClearBit(left + 1), size())
+            while (gap > 0 && right < size()) {
+                val nextSet = nextSetBit(right + 1)
+                if (nextSet != -1 && nextSet - right <= gap) {
+                    right = min(nextClearBit(nextSet + 1), size())
+                } else {
+                    break
+                }
+            }
             ranges.add(Range(left, right))
             offset = right
         }
 
         return ranges
     }
-
     override fun equals(other: Any?) = when {
         this === other -> true
         other !is BitList -> false

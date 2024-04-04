@@ -151,25 +151,28 @@ class BitListTest {
 }
 
 @RunWith(Parameterized::class)
-class AggregateTest(private val expected: List<Range>, private val bits: IntArray) {
+class AggregateTest(private val expected: List<Range>, private val bits: IntArray, private val gap: Int) {
     @Test
     fun aggregate() {
         val actual = bits.toBitList()
-        assertEquals(expected, actual.aggregate())
+        assertEquals(expected, actual.aggregate(gap))
     }
 
     companion object {
         @JvmStatic
         @Parameters
         fun `data`(): Collection<Array<out Any>> = listOf(
-            arrayOf(emptyList<Range>(), intArrayOf()),
-            arrayOf(listOf(Range(1, 4)), intArrayOf(1, 2, 3)),
-            arrayOf(listOf(Range(1, 4), Range(5, 7)), intArrayOf(1, 2, 3, 5, 6)),
+            arrayOf(emptyList<Range>(), intArrayOf(), 0),
+            arrayOf(listOf(Range(1, 4)), intArrayOf(1, 2, 3), 0),
+            arrayOf(listOf(Range(1, 4), Range(5, 7)), intArrayOf(1, 2, 3, 5, 6), 0),
             arrayOf(
-                listOf(Range(1, 4), Range(5, 7), Range(10, 11), Range(15, 16)), intArrayOf(1, 2, 3, 5, 6, 10, 15)
+                listOf(Range(1, 4), Range(5, 7), Range(10, 11), Range(15, 16)),
+                intArrayOf(1, 2, 3, 5, 6, 10, 15), 0
             ),
-            arrayOf(emptyList<Range>(), intArrayOf()),
-            arrayOf(listOf(Range(1, 3), Range(4, 6)), intArrayOf(1, 2, 4, 5))
+            arrayOf(emptyList<Range>(), intArrayOf(), 10),
+            arrayOf(listOf(Range(1, 18), Range(30, 41)), intArrayOf(1, 2, 3, 4, 10, 15, 17, 30, 35, 40), 5),
+            arrayOf(listOf(Range(1, 3), Range(4, 6)), intArrayOf(1, 2, 4, 5), 0),
+            arrayOf(listOf(Range(1, 6)), intArrayOf(1, 2, 4, 5), 1)
         )
     }
 }
