@@ -548,6 +548,8 @@ data class Chromosome private constructor(
 
     val range: Range get() = Range(0, length)
 
+    val chromosomeRange: ChromosomeRange get() = ChromosomeRange(0, length, this)
+
     val centromere: Range?
         get() {
             val centromeres = gaps.asSequence()

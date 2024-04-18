@@ -54,7 +54,7 @@ class ReadsQueryTest {
             val chr1 = genomeQuery["chr1"]!!
             assertEquals(SingleEndCoverage::class.java, coverage::class.java)
             assertEquals(SINGLE_END_BAM_DETECTED_FRAGMENT, (coverage as SingleEndCoverage).detectedFragment)
-            assertEquals(SINGLE_END_BAM_READS, coverage.getBothStrandsCoverage(chr1.range.on(chr1)))
+            assertEquals(SINGLE_END_BAM_READS, coverage.getBothStrandsCoverage(chr1.chromosomeRange))
         }
     }
 
@@ -149,7 +149,7 @@ class ReadsQueryTest {
             assertIs(coverage, SingleEndCoverage::class.java)
             assertEquals(
                 PAIRED_END_BAM_PAIRS * 2,
-                coverage.getBothStrandsCoverage(chr1.range.on(chr1))
+                coverage.getBothStrandsCoverage(chr1.chromosomeRange)
             )
         }
     }
