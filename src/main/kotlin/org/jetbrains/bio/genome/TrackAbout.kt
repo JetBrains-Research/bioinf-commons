@@ -11,13 +11,26 @@ data class TrackAboutMetricValue<T>(
     val value: T
 )
 
-interface TrackAboutColumnType<T> {
-    val name: String
+abstract class TrackAboutColumnType<T> {
+    abstract val name: String
 
-    fun comparator(): Comparator<T>? = null
-    fun valueClass(): Class<*>?
-    fun render(value: Any?) = value?.toString() ?: "-"
+    open fun comparator(): Comparator<T>? = null
+    abstract fun valueClass(): Class<*>?
+    open fun render(value: Any?) = value?.toString() ?: "-"
     infix fun to(value: T): TrackAboutMetricValue<T> = TrackAboutMetricValue(this, value)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is TrackAboutColumnType<*>) return false
+        if (name != other.name) return false
+        if (valueClass() != other.valueClass()) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return name.hashCode() * 31 + valueClass().hashCode()
+    }
+
 }
 
 object TrackAboutColumnTypes {
@@ -27,7 +40,7 @@ object TrackAboutColumnTypes {
 
 class TrackAboutStringColumnType(
     override val name: String
-) : TrackAboutColumnType<String> {
+) : TrackAboutColumnType<String>() {
     override fun valueClass() = String::class.java
 
     override fun comparator() = Comparator<String> { o1, o2 ->
@@ -40,7 +53,7 @@ class TrackAboutStringColumnType(
 
 class TrackAboutLongColumnType(
     override val name: String
-) : TrackAboutColumnType<Long> {
+) : TrackAboutColumnType<Long>() {
     override fun valueClass() = Long::class.java
 
     override fun render(value: Any?) = when (value) {
@@ -57,7 +70,7 @@ class TrackAboutLongColumnType(
 
 class TrackAboutIntegerColumnType(
     override val name: String
-) : TrackAboutColumnType<Int> {
+) : TrackAboutColumnType<Int>() {
     override fun valueClass() = Int::class.java
 
     override fun render(value: Any?) = when (value) {
@@ -72,7 +85,7 @@ class TrackAboutIntegerColumnType(
 
 open class TrackAboutDoubleColumnType(
     override val name: String
-) : TrackAboutColumnType<Double> {
+) : TrackAboutColumnType<Double>() {
     override fun valueClass() = Double::class.java
 
     override fun comparator() = Comparator<Double> { o1, o2 ->
@@ -82,7 +95,7 @@ open class TrackAboutDoubleColumnType(
 
 open class TrackAboutBooleanColumnType(
     override val name: String
-) : TrackAboutColumnType<Boolean> {
+) : TrackAboutColumnType<Boolean>() {
     override fun valueClass() = Boolean::class.java
 
     override fun comparator() = Comparator<Boolean> { o1, o2 ->
@@ -103,7 +116,7 @@ class TrackAboutPercentageColumnType(
 
 class TrackAboutFileSizeColumnType(
     override val name: String
-) : TrackAboutColumnType<FileSize> {
+) : TrackAboutColumnType<FileSize>() {
 
     override fun comparator() = Comparator<FileSize> { o1, o2 ->
         o1.bytes.compareTo(o2.bytes)
