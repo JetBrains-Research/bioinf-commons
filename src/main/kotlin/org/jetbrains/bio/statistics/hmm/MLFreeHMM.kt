@@ -29,7 +29,7 @@ import org.jetbrains.bio.viktor.F64Array
  */
 abstract class MLFreeHMM(
     numStates: Int,
-    private val numDimensions: Int,
+    val numDimensions: Int,
     priorProbabilities: F64Array = F64Array.stochastic(numStates),
     transitionProbabilities: F64Array = F64Array.stochastic(numStates, numStates)
 ) : MLAbstractHMM(numStates, priorProbabilities, transitionProbabilities) {
