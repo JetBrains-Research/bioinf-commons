@@ -200,7 +200,13 @@ class NegativeBinomialDistribution(
         /** Gamma fit based on
          * http://research.microsoft.com/en-us/um/people/minka/papers/minka-gamma.pdf
          */
-        fun fitGamma(meanLog: Double, mean: Double, prevA: Double): Double {
+        fun fitGamma(
+            meanLog: Double,
+            mean: Double,
+            prevA: Double,
+            iterations: Int = 200,
+            epsilon: Double = 1e-6
+        ): Double {
             if (mean == 0.0) {
                 return Double.NaN
             }
@@ -208,11 +214,11 @@ class NegativeBinomialDistribution(
             var aInv = 1 / prevA
             var a = prevA
 
-            for (i in 0..99) {
+            repeat(iterations) {
                 aInv += (meanLog - logMean + ln(a) - Gamma.digamma(a)) * aInv * aInv / (aInv - Gamma.trigamma(a))
 
                 val aNext = 1 / aInv
-                if (abs(a - aNext) < 1E-6 * a) {
+                if (abs(a - aNext) < epsilon * a) {
                     return aNext
                 }
                 a = aNext
@@ -249,8 +255,8 @@ class NegativeBinomialDistribution(
                 return failures
             }
 
+            // Compute summary weights of unique values using Kahan sums
             val valuesMap = TIntObjectHashMap<KahanSum>()
-
             for (i in values.indices) {
                 val value = values[i]
                 val weight = weights[i]
@@ -260,23 +266,37 @@ class NegativeBinomialDistribution(
                 valuesMap[value].feed(weight)
             }
 
-            val valuesSmall = valuesMap.keys()
-            val weightsSmall = F64Array(valuesMap.size()) { i ->
-                valuesMap[valuesSmall[i]].result()
+
+            val uniqueValues = valuesMap.keys().sortedArray()
+            val uniqueValuesWeights = F64Array(valuesMap.size()) {
+                valuesMap[uniqueValues[it]].result()
             }
 
+            return fitNumberOfFailures(uniqueValues, uniqueValuesWeights, failures)
+        }
+
+        /**
+         * See ML algorithm description at:
+         * http://research.microsoft.com/en-us/um/people/minka/papers/minka-gamma.pdf
+         */
+        private fun fitNumberOfFailures(
+            values: IntArray,
+            weights: F64Array,
+            failures: Double,
+            iterations: Int = 200,
+            epsilon: Double = 1e-6
+        ): Double {
+
             var a = failures // shape
+            val sum = weights.sum()
 
-            val sum = weightsSmall.sum()
-
-            for (i in 0..199) {
+            repeat(iterations) {
                 val lambdaExpectationSum = KahanSum()
                 val logLambdaExpectationSum = KahanSum()
 
-                for (e in valuesSmall.indices) {
-
-                    val weight = weightsSmall[e]
-                    val value = valuesSmall[e]
+                for (e in values.indices) {
+                    val weight = weights[e]
+                    val value = values[e]
 
                     val a2 = a + value     // shape of posterior Gamma
                     val lambdaExpectation = a2
@@ -288,7 +308,7 @@ class NegativeBinomialDistribution(
                 val newMean = lambdaExpectationSum.result() / sum
                 val newMeanLog = logLambdaExpectationSum.result() / sum
                 val newA = fitGamma(newMeanLog, newMean, a)
-                if (newA.isNaN() || abs(a - newA) < a * 1E-6) {
+                if (newA.isNaN() || abs(a - newA) < a * epsilon) {
                     return a
                 }
                 a = newA
@@ -301,7 +321,9 @@ class NegativeBinomialDistribution(
             values: F64Array,
             weights: F64Array,
             mean: F64Array,
-            failures: Double
+            failures: Double,
+            iterations: Int = 200,
+            epsilon: Double = 1e-4
         ): Double {
 
             if (failures.isInfinite() || mean.equals(0)) {
@@ -310,7 +332,7 @@ class NegativeBinomialDistribution(
             }
             var a = weights.sum() / (weights * (values / mean - 1.0) * (values / mean - 1.0)).sum() // shape
             //var a = 1.0
-            for (i in 0..99) {
+            repeat(iterations) {
                 a = abs(a)
                 val fDeriv = (weights * (diGammaInPlace(values + a) -
                         Gamma.digamma(a) -
@@ -326,7 +348,7 @@ class NegativeBinomialDistribution(
                     .sum()
 
                 val aNext = a - fDeriv / fSecDeriv
-                if (abs(a - aNext) < 1E-4) {
+                if (abs(a - aNext) < epsilon) {
                     return aNext
                 }
                 a = aNext
