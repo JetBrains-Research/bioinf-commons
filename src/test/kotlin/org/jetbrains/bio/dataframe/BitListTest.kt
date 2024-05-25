@@ -172,7 +172,8 @@ class AggregateTest(private val expected: List<Range>, private val bits: IntArra
             arrayOf(emptyList<Range>(), intArrayOf(), 10),
             arrayOf(listOf(Range(1, 18), Range(30, 41)), intArrayOf(1, 2, 3, 4, 10, 15, 17, 30, 35, 40), 5),
             arrayOf(listOf(Range(1, 3), Range(4, 6)), intArrayOf(1, 2, 4, 5), 0),
-            arrayOf(listOf(Range(1, 6)), intArrayOf(1, 2, 4, 5), 1)
+            arrayOf(listOf(Range(1, 6)), intArrayOf(1, 2, 4, 5), 1),
+            arrayOf(listOf(Range(1, 2), Range(4, 5)), intArrayOf(1, 4), 0)
         )
     }
 }

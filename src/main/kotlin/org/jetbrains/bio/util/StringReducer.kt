@@ -1,5 +1,7 @@
 package org.jetbrains.bio.util
 
+import kotlin.math.min
+
 /**
  * Reduces list of string into truncated id with hash
  */
@@ -15,15 +17,16 @@ fun reduceIds(strings: List<String>, maxLength: Int = 100, predefinedSha: String
             .replace(Regex("__+"), "_")
             .replace(Regex("(^_+)|(_+$)"), "")
     }.distinct()
-    val joined = ids.joinToString("_") + sha
+    var joined = ids.joinToString("_")
     if (joined.length <= maxLength) {
         return joined
     }
+    joined += sha
     // Try to filter our GSM ids
     val gsmRegex = "GSM\\d+".toRegex()
     val gsmIds = ids.map { gsmRegex.find(it)?.value ?: it }
     if (gsmIds != ids) {
         return reduceIds(gsmIds, maxLength, sha)
     }
-    return "${joined.substring(0, Math.min(joined.length, maxLength - sha.length))}$sha"
+    return "${joined.substring(0, min(joined.length, maxLength - sha.length))}$sha"
 }

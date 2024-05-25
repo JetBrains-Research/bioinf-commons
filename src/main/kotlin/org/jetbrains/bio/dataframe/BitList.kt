@@ -97,6 +97,9 @@ class BitList(private val universe: Int) : BitSet() {
                 break
             }
             var right = min(nextClearBit(left + 1), size())
+            if (right == -1) {
+                break
+            }
             while (gap > 0 && right < size()) {
                 val nextSet = nextSetBit(right + 1)
                 if (nextSet != -1 && nextSet - right <= gap) {
