@@ -40,13 +40,13 @@ class GenomeQuery(val genome: Genome, vararg names: String) {
     operator fun get(name: String): Chromosome? {
         val result = genome.chromosomeNamesMap[name]
         if (result == null) {
-            LOG.debug("Chromosome $name not found in genome ${genome.presentableName()}")
+            LOG.trace("Chromosome $name not found in genome ${genome.presentableName()}")
             return null
         }
         /** [Chromosome] always contain canonical name, i.e. given in chrom.sizes.path */
         val canonicalName = result.name
         if (restriction != null && canonicalName !in restriction) {
-            LOG.debug("Chromosome $name in not in restricted genome $description")
+            LOG.trace("Chromosome $name is not in restricted genome $description")
             return null
         }
         return result
