@@ -36,7 +36,7 @@ enum class OutputType {
     IGNORE
 }
 
-private object Exec {
+object Exec {
     private val LOG = LoggerFactory.getLogger(Exec::class.java)
 
     fun exec(
