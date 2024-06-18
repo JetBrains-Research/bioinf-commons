@@ -86,6 +86,11 @@ class TrackAboutIntegerColumnType(
 open class TrackAboutDoubleColumnType(
     override val name: String
 ) : TrackAboutColumnType<Double>() {
+
+    override fun render(value: Any?): String {
+        return "%.3f".format(value as Double)
+    }
+
     override fun valueClass() = Double::class.java
 
     override fun comparator() = Comparator<Double> { o1, o2 ->
