@@ -88,7 +88,7 @@ open class TrackAboutDoubleColumnType(
 ) : TrackAboutColumnType<Double>() {
 
     override fun render(value: Any?): String {
-        return if (value != null)"%.3f".format(value as Double).trimEnd('0') else "-"
+        return if (value != null)"%.3f".format(value as Double).replace(Regex("((?<=(,[0-9]+))0+)|(,0+)$"), "") else "-"
     }
 
     override fun valueClass() = Double::class.java
