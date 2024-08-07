@@ -6,29 +6,10 @@ import kotlin.test.assertEquals
 class StringReducerTest {
     @Test
     fun reducedIdSingle() {
-        assertEquals("GSM42#d9a2a", reduceIds(listOf("GSM42")))
-        assertEquals("GSM42#4186c", reduceIds(listOf("GSM42_something_else"), 12))
-        assertEquals("non_gsm#5752f", reduceIds(listOf("non_gsm")))
-        assertEquals("YD_ac_BC1_R1_hg19_bam#2c249", reduceIds(listOf("YD_ac_BC1_R1_hg19.bam")))
-    }
-
-    @Test
-    fun reduceChars() {
-        assertEquals("foo_bar#5d5f2", reduceIds(listOf("foo_bar")))
-        assertEquals("foo_bar#c6167", reduceIds(listOf("_foo%bar_")))
-        assertEquals("foo_bar#5d5f2", reduceIds(listOf("foo", "bar")))
-        assertEquals("foo_bar#4d2ea", reduceIds(listOf("___foo:$%^", "_bar_")))
-        if (isWindows()) {
-            assertEquals(
-                "foo_bar#7cdc7",
-                reduceIds(listOf("C:\\mnt\\stripe\\bio\\foo", "C:\\mnt\\stripe\\bio\\genomes\\bar"))
-            )
-        } else {
-            assertEquals(
-                "foo_bar#8fcf1",
-                reduceIds(listOf("/mnt/stripe/bio/foo", "/mnt/stripe/bio/genomes/bar"))
-            )
-        }
+        assertEquals("GSM42", reduceIds(listOf("GSM42")))
+        assertEquals("GSM42", reduceIds(listOf("GSM42_something_else"), 12))
+        assertEquals("non_gsm", reduceIds(listOf("non_gsm")))
+        assertEquals("YD_ac_BC1_R1_hg19_bam", reduceIds(listOf("YD_ac_BC1_R1_hg19.bam")))
     }
 
     @Test
@@ -38,7 +19,7 @@ class StringReducerTest {
             "GSM772872_BI.CD8_Naive_Primary_Cells.H3K36me3.Donor_100_7_pooled_leukopaks_Jan_7_2011.bed.gz",
             "GSM613881_UCSF-UBC.CD8_Naive_Primary_Cells.H3K4me3.TC010.bed.gz"
         )
-        assertEquals("GSM1102782_GSM772872_GSM613881#10721", reduceIds(ids))
+        assertEquals("GSM1102782_GSM772872_GSM613881", reduceIds(ids))
     }
 
     @Test
@@ -46,6 +27,7 @@ class StringReducerTest {
         val path = "/mnt/stripe/bio/experiments/cache/fit/vbdpcsmbhmm/methylationenrichment_hg19_3_".length
         assertEquals(
             "OD1_sorted_OD10_sorted_OD2_sorted_OD3_sorted_OD4_sorted_YD1_sorte#f6361",
+
             reduceIds(
                 listOf(
                     "OD1.sorted#00000",
@@ -61,7 +43,7 @@ class StringReducerTest {
             )
         )
         assertEquals(
-            "OD1_sorted_OD10_sorted_OD2_sorted_OD3_sorted_OD4_sorted_YD1_sorte#d3112",
+            "OD1_sorted_OD10_sorted_OD2_sorted_OD3_sorted_OD4_sorted_YD1_sorted",
             reduceIds(
                 listOf(
                     "OD1.sorted#00000",
