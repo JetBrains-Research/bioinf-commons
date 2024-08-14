@@ -1,6 +1,5 @@
 package org.jetbrains.bio.genome.sampling
 
-import kotlinx.support.jdk7.use
 import org.jetbrains.bio.big.ExtendedBedEntry
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.GenomeQuery
@@ -25,7 +24,7 @@ private const val SAMPLE_ATTEMPTS_THRESHOLD = 1000
  */
 fun randomizeBedRegions(bedFilePath: Path, genomeQuery: GenomeQuery): Path {
     val randomBedPath = Files.createTempFile("randomRegions", ".bed")
-    BedFormat().print(randomBedPath).use { printer ->
+    with(BedFormat().print(randomBedPath)) {
         BedFormat.auto(bedFilePath).parse(bedFilePath) { bedParser ->
             bedParser.distinct()
                 .filter { it.chrom in genomeQuery }
@@ -40,7 +39,7 @@ fun randomizeBedRegions(bedFilePath: Path, genomeQuery: GenomeQuery): Path {
                 .sequential() // required here, otherwise flatMap().forEach() seems to look concurrently
                 .flatMap { it.stream() }
                 .forEach { (start, end, chr, strand) ->
-                    printer.print(ExtendedBedEntry(chr.name, start, end, strand = strand.char))
+                    this.print(ExtendedBedEntry(chr.name, start, end, strand = strand.char))
                 }
         }
     }

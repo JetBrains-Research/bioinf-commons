@@ -3,7 +3,6 @@ package org.jetbrains.bio.genome.format
 import htsjdk.samtools.SAMRecord
 import htsjdk.samtools.SamReaderFactory
 import htsjdk.samtools.ValidationStringency
-import kotlinx.support.jdk7.use
 import org.jetbrains.bio.genome.*
 import org.jetbrains.bio.util.*
 import picard.sam.markduplicates.MarkDuplicates

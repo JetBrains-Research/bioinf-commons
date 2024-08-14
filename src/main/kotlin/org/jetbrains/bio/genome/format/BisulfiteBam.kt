@@ -6,7 +6,6 @@ import gnu.trove.list.array.TCharArrayList
 import htsjdk.samtools.*
 import htsjdk.samtools.SAMFileHeader.SortOrder
 import htsjdk.samtools.cram.ref.ReferenceSource
-import kotlinx.support.jdk7.use
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Strand
@@ -81,9 +80,9 @@ object BisulfiteBamParser {
         minBasePhred: Byte
     ) {
 
-        getPiler(path, chromosome, minBasePhred).use { piler ->
-            loop@ while (piler.hasNext()) {
-                val pc = piler.next()
+        with(getPiler(path, chromosome, minBasePhred)) {
+            loop@ while (this.hasNext()) {
+                val pc = this.next()
                 // Reference position is 1-based in SAM.
                 val offset = pc.position - 1
                 val ch = sequence.charAt(offset)
@@ -96,7 +95,7 @@ object BisulfiteBamParser {
                 }
 
                 val context = CytosineContext.determine(sequence, offset, strand)
-                piler.handleLocus(builder, chromosome, strand, offset, context, pc)
+                this.handleLocus(builder, chromosome, strand, offset, context, pc)
                 progress.report()
             }
         }

@@ -1,7 +1,6 @@
 package org.jetbrains.bio.genome.coverage
 
 import gnu.trove.list.TIntList
-import kotlinx.support.jdk7.use
 import org.jetbrains.bio.genome.ChromosomeRange
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.Location

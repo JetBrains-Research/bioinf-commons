@@ -1,7 +1,6 @@
 package org.jetbrains.bio.genome.containers
 
 import com.google.common.collect.Lists
-import kotlinx.support.jdk7.use
 import org.jetbrains.bio.big.BedEntry
 import org.jetbrains.bio.genome.*
 import org.jetbrains.bio.genome.format.BedFormat
@@ -90,7 +89,7 @@ abstract class LocationsList<T : RangesList> : GenomeStrandMapLike<List<Location
         val acc = mutableListOf<Location>()
         genomeQuery.get().forEach { chromosome ->
             Strand.values().forEach { strand ->
-                val ranges = metric(rangeLists[chromosome, strand], other. rangeLists[chromosome, strand])
+                val ranges = metric(rangeLists[chromosome, strand], other.rangeLists[chromosome, strand])
                 acc.addAll(ranges.map { Location(it.startOffset, it.endOffset, chromosome, strand) })
             }
         }
@@ -141,8 +140,8 @@ abstract class LocationsList<T : RangesList> : GenomeStrandMapLike<List<Location
 
     @Throws(IOException::class)
     fun save(path: Path, format: BedFormat = BedFormat()) {
-        format.print(path).use { printer ->
-            locationIterator().forEach { printer.print(it.toBedEntry()) }
+        with(format.print(path)) {
+            locationIterator().forEach { this.print(it.toBedEntry()) }
         }
     }
 

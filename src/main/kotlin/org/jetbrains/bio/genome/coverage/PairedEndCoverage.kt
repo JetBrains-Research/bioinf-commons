@@ -4,7 +4,6 @@ import com.google.common.base.MoreObjects
 import gnu.trove.list.TIntList
 import gnu.trove.list.array.TIntArrayList
 import gnu.trove.set.hash.TIntHashSet
-import kotlinx.support.jdk7.use
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.ChromosomeRange
 import org.jetbrains.bio.genome.GenomeQuery

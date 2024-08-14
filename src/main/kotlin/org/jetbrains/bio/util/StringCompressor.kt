@@ -1,6 +1,5 @@
 package org.jetbrains.bio.util
 
-import kotlinx.support.jdk7.use
 import org.jetbrains.bio.util.StringCompressorChunk.Companion.FLUSH_THRESHOLD
 import java.io.ByteArrayOutputStream
 import java.lang.ref.WeakReference

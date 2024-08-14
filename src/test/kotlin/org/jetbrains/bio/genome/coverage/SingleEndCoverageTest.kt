@@ -1,7 +1,6 @@
 package org.jetbrains.bio.genome.coverage
 
 import gnu.trove.list.array.TIntArrayList
-import kotlinx.support.jdk7.use
 import org.jetbrains.bio.Tests.assertIn
 import org.jetbrains.bio.Tests.assertNotIn
 import org.jetbrains.bio.genome.*
@@ -172,15 +171,15 @@ class SingleEndCoverageTest {
     fun testSortInComputeTagsCoverage() {
         withTempFile("track", ".bed") { trackPath ->
             val bedFormat = BedFormat()
-            bedFormat.print(trackPath).use { bedPrinter ->
-                bedPrinter.print(Location(0, 3, chromosome1, Strand.PLUS).toBedEntry())
-                bedPrinter.print(Location(2, 4, chromosome1, Strand.PLUS).toBedEntry())
-                bedPrinter.print(Location(4, 7, chromosome1, Strand.PLUS).toBedEntry())
+            with(bedFormat.print(trackPath)) {
+                this.print(Location(0, 3, chromosome1, Strand.PLUS).toBedEntry())
+                this.print(Location(2, 4, chromosome1, Strand.PLUS).toBedEntry())
+                this.print(Location(4, 7, chromosome1, Strand.PLUS).toBedEntry())
 
                 // Not sorted!
-                bedPrinter.print(Location(4, 7, chromosome2, Strand.PLUS).toBedEntry())
-                bedPrinter.print(Location(2, 9, chromosome2, Strand.PLUS).toBedEntry())
-                bedPrinter.print(Location(0, 11, chromosome2, Strand.PLUS).toBedEntry())
+                this.print(Location(4, 7, chromosome2, Strand.PLUS).toBedEntry())
+                this.print(Location(2, 9, chromosome2, Strand.PLUS).toBedEntry())
+                this.print(Location(0, 11, chromosome2, Strand.PLUS).toBedEntry())
             }
 
             val coverage = SingleEndCoverage.builder(genomeQuery).apply {
@@ -197,10 +196,10 @@ class SingleEndCoverageTest {
     fun testUniqueTags() {
         withTempFile("track", ".bed") { trackPath ->
             val bedFormat = BedFormat()
-            bedFormat.print(trackPath).use { bedPrinter ->
-                bedPrinter.print(Location(0, 1, chromosome1, Strand.PLUS).toBedEntry())
-                bedPrinter.print(Location(0, 1, chromosome1, Strand.PLUS).toBedEntry())
-                bedPrinter.print(Location(0, 1, chromosome1, Strand.PLUS).toBedEntry())
+            with(bedFormat.print(trackPath)) {
+                this.print(Location(0, 1, chromosome1, Strand.PLUS).toBedEntry())
+                this.print(Location(0, 1, chromosome1, Strand.PLUS).toBedEntry())
+                this.print(Location(0, 1, chromosome1, Strand.PLUS).toBedEntry())
             }
 
             val coverage = SingleEndCoverage.builder(genomeQuery).apply {
@@ -217,12 +216,12 @@ class SingleEndCoverageTest {
     fun testFragmentSize() {
         withTempFile("track", ".bed") { trackPath ->
             val bedFormat = BedFormat()
-            bedFormat.print(trackPath).use { bedPrinter ->
-                bedPrinter.print(Location(0, 100, chromosome1, Strand.PLUS).toBedEntry())
-                bedPrinter.print(Location(0, 50, chromosome1, Strand.PLUS).toBedEntry())
-                bedPrinter.print(Location(0, 25, chromosome1, Strand.PLUS).toBedEntry())
-                bedPrinter.print(Location(0, 101, chromosome1, Strand.MINUS).toBedEntry())
-                bedPrinter.print(Location(0, 151, chromosome1, Strand.MINUS).toBedEntry())
+            with(bedFormat.print(trackPath)) {
+                this.print(Location(0, 100, chromosome1, Strand.PLUS).toBedEntry())
+                this.print(Location(0, 50, chromosome1, Strand.PLUS).toBedEntry())
+                this.print(Location(0, 25, chromosome1, Strand.PLUS).toBedEntry())
+                this.print(Location(0, 101, chromosome1, Strand.MINUS).toBedEntry())
+                this.print(Location(0, 151, chromosome1, Strand.MINUS).toBedEntry())
             }
 
             val coverage = SingleEndCoverage.builder(genomeQuery).apply {

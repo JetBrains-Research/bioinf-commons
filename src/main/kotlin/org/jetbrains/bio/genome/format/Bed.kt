@@ -3,7 +3,6 @@ package org.jetbrains.bio.genome.format
 import com.google.common.base.Splitter
 import com.google.common.collect.UnmodifiableIterator
 import com.google.common.io.Closeables
-import kotlinx.support.jdk7.use
 import org.jetbrains.bio.big.BedEntry
 import org.jetbrains.bio.big.ExtendedBedEntry
 import org.jetbrains.bio.genome.Chromosome
@@ -106,7 +105,7 @@ data class BedFormat(
     }
 
     private fun <T> parse(reader: BufferedReader, src: String, f: (BedParser) -> T) =
-        BedParser(reader, src, delimiter).use { f(it) }
+        with(BedParser(reader, src, delimiter)) { f(this) }
 
     fun print(path: Path) = print(path.bufferedWriter())
 
@@ -644,10 +643,10 @@ fun ExtendedBedEntry.toLocation(genome: Genome) =
     Location(start, end, Chromosome(genome, chrom), strand.toStrand())
 
 fun LocationsMergingList.saveWithUniqueNames(bedPath: Path) {
-    BedFormat().print(bedPath).use { printer ->
+    with(BedFormat().print(bedPath)) {
         var i = 0
         locationIterator().forEach { (start, end, chr) ->
-            printer.print(ExtendedBedEntry(chr.name, start, end, "$i", strand = '+'))
+            this.print(ExtendedBedEntry(chr.name, start, end, "$i", strand = '+'))
             i++
         }
     }
