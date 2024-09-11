@@ -13,22 +13,22 @@ class FragmentSizeTest {
     fun testDetectFragmentSize() {
         withTempFile("track", ".bed") { trackPath ->
             val bedFormat = BedFormat()
-            with(bedFormat.print(trackPath)) {
-                this.print(Location(0, 50, chromosome1, Strand.PLUS).toBedEntry())
-                this.print(Location(0, 50, chromosome1, Strand.PLUS).toBedEntry())
-                this.print(Location(0, 50, chromosome1, Strand.PLUS).toBedEntry())
-                this.print(Location(10, 60, chromosome1, Strand.PLUS).toBedEntry())
-                this.print(Location(20, 70, chromosome1, Strand.PLUS).toBedEntry())
-                this.print(Location(51, 101, chromosome1, Strand.MINUS).toBedEntry())
-                this.print(Location(51, 101, chromosome1, Strand.MINUS).toBedEntry())
-                this.print(Location(51, 101, chromosome1, Strand.MINUS).toBedEntry())
-                this.print(Location(111, 161, chromosome1, Strand.MINUS).toBedEntry())
-                this.print(Location(121, 171, chromosome1, Strand.MINUS).toBedEntry())
+            bedFormat.print(trackPath).use {
+                it.print(Location(0, 50, chromosome1, Strand.PLUS).toBedEntry())
+                it.print(Location(0, 50, chromosome1, Strand.PLUS).toBedEntry())
+                it.print(Location(0, 50, chromosome1, Strand.PLUS).toBedEntry())
+                it.print(Location(10, 60, chromosome1, Strand.PLUS).toBedEntry())
+                it.print(Location(20, 70, chromosome1, Strand.PLUS).toBedEntry())
+                it.print(Location(51, 101, chromosome1, Strand.MINUS).toBedEntry())
+                it.print(Location(51, 101, chromosome1, Strand.MINUS).toBedEntry())
+                it.print(Location(51, 101, chromosome1, Strand.MINUS).toBedEntry())
+                it.print(Location(111, 161, chromosome1, Strand.MINUS).toBedEntry())
+                it.print(Location(121, 171, chromosome1, Strand.MINUS).toBedEntry())
             }
 
             val builder = SingleEndCoverage.builder(genomeQuery).apply {
                 processReads(genomeQuery, trackPath) {
-                    this.process(it)
+                    process(it)
                 }
             }
             // this is required to sort the builder data

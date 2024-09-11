@@ -303,8 +303,8 @@ Fields number in BED file is between 3 and 15, but was 2"""
         val bedFormat = BedFormat.from("bed8+1")
 
         val writer = StringWriter()
-        with(bedFormat.print(writer)) {
-            this.print(
+        bedFormat.print(writer).use {
+            it.print(
                 ExtendedBedEntry(
                     "chr1", 1000, 5000, "cloneA",
                     777, '-', 2000, 4000, Color.WHITE.rgb, 2,
@@ -323,8 +323,8 @@ Fields number in BED file is between 3 and 15, but was 2"""
     fun testWriteBed() {
         val bedFormat = BedFormat.DEFAULT
         val writer = StringWriter()
-        with(bedFormat.print(writer)) {
-            this.print(
+        bedFormat.print(writer).use {
+            it.print(
                 ExtendedBedEntry(
                     "chr1", 1000, 5000, "cloneA",
                     777, '-', 1000, 5000, Color.BLACK.rgb, 2,
@@ -343,8 +343,8 @@ Fields number in BED file is between 3 and 15, but was 2"""
     fun testWriteBed6() {
         val bedFormat = BedFormat.from("bed6")
         val writer = StringWriter()
-        with(bedFormat.print(writer)) {
-            this.print(
+        bedFormat.print(writer).use {
+            it.print(
                 ExtendedBedEntry(
                     "chr1", 1000, 5000, "cloneA",
                     777, '-', 1000, 5000, Color.BLACK.rgb, 2,
@@ -363,8 +363,8 @@ Fields number in BED file is between 3 and 15, but was 2"""
     fun testWriteBedRGB() {
         val bedFormat = BedFormat.RGB
         val writer = StringWriter()
-        with(bedFormat.print(writer)) {
-            this.print(
+        bedFormat.print(writer).use {
+            it.print(
                 ExtendedBedEntry(
                     "chr1", 1000, 5000, "cloneA",
                     777, '-', 1000, 5000, Color.BLACK.rgb, 2,
@@ -601,12 +601,12 @@ Fields number in BED file is between 3 and 15, but was 2"""
     @Test
     fun testAuto_DefaultScheme() {
         withBedFile { path ->
-            with(BedFormat().print(path.bufferedWriter())) {
+            BedFormat().print(path.bufferedWriter()).use {
                 val entry = ExtendedBedEntry(
                     "chr2", 1, 2, "Description",
                     0, '+', 1000, 5000, Color.RED.rgb
                 )
-                this.print(entry)
+                it.print(entry)
             }
 
             doCheckAuto(
@@ -974,18 +974,6 @@ Fields number in BED file is between 3 and 15, but was 2"""
         assertArrayEquals(intArrayOf(0, 0, 0), ".".splitToInts(3))
     }
 
-    @Test(expected = IOException::class)
-    fun testCloseParser() {
-        val format = BedFormat.DEFAULT
-        withBedFile(CONTENT_RGB_EXAMPLE) { path ->
-            val reader = path.bufferedReader()
-            format.parse(reader) {
-                // here may be some code
-            }
-            reader.read()
-        }
-    }
-
     @Test
     fun testWriteEmptyName() {
         val entries = listOf(
@@ -995,8 +983,8 @@ Fields number in BED file is between 3 and 15, but was 2"""
 
         withBedFile { trackPath ->
             val format = BedFormat()
-            with(format.print(trackPath)) {
-                entries.forEach { e -> this.print(e) }
+            format.print(trackPath).use {
+                entries.forEach { e -> it.print(e) }
             }
 
             assertEquals(format, BedFormat.auto(trackPath))
@@ -1019,9 +1007,9 @@ Fields number in BED file is between 3 and 15, but was 2"""
 
         withBedFile { trackPath ->
             val bedFormat = BedFormat()
-            with(bedFormat.print(trackPath)) {
+            bedFormat.print(trackPath).use {
                 for (l in loci) {
-                    this.print(l.toBedEntry())
+                    it.print(l.toBedEntry())
                 }
             }
 

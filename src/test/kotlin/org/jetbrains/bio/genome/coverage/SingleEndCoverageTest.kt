@@ -171,20 +171,20 @@ class SingleEndCoverageTest {
     fun testSortInComputeTagsCoverage() {
         withTempFile("track", ".bed") { trackPath ->
             val bedFormat = BedFormat()
-            with(bedFormat.print(trackPath)) {
-                this.print(Location(0, 3, chromosome1, Strand.PLUS).toBedEntry())
-                this.print(Location(2, 4, chromosome1, Strand.PLUS).toBedEntry())
-                this.print(Location(4, 7, chromosome1, Strand.PLUS).toBedEntry())
+            bedFormat.print(trackPath).use {
+                it.print(Location(0, 3, chromosome1, Strand.PLUS).toBedEntry())
+                it.print(Location(2, 4, chromosome1, Strand.PLUS).toBedEntry())
+                it.print(Location(4, 7, chromosome1, Strand.PLUS).toBedEntry())
 
                 // Not sorted!
-                this.print(Location(4, 7, chromosome2, Strand.PLUS).toBedEntry())
-                this.print(Location(2, 9, chromosome2, Strand.PLUS).toBedEntry())
-                this.print(Location(0, 11, chromosome2, Strand.PLUS).toBedEntry())
+                it.print(Location(4, 7, chromosome2, Strand.PLUS).toBedEntry())
+                it.print(Location(2, 9, chromosome2, Strand.PLUS).toBedEntry())
+                it.print(Location(0, 11, chromosome2, Strand.PLUS).toBedEntry())
             }
 
             val coverage = SingleEndCoverage.builder(genomeQuery).apply {
                 processReads(genomeQuery, trackPath) {
-                    this.process(it)
+                    process(it)
                 }
             }.build(true).withFragment(0)
             assertEquals(3, coverage.getCoverage(Location(0, 10, chromosome1, Strand.PLUS)))
@@ -196,15 +196,15 @@ class SingleEndCoverageTest {
     fun testUniqueTags() {
         withTempFile("track", ".bed") { trackPath ->
             val bedFormat = BedFormat()
-            with(bedFormat.print(trackPath)) {
-                this.print(Location(0, 1, chromosome1, Strand.PLUS).toBedEntry())
-                this.print(Location(0, 1, chromosome1, Strand.PLUS).toBedEntry())
-                this.print(Location(0, 1, chromosome1, Strand.PLUS).toBedEntry())
+            bedFormat.print(trackPath).use {
+                it.print(Location(0, 1, chromosome1, Strand.PLUS).toBedEntry())
+                it.print(Location(0, 1, chromosome1, Strand.PLUS).toBedEntry())
+                it.print(Location(0, 1, chromosome1, Strand.PLUS).toBedEntry())
             }
 
             val coverage = SingleEndCoverage.builder(genomeQuery).apply {
                 processReads(genomeQuery, trackPath) {
-                    this.process(it)
+                    process(it)
                 }
             }.build(true).withFragment(0)
 
@@ -216,17 +216,17 @@ class SingleEndCoverageTest {
     fun testFragmentSize() {
         withTempFile("track", ".bed") { trackPath ->
             val bedFormat = BedFormat()
-            with(bedFormat.print(trackPath)) {
-                this.print(Location(0, 100, chromosome1, Strand.PLUS).toBedEntry())
-                this.print(Location(0, 50, chromosome1, Strand.PLUS).toBedEntry())
-                this.print(Location(0, 25, chromosome1, Strand.PLUS).toBedEntry())
-                this.print(Location(0, 101, chromosome1, Strand.MINUS).toBedEntry())
-                this.print(Location(0, 151, chromosome1, Strand.MINUS).toBedEntry())
+            bedFormat.print(trackPath).use {
+                it.print(Location(0, 100, chromosome1, Strand.PLUS).toBedEntry())
+                it.print(Location(0, 50, chromosome1, Strand.PLUS).toBedEntry())
+                it.print(Location(0, 25, chromosome1, Strand.PLUS).toBedEntry())
+                it.print(Location(0, 101, chromosome1, Strand.MINUS).toBedEntry())
+                it.print(Location(0, 151, chromosome1, Strand.MINUS).toBedEntry())
             }
 
             val coverage = SingleEndCoverage.builder(genomeQuery).apply {
                 processReads(genomeQuery, trackPath) {
-                    this.process(it)
+                    process(it)
                 }
             }.build(true).withFragment(150)
             assertEquals(1, coverage.getTags(Location(0, 100, chromosome1, Strand.PLUS)))

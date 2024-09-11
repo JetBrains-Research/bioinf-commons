@@ -462,7 +462,7 @@ class BedParser(
     }
 }
 
-class BedPrinter(private val writer: BufferedWriter, private val format: BedFormat) : AutoCloseable {
+class BedPrinter(private val writer: BufferedWriter, private val format: BedFormat) : Closeable {
 
     fun print(line: String) {
         writer.write(line)
