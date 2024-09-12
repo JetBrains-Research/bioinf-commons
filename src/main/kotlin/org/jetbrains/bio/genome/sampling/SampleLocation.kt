@@ -24,7 +24,7 @@ private const val SAMPLE_ATTEMPTS_THRESHOLD = 1000
  */
 fun randomizeBedRegions(bedFilePath: Path, genomeQuery: GenomeQuery): Path {
     val randomBedPath = Files.createTempFile("randomRegions", ".bed")
-    with(BedFormat().print(randomBedPath)) {
+    BedFormat().print(randomBedPath).use {
         BedFormat.auto(bedFilePath).parse(bedFilePath) { bedParser ->
             bedParser.distinct()
                 .filter { it.chrom in genomeQuery }
@@ -39,7 +39,7 @@ fun randomizeBedRegions(bedFilePath: Path, genomeQuery: GenomeQuery): Path {
                 .sequential() // required here, otherwise flatMap().forEach() seems to look concurrently
                 .flatMap { it.stream() }
                 .forEach { (start, end, chr, strand) ->
-                    this.print(ExtendedBedEntry(chr.name, start, end, strand = strand.char))
+                    it.print(ExtendedBedEntry(chr.name, start, end, strand = strand.char))
                 }
         }
     }
