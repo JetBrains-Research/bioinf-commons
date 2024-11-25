@@ -4,29 +4,29 @@
 # when new fields or new genome is added. This will allow to automatically update user's `~/.jbr_browser/genomes/annotations.yaml`
 # file otherwise your code will throw exceptions on deserialization of user's annotation YAML file with previous format
 
-version: 6
+version: 7
 genomes:
-  # http://www.ensembl.org/Mus_musculus
+  # https://www.ensembl.org/Mus_musculus
   mm9:
     species: Mus musculus
     ucsc_alias: mm9
     aliases: NCBIM37
     description: 'Jul. 2007, genes Ensembl 67 (May 2012)'
     biomart:
-      url: http://may2012.archive.ensembl.org/biomart/martservice
+      url: https://may2012.archive.ensembl.org/biomart/martservice
       dataset: mmusculus_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-67/gtf/mus_musculus/Mus_musculus.NCBIM37.67.gtf.gz
     chr_alt_name_to_canonical:
       - MT: chrM
 
     ucsc_annotations_legacy: True
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/database/rmsk.txt.gz
-    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/database/cytoBand.txt.gz
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/database/gap.txt.gz
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/mm9/database/rmsk.txt.gz
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/mm9/database/cytoBand.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/mm9/database/gap.txt.gz
     # centromeres:  n/a
-    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/database/cpgIslandExt.txt.gz
-    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/mm9.2bit
-    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/mm9.chrom.sizes
+    cgis: https://hgdownload.cse.ucsc.edu/goldenPath/mm9/database/cpgIslandExt.txt.gz
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/mm9.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/mm9.chrom.sizes
 
   mm10:
     species: Mus musculus
@@ -34,41 +34,61 @@ genomes:
     aliases: GRCm38
     description: 'Dec. 2011, genes Ensembl 97 (March 2019)'
     biomart:
-      url: http://mar2016.archive.ensembl.org/biomart/martservice
+      url: https://mar2016.archive.ensembl.org/biomart/martservice
       dataset: mmusculus_gene_ensembl
     # Most recent is: "/pub/current-gtf/gtf/Mus_musculus.GRCm38.*.gtf.gz"
-    # http://www.ensembl.org/Mus_musculus/Info/Index
+    # https://www.ensembl.org/Mus_musculus/Info/Index
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-97/gtf/mus_musculus/Mus_musculus.GRCm38.97.gtf.gz
     chr_alt_name_to_canonical:
       - MT: chrM
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/mm10/database/rmsk.txt.gz
-    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/mm10/database/cytoBand.txt.gz
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/mm10/database/gap.txt.gz
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/mm10/database/rmsk.txt.gz
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/mm10/database/cytoBand.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/mm10/database/gap.txt.gz
     # centromeres:  n/a
-    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/mm10/database/cpgIslandExt.txt.gz
-    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/mm10/bigZips/mm10.2bit
-    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes
+    cgis: https://hgdownload.cse.ucsc.edu/goldenPath/mm10/database/cpgIslandExt.txt.gz
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/mm10/bigZips/mm10.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes
 
-  # http://www.ensembl.org/Homo_sapiens
+  mm39:
+    species: Mus musculus
+    ucsc_alias: mm39
+    aliases: GRCm39
+    description: 'Jun 2020, genes Gencode M36, (May 2024)'
+    biomart:
+      url: https://mar2016.archive.ensembl.org/biomart/martservice
+      dataset: mmusculus_gene_ensembl
+    gtf: https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M36/gencode.vM36.annotation.gtf.gz
+    chr_alt_name_to_canonical:
+      - MT: chrM
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/mm39/database/rmsk.txt.gz
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/mm39/database/cytoBandIdeo.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/mm39/database/gap.txt.gz
+    # centromeres:  n/a
+    cgis: https://hgdownload.cse.ucsc.edu/goldenPath/mm39/database/cpgIslandExt.txt.gz
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/mm39/bigZips/mm39.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/mm39/bigZips/mm39.chrom.sizes
+
+
+  # https://www.ensembl.org/Homo_sapiens
   hg18:
     species: Homo sapiens
     ucsc_alias: hg18
     aliases: NCBI36
     description: "Mar. 2006"
     biomart:
-      url: http://may2009.archive.ensembl.org/biomart/martservice
+      url: https://may2009.archive.ensembl.org/biomart/martservice
       dataset: hsapiens_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-54/gtf/homo_sapiens/Homo_sapiens.NCBI36.54.gtf.gz
     chr_alt_name_to_canonical:
       - MT: chrM
     ucsc_annotations_legacy: True
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/rmsk.txt.gz
-    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/cytoBand.txt.gz
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/gap.txt.gz
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/rmsk.txt.gz
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/cytoBand.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/gap.txt.gz
     # centromeres:  n/a
-    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/cpgIslandExt.txt.gz
-    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips/hg18.2bit
-    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips/hg18.chrom.sizes
+    cgis: https://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/cpgIslandExt.txt.gz
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips/hg18.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips/hg18.chrom.sizes
 
   hg19:
     species: Homo sapiens
@@ -76,19 +96,19 @@ genomes:
     aliases: GRCh37
     description: 'Feb. 2009, genes Ensembl 87 (Dec 2016)'
     biomart:
-      url: http://feb2014.archive.ensembl.org/biomart/martservice
+      url: https://feb2014.archive.ensembl.org/biomart/martservice
       dataset: hsapiens_gene_ensembl
     # Most recent is: "/pub/grch37/current/gtf/homo_sapiens/Homo_sapiens.GRCh37.*.gtf.gz" //87
     gtf: ftp://anonymous@ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz
     chr_alt_name_to_canonical:
       - MT: chrM
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz
-    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/gap.txt.gz
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/gap.txt.gz
     # centromeres:  n/a
-    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cpgIslandExt.txt.gz
-    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.2bit
-    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.chrom.sizes
+    cgis: https://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cpgIslandExt.txt.gz
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.chrom.sizes
 
   hs37-1kg:
     species: Homo sapiens
@@ -96,25 +116,25 @@ genomes:
     aliases: b37
     description: 'Mar 2011, GRCh37.p4 w/o alt contigs + rCRS MT genome, genes Ensembl 87 (Dec 2016)'
     biomart:
-      url: http://feb2014.archive.ensembl.org/biomart/martservice
+      url: https://feb2014.archive.ensembl.org/biomart/martservice
       dataset: hsapiens_gene_ensembl
     # Most recent is: "/pub/grch37/current/gtf/homo_sapiens/Homo_sapiens.GRCh37.*.gtf.gz" // e.g. 87
     gtf: ftp://anonymous@ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz
     chr_alt_name_to_canonical:
       - chrM: MT
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz # XXX: only main chrs matches the reference
-    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz # ok, only chr1..22,X,Y in cytoBands
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/gap.txt.gz # XXX: only main chrs matches the reference
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz # XXX: only main chrs matches the reference
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz # ok, only chr1..22,X,Y in cytoBands
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/gap.txt.gz # XXX: only main chrs matches the reference
     # centromeres:  n/a
 
     # Generate using UCSC 'cpg_lh' tool:
-    # see http://genome.ucsc.edu/cgi-bin/hgTrackUi?g=cpgIslandExt
+    # see https://genome.ucsc.edu/cgi-bin/hgTrackUi?g=cpgIslandExt
     #     cpg_lh hs37-1kg.fa | awk '{$2 = $2 - 1; width = $3 - $2; printf("%s\t%d\t%s\t%s %s\t%s\t%s\t%0.0f\t%0.1f\t%s\t%s\n",  \
     #           $1, $2, $3, $5, $6, width, $6, width*$7*0.01, 100.0*2*$6/width, $7, $9);}' | sort -k1,1 -k2,2n | \
     #           gzip > cpgIslandExt.txt.gz
-    cgis: http://localhost/cpgIslandExt.txt.gz # XXX: fake url, generate using UCSC 'cpg_lh' tool manually
+    cgis: https://localhost/cpgIslandExt.txt.gz # XXX: fake url, generate using UCSC 'cpg_lh' tool manually
     sequence: ftp://anonymous@ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/human_g1k_v37.fasta.gz  # XXX: fake url, put file in genome dir manually, *.fasta.gz conversion not supported at the momentmanually
-    chromsizes: http://localhost/hs37-1kg.chrom.sizes # XXX: fake url, use ucsc tool 'twoBitInfo' to generate this file
+    chromsizes: https://localhost/hs37-1kg.chrom.sizes # XXX: fake url, use ucsc tool 'twoBitInfo' to generate this file
 
   hs37d5:
     species: Homo sapiens
@@ -122,23 +142,23 @@ genomes:
     aliases: b37_decoy
     description: 'Mar 2011, GRCh37.p4 w/o alt contigs + rCRS MT, EBV, decoy genomes, genes Ensembl 87 (Dec 2016)'
     biomart:
-      url: http://feb2014.archive.ensembl.org/biomart/martservice
+      url: https://feb2014.archive.ensembl.org/biomart/martservice
       dataset: hsapiens_gene_ensembl
     # Most recent is: "/pub/grch37/current/gtf/homo_sapiens/Homo_sapiens.GRCh37.*.gtf.gz" // e.g. 87
     gtf: ftp://anonymous@ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz
     chr_alt_name_to_canonical:
       - chrM: MT
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz # XXX: only main chrs matches the reference
-    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz  # ok, only chr1..22,X,Y in cytoBands
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/gap.txt.gz # XXX: only main chrs matches the reference
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz # XXX: only main chrs matches the reference
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz  # ok, only chr1..22,X,Y in cytoBands
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/gap.txt.gz # XXX: only main chrs matches the reference
     # centromeres:  n/a
     # Generate using UCSC 'cpg_lh' tool:
     #     cpg_lh hs37d5.fa | awk '{$2 = $2 - 1; width = $3 - $2; printf("%s\t%d\t%s\t%s %s\t%s\t%s\t%0.0f\t%0.1f\t%s\t%s\n",  \
     #           $1, $2, $3, $5, $6, width, $6, width*$7*0.01, 100.0*2*$6/width, $7, $9);}' | sort -k1,1 -k2,2n | \
     #           gzip > cpgIslandExt.txt.gz
-    cgis: http://localhost/cpgIslandExt.txt.gz # XXX: fake url, generate using UCSC 'cpg_lh' tool manually
+    cgis: https://localhost/cpgIslandExt.txt.gz # XXX: fake url, generate using UCSC 'cpg_lh' tool manually
     sequence: ftp://anonymous@ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz  # XXX: fake url, put file in genome dir manually, *.fasta.gz conversion not supported at the moment
-    chromsizes: http://localhost/hs37d5.chrom.sizes # XXX: fake url, use ucsc tool 'twoBitInfo' to generate this file
+    chromsizes: https://localhost/hs37d5.chrom.sizes # XXX: fake url, use ucsc tool 'twoBitInfo' to generate this file
 
   hg38:
     species: Homo sapiens
@@ -146,27 +166,27 @@ genomes:
     aliases: GRCh38
     description: 'Dec. 2013, genes Ensembl 96 (Mar 2019)'
     biomart:
-      url: http://apr2019.archive.ensembl.org/biomart/martservice
+      url: https://apr2019.archive.ensembl.org/biomart/martservice
       dataset: hsapiens_gene_ensembl
     # Most recent is: "/pub/current-gtf/homo_sapiens/Homo_sapiens.GRCh38.*.gtf.gz" // e.g. 97
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-97/gtf/homo_sapiens/Homo_sapiens.GRCh38.97.gtf.gz
     chr_alt_name_to_canonical:
       - MT: chrM
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/rmsk.txt.gz
-    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/cytoBand.txt.gz
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/gap.txt.gz
-    centromeres: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/centromeres.txt.gz
-    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/cpgIslandExt.txt.gz
-    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.2bit
-    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/rmsk.txt.gz
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/cytoBand.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/gap.txt.gz
+    centromeres: https://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/centromeres.txt.gz
+    cgis: https://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/cpgIslandExt.txt.gz
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
 
   hs1:
     species: Homo sapiens
     ucsc_alias: hs1
     aliases: T2T CHM13v2.0
     description: 'T2T CHM13v2.0 Telomere-to-Telomere assembly of the CHM13 cell line, with chrY from NA24385'
-    gtf: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/genes/catLiftOffGenesV1.gtf.gz
-    chr_alt_name_to_canonical: #based on http://hgdownload.soe.ucsc.edu/goldenPath/hs1/hubs/chromAlias.txt
+    gtf: https://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/genes/catLiftOffGenesV1.gtf.gz
+    chr_alt_name_to_canonical: #based on https://hgdownload.soe.ucsc.edu/goldenPath/hs1/hubs/chromAlias.txt
       - CP068277.2: chr1
       - CP068268.2: chr10
       - CP068267.2: chr11
@@ -192,32 +212,32 @@ genomes:
       - CP068254.1: chrM
       - CP068255.2: chrX
       - CP086569.2: chrY
-    repeats: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.repeatMasker.out.gz
-    cytobands: http://t2t.gi.ucsc.edu/chm13/hub/t2t-chm13-v2.0/download/chm13v2.0_cytobands_allchrs.bed.gz
-    cgis: http://hgdownload.soe.ucsc.edu/gbdb/hs1/bbi/cpgIslandExt.bb
-    sequence: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.2bit
-    chromsizes: http://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.chrom.sizes.txt
+    repeats: https://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.repeatMasker.out.gz
+    cytobands: https://t2t.gi.ucsc.edu/chm13/hub/t2t-chm13-v2.0/download/chm13v2.0_cytobands_allchrs.bed.gz
+    cgis: https://hgdownload.soe.ucsc.edu/gbdb/hs1/bbi/cpgIslandExt.bb
+    sequence: https://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.2bit
+    chromsizes: https://hgdownload.soe.ucsc.edu/goldenPath/hs1/bigZips/hs1.chrom.sizes.txt
 
-  # http://www.ensembl.org/Drosophila_melanogaster/
+  # https://www.ensembl.org/Drosophila_melanogaster/
   dm3:
     species: Drosophila melanogaster
     ucsc_alias: dm3
     aliases: BDGP5
     description: 'Apr. 2006, genes Ensembl 78'
     biomart:
-      url: http://dec2014.archive.ensembl.org/biomart/martservice
+      url: https://dec2014.archive.ensembl.org/biomart/martservice
       dataset: dmelanogaster_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-78/gtf/drosophila_melanogaster/Drosophila_melanogaster.BDGP5.78.gtf.gz
     chr_alt_name_to_canonical:
       - mitochondrion_genome: chrM
     ucsc_annotations_legacy: True
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/dm3/database/rmsk.txt.gz
-    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/dm3/database/cytoBand.txt.gz
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/dm3/database/gap.txt.gz
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/dm3/database/rmsk.txt.gz
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/dm3/database/cytoBand.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/dm3/database/gap.txt.gz
     # centromeres:  n/a
     # cgis: n/a
-    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips/dm3.2bit
-    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips/dm3.chrom.sizes
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips/dm3.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips/dm3.chrom.sizes
 
   dm6:
     species: Drosophila melanogaster
@@ -225,38 +245,38 @@ genomes:
     aliases: BDGP6
     description: 'Aug. 2014, genes Ensembl 97 (May 2014)'
     biomart:
-      url: http://oct2016.archive.ensembl.org/biomart/martservice
+      url: https://oct2016.archive.ensembl.org/biomart/martservice
       dataset: dmelanogaster_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-97/gtf/drosophila_melanogaster/Drosophila_melanogaster.BDGP6.22.97.gtf.gz
     chr_alt_name_to_canonical:
       - mitochondrion_genome: chrM
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/dm6/database/rmsk.txt.gz
-    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/dm6/database/cytoBand.txt.gz
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/dm6/database/gap.txt.gz
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/dm6/database/rmsk.txt.gz
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/dm6/database/cytoBand.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/dm6/database/gap.txt.gz
     # centromeres:  n/a
-    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/dm6/database/cpgIslandExt.txt.gz
-    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/dm6/bigZips/dm6.2bit
-    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/dm6/bigZips/dm6.chrom.sizes
+    cgis: https://hgdownload.cse.ucsc.edu/goldenPath/dm6/database/cpgIslandExt.txt.gz
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/dm6/bigZips/dm6.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/dm6/bigZips/dm6.chrom.sizes
 
-  # http://www.ensembl.org/Danio_rerio
+  # https://www.ensembl.org/Danio_rerio
   danRer7:
     species: Zebrafish (Danio rerio)
     ucsc_alias: danRer7
     aliases: Zv9
     description: 'Jul. 2010, genes Ensembl 79'
     biomart:
-      url: http://mar2015.archive.ensembl.org/biomart/martservice
+      url: https://mar2015.archive.ensembl.org/biomart/martservice
       dataset: drerio_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-79/gtf/danio_rerio/Danio_rerio.Zv9.79.gtf.gz
     chr_alt_name_to_canonical:
       - MT: chrM
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/danRer7/database/rmsk.txt.gz
-    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/danRer7/database/cytoBandIdeo.txt.gz
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/danRer7/database/gap.txt.gz
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/danRer7/database/rmsk.txt.gz
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/danRer7/database/cytoBandIdeo.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/danRer7/database/gap.txt.gz
     # centromeres:  n/a
-    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/danRer7/database/cpgIslandExt.txt.gz
-    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/danRer7/bigZips/danRer7.2bit
-    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/danRer7/bigZips/danRer7.chrom.sizes
+    cgis: https://hgdownload.cse.ucsc.edu/goldenPath/danRer7/database/cpgIslandExt.txt.gz
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/danRer7/bigZips/danRer7.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/danRer7/bigZips/danRer7.chrom.sizes
 
   danRer10:
     species: Zebrafish (Danio rerio)
@@ -264,18 +284,18 @@ genomes:
     aliases: GRCz10
     description: 'Sep. 2014, genes Ensembl 91'
     biomart:
-      url: http://dec2017.archive.ensembl.org/biomart/martservice
+      url: https://dec2017.archive.ensembl.org/biomart/martservice
       dataset: drerio_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-91/gtf/danio_rerio/Danio_rerio.GRCz10.91.gtf.gz
     chr_alt_name_to_canonical:
       - MT: chrM
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/danRer10/database/rmsk.txt.gz
-    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/danRer10/database/cytoBandIdeo.txt.gz
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/danRer10/database/gap.txt.gz
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/danRer10/database/rmsk.txt.gz
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/danRer10/database/cytoBandIdeo.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/danRer10/database/gap.txt.gz
     # centromeres:  n/a
-    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/danRer10/database/cpgIslandExt.txt.gz
-    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/danRer10/bigZips/danRer10.2bit
-    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/danRer10/bigZips/danRer10.chrom.sizes
+    cgis: https://hgdownload.cse.ucsc.edu/goldenPath/danRer10/database/cpgIslandExt.txt.gz
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/danRer10/bigZips/danRer10.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/danRer10/bigZips/danRer10.chrom.sizes
 
   danRer11:
     species: Zebrafish (Danio rerio)
@@ -284,38 +304,38 @@ genomes:
     description: 'May 2017, genes Ensembl 97 (Apr. 2018)'
     biomart:
       # XXX: mirror not mentioned anywhere but works, apr2019 is release date for vers 96
-      url: http://apr2019.archive.ensembl.org/biomart/martservice
+      url: https://apr2019.archive.ensembl.org/biomart/martservice
       dataset: drerio_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-97/gtf/danio_rerio/Danio_rerio.GRCz11.97.gtf.gz
     chr_alt_name_to_canonical:
       - MT: chrM
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/danRer11/database/rmsk.txt.gz
-    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/danRer11/database/cytoBandIdeo.txt.gz
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/danRer11/database/gap.txt.gz
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/danRer11/database/rmsk.txt.gz
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/danRer11/database/cytoBandIdeo.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/danRer11/database/gap.txt.gz
     # centromeres:  n/a
-    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/danRer11/database/cpgIslandExt.txt.gz
-    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/danRer11/bigZips/danRer11.2bit
-    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/danRer11/bigZips/danRer11.chrom.sizes
+    cgis: https://hgdownload.cse.ucsc.edu/goldenPath/danRer11/database/cpgIslandExt.txt.gz
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/danRer11/bigZips/danRer11.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/danRer11/bigZips/danRer11.chrom.sizes
 
-  # http://www.ensembl.org/Rattus_norvegicus
+  # https://www.ensembl.org/Rattus_norvegicus
   rn5:
     species: Rattus norvegicus
     ucsc_alias: rn5
     aliases: RGSC 5.0
     description: 'Mar. 2012, genes Ensembl 79'
     biomart:
-      url: http://mar2015.archive.ensembl.org/biomart/martservice
+      url: https://mar2015.archive.ensembl.org/biomart/martservice
       dataset: rnorvegicus_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-79/gtf/rattus_norvegicus/Rattus_norvegicus.Rnor_5.0.79.gtf.gz
     chr_alt_name_to_canonical:
       - MT: chrM
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/rn5/database/rmsk.txt.gz
-    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/rn5/database/cytoBand.txt.gz
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/rn5/database/gap.txt.gz
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/rn5/database/rmsk.txt.gz
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/rn5/database/cytoBand.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/rn5/database/gap.txt.gz
     # centromeres:  n/a
-    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/rn5/database/cpgIslandExt.txt.gz
-    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/rn5/bigZips/rn5.2bit
-    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/rn5/bigZips/rn5.chrom.sizes
+    cgis: https://hgdownload.cse.ucsc.edu/goldenPath/rn5/database/cpgIslandExt.txt.gz
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/rn5/bigZips/rn5.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/rn5/bigZips/rn5.chrom.sizes
 
   rn6:
     species: Rattus norvegicus
@@ -324,80 +344,80 @@ genomes:
     description: 'Jul. 2014, genes Ensembl 97 (Jan 2017)'
     biomart:
       # XXX: mirror not mentioned anywhere but works, apr2019 is release date for vers 96
-      url: http://apr2019.archive.ensembl.org/biomart/martservice
+      url: https://apr2019.archive.ensembl.org/biomart/martservice
       dataset: rnorvegicus_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-97/gtf/rattus_norvegicus/Rattus_norvegicus.Rnor_6.0.97.gtf.gz
     chr_alt_name_to_canonical:
       - MT: chrM
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/rn6/database/rmsk.txt.gz
-    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/rn6/database/cytoBand.txt.gz
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/rn6/database/gap.txt.gz
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/rn6/database/rmsk.txt.gz
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/rn6/database/cytoBand.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/rn6/database/gap.txt.gz
     # centromeres:  n/a
-    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/rn6/database/cpgIslandExt.txt.gz
-    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/rn6/bigZips/rn6.2bit
-    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/rn6/bigZips/rn6.chrom.sizes
+    cgis: https://hgdownload.cse.ucsc.edu/goldenPath/rn6/database/cpgIslandExt.txt.gz
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/rn6/bigZips/rn6.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/rn6/bigZips/rn6.chrom.sizes
 
   # Naked mole rat: chromosomes names are weird, like 'JH602071' and not supported by browser, we expect "chr..."
   # names. Let's fix on request from users.
   #
-  # http://www.ensembl.org/Heterocephalus_glaber_female/
-  # http://hgdownload.soe.ucsc.edu/downloads.html#naked_mole-rat
+  # https://www.ensembl.org/Heterocephalus_glaber_female/
+  # https://hgdownload.soe.ucsc.edu/downloads.html#naked_mole-rat
   #  hetGla1:
   #    species: Naked mole-rat male (Heterocephalus glaber)
   #    alias: HetGla_1.0
   #    biomart:
   #      # XXX: mirror not mentioned anywhere but works, apr2018 is release date for vers 92
-  #      url: http://apr2018.archive.ensembl.org/biomart/martservice
+  #      url: https://apr2018.archive.ensembl.org/biomart/martservice
   #      dataset: hmale_gene_ensembl
   #    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-92/gtf/heterocephalus_glaber_male/Heterocephalus_glaber_male.HetGla_1.0.92.gtf.gz
   #    chr_alt_name_to_canonical:
   #      - MT: chrM
-  #    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/database/rmsk.txt.gz
+  #    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/database/rmsk.txt.gz
   #    cytobands: # n/a
-  #    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/database/gap.txt.gz
+  #    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/database/gap.txt.gz
   #    # centromeres:  n/a
-  #    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/database/cpgIslandExt.txt.gz
-  #    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/bigZips/hetGla1.2bit
-  #    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/bigZips/hetGla1.chrom.sizes
+  #    cgis: https://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/database/cpgIslandExt.txt.gz
+  #    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/bigZips/hetGla1.2bit
+  #    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/hetGla1/bigZips/hetGla1.chrom.sizes
   #
-  #  # http://www.ensembl.org/Heterocephalus_glaber_male/
-  #  # http://hgdownload.soe.ucsc.edu/downloads.html#naked_mole-rat
+  #  # https://www.ensembl.org/Heterocephalus_glaber_male/
+  #  # https://hgdownload.soe.ucsc.edu/downloads.html#naked_mole-rat
   #  hetGla2:
   #    species: Naked mole-rat female (Heterocephalus glaber)
   #    alias: HetGla_female_1.0
   #    biomart:
   #      # XXX: mirror not mentioned anywhere but works, apr2018 is release date for vers 92
-  #      url: http://apr2018.archive.ensembl.org/biomart/martservice
+  #      url: https://apr2018.archive.ensembl.org/biomart/martservice
   #      dataset: hfemale_gene_ensembl
   #    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-92/gtf/heterocephalus_glaber_female/Heterocephalus_glaber_female.HetGla_female_1.0.92.gtf.gz
   #    chr_alt_name_to_canonical:
   #      - MT: chrM
-  #    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/rmsk.txt.gz
-  #    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/cytoBandIdeo.txt.gz
-  #    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/gap.txt.gz
+  #    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/rmsk.txt.gz
+  #    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/cytoBandIdeo.txt.gz
+  #    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/gap.txt.gz
   #    # centromeres:  n/a
-  #    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/cpgIslandExt.txt.gz
-  #    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/bigZips/hetGla2.2bit
-  #    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/bigZips/hetGla2.chrom.sizes
+  #    cgis: https://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/database/cpgIslandExt.txt.gz
+  #    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/bigZips/hetGla2.2bit
+  #    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/hetGla2/bigZips/hetGla2.chrom.sizes
 
-  # http://www.ensembl.org/Caenorhabditis_elegans/
+  # https://www.ensembl.org/Caenorhabditis_elegans/
   ce6:
     species: Caenorhabditis elegans
     ucsc_alias: ce6
     aliases: WS190
     description: 'May. 2008, genes Ensembl 54'
     biomart:
-      url: http://may2009.archive.ensembl.org/biomart/martservice
+      url: https://may2009.archive.ensembl.org/biomart/martservice
       dataset: celegans_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-54/gtf/caenorhabditis_elegans/Caenorhabditis_elegans.WS190.54.gtf.gz
     ucsc_annotations_legacy: True
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/ce6/database/rmsk.txt.gz
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/ce6/database/rmsk.txt.gz
     # cytobands: n/a
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/ce6/database/gap.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/ce6/database/gap.txt.gz
     # centromeres:  n/a
     # cgis: n/a
-    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/ce6/bigZips/ce6.2bit
-    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/ce6/bigZips/ce6.chrom.sizes
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/ce6/bigZips/ce6.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/ce6/bigZips/ce6.chrom.sizes
 
   # Caused by: ERROR Index for header 'description' is 1 but CSVRecord only has 1 values!
   ce10:
@@ -408,22 +428,22 @@ genomes:
     biomart:
       # for 66 release should be feb2012.archive.ensembl.org, but it doesn't exists, let's
       # take annotations for 67 release
-      url: http://may2012.archive.ensembl.org/biomart/martservice  # 67 release
+      url: https://may2012.archive.ensembl.org/biomart/martservice  # 67 release
       dataset: celegans_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-66/gtf/caenorhabditis_elegans/Caenorhabditis_elegans.WS220.66.gtf.gz
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/ce10/database/rmsk.txt.gz
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/ce10/database/rmsk.txt.gz
     # cytobands: n/a
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/ce10/database/gap.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/ce10/database/gap.txt.gz
     # centromeres:  n/a
     # cgis: n/a
-    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/ce10/bigZips/ce10.2bit
-    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/ce10/bigZips/ce10.chrom.sizes
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/ce10/bigZips/ce10.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/ce10/bigZips/ce10.chrom.sizes
 
   #  wbcel215:
   #    species: Caenorhabditis elegans
   #    alias: Bcel215
   #    biomart:
-  #      url: http://may2012.archive.ensembl.org/biomart/martservice
+  #      url: https://may2012.archive.ensembl.org/biomart/martservice
   #      dataset: celegans_gene_ensembl
   #    gtf: ftp://anonymous@ftp.ensembl.org/pub/release-67/gtf/caenorhabditis_elegans/Caenorhabditis_elegans.WS215.67.gtf.gz
   #    # repeats: n/a
@@ -441,13 +461,13 @@ genomes:
     description: 'Feb. 2013, genes Ensembl 97 (Jan 2019)'
     biomart:
       # XXX: mirror not mentioned anywhere but works, apr2019 is release date for vers 96
-      url: http://apr2019.archive.ensembl.org/biomart/martservice
+      url: https://apr2019.archive.ensembl.org/biomart/martservice
       dataset: celegans_gene_ensembl
     gtf: ftp://anonymous@ftp.ensembl.org/pub/release-97/gtf/caenorhabditis_elegans/Caenorhabditis_elegans.WBcel235.97.gtf.gz
-    repeats: http://hgdownload.cse.ucsc.edu/goldenPath/ce11/database/rmsk.txt.gz
-    cytobands: http://hgdownload.cse.ucsc.edu/goldenPath/ce11/database/cytoBandIdeo.txt.gz
-    gaps: http://hgdownload.cse.ucsc.edu/goldenPath/ce11/database/gap.txt.gz
+    repeats: https://hgdownload.cse.ucsc.edu/goldenPath/ce11/database/rmsk.txt.gz
+    cytobands: https://hgdownload.cse.ucsc.edu/goldenPath/ce11/database/cytoBandIdeo.txt.gz
+    gaps: https://hgdownload.cse.ucsc.edu/goldenPath/ce11/database/gap.txt.gz
     # centromeres:  n/a
-    cgis: http://hgdownload.cse.ucsc.edu/goldenPath/ce11/database/cpgIslandExt.txt.gz
-    sequence: http://hgdownload.cse.ucsc.edu/goldenPath/ce11/bigZips/ce11.2bit
-    chromsizes: http://hgdownload.cse.ucsc.edu/goldenPath/ce11/bigZips/ce11.chrom.sizes
+    cgis: https://hgdownload.cse.ucsc.edu/goldenPath/ce11/database/cpgIslandExt.txt.gz
+    sequence: https://hgdownload.cse.ucsc.edu/goldenPath/ce11/bigZips/ce11.2bit
+    chromsizes: https://hgdownload.cse.ucsc.edu/goldenPath/ce11/bigZips/ce11.chrom.sizes

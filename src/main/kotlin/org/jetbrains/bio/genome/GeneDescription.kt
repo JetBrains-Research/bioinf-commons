@@ -99,9 +99,11 @@ private inline fun <T> PeekingIterator<T>.nextBlock(
 
 private operator fun List<CSVRecord>.get(field: String): String {
     for (row in this) {
-        val value = row[field]
-        if (value.isNotEmpty()) {
-            return value
+        if (field in row) {
+            val value = row[field]
+            if (value.isNotEmpty()) {
+                return value
+            }
         }
     }
 
