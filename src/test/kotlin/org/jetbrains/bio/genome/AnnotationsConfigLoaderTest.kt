@@ -138,7 +138,7 @@ class AnnotationsConfigLoaderTest {
             )
         withTempFile("foo", ".yaml") {
             AnnotationsConfigLoader.saveYaml(it, mapping)
-            val (_, mapping2, _) = AnnotationsConfigLoader.parseYaml(it, 6)
+            val (_, mapping2, _) = AnnotationsConfigLoader.parseYaml(it, 7)
             assertEquals(mapping, mapping2)
         }
     }
@@ -149,7 +149,7 @@ class AnnotationsConfigLoaderTest {
             val (_, mapping, _) = AnnotationsConfigLoader.parseYaml(path, 1)
             withTempFile("foo", ".yaml") {
                 AnnotationsConfigLoader.saveYaml(it, mapping!!)
-                val (_, mapping2, _) = AnnotationsConfigLoader.parseYaml(it, 6)
+                val (_, mapping2, _) = AnnotationsConfigLoader.parseYaml(it, 7)
                 assertEquals(mapping, mapping2)
             }
         }
