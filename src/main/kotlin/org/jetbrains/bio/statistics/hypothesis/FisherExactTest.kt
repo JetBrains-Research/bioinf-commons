@@ -2,6 +2,7 @@ package org.jetbrains.bio.statistics.hypothesis
 
 import org.jetbrains.bio.statistics.MoreMath
 import kotlin.math.exp
+import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
 
@@ -43,6 +44,18 @@ class FisherExactTest(
         }
     }
 
+    private fun dnhyperNCP(ncp: Double = 1.0): List<Double> {
+        val logSupportProbs = support.map { hypergeometricProbabilityLog(N, K, n, it) }
+        var d = support.zip(logSupportProbs).map { (sup, prob) ->
+            prob + ln(ncp) * sup
+        }
+        val dMax = d.maxOrNull()!!
+        d = d.map { exp(it - dMax) }
+        val dSum = d.sum()
+        return d.map {it / dSum}
+
+    }
+
     operator fun invoke(alternative: Alternative = Alternative.LESS): Double {
         return when (alternative) {
             Alternative.LESS -> {
@@ -55,18 +68,12 @@ class FisherExactTest(
             }
 
             Alternative.TWO_SIDED -> {
-                val baseline = hypergeometricProbability(N, K, n, k)
-                var acc = 0.0
-                for (x in support) {
-                    val current = hypergeometricProbability(N, K, n, x)
-                    // XXX the cutoff is chosen to be consistent with
-                    //     'fisher.test' in R.
-                    if (current <= baseline + 1e-6) {
-                        acc += current
-                    }
-                }
-
-                acc
+                val relativeError = 1 + 1e-7
+                val dnhyper = dnhyperNCP()
+                val acc = dnhyper.filter {
+                    it <= dnhyper[k - support.first] * relativeError
+                }.sum()
+                if (acc > 1.0) return 1.0 else return acc
             }
 
             else -> error(alternative.toString())
@@ -88,7 +95,6 @@ class FisherExactTest(
                 n = a + c, k = a
             )
         }
-
         /**
          * This is up to 30x faster than calling [HypergeometricDistribution#logProbability]
          * because of tabulated factorial
@@ -100,5 +106,12 @@ class FisherExactTest(
                         - MoreMath.binomialCoefficientLog(N, n)
             )
         }
+
+        private fun hypergeometricProbabilityLog(N: Int, K: Int, n: Int, k: Int): Double {
+            return MoreMath.binomialCoefficientLog(K, k) +
+                    MoreMath.binomialCoefficientLog(N - K, n - k) -
+                    MoreMath.binomialCoefficientLog(N, n)
+        }
+
     }
 }
