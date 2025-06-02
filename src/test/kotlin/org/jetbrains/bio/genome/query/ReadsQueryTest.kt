@@ -40,8 +40,8 @@ class ReadsQueryTest {
     fun testCoverageId() {
         withTempDirectory("foo") {
             val treatment = (it / "OD7_k4me1_hg19.bed.gz").apply { touch() }
-            assertEquals("OD7_k4me1_hg19_unique_150", ReadsQuery(TO, treatment, true, FixedFragment(150)).id)
-            assertEquals("OD7_k4me1_hg19", ReadsQuery(TO, treatment, false, AutoFragment).id)
+            assertEquals("OD7_k4me1_hg19_unique_150", ReadsQuery(TO, treatment, null, true, FixedFragment(150)).id)
+            assertEquals("OD7_k4me1_hg19", ReadsQuery(TO, treatment, null, false, AutoFragment).id)
         }
     }
 
@@ -49,7 +49,7 @@ class ReadsQueryTest {
     fun testLoadSingleEndBam() {
         withResource(ReadsQueryTest::class.java, "single_end.bam") { path ->
             val genomeQuery = GenomeQuery(Genome["to1"])
-            val readsQuery = ReadsQuery(genomeQuery, path, false)
+            val readsQuery = ReadsQuery(genomeQuery, path, null, false)
             val coverage = readsQuery.get()
             val chr1 = genomeQuery["chr1"]!!
             assertEquals(SingleEndCoverage::class.java, coverage::class.java)
@@ -62,7 +62,7 @@ class ReadsQueryTest {
     fun testLoadPairedEndBam() {
         withResource(ReadsQueryTest::class.java, "paired_end.bam") { path ->
             val genomeQuery = GenomeQuery(Genome["to1"])
-            val readsQuery = ReadsQuery(genomeQuery, path, false)
+            val readsQuery = ReadsQuery(genomeQuery, path, null, false)
             val coverage = readsQuery.get()
             val chr1 = genomeQuery["chr1"]!!
             assertEquals(PairedEndCoverage::class.java, coverage::class.java)
@@ -74,7 +74,7 @@ class ReadsQueryTest {
     fun testSingleEndLoggingDefault() {
         withResource(ReadsQueryTest::class.java, "single_end.bam") { path ->
             val genomeQuery = GenomeQuery(Genome["to1"])
-            val readsQuery = ReadsQuery(genomeQuery, path, false)
+            val readsQuery = ReadsQuery(genomeQuery, path, null, false)
             val (out, err) = Logs.captureLoggingOutput { readsQuery.get() }
             assertIn("Library: single_end.bam", out)
             assertIn("Depth: ${"%,d".format(SINGLE_END_BAM_READS)}", out)
@@ -91,7 +91,7 @@ class ReadsQueryTest {
     fun testSingleEndLoggingOverride() {
         withResource(ReadsQueryTest::class.java, "single_end.bam") { path ->
             val genomeQuery = GenomeQuery(Genome["to1"])
-            val readsQuery = ReadsQuery(genomeQuery, path, false, fragment = FixedFragment(100))
+            val readsQuery = ReadsQuery(genomeQuery, path, null, false, fragment = FixedFragment(100))
             val (out, err) = Logs.captureLoggingOutput { readsQuery.get() }
             assertIn("Library: single_end.bam", out)
             assertIn("Depth: ${"%,d".format(SINGLE_END_BAM_READS)}", out)
@@ -108,7 +108,7 @@ class ReadsQueryTest {
     fun testPairedEndLoggingDefault() {
         withResource(ReadsQueryTest::class.java, "paired_end.bam") { path ->
             val genomeQuery = GenomeQuery(Genome["to1"])
-            val readsQuery = ReadsQuery(genomeQuery, path, false)
+            val readsQuery = ReadsQuery(genomeQuery, path, null, false)
             val (out, err) = Logs.captureLoggingOutput { readsQuery.get() }
             assertIn("Library: paired_end.bam", out)
             assertIn("Depth: ${"%,d".format(PAIRED_END_BAM_PAIRS)}", out)
@@ -130,7 +130,7 @@ class ReadsQueryTest {
         withResource(ReadsQueryTest::class.java, "single_end.bam") { path ->
             val genomeQuery = GenomeQuery(Genome["to1"])
             var pairedReads = 0
-            val unpairedReads = processPairedReads(genomeQuery, path) { _, _, _, _ -> pairedReads++ }
+            val unpairedReads = processPairedReads(genomeQuery, path, null) { _, _, _, _ -> pairedReads++ }
             assertEquals(0, pairedReads)
             assertEquals(SINGLE_END_BAM_READS, unpairedReads)
         }
@@ -143,7 +143,7 @@ class ReadsQueryTest {
     fun testLoadPairedEndBamAsSingleEnd() {
         withResource(ReadsQueryTest::class.java, "paired_end.bam") { path ->
             val genomeQuery = GenomeQuery(Genome["to1"])
-            val readsQuery = ReadsQuery(genomeQuery, path, false, fragment = FixedFragment(0))
+            val readsQuery = ReadsQuery(genomeQuery, path, null, false, fragment = FixedFragment(0))
             val coverage = readsQuery.get()
             val chr1 = genomeQuery["chr1"]!!
             assertIs(coverage, SingleEndCoverage::class.java)
@@ -161,7 +161,7 @@ class ReadsQueryTest {
     fun testLoadPairedEndBamAsSingleEndLogging() {
         withResource(ReadsQueryTest::class.java, "paired_end.bam") { path ->
             val genomeQuery = GenomeQuery(Genome["to1"])
-            val readsQuery = ReadsQuery(genomeQuery, path, false, fragment = FixedFragment(0))
+            val readsQuery = ReadsQuery(genomeQuery, path, null, false, fragment = FixedFragment(0))
             val (out, err) = Logs.captureLoggingOutput { readsQuery.get() }
             assertIn("Fragment option (0) forces reading paired-end reads as single-end!", out)
             assertEquals("", err)
@@ -176,9 +176,9 @@ class ReadsQueryTest {
     fun testLoadPairedEndBamAsPairedEndThenSingleEnd() {
         withResource(ReadsQueryTest::class.java, "paired_end.bam") { path ->
             val genomeQuery = GenomeQuery(Genome["to1"])
-            val readsQueryAsPaired = ReadsQuery(genomeQuery, path, false)
+            val readsQueryAsPaired = ReadsQuery(genomeQuery, path, null, false)
             val coverageAsPaired = readsQueryAsPaired.get()
-            val readsQueryAsSingle = ReadsQuery(genomeQuery, path, false, fragment = FixedFragment(0))
+            val readsQueryAsSingle = ReadsQuery(genomeQuery, path, null, false, fragment = FixedFragment(0))
             val coverageAsSingle = readsQueryAsSingle.get()
             assertIs(coverageAsPaired, PairedEndCoverage::class.java)
             assertIs(coverageAsSingle, SingleEndCoverage::class.java)

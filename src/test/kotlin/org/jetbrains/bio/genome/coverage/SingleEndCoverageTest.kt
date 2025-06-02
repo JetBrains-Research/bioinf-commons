@@ -183,7 +183,7 @@ class SingleEndCoverageTest {
             }
 
             val coverage = SingleEndCoverage.builder(genomeQuery).apply {
-                processReads(genomeQuery, trackPath) {
+                processReads(genomeQuery, trackPath, null) {
                     process(it)
                 }
             }.build(true).withFragment(0)
@@ -203,7 +203,7 @@ class SingleEndCoverageTest {
             }
 
             val coverage = SingleEndCoverage.builder(genomeQuery).apply {
-                processReads(genomeQuery, trackPath) {
+                processReads(genomeQuery, trackPath, null) {
                     process(it)
                 }
             }.build(true).withFragment(0)
@@ -225,7 +225,7 @@ class SingleEndCoverageTest {
             }
 
             val coverage = SingleEndCoverage.builder(genomeQuery).apply {
-                processReads(genomeQuery, trackPath) {
+                processReads(genomeQuery, trackPath, null) {
                     process(it)
                 }
             }.build(true).withFragment(150)

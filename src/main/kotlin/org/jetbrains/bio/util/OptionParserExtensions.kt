@@ -254,3 +254,25 @@ class FragmentConverter : ValueConverter<Fragment> {
 
     override fun valuePattern(): String? = null
 }
+
+/**
+ * Converts a string value into Format.
+ */
+class FormatConverter : ValueConverter<Fragment> {
+
+    @Throws(ValueConversionException::class)
+    override fun convert(value: String): Fragment {
+        try {
+            return Fragment.fromString(value)
+        } catch (e: NumberFormatException) {
+            throw ValueConversionException("Expected an integer number or 'auto', got $value", e)
+        }
+    }
+
+    /**
+     * It seems impossible to just write Optional<Int>::class.java, but the class of an instance works fine.
+     */
+    override fun valueType() = Fragment::class.java
+
+    override fun valuePattern(): String? = null
+}

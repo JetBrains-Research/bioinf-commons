@@ -27,7 +27,7 @@ class FragmentSizeTest {
             }
 
             val builder = SingleEndCoverage.builder(genomeQuery).apply {
-                processReads(genomeQuery, trackPath) {
+                processReads(genomeQuery, trackPath, null) {
                     process(it)
                 }
             }

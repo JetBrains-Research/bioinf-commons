@@ -3,6 +3,7 @@ package org.jetbrains.bio.genome.query
 import org.jetbrains.bio.experiment.Configuration
 import org.jetbrains.bio.genome.GenomeQuery
 import org.jetbrains.bio.genome.coverage.*
+import org.jetbrains.bio.genome.format.ReadsFormat
 import org.jetbrains.bio.genome.format.isPaired
 import org.jetbrains.bio.genome.format.processPairedReads
 import org.jetbrains.bio.genome.format.processReads
@@ -26,6 +27,7 @@ import java.nio.file.Path
 class ReadsQuery(
     val genomeQuery: GenomeQuery,
     val path: Path,
+    val explicitFormat: ReadsFormat? = null,
     val unique: Boolean = true,
     val fragment: Fragment = AutoFragment,
     val showLibraryInfo: Boolean = true,
@@ -65,10 +67,10 @@ class ReadsQuery(
         check(isAccessible()) { "Unable to load coverage: original reads $path and cache ${npzPath()} not available" }
         val npz = npzPath()
         npz.checkOrRecalculate("Coverage for ${path.name}") { (npzPath) ->
-            val paired = isPaired(path)
+            val paired = isPaired(path, explicitFormat)
             if (paired && fragment is AutoFragment) {
                 val pairedEndCoverage = PairedEndCoverage.builder(genomeQuery).apply {
-                    val unpaired = processPairedReads(genomeQuery, path) { chr, pos, pnext, len ->
+                    val unpaired = processPairedReads(genomeQuery, path, explicitFormat) { chr, pos, pnext, len ->
                         process(chr, pos, pnext, len)
                     }
                     if (unpaired != 0) {
@@ -83,7 +85,7 @@ class ReadsQuery(
                     LOG.info("Fragment option ($fragment) forces reading paired-end reads as single-end!")
                 }
                 val singleEndCoverage = SingleEndCoverage.builder(genomeQuery).apply {
-                    processReads(genomeQuery, path) {
+                    processReads(genomeQuery, path, explicitFormat) {
                         process(it)
                     }
                 }.build(unique)
@@ -98,33 +100,32 @@ class ReadsQuery(
     }
 
     private fun showLibraryInfo(coverage: Coverage) {
-        val libraryDepth = coverage.depth
-        val information = "Library: ${path.name}, Depth: ${"%,d".format(libraryDepth)}, " +
-                when (coverage) {
-                    is SingleEndCoverage -> "Reads: single-ended, " + when {
-                        coverage.actualFragment != coverage.detectedFragment ->
-                            "Fragment size: ${coverage.actualFragment} bp " +
-                                    "(overrides cross-correlation " +
-                                    "estimate ${coverage.detectedFragment})"
+        val coverageInfo = when (coverage) {
+            is SingleEndCoverage -> "Reads: single-ended, " + when {
+                coverage.actualFragment != coverage.detectedFragment ->
+                    "Fragment size: ${coverage.actualFragment} bp " +
+                            "(overrides cross-correlation " +
+                            "estimate ${coverage.detectedFragment})"
 
-                        fragment is AutoFragment ->
-                            "Fragment size: ${coverage.detectedFragment} bp " +
-                                    "(cross-correlation estimate)"
+                fragment is AutoFragment ->
+                    "Fragment size: ${coverage.detectedFragment} bp " +
+                            "(cross-correlation estimate)"
 
-                        else ->
-                            "Fragment size: ${coverage.detectedFragment} bp " +
-                                    "(user input is equal to cross-correlation estimate)"
-                    }
+                else ->
+                    "Fragment size: ${coverage.detectedFragment} bp " +
+                            "(user input is equal to cross-correlation estimate)"
+            }
 
-                    is PairedEndCoverage -> "Reads: paired-ended, " + if (fragment is FixedFragment) {
-                        "Fragment size: ${coverage.averageFragmentSize} bp (average; inferred from read pairs; " +
-                                "user input $fragment is ignored)"
-                    } else {
-                        "Fragment size: ${coverage.averageFragmentSize} bp (average; inferred from read pairs)"
-                    }
+            is PairedEndCoverage -> "Reads: paired-ended, " + if (fragment is FixedFragment) {
+                "Fragment size: ${coverage.averageFragmentSize} bp (average; inferred from read pairs; " +
+                        "user input $fragment is ignored)"
+            } else {
+                "Fragment size: ${coverage.averageFragmentSize} bp (average; inferred from read pairs)"
+            }
 
-                    else -> throw IllegalArgumentException("Unknown library type: ${coverage::class.java}")
-                }
+            else -> throw IllegalArgumentException("Unknown library type: ${coverage::class.java}")
+        }
+        val information = "Library: ${path.name}, Depth: ${"%,d".format(coverage.depth)}, $coverageInfo"
         LOG.info(information)
     }
 
