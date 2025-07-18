@@ -51,6 +51,8 @@ if (rootProject == project) {
         implementation("com.github.broadinstitute:picard:2.18.26")
         implementation("org.jline:jline-terminal:3.25.1")
         implementation("com.carrotsearch:jsuffixarrays:0.1.0")
+
+        implementation("org.jetbrains.bio:npy:0.3.5")
         implementation("org.jetbrains.bio:big:0.9.1")
         implementation("org.jetbrains.bio:viktor:2.0.0")
 
@@ -129,6 +131,9 @@ tasks.withType(Test) {
     maxHeapSize = "1024m"
 
     testLogging.showStandardStreams = true
+
+    // Add JVM options for Vector API
+    jvmArgs '--add-modules', 'jdk.incubator.vector'
 
     systemProperty "genomes.path", settingsFolder("genomes.path", "genomes")
     systemProperty "experiments.path", settingsFolder("experiments.path", "experiments")
