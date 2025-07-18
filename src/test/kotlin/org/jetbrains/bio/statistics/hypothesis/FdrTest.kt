@@ -16,7 +16,7 @@ class FdrTest {
             .asF64Array().log()
 
         val alphas = F64Array.of(0.0001, 0.001, 0.01, 0.1)
-        for (i in 0 until alphas.size) {
+        for (i in 0 until alphas.length) {
             val directRejected = Fdr.control(logMemberships, alphas[i]).cardinality()
             val qvalueRejected = Fdr.qvalidate(logMemberships).toDoubleArray()
                 .count { it <= alphas[i] }

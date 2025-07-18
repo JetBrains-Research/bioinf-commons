@@ -12,7 +12,7 @@ object BenjaminiHochberg {
      * See [Fdr.qvalidate] for log version for posterior error probabilities.
      */
     fun adjust(ps: F64Array): F64Array {
-        val m = ps.size
+        val m = ps.length
 
         // Sort Ps in ascending order and remember the inverse
         // permutation, so that we can return Q-values in the order

@@ -43,7 +43,7 @@ class CategoricalDistributionTest {
         val probabilities = doubleArrayOf(.15, .6, .25).asF64Array()
         val alias = CategoricalDistribution(probabilities)
 
-        val workBuffer = F64Array(probabilities.size)
+        val workBuffer = F64Array(probabilities.length)
         for (i in 0..IntMath.pow(2, 14) - 1) {
             val value = alias.sample()
             workBuffer[value] = workBuffer[value] + 1

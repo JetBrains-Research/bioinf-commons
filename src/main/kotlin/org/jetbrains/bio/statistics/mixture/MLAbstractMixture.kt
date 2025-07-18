@@ -87,7 +87,7 @@ abstract class MLAbstractMixture(protected val numComponents: Int, weights: F64A
     protected open fun updateParameters(df: DataFrame, gammas: F64Array) {
         for (i in 0 until numComponents) {
             val rowView = gammas.V[i]
-            logWeights[i] = ln(rowView.sum()) - ln(rowView.size.toDouble())
+            logWeights[i] = ln(rowView.sum()) - ln(rowView.length.toDouble())
         }
     }
 

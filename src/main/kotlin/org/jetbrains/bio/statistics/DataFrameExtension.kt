@@ -8,7 +8,7 @@ import org.jetbrains.bio.viktor.asF64Array
 
 // Support save states to file as [Float], see #1163
 fun F64Array.toFloatArray(): FloatArray {
-    return FloatArray(this.size) { this[it].toFloat() }
+    return FloatArray(this.length) { this[it].toFloat() }
 }
 
 // Support loading states to file as [Float], see #1163

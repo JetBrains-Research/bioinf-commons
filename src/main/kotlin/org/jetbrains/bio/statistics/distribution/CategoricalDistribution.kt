@@ -29,7 +29,7 @@ class CategoricalDistribution @JvmOverloads constructor(
     private val aliasProbabilities: DoubleArray
 
     init {
-        val n = probabilities.size
+        val n = probabilities.length
         require(n > 0) { "no data" }
 
         // Init alias structures as described in http://www.keithschwarz.com/darts-dice-coins
@@ -101,7 +101,7 @@ class CategoricalDistribution @JvmOverloads constructor(
 
     override fun getSupportLowerBound(): Int = 1
 
-    override fun getSupportUpperBound(): Int = probabilities.size
+    override fun getSupportUpperBound(): Int = probabilities.length
 
     override fun isSupportConnected(): Boolean = true
 

@@ -47,7 +47,7 @@ class Fdr(private val alpha: Double) : Predictor {
          */
         fun control(logNullMemberships: F64Array, alpha: Double): BitList {
             val indices = logNullMemberships.argSort()
-            val res = BitList(logNullMemberships.size)
+            val res = BitList(logNullMemberships.length)
             var logSum = Double.NEGATIVE_INFINITY
             var logFdr: Double
             var count = 0
@@ -55,7 +55,7 @@ class Fdr(private val alpha: Double) : Predictor {
                 logSum = logSum logAddExp logNullMemberships[indices[count]]
                 count++
                 logFdr = logSum - ln(count.toDouble())
-            } while (count < logNullMemberships.size && logFdr <= ln(alpha))
+            } while (count < logNullMemberships.length && logFdr <= ln(alpha))
 
             // All hypotheses prior to and including 'count' are rejected. The
             // '-1' is to compensate the increment in the while loop above.
@@ -78,7 +78,7 @@ class Fdr(private val alpha: Double) : Predictor {
          *               bisulfite next-generation sequencing", Bioinformatics, 2014.
          */
         fun qvalidate(logNullMemberships: F64Array, logResults: Boolean = false): F64Array {
-            val m = logNullMemberships.size
+            val m = logNullMemberships.length
             // Sort PEPs in ascending order and remember the inverse
             // permutation, so that we can return Q-values in the order
             // corresponding to the original PEPs.

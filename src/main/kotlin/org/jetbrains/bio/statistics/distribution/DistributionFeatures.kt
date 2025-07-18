@@ -86,7 +86,7 @@ object Sampling {
      * @return an array of weights which sum to one.
      */
     fun sampleDirichlet(concentration: F64Array): F64Array {
-        val k = concentration.size
+        val k = concentration.length
         val weights = F64Array(k)
         for (component in 0 until k) {
             weights[component] = sampleGamma(concentration[component], 1.0)
@@ -150,7 +150,7 @@ object Densities {
         weights: F64Array,
         concentration: F64Array
     ): Double {
-        val k = weights.size
+        val k = weights.length
         val totalConcentration = concentration.sum()
         var acc = Gamma.logGamma(totalConcentration)
         for (component in 0 until k) {
@@ -205,7 +205,7 @@ object Expectations {
         val totalConcentration = concentration.sum()
         requireNotNaN("concentration", totalConcentration)
         val totalConcentrationDigamma = Gamma.digamma(totalConcentration)
-        for (i in 0 until concentration.size) {
+        for (i in 0 until concentration.length) {
             dst[i] = Gamma.digamma(concentration[i]) - totalConcentrationDigamma
         }
     }
@@ -232,8 +232,8 @@ private fun requireNotNaN(role: String, x: Double) {
  */
 object KullbackLeibler {
     fun dirichlet(concentration1: F64Array, concentration2: F64Array): Double {
-        val n = concentration1.size
-        require(concentration2.size == n)
+        val n = concentration1.length
+        require(concentration2.length == n)
         val meanLogWeights = F64Array(n)
         Expectations.logDirichlet(concentration2, meanLogWeights)
 

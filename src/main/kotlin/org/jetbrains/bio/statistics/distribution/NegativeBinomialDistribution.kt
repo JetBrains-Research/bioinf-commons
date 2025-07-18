@@ -227,14 +227,14 @@ class NegativeBinomialDistribution(
         }
 
         private fun diGammaInPlace(eta: F64Array): F64Array {
-            for (i in 0 until eta.size) {
+            for (i in 0 until eta.length) {
                 eta[i] = Gamma.digamma(eta[i])
             }
             return eta
         }
 
         private fun triGammaInPlace(eta: F64Array): F64Array {
-            for (i in 0 until eta.size) {
+            for (i in 0 until eta.length) {
                 eta[i] = Gamma.trigamma(eta[i])
             }
             return eta
