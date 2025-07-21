@@ -19,7 +19,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.stream.Collectors
+import kotlin.Throws
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -126,15 +126,18 @@ object TestOrganismDataGenerator {
      * @param maxGapLength maximum gap length.
      */
     private fun generateSequence(genome: Genome, twoBitPath: Path, maxGaps: Int = 10, maxGapLength: Int = 100) {
-        // XXX: Uses randomization
+        // XXX: Uses randomization, seed is fixed before method call
 
         LOG.info("Generating FASTA sequence")
         withTempFile(genome.build, ".fa") { fastaPath ->
             CHROMOSOMES_SIZES.map { (name, length) ->
-                val sequence = RANDOM.ints(length.toLong(), 0, Nucleotide.ALPHABET.size)
-                    .mapToObj { Nucleotide.ALPHABET[it].toString() }
-                    .collect(Collectors.joining())
-                    .toCharArray()
+                val sequence = CharArray(length) {
+                    // XXX: JDK 17 changed impl of `RANDOM.ints(length.toLong(), 0, ALPHABET.size)`
+                    //  and it doesn't generate the same sequence as JDK11 even with same seed.
+                    //  Here we workaround generation to restore the previous behaviour and let
+                    //  tests pass insted of fixing testdata that reference to exact nucleotides values.
+                    Nucleotide.ALPHABET[RANDOM.nextInt(Nucleotide.ALPHABET.size)]
+                }
 
                 val numGaps = min(RANDOM.nextInt(maxGaps + 1), 3)
                 for (i in 0 until numGaps) {
