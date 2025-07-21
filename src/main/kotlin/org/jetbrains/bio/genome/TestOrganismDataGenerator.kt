@@ -468,7 +468,16 @@ object TestOrganismDataGenerator {
 
         val alphabet = Nucleotide.ALPHABET
         val readCharArray = read.toCharArray()
-        val mismatches = RANDOM.ints().map { i -> abs(i % length) }.distinct().limit(maxMismatchCount.toLong())
+
+        // XXX: JDK 17 changed impl of `RANDOM.ints(length.toLong(), 0, ALPHABET.size)`
+        //  and it doesn't generate the same sequence as JDK11 even with same seed.
+        //  Here we workaround generation to restore the previous behaviour and let
+        //  tests pass insted of fixing testdata that reference to exact nucleotides values.
+        val mismatches = mutableSetOf<Int>()
+        while (mismatches.size < maxMismatchCount) {
+            val value = abs(RANDOM.nextInt()) % length
+            mismatches.add(value)
+        }
         mismatches.forEach { mismatchPos -> readCharArray[mismatchPos] = alphabet[RANDOM.nextInt(alphabet.size)] }
 
         read = String(readCharArray).uppercase()
