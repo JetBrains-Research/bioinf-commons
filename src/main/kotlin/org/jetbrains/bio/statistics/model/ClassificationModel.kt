@@ -99,20 +99,12 @@ interface ClassificationModel {
          *
          * CONTRACT: each Model class specifies "VERSION" int static field
          * describing current serialization format version.
-         *
-         * @param path to serialized model.
-         * @throws IOException, JsonParseException if a given path is not readable.
          */
         @Suppress("unchecked_cast")
-        @Throws(IOException::class, JsonParseException::class)
-        fun <M : ClassificationModel> load(path: Path): M {
-            return path.bufferedReader().use {
-                val model = GSON.fromJson(it, ClassificationModel::class.java) as M?
-                checkNotNull(model) {
-                    "failed to load model from $path"
-                }
-            }
-        }
+        @Throws(JsonParseException::class)
+        fun <M : ClassificationModel> load(json: String): M? {
+            return GSON.fromJson(json, ClassificationModel::class.java) as M?        }
+
 
         /**
          * Please do not use this instance for serializing arbitrary objects to

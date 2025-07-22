@@ -36,7 +36,7 @@ class ClassificationModelTest {
     fun testLoad() = withTempFile("model", ".json") { path ->
         val obj = Boo(1)
         obj.save(path)
-        val boo = ClassificationModel.load<Boo>(path)
+        val boo = ClassificationModel.load<Boo>(path.bufferedReader().readText())
         assertEquals(obj, boo)
     }
 
@@ -54,7 +54,7 @@ class ClassificationModelTest {
                 "Deserialization error: Class name (model.class.fqn) is missing.",
                 JsonParseException::class.java,
             ) {
-                ClassificationModel.load<Boo>(path)
+                ClassificationModel.load<Boo>(path.bufferedReader().readText())
             }
         }
     }
@@ -73,7 +73,7 @@ class ClassificationModelTest {
             path.read()
         )
 
-        assertEquals(nanBoo, ClassificationModel.load<NanBoo>(path))
+        assertEquals(nanBoo, ClassificationModel.load<NanBoo>(path.bufferedReader().readText()))
     }
 
     @Test
@@ -90,7 +90,7 @@ class ClassificationModelTest {
                         "'org.jetbrains.bio.statistics.model.Boo' expects '123' version, but got '222'",
                 JsonParseException::class.java,
             ) {
-                ClassificationModel.load<Boo>(path)
+                ClassificationModel.load<Boo>(path.bufferedReader().readText())
             }
         }
     }
@@ -110,7 +110,7 @@ class ClassificationModelTest {
                         "'org.jetbrains.bio.statistics.model.Boo' expects '666' version, but got '222'",
                 JsonParseException::class.java,
             ) {
-                ClassificationModel.load<Boo>(path)
+                ClassificationModel.load<Boo>(path.bufferedReader().readText())
             }
         }
     }
