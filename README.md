@@ -35,7 +35,7 @@ Usages
 ------
 Used in the following projects:
 
-* [SPAN](https://github.com/JetBrains-Research/span) Semi-supervised Peak Analyzer
+* [Omnipeak](https://github.com/JetBrains-Research/omnipeak) Universal chromatin peak caller
 * [JBR](https://github.com/JetBrains-Research/jbr) JBR Genome Browser
 * [FARM](https://github.com/JetBrains-Research/fishbone) hierarchical association rule mining and visualization method
 
