@@ -28,7 +28,8 @@ class URIExtensionsTest {
 
     @Test
     fun extension() {
-        assertEquals("span", "file:///mnt/stripe/foo.span".toUri().extension())
+        assertEquals("omnipeak", "file:///mnt/stripe/foo.omni".toUri().extension())
+        assertEquals("omnipeak", "file:///mnt/stripe/foo.span".toUri().extension())
         assertEquals("narrowPeak", "file:///mnt/stripe/f.o.o.narrowPeak".toUri().extension())
         assertEquals("bigWig", ("https://www.encodeproject.org/files/@@download/foo.bigWig").toUri().extension())
         assertEquals("bw", "ftp://hgdownload.soe.ucsc.edu/goldenPath/foo.bw".toUri().extension())
