@@ -141,7 +141,7 @@ fun processPairedReads(
         error("unknown format $path, please specify format explicitly with --format option")
     }
     check(readsFormat in listOf(ReadsFormat.BAM, ReadsFormat.SAM, ReadsFormat.CRAM)) {
-        "Only BAM supported, got: $path"
+        "Only BAM, SAM or CRAM supported, got: $path"
     }
     val progress = Progress { title = "Loading paired-end reads ${path.name}" }.unbounded()
     try {
