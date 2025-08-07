@@ -2,9 +2,9 @@
 
 package org.jetbrains.bio.genome
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.common.base.Joiner
-import com.google.common.cache.Cache
-import com.google.common.cache.CacheBuilder
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.ImmutableListMultimap
 import com.google.common.collect.LinkedListMultimap
@@ -32,11 +32,11 @@ import java.nio.file.StandardOpenOption
  * return false, and the entries of `M` could never be updated or
  * retrieved.
  */
-internal fun <T> cache(): Cache<Genome, ListMultimap<Chromosome, T>> {
-    return CacheBuilder.newBuilder()
+internal fun <T> cache(): Cache<String, ListMultimap<Chromosome, T>> {
+    return Caffeine.newBuilder()
         .softValues()
         .initialCapacity(1)
-        .build<Genome, ListMultimap<Chromosome, T>>()
+        .build<String, ListMultimap<Chromosome, T>>()
 }
 
 data class Repeat(
@@ -79,8 +79,10 @@ object Repeats {
         "repeat_end", "repeat_left", "id"
     ).build()
 
-    internal fun all(genome: Genome) = CACHE.get(genome) {
-        repeatsPath(genome)?.let { read(genome, it) } ?: ArrayListMultimap.create()
+    internal fun all(genome: Genome): ListMultimap<Chromosome, Repeat> {
+        return CACHE.get(genome.presentableName()) {
+            repeatsPath(genome)?.let { read(genome, it) } ?: ArrayListMultimap.create()
+        }
     }
 
 
@@ -139,7 +141,7 @@ object CytoBands {
     ).build()
 
     internal fun all(genome: Genome): ListMultimap<Chromosome, CytoBand> {
-        return CACHE.get(genome) {
+        return CACHE.get(genome.presentableName()) {
             val path = genome.cytobandsPath
             if (path == null) {
                 ArrayListMultimap.create()
@@ -209,7 +211,7 @@ object Gaps {
     private const val CENTROMERES_FILE_NAME = "centromeres.txt.gz"
 
     internal fun all(genome: Genome): ListMultimap<Chromosome, Gap> {
-        return CACHE.get(genome) {
+        return CACHE.get(genome.presentableName()) {
             val gapsPath = genome.gapsPath
             gapsPath?.checkOrRecalculate("Gaps") { output ->
                 val config = genome.annotationsConfig
@@ -322,7 +324,7 @@ object CpGIslands {
     internal const val ISLANDS_FILE_NAME = "cpgIslandExt.txt.gz"
 
     fun all(genome: Genome): ListMultimap<Chromosome, CpGIsland> {
-        return CACHE.get(genome) {
+        return CACHE.get(genome.presentableName()) {
             val path = genome.cpgIslandsPath
             if (path == null) {
                 LinkedListMultimap.create()

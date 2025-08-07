@@ -1,6 +1,6 @@
 package org.jetbrains.bio.genome
 
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.common.collect.ListMultimap
 import com.google.common.collect.Maps
 import com.google.common.collect.Multimaps
@@ -22,8 +22,8 @@ import kotlin.math.min
  * @author Sergei Lebedev
  */
 enum class GeneClass(
-        val id: String, val description: String,
-        private val predicate: (Transcript) -> Boolean
+    val id: String, val description: String,
+    private val predicate: (Transcript) -> Boolean
 ) {
     CODING("coding", "coding genes", { it.isCoding }),
     NON_CODING("non-coding", "non-coding genes", { !it.isCoding }),
@@ -92,19 +92,19 @@ class GeneAliasMap internal constructor(private val transcript: Transcript) : Ma
 
 /** This is actually a transcript, not a gene. */
 class Transcript(
-        /** Ensembl transcript ID. */
-        val ensemblId: String,
-        /** Ensembl gene ID. */
-        val ensemblGeneId: String,
-        /** Gene symbol associated with this transcript. */
-        val geneSymbol: String,
-        /** Transcript location. */
-        override val location: Location,
-        /** Coding sequence range or `null` for non-coding transcripts. */
-        val cdsRange: Range?,
-        private val utr3End5: Int, // Could be out of transcript bound if not defined
-        /** A list of sorted exon ranges. Empty for non-coding transcripts. */
-        private val exonRanges: List<Range>
+    /** Ensembl transcript ID. */
+    val ensemblId: String,
+    /** Ensembl gene ID. */
+    val ensemblGeneId: String,
+    /** Gene symbol associated with this transcript. */
+    val geneSymbol: String,
+    /** Transcript location. */
+    override val location: Location,
+    /** Coding sequence range or `null` for non-coding transcripts. */
+    val cdsRange: Range?,
+    private val utr3End5: Int, // Could be out of transcript bound if not defined
+    /** A list of sorted exon ranges. Empty for non-coding transcripts. */
+    private val exonRanges: List<Range>
 ) : LocationAware {
 
     init {
@@ -195,9 +195,9 @@ class Transcript(
  * Simplified notion of gene as a collection of [Transcript]
  */
 data class Gene(
-        val ensemblGeneId: String,
-        val geneSymbol: String,
-        val transcripts: Collection<Transcript>
+    val ensemblGeneId: String,
+    val geneSymbol: String,
+    val transcripts: Collection<Transcript>
 ) {
     // Gene location can be considered as longest isoform (according to the talk at ECCB-2018) or union of isoforms.
     val location: Location
@@ -208,7 +208,7 @@ data class Gene(
         val ranges = locations.map { it.toRange() }
 
         location = ranges.fold(ranges.first(), Range::union)
-                .on(locations.first().chromosome, locations.first().strand)
+            .on(locations.first().chromosome, locations.first().strand)
     }
 }
 
@@ -229,34 +229,36 @@ object Transcripts {
 
     private const val FORMAT_VERSION = 1
 
-    private val TRANSCRIPTS_CACHE = cache<Transcript>()
-    private val BOUND5_INDEX_CACHE = CacheBuilder.newBuilder()
-            .softValues()
-            .initialCapacity(1)
-            .build<Pair<Genome, Boolean>, Map<Chromosome, Triple<List<Transcript>, IntArray, BinaryLut>>>()
+    private val CACHE = cache<Transcript>()
+    private val BOUND5_INDEX_CACHE =  Caffeine.newBuilder()
+        .softValues()
+        .initialCapacity(1)
+        .build<Pair<String, Boolean>, Map<Chromosome, Triple<List<Transcript>, IntArray, BinaryLut>>>()
 
     /** Visible only for [TestOrganismDataGenerator]. */
     val GSON = GsonBuilder()
-            .registerTypeAdapter(Range::class.java, Range.ADAPTER)
-            .registerTypeAdapter(Location::class.java, Location.ADAPTER)
-            .create()
+        .registerTypeAdapter(Range::class.java, Range.ADAPTER)
+        .registerTypeAdapter(Location::class.java, Location.ADAPTER)
+        .create()
 
     fun bound5Index(
-            genome: Genome,
-            onlyCodingGenes: Boolean
-    ) = BOUND5_INDEX_CACHE.get(genome to onlyCodingGenes) {
-        val allTranscripts = all(genome)
+        genome: Genome,
+        onlyCodingGenes: Boolean
+    ): Map<Chromosome, Triple<List<Transcript>, IntArray, BinaryLut>> {
+        return BOUND5_INDEX_CACHE.get(genome.presentableName() to onlyCodingGenes) {
+            val allTranscripts = all(genome)
 
-        allTranscripts.keySet().associate { chr ->
-            val transcripts = allTranscripts[chr].filter { !onlyCodingGenes || it.isCoding }
+            allTranscripts.keySet().associateWith { chr ->
+                val transcripts = allTranscripts[chr].filter { !onlyCodingGenes || it.isCoding }
 
-            val bounds5 = transcripts.map { it.location.get5Bound() }.toIntArray()
-            chr to (Triple(transcripts, bounds5, BinaryLut.of(bounds5, 24)))
+                val bounds5 = transcripts.map { it.location.get5Bound() }.toIntArray()
+                (Triple(transcripts, bounds5, BinaryLut.of(bounds5, 24)))
+            }
         }
     }
 
     fun all(genome: Genome): ListMultimap<Chromosome, Transcript> {
-        return TRANSCRIPTS_CACHE.get(genome) {
+        return CACHE.get(genome.presentableName()) {
             try {
                 loadTranscripts(genome, null, false)
             } catch (e: Exception) {
@@ -280,7 +282,11 @@ object Transcripts {
         return genesGtfPath.withExtension("json.gz")
     }
 
-    private fun loadTranscripts(genome: Genome, inputGtfFile: Path?, cleanCache: Boolean): ListMultimap<Chromosome, Transcript> {
+    private fun loadTranscripts(
+        genome: Genome,
+        inputGtfFile: Path?,
+        cleanCache: Boolean
+    ): ListMultimap<Chromosome, Transcript> {
         val gtfFile = inputGtfFile ?: genome.genesGtfPath(false)
         val cachedTranscripts = cachedTranscriptsJsonPath(gtfFile)
 
@@ -295,18 +301,18 @@ object Transcripts {
             val transcripts = LOG.time(level = Level.INFO, message = "Parsing genes $gtfFile") {
                 gtfFile.bufferedReader().use { reader ->
                     GtfReader(reader, genome).readTranscripts()
-                            // sort by 5' offset then by ensemblId (to be deterministic),
-                            // it is required for bound5Index() correct work,
-                            // please don't change it to sort by start offset
-                            .sortedWith(compareBy({ it.location.get5Bound() }, { it.ensemblId }))
+                        // sort by 5' offset then by ensemblId (to be deterministic),
+                        // it is required for bound5Index() correct work,
+                        // please don't change it to sort by start offset
+                        .sortedWith(compareBy({ it.location.get5Bound() }, { it.ensemblId }))
                 }
             }
             path.bufferedWriter().use { GSON.toJson(JsonTranscriptome(FORMAT_VERSION, transcripts), it) }
         }
 
         val transcripts = LOG.time(
-                level = Level.INFO,
-                message = "Loading genes $gtfFile"
+            level = Level.INFO,
+            message = "Loading genes $gtfFile"
         ) {
             loadFromJson(cachedTranscripts)
         }
@@ -331,32 +337,32 @@ object Transcripts {
      * See corresponding internal methods for more information.
      */
     fun associatedTranscripts(
-            location: Location,
-            strategy: AssociationStrategy = AssociationStrategy.SINGLE,
-            limit: Int = 1000000,
-            codingOnly: Boolean = false
+        location: Location,
+        strategy: AssociationStrategy = AssociationStrategy.SINGLE,
+        limit: Int = 1000000,
+        codingOnly: Boolean = false
     ): List<Transcript> = when (strategy) {
         AssociationStrategy.SINGLE -> associatedTranscriptsSingle(
-                location, limit, codingOnly
+            location, limit, codingOnly
         )
 
         AssociationStrategy.TWO -> associatedTranscriptsTwo(
-                location, limit, codingOnly
+            location, limit, codingOnly
         )
 
         AssociationStrategy.BASAL_PLUS_EXT -> associatedTranscriptsPlus(
-                location, codingOnly = codingOnly, distal = limit
+            location, codingOnly = codingOnly, distal = limit
         )
 
         AssociationStrategy.MULTIPLE -> associatedTranscriptsMultiple(
-                location, codingOnly = codingOnly, limit = limit
+            location, codingOnly = codingOnly, limit = limit
         )
     }
 
     fun associatedTranscriptsSingle(
-            location: Location,
-            limit: Int = 1000000,
-            codingOnly: Boolean = false
+        location: Location,
+        limit: Int = 1000000,
+        codingOnly: Boolean = false
     ): List<Transcript> {
         // XXX GREAT: "single nearest gene" strategy: we use it because it simple, feel free to change it to
         // XXX "basal plus ext" or "two nearest genes"
@@ -376,7 +382,7 @@ object Transcripts {
 
         val chr = location.chromosome
         val (transcripts, bounds5, bound5Lut) = bound5Index(
-                chr.genome, onlyCodingGenes = codingOnly
+            chr.genome, onlyCodingGenes = codingOnly
         ).getValue(chr)
 
         val midpoint = (location.startOffset + location.endOffset) / 2
@@ -399,9 +405,9 @@ object Transcripts {
     }
 
     fun associatedTranscriptsTwo(
-            location: Location,
-            limit: Int = 1000000,
-            codingOnly: Boolean = false
+        location: Location,
+        limit: Int = 1000000,
+        codingOnly: Boolean = false
     ): List<Transcript> {
         // XXX GREAT: "two nearest genes" strategy (http://great.stanford.edu/)
 
@@ -420,7 +426,7 @@ object Transcripts {
 
         val chr = location.chromosome
         val (transcripts, bounds5, bound5Lut) = bound5Index(
-                chr.genome, onlyCodingGenes = codingOnly
+            chr.genome, onlyCodingGenes = codingOnly
         ).getValue(chr)
 
         val midpoint = (location.startOffset + location.endOffset) / 2
@@ -439,8 +445,8 @@ object Transcripts {
         // TODO: seems is incorrect behaviour,
         //  instead of two nearest transcripts of same gene it should be two different nearest genes
         val candidates = (low..high)
-                .filter { abs(bounds5[it] - midpoint) <= limit }
-                .map { transcripts[it] }
+            .filter { abs(bounds5[it] - midpoint) <= limit }
+            .map { transcripts[it] }
 
         if (candidates.size <= 2) {
             return candidates
@@ -451,14 +457,14 @@ object Transcripts {
     }
 
     fun associatedTranscriptsMultiple(
-            location: Location,
-            limit: Int = 1000000,
-            closeGenesAreaThreshold: Int = 50000,
-            codingOnly: Boolean = false
+        location: Location,
+        limit: Int = 1000000,
+        closeGenesAreaThreshold: Int = 50000,
+        codingOnly: Boolean = false
     ): List<Transcript> {
         val chr = location.chromosome
         val (transcripts, bounds5, bound5Lut) = bound5Index(
-                chr.genome, onlyCodingGenes = codingOnly
+            chr.genome, onlyCodingGenes = codingOnly
         ).getValue(chr)
 
         val midpoint = (location.startOffset + location.endOffset) / 2
@@ -481,11 +487,11 @@ object Transcripts {
     }
 
     fun associatedTranscriptsPlus(
-            location: Location,
-            upstream: Int = 5000,
-            downstream: Int = 1000,
-            distal: Int = 1000000,
-            codingOnly: Boolean = false
+        location: Location,
+        upstream: Int = 5000,
+        downstream: Int = 1000,
+        distal: Int = 1000000,
+        codingOnly: Boolean = false
     ): List<Transcript> {
         // XXX GREAT: "basal plus extension" strategy
 
@@ -507,7 +513,7 @@ object Transcripts {
 
         val chr = location.chromosome
         val (transcripts, bounds5, bound5Lut) = bound5Index(
-                chr.genome, onlyCodingGenes = codingOnly
+            chr.genome, onlyCodingGenes = codingOnly
         ).getValue(chr)
 
         val midpoint = (location.startOffset + location.endOffset) / 2
@@ -517,34 +523,34 @@ object Transcripts {
         if (lowBas != -1) {
             val candidates = (lowBas..highBas).filter {
                 bounds5[it] - midpoint in transcripts[it].strand.choose(
-                        -downstream..upstream, -upstream..downstream
+                    -downstream..upstream, -upstream..downstream
                 )
             }
-                    .map { transcripts[it] }
+                .map { transcripts[it] }
             if (candidates.isNotEmpty()) return candidates
         }
         // check extended regulatory domain -- this is very tricky; we do it mostly separately for the two strands
         val plus = bound5Lut.framingElem(bounds5, midpoint) { transcripts[it].strand == Strand.PLUS }
         val minus = bound5Lut.framingElem(bounds5, midpoint) { transcripts[it].strand == Strand.MINUS }
         val leftBasalBoundaryPlus = plus.map { bounds5[it] + downstream }
-                .filter { it < midpoint }.maxOrNull()
+            .filter { it < midpoint }.maxOrNull()
         val rightBasalBoundaryPlus = plus.map { bounds5[it] - upstream }
-                .filter { it > midpoint }.minOrNull()
+            .filter { it > midpoint }.minOrNull()
         val leftBasalBoundaryMinus = minus.map { bounds5[it] + upstream }
-                .filter { it < midpoint }.maxOrNull()
+            .filter { it < midpoint }.maxOrNull()
         val rightBasalBoundaryMinus = minus.map { bounds5[it] - downstream }
-                .filter { it > midpoint }.minOrNull()
+            .filter { it > midpoint }.minOrNull()
         val leftBasalBoundary = when {
             leftBasalBoundaryPlus == null -> leftBasalBoundaryMinus
             leftBasalBoundaryMinus == null -> leftBasalBoundaryPlus
             else -> max(leftBasalBoundaryPlus, leftBasalBoundaryMinus)
-                    .let { if (midpoint - it <= distal) it else null }
+                .let { if (midpoint - it <= distal) it else null }
         }
         val rightBasalBoundary = when {
             rightBasalBoundaryPlus == null -> rightBasalBoundaryMinus
             rightBasalBoundaryMinus == null -> rightBasalBoundaryPlus
             else -> min(rightBasalBoundaryPlus, rightBasalBoundaryMinus)
-                    .let { if (it - midpoint <= distal) it else null }
+                .let { if (it - midpoint <= distal) it else null }
         }
         val resultsPlus = plus.filter {
             bounds5[it] + downstream == leftBasalBoundary || bounds5[it] - upstream == rightBasalBoundary

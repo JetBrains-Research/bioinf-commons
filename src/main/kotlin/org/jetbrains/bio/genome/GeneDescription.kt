@@ -1,8 +1,7 @@
 package org.jetbrains.bio.genome
 
 
-import com.google.common.cache.Cache
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.common.collect.Iterators
 import com.google.common.collect.PeekingIterator
 import org.apache.commons.csv.CSVRecord
@@ -17,7 +16,7 @@ import java.util.*
  * See [Biomart]
  */
 object GeneDescription {
-    private val CACHE: Cache<Genome, Map<String, String>> = CacheBuilder.newBuilder()
+    private val CACHE =  Caffeine.newBuilder()
         .softValues()
         .initialCapacity(1)
         .build<Genome, Map<String, String>>()

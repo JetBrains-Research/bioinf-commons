@@ -1,7 +1,7 @@
 package org.jetbrains.bio.genome.query
 
-import com.google.common.cache.Cache
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import java.util.function.Function
 
 /**
@@ -24,7 +24,7 @@ abstract class CachingQuery<I : Any, O> : Query<I, O> {
 
     abstract fun getUncached(input: I): O
 
-    private val cache: Cache<I, O> = CacheBuilder.newBuilder().build()
+    private val cache: Cache<I, O> =  Caffeine.newBuilder().build()
 
     override fun apply(t: I): O = cache.get(t) { getUncached(t) }
 }

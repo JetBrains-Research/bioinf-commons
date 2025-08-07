@@ -1,5 +1,7 @@
 package org.jetbrains.bio.genome
 
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.google.common.cache.CacheBuilder
 import com.google.common.collect.Maps
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
@@ -17,6 +19,7 @@ import java.io.UncheckedIOException
 import java.lang.ref.WeakReference
 import java.nio.channels.ClosedByInterruptException
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 
 /**
  * The genome.
@@ -260,8 +263,12 @@ class Genome private constructor(
 
         internal val LOG = LoggerFactory.getLogger(Genome::class.java)
 
-        /** Use cache to avoid extra chrom.sizes loading. */
-        private val CACHE = Maps.newConcurrentMap<String, Genome>()
+        /** Use cache to avoid extra chrom.sizes, transcripts, etc. loading. */
+        private val GENOMES_CACHE =  Caffeine.newBuilder()
+            .expireAfterAccess(30, TimeUnit.MINUTES)
+            .softValues()
+            .maximumSize(5)
+            .build<String, Genome>()
 
         /**
          * Get or init default genome, which downloads all missing files to [Configuration.genomesPath]
@@ -420,7 +427,7 @@ class Genome private constructor(
                     // paths.
                     //
                     // P.S: We could remove this code and leave impl like for customized genome (see the other branch)
-                    CACHE.computeIfAbsent(build) {
+                    GENOMES_CACHE.get(build) {
                         genomeProvider()
                     }
                 } else {
@@ -428,10 +435,11 @@ class Genome private constructor(
                     val newGenome = genomeProvider()
 
                     if (forceUpdateCache) {
-                        CACHE[build] = newGenome
+                        GENOMES_CACHE.invalidate(build)
+                        GENOMES_CACHE.get(build) { newGenome }
                     }
 
-                    val cachedGenome = CACHE.computeIfAbsent(build) {
+                    val cachedGenome = GENOMES_CACHE.get(build) {
                         newGenome
                     }
 
@@ -479,7 +487,7 @@ class Genome private constructor(
                 annotationsConfig.chromsizesUrl.downloadTo(p)
             }
 
-            LOG.debug("Loading chrom.sizes $chromSizesPath")
+            LOG.debug("Loading chrom.sizes {}", chromSizesPath)
             val map = LinkedHashMap<String, Int>()
             CSVFormat.TDF.parse(chromSizesPath.bufferedReader()).use { parser ->
                 parser.records.forEach {
@@ -492,7 +500,7 @@ class Genome private constructor(
                         )
                     }
                 }
-                LOG.debug("DONE Loading chrom.sizes $chromSizesPath")
+                LOG.debug("DONE Loading chrom.sizes {}", chromSizesPath)
                 return map
             }
         }
