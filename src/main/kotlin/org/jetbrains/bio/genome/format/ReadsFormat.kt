@@ -13,25 +13,25 @@ enum class ReadsFormat {
     fun check(path: Path) {
         when (this) {
             BED -> {
-                if (path.extension !in listOf("bed", "gz", "zip")) {
+                if (path.extension.lowercase() !in listOf("bed", "gz", "zip")) {
                     LOG.warn("Unexpected file extension for BED file: $path, expected bed, bed.gz or bed.zip")
                 }
             }
 
             BAM -> {
-                if (path.extension != "bam") {
+                if (path.extension.lowercase() != "bam") {
                     LOG.warn("Unexpected file extension for BAM file: $path, expected bam")
                 }
             }
 
             SAM -> {
-                if (path.extension != "sam") {
+                if (path.extension.lowercase() != "sam") {
                     LOG.warn("Unexpected file extension for SAM file: $path, expected sam")
                 }
             }
 
             CRAM -> {
-                if (path.extension != "cram") {
+                if (path.extension.lowercase() != "cram") {
                     LOG.warn("Unexpected file extension for CRAM file: $path, expected cram")
                 }
             }
@@ -42,7 +42,7 @@ enum class ReadsFormat {
         private val LOG = LoggerFactory.getLogger(ReadsFormat::class.java)
 
 
-        fun guess(path: Path): ReadsFormat? = when (path.extension) {
+        fun guess(path: Path): ReadsFormat? = when (path.extension.lowercase()) {
             in listOf("bed", "gz", "zip") -> {
                 BED
             }
