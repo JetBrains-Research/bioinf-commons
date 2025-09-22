@@ -9,7 +9,11 @@ import java.nio.file.Path
 data class TrackAboutMetricValue<T>(
     val type: TrackAboutColumnType<T>,
     val value: T
-)
+) {
+    override fun toString(): String {
+        return "${type.name} ${type.render(value)}"
+    }
+}
 
 abstract class TrackAboutColumnType<T> {
     abstract val name: String
