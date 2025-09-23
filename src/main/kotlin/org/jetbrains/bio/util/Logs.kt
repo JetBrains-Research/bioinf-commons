@@ -113,6 +113,7 @@ object Logs {
 
     private fun isAux(t: IThrowableProxy) =
         t.className in setOf(
+            IllegalArgumentException::class.qualifiedName,
             RuntimeException::class.qualifiedName,
             ExecutionException::class.qualifiedName,
             InvocationTargetException::class.qualifiedName
