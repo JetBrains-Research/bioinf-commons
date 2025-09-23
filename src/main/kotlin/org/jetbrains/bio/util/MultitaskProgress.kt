@@ -190,4 +190,5 @@ interface ProgressBar {
     fun done()
     fun setTotal(total: Long)
     fun setState(amount: Long, total: Long)
+    fun setIndeterminate(indeterminate: Boolean)
 }
