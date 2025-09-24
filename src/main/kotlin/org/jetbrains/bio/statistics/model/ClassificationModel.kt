@@ -7,12 +7,10 @@ import org.jetbrains.bio.statistics.Preprocessed
 import org.jetbrains.bio.statistics.gson.F64ArrayTypeAdapter
 import org.jetbrains.bio.statistics.gson.GSONUtil
 import org.jetbrains.bio.statistics.gson.NotDirectlyDeserializable
-import org.jetbrains.bio.util.bufferedReader
 import org.jetbrains.bio.util.bufferedWriter
 import org.jetbrains.bio.util.createDirectories
 import org.jetbrains.bio.viktor.F64Array
 import org.slf4j.LoggerFactory
-import java.io.IOException
 import java.nio.file.Path
 
 /**

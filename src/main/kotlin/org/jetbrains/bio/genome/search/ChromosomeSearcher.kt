@@ -4,6 +4,9 @@ import htsjdk.samtools.util.SequenceUtil
 import org.jetbrains.bio.genome.Chromosome
 import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.Strand
+import org.jetbrains.bio.genome.search.ChromosomeSearcher.Companion.NOT_FOUND
+import org.jetbrains.bio.genome.search.ChromosomeSearcher.Companion.NOT_UNIQUE
+import org.jetbrains.bio.genome.search.ChromosomeSearcher.Companion.UNIQUE
 import org.jetbrains.bio.genome.sequence.NucleotideSequence
 import java.util.stream.IntStream
 import java.util.stream.Stream

@@ -4,10 +4,12 @@ import org.apache.commons.math3.distribution.AbstractIntegerDistribution
 import org.apache.commons.math3.distribution.NormalDistribution
 import org.apache.commons.math3.random.RandomGenerator
 import org.apache.commons.math3.random.Well19937c
+import org.jetbrains.bio.statistics.distribution.NormalIntDistribution.Companion.of
 import org.jetbrains.bio.statistics.standardDeviation
 import java.util.*
 import java.util.stream.DoubleStream
-import kotlin.math.*
+import kotlin.math.ln
+import kotlin.math.sqrt
 
 class NormalIntDistribution(
     val mean: Double,

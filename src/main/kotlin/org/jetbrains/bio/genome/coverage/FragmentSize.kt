@@ -3,6 +3,7 @@ package org.jetbrains.bio.genome.coverage
 import gnu.trove.list.TIntList
 import org.jetbrains.bio.genome.Strand
 import org.jetbrains.bio.genome.containers.GenomeStrandMap
+import org.jetbrains.bio.genome.coverage.FragmentSize.computePearsonCorrelationTransform
 import org.slf4j.LoggerFactory
 import kotlin.math.ceil
 import kotlin.math.sqrt

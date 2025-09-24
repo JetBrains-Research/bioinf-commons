@@ -17,8 +17,6 @@ import org.junit.Test
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
-import java.text.NumberFormat
-import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit

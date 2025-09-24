@@ -7,7 +7,6 @@ package org.jetbrains.bio.dataframe
  */
 
 import com.google.common.collect.ComparisonChain
-import java.util.*
 import java.util.stream.IntStream
 
 /**

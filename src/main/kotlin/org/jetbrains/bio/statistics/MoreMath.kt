@@ -4,6 +4,7 @@ import org.apache.commons.math3.exception.NotPositiveException
 import org.apache.commons.math3.special.Gamma
 import org.apache.commons.math3.util.CombinatoricsUtils
 import org.apache.commons.math3.util.FastMath
+import org.jetbrains.bio.statistics.MoreMath.factorialLog
 import org.jetbrains.bio.viktor.logAddExp
 import kotlin.math.*
 

@@ -2,7 +2,6 @@ package org.jetbrains.bio.statistics.model
 
 import gnu.trove.list.array.TDoubleArrayList
 import org.apache.commons.math3.exception.NotANumberException
-import org.apache.commons.math3.util.Precision
 import org.slf4j.event.Level
 import kotlin.math.abs
 

@@ -12,9 +12,7 @@ import org.jetbrains.bio.util.*
 import org.junit.Assert.assertArrayEquals
 import org.junit.Test
 import java.awt.Color
-import java.io.IOException
 import java.io.StringWriter
-import java.lang.IllegalStateException
 import java.nio.file.Path
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

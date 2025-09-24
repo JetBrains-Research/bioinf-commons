@@ -10,6 +10,7 @@ import org.apache.commons.math3.special.Beta
 import org.apache.commons.math3.special.Gamma
 import org.apache.commons.math3.util.CombinatoricsUtils
 import org.apache.commons.math3.util.Precision
+import org.jetbrains.bio.statistics.distribution.NegativeBinomialDistribution.Companion.of
 import org.jetbrains.bio.statistics.standardDeviation
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.KahanSum

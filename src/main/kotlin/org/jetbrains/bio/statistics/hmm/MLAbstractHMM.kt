@@ -13,7 +13,6 @@ import org.jetbrains.bio.util.await
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor._I
 import java.util.concurrent.Callable
-import java.util.concurrent.ExecutorService
 
 /**
  * A generic HMM with parameters estimated via ML.

@@ -10,7 +10,6 @@ import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.containers.LocationsMergingList
 import org.jetbrains.bio.genome.format.BedFormat.Companion.auto
-import org.jetbrains.bio.genome.format.BedParser.Companion.Stringency
 import org.jetbrains.bio.genome.format.BedParser.Companion.Stringency.LENIENT
 import org.jetbrains.bio.genome.format.BedParser.Companion.Stringency.STRICT
 import org.jetbrains.bio.genome.toStrand

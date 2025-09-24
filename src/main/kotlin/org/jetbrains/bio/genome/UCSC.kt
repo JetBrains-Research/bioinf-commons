@@ -3,14 +3,12 @@ package org.jetbrains.bio.genome
 import org.apache.commons.net.ftp.FTPClient
 import org.apache.hc.client5.http.ConnectTimeoutException
 import org.apache.hc.client5.http.HttpResponseException
-import org.apache.hc.client5.http.classic.HttpClient
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.config.RequestConfig
 import org.apache.hc.client5.http.impl.DefaultRedirectStrategy
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
 import org.apache.hc.core5.http.HttpEntity
-import org.apache.hc.core5.http.io.SocketConfig
 import org.apache.hc.core5.io.CloseMode
 import org.apache.hc.core5.util.Timeout
 import org.jetbrains.bio.util.*

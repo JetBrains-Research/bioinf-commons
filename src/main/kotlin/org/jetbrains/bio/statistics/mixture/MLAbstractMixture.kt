@@ -7,11 +7,8 @@ import org.jetbrains.bio.statistics.distribution.CategoricalDistribution
 import org.jetbrains.bio.statistics.model.ClassificationModel
 import org.jetbrains.bio.statistics.model.MLMonitor
 import org.jetbrains.bio.statistics.model.SamplingChain
-import org.jetbrains.bio.util.*
+import org.jetbrains.bio.util.MultitaskProgress
 import org.jetbrains.bio.viktor.F64Array
-import java.util.concurrent.Callable
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import kotlin.math.ln
 
 /**

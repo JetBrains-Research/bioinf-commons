@@ -1,7 +1,6 @@
 package org.jetbrains.bio.genome.sequence
 
 import org.junit.Test
-import java.lang.IllegalArgumentException
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull

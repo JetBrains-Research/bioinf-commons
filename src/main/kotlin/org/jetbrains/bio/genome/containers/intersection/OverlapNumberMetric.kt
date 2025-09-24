@@ -1,6 +1,5 @@
 package org.jetbrains.bio.genome.containers.intersection
 
-import org.jetbrains.bio.genome.Location
 import org.jetbrains.bio.genome.containers.LocationsList
 import org.jetbrains.bio.genome.containers.RangesList
 

@@ -3,7 +3,6 @@ package org.jetbrains.bio.statistics
 import org.apache.commons.math3.util.CombinatoricsUtils
 import org.jetbrains.bio.dataframe.DataFrame
 import java.util.function.Supplier
-import java.util.stream.IntStream
 
 /**
  * A preprocessor augments a sample in a way required by the model. For

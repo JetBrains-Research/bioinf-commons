@@ -8,6 +8,7 @@ import com.google.gson.internal.bind.JsonTreeWriter
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
+import org.jetbrains.bio.statistics.gson.GSONUtil.classAwareAdapter
 import java.io.IOException
 
 /**

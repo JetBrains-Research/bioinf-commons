@@ -1,6 +1,7 @@
 package org.jetbrains.bio.statistics.hypothesis
 
 import org.jetbrains.bio.dataframe.BitList
+import org.jetbrains.bio.statistics.hypothesis.Fdr.Companion.control
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor.argSort
 import org.jetbrains.bio.viktor.logAddExp

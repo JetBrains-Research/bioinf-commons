@@ -1,6 +1,8 @@
 package org.jetbrains.bio.statistics.hmm
 
 import org.jetbrains.bio.dataframe.DataFrame
+import org.jetbrains.bio.statistics.hmm.HMMInternals.logBackward
+import org.jetbrains.bio.statistics.hmm.HMMInternals.logForward
 import org.jetbrains.bio.viktor.F64Array
 import org.jetbrains.bio.viktor._I
 import kotlin.math.ln

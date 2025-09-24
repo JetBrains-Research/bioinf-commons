@@ -3,7 +3,6 @@ package org.jetbrains.bio.gse
 import gnu.trove.map.hash.TIntIntHashMap
 import joptsimple.ValueConversionException
 import joptsimple.ValueConverter
-import org.apache.commons.math3.util.Precision
 import org.jetbrains.bio.dataframe.DataFrame
 import org.jetbrains.bio.genome.*
 import org.jetbrains.bio.genome.containers.LocationsList

@@ -1,7 +1,6 @@
 package org.jetbrains.bio.genome
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.google.common.cache.CacheBuilder
 import com.google.common.collect.Maps
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader

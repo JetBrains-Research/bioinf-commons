@@ -35,7 +35,7 @@ fun URI.presentablePath() = when {
     else -> URLDecoder.decode(toString(), "UTF-8")
 }
 
-fun URI.shortName() = when {
+fun URI.shortName(): String = when {
     isFile() -> toPath().name
     !path.isNullOrEmpty() && query == null -> {
         URLDecoder.decode(path.substringAfterLast('/'), "UTF-8")
@@ -45,6 +45,7 @@ fun URI.shortName() = when {
 }
 
 private val URL_REGEXP = Pattern.compile("^[a-z]{3,10}:/(/){0,2}[a-z0-9].*$")
+
 fun String.toUri(): URI {
     // 'file:/' urls:
     val lc = lowercase()
@@ -80,8 +81,7 @@ fun URI.checkAccessible() {
                 conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "HEAD"
 
-                val status = conn.responseCode
-                when (status) {
+                when (val status = conn.responseCode) {
                     HTTP_MOVED_TEMP, HTTP_MOVED_PERM, HTTP_SEE_OTHER -> {
                         // most likely HTTP -> HTTPS redirect, don't do it for
                         // security reasons (passwords / cookies insecure transfer)
@@ -89,7 +89,7 @@ fun URI.checkAccessible() {
                         false to (" (http response $status, use $redirectUrl instead)")
                     }
 
-                    HttpURLConnection.HTTP_OK -> true to ""
+                    HTTP_OK -> true to ""
                     else -> false to " (http response $status)"
                 }
             } catch (e: IOException) {

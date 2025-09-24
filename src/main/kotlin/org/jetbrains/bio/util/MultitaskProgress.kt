@@ -3,6 +3,7 @@ package org.jetbrains.bio.util
 import org.jetbrains.bio.util.MultitaskProgress.addTask
 import org.jetbrains.bio.util.MultitaskProgress.finishTask
 import org.jetbrains.bio.util.MultitaskProgress.periodNanos
+import org.jetbrains.bio.util.MultitaskProgress.reportIfNecessary
 import org.jetbrains.bio.util.MultitaskProgress.reportTask
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
