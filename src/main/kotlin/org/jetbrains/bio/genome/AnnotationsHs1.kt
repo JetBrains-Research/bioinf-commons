@@ -36,7 +36,7 @@ object RepeatsHs1 {
         return line.isNotBlank() && line.contains(chrMarker) && !line.contains(substringPresentOnlyInHeader)
     }
 
-    internal fun parseHs1RepeatsLine(line: String, chromosomes: Map<String, Chromosome>): Pair<Chromosome, Repeat>? {
+    fun parseHs1RepeatsLine(line: String, chromosomes: Map<String, Chromosome>): Pair<Chromosome, Repeat>? {
         if (!isValidHs1RepeatsLine(line)) {
             return null
         }
@@ -112,7 +112,7 @@ object CpGIslandsHs1 {
         return builder.build()
     }
 
-    internal fun parseIsland(chr: Chromosome?, start: Int, end: Int, rest: String): CpGIsland? {
+    fun parseIsland(chr: Chromosome?, start: Int, end: Int, rest: String): CpGIsland? {
         if (chr == null) {
             return null
         }

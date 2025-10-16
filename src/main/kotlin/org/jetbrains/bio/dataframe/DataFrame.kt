@@ -13,7 +13,7 @@ import java.util.stream.Stream
 @Suppress("unused")
 class DataFrame @JvmOverloads constructor(
     val rowsNumber: Int = 0,
-    internal val columns: List<Column<*>> = emptyList()
+    val columns: List<Column<*>> = emptyList()
 ) {
 
     val labels = columns.map { it.label.intern() }.toTypedArray()
