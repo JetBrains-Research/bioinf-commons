@@ -27,7 +27,7 @@ class CategoricalDistributionTest {
                 expected = 0.0
             }
 
-            assertTrue(Precision.equals(expected, d.probability(value), 1e-10))
+            assertEquals(expected, d.probability(value), 1e-10)
         }
     }
 

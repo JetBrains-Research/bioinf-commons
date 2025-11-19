@@ -1,5 +1,6 @@
 package org.jetbrains.bio.gsea
 
+import junit.framework.TestCase.assertEquals
 import org.apache.commons.math3.stat.StatUtils
 import org.apache.commons.math3.util.Precision
 import org.jetbrains.bio.gse.IntHistogram
@@ -61,13 +62,6 @@ class IntHistogramTest {
         )
     }
 
-    fun assertEquals(expected: Double, actual: Double, eps: Double = 0.0001) {
-        assertTrue(
-            Precision.equals(expected, actual, eps),
-            "Expected: $expected, but was $actual (precision: $eps)"
-        )
-    }
-
     private fun doCheckMean(data: IntArray) {
         val metricHist = IntHistogram.create(data)
         val expected = StatUtils.mean(data.map { it.toDouble() }.toDoubleArray())
@@ -76,7 +70,7 @@ class IntHistogramTest {
         if (expected.isNaN()) {
             assertTrue(actual.isNaN())
         } else {
-            assertEquals(expected, actual)
+            assertEquals(expected, actual, 0.0001)
         }
     }
 

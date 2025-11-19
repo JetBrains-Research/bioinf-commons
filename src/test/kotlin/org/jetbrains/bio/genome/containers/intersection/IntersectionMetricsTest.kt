@@ -1,6 +1,5 @@
 package org.jetbrains.bio.genome.containers.intersection
 
-import org.apache.commons.math3.util.Precision
 import org.jetbrains.bio.genome.Genome
 import org.jetbrains.bio.genome.containers.LocationsMergingList
 import org.jetbrains.bio.genome.containers.LocationsSortedList
@@ -9,7 +8,6 @@ import org.jetbrains.bio.genome.toQuery
 import org.junit.Test
 import java.io.StringReader
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class IntersectionMetricsTest {
     @Test
@@ -284,14 +282,16 @@ class IntersectionMetricsTest {
             val a = LocationsMergingList.load(gq, StringReader(aContent), "a.csv", bedFormat)
             val b = LocationsMergingList.load(gq, StringReader(bContent), "b.csv", bedFormat)
             assertEquals(overlapNum, IntersectionMetrics.OVERLAP.calcMetric(a, b).toLong())
-            assertEquals(overlapFract, IntersectionMetrics.OVERLAP_FRACTION.calcMetric(a, b))
+            val actual = IntersectionMetrics.OVERLAP_FRACTION.calcMetric(a, b)
+            assertEquals(overlapFract, actual, 0.0001)
         }
 
         if (mode == "both" || mode == "sorted") {
             val a = LocationsSortedList.load(gq, StringReader(aContent), "a.csv", bedFormat)
             val b = LocationsSortedList.load(gq, StringReader(bContent), "b.csv", bedFormat)
             assertEquals(overlapNum, IntersectionMetrics.OVERLAP.calcMetric(a, b).toLong())
-            assertEquals(overlapFract, IntersectionMetrics.OVERLAP_FRACTION.calcMetric(a, b))
+            val actual = IntersectionMetrics.OVERLAP_FRACTION.calcMetric(a, b)
+            assertEquals(overlapFract, actual, 0.0001)
         }
     }
 
@@ -451,22 +451,20 @@ class IntersectionMetricsTest {
         if (mode == "both" || mode == "merged") {
             val a = LocationsMergingList.load(gq, StringReader(aContent), "a.csv", bedFormat)
             val b = LocationsMergingList.load(gq, StringReader(bContent), "b.csv", bedFormat)
-            assertEquals(jaccardIndex, IntersectionMetrics.JACCARD.calcMetric(a, b))
-            assertEquals(jaccardIndex, IntersectionMetrics.JACCARD.calcMetric(b, a))
+            val actual = IntersectionMetrics.JACCARD.calcMetric(a, b)
+            assertEquals(jaccardIndex, actual, 0.0001)
+            val actual1 = IntersectionMetrics.JACCARD.calcMetric(b, a)
+            assertEquals(jaccardIndex, actual1, 0.0001)
         }
 
         if (mode == "both" || mode == "sorted") {
             val a = LocationsSortedList.load(gq, StringReader(aContent), "a.csv", bedFormat)
             val b = LocationsSortedList.load(gq, StringReader(bContent), "b.csv", bedFormat)
-            assertEquals(jaccardIndex, IntersectionMetrics.JACCARD.calcMetric(a, b))
-            assertEquals(jaccardIndex, IntersectionMetrics.JACCARD.calcMetric(b, a))
+            val actual = IntersectionMetrics.JACCARD.calcMetric(a, b)
+            assertEquals(jaccardIndex, actual, 0.0001)
+            val actual1 = IntersectionMetrics.JACCARD.calcMetric(b, a)
+            assertEquals(jaccardIndex, actual1, 0.0001)
         }
     }
 
-    fun assertEquals(expected: Double, actual: Double, eps: Double = 0.0001) {
-        assertTrue(
-            Precision.equals(expected, actual, eps),
-            "Expected: $expected, but was $actual (precision: $eps)"
-        )
-    }
 }
