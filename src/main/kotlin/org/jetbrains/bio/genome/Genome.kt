@@ -264,9 +264,7 @@ class Genome private constructor(
 
         /** Use cache to avoid extra chrom.sizes, transcripts, etc. loading. */
         private val GENOMES_CACHE =  Caffeine.newBuilder()
-            .expireAfterAccess(30, TimeUnit.MINUTES)
             .softValues()
-            .maximumSize(5)
             .build<String, Genome>()
 
         /**
@@ -596,7 +594,7 @@ data class Chromosome private constructor(
         internal val LOG = LoggerFactory.getLogger(Chromosome::class.java)
 
         /** Use cache to avoid extra sequence loading. */
-        private val CACHE = Maps.newConcurrentMap<Pair<Genome, String>, Chromosome>()
+        private val CHROMOSOMES_CACHE = Maps.newConcurrentMap<Pair<String, String>, Chromosome>()
 
         /** Constructs a chromosome from a human-readable name, e.g. "chrM". */
         operator fun invoke(genome: Genome, name: String): Chromosome {
@@ -609,7 +607,7 @@ data class Chromosome private constructor(
         }
 
         internal fun getOrCreateChromosome(genome: Genome, canonicalName: String, length: Int): Chromosome {
-            return CACHE.computeIfAbsent(genome to canonicalName) { Chromosome(genome, canonicalName, length) }
+            return CHROMOSOMES_CACHE.computeIfAbsent(genome.presentableName() to canonicalName) { Chromosome(genome, canonicalName, length) }
         }
 
         val ADAPTER = object : TypeAdapter<Chromosome>() {

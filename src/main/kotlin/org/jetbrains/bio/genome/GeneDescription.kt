@@ -16,10 +16,9 @@ import java.util.*
  * See [Biomart]
  */
 object GeneDescription {
-    private val CACHE =  Caffeine.newBuilder()
+    private val GENES_DESCRIPTION_CACHE =  Caffeine.newBuilder()
         .softValues()
-        .initialCapacity(1)
-        .build<Genome, Map<String, String>>()
+        .build<String, Map<String, String>>()
 
     fun getDescription(transcript: Transcript): String? {
         val genome: Genome = transcript.chromosome.genome
@@ -27,7 +26,7 @@ object GeneDescription {
     }
 
     private fun getMap(genome: Genome): Map<String, String> {
-        return CACHE.get(genome) {
+        return GENES_DESCRIPTION_CACHE.get(genome.presentableName()) {
             val descriptionPath = genome.genesDescriptionsPath
             descriptionPath.checkOrRecalculate("Genes") { output ->
                 val pairs = downloadAnnotation(genome).toList()

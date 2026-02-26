@@ -8,10 +8,10 @@ data class Cell private constructor(val name: String, val description: String) {
     override fun toString() = name
 
     companion object {
-        private val CACHE = Maps.newConcurrentMap<String, Cell>()
+        private val CELLS_CACHE = Maps.newConcurrentMap<String, Cell>()
 
         operator fun invoke(name: String, description: String = "N/A"): Cell =
-            CACHE.computeIfAbsent(name.lowercase()) {
+            CELLS_CACHE.computeIfAbsent(name.lowercase()) {
                 Cell(name, description)
             }
     }

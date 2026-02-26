@@ -50,7 +50,7 @@ data class Repeat(
  * A registry for repetitive genomic elements.
  */
 object Repeats {
-    private val CACHE = cache<Repeat>()
+    private val REPEATS_CACHE = cache<Repeat>()
     internal const val FILE_NAME = "rmsk.txt.gz"
 
     fun repeatsPath(genome: Genome): Path? {
@@ -80,7 +80,7 @@ object Repeats {
     ).build()
 
     internal fun all(genome: Genome): ListMultimap<Chromosome, Repeat> {
-        return CACHE.get(genome.presentableName()) {
+        return REPEATS_CACHE.get(genome.presentableName()) {
             repeatsPath(genome)?.let { read(genome, it) } ?: ArrayListMultimap.create()
         }
     }
@@ -132,7 +132,7 @@ data class CytoBand(
  * A registry for CytoBand chromosome structure.
  */
 object CytoBands {
-    private val CACHE = cache<CytoBand>()
+    private val CYTOBAND_CACHE = cache<CytoBand>()
 
     internal const val FILE_NAME = "cytoBand.txt.gz"
 
@@ -141,7 +141,7 @@ object CytoBands {
     ).build()
 
     internal fun all(genome: Genome): ListMultimap<Chromosome, CytoBand> {
-        return CACHE.get(genome.presentableName()) {
+        return CYTOBAND_CACHE.get(genome.presentableName()) {
             val path = genome.cytobandsPath
             if (path == null) {
                 ArrayListMultimap.create()
@@ -199,7 +199,7 @@ class Gap(val name: String, override val location: Location) :
 }
 
 object Gaps {
-    private val CACHE = cache<Gap>()
+    private val GAPS_CACHE = cache<Gap>()
 
     internal const val FILE_NAME = "gap.txt.gz"
 
@@ -211,7 +211,7 @@ object Gaps {
     private const val CENTROMERES_FILE_NAME = "centromeres.txt.gz"
 
     internal fun all(genome: Genome): ListMultimap<Chromosome, Gap> {
-        return CACHE.get(genome.presentableName()) {
+        return GAPS_CACHE.get(genome.presentableName()) {
             val gapsPath = genome.gapsPath
             gapsPath?.checkOrRecalculate("Gaps") { output ->
                 val config = genome.annotationsConfig
@@ -319,12 +319,12 @@ data class CpGIsland(
  * Registry with information about CpG islands.
  */
 object CpGIslands {
-    private val CACHE = cache<CpGIsland>()
+    private val CGI_CACHE = cache<CpGIsland>()
 
     internal const val ISLANDS_FILE_NAME = "cpgIslandExt.txt.gz"
 
     fun all(genome: Genome): ListMultimap<Chromosome, CpGIsland> {
-        return CACHE.get(genome.presentableName()) {
+        return CGI_CACHE.get(genome.presentableName()) {
             val path = genome.cpgIslandsPath
             if (path == null) {
                 LinkedListMultimap.create()

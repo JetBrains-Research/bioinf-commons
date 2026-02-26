@@ -229,10 +229,9 @@ object Transcripts {
 
     private const val FORMAT_VERSION = 1
 
-    private val CACHE = cache<Transcript>()
+    private val TRANSCRIPTS_CACHE = cache<Transcript>()
     private val BOUND5_INDEX_CACHE =  Caffeine.newBuilder()
         .softValues()
-        .initialCapacity(1)
         .build<Pair<String, Boolean>, Map<Chromosome, Triple<List<Transcript>, IntArray, BinaryLut>>>()
 
     /** Visible only for [TestOrganismDataGenerator]. */
@@ -258,7 +257,7 @@ object Transcripts {
     }
 
     fun all(genome: Genome): ListMultimap<Chromosome, Transcript> {
-        return CACHE.get(genome.presentableName()) {
+        return TRANSCRIPTS_CACHE.get(genome.presentableName()) {
             try {
                 loadTranscripts(genome, null, false)
             } catch (e: Exception) {

@@ -11,12 +11,12 @@ data class ChipSeqTarget private constructor(val name: String) {
     val isInput: Boolean get() = isInput(name)
 
     companion object {
-        private val CACHE = Maps.newConcurrentMap<String, ChipSeqTarget>()
+        private val CHIPSEQ_TARGET_CACHE = Maps.newConcurrentMap<String, ChipSeqTarget>()
 
         fun isInput(name: String): Boolean = "input" in name.lowercase() || "control" in name.lowercase()
 
         operator fun invoke(name: String): ChipSeqTarget =
-            CACHE.computeIfAbsent(name.lowercase()) {
+            CHIPSEQ_TARGET_CACHE.computeIfAbsent(name.lowercase()) {
                 ChipSeqTarget(name)
             }
     }

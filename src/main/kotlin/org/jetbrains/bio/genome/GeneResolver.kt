@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
 object GeneResolver {
     /** A mapping of UPPERCASE "gene names" to genes for a specific organism.  */
     private val TRANSCRIPTS_MAPS_CACHE =
-        Maps.newConcurrentMap<Pair<Genome, GeneAliasType>, ListMultimap<String, Transcript>>()
+        Maps.newConcurrentMap<Pair<String, GeneAliasType>, ListMultimap<String, Transcript>>()
 
     private val LOG = LoggerFactory.getLogger(GeneResolver::class.java)
 
@@ -81,7 +81,7 @@ object GeneResolver {
     }
 
     private fun transcriptsMapFor(genome: Genome, aliasType: GeneAliasType): ListMultimap<String, Transcript> {
-        return TRANSCRIPTS_MAPS_CACHE.computeIfAbsent(genome to aliasType) {
+        return TRANSCRIPTS_MAPS_CACHE.computeIfAbsent(genome.presentableName() to aliasType) {
             // TODO additional tid -> aliases mapping
             // TODO: genome.transcriptsSynonyms
 

@@ -56,7 +56,7 @@ enum class Ontology {
     /**
      * Returns a mapping of GO terms to gene symbols.
      */
-    fun associations(genome: Genome) = CACHE.computeIfAbsent(genome to this) {
+    fun associations(genome: Genome) = ONTOLOGIES_CACHE.computeIfAbsent(genome.presentableName() to this) {
         val speciesInformal = when (genome.species) {
             "hg" -> "human"
             "mm" -> "mouse"
@@ -74,7 +74,7 @@ enum class Ontology {
     }
 
     companion object {
-        private var CACHE: ConcurrentMap<Pair<Genome, Ontology>, SetMultimap<String, String>> =
+        private var ONTOLOGIES_CACHE: ConcurrentMap<Pair<String, Ontology>, SetMultimap<String, String>> =
             Maps.newConcurrentMap()
     }
 }
