@@ -509,7 +509,8 @@ class Genome private constructor(
  *
  * @author Sergei Lebedev
  */
-@Suppress("DataClassPrivateConstructor") // Constructor is used in [invoke] call
+// Constructor is used in [invoke] call
+@ConsistentCopyVisibility
 data class Chromosome private constructor(
         /** Reference to the owner genome. */
         val genome: Genome,
@@ -548,7 +549,7 @@ data class Chromosome private constructor(
                 sequenceRef = WeakReference(s)
             }
 
-            return s!!
+            return s
         }
 
     val range: Range get() = Range(0, length)
