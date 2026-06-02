@@ -9,7 +9,7 @@ import kotlin.math.ln
 import kotlin.math.min
 
 /**
- * Procedures for estimating and controlling FDR for predictions for [ClassificationModel]
+ * Procedures for estimating and controlling FDR for posterior error probabilities
  *
  * @author Sergei Lebedev
  * @since 06/06/14
@@ -78,7 +78,7 @@ class Fdr(private val alpha: Double) : Predictor {
          * Cheng & Zhu, "A classification approach to DNA methylation profiling with
          *               bisulfite next-generation sequencing", Bioinformatics, 2014.
          */
-        fun qvalidate(logNullMemberships: F64Array, logResults: Boolean = false): F64Array {
+        fun qvalidatePEPs(logNullMemberships: F64Array, logResults: Boolean = false): F64Array {
             val m = logNullMemberships.length
             // Sort PEPs in ascending order and remember the inverse
             // permutation, so that we can return Q-values in the order

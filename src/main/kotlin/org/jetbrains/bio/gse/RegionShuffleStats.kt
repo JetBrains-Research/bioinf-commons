@@ -221,7 +221,7 @@ class RegionShuffleStats(
             sampledSetsMetricVar.add(metricSd * metricSd)
         }
         val pValues = pValuesList.toDoubleArray()
-        val qValues = BenjaminiHochberg.adjust(pValues.asF64Array()).toDoubleArray()
+        val qValues = BenjaminiHochberg.adjustPValues(pValues.asF64Array()).toDoubleArray()
 
         return DataFrame()
             .with("name", regionLabels.toTypedArray())
