@@ -68,7 +68,7 @@ object FragmentSize {
      * Stores a certain monotone substitute for Pearson correlation, see extensive comments
      * to [computePearsonCorrelationTransform].
      */
-    private data class CrossCorrelation(val fragment: Int, var pearsonTransform: Double = 0.0)
+    data class CrossCorrelation(val fragment: Int, var pearsonTransform: Double = 0.0)
 
 
     /**
@@ -107,7 +107,7 @@ object FragmentSize {
      *      arg max ∑ ∑xi*yi * (∑xi + ∑yi) Lc / √(∑xi * (Lc-∑xi) * ∑yi * (Lc-∑yi))
      *      We denote the value under arg max as "Pearson correlation transform".
      */
-    private fun computePearsonCorrelationTransform(
+    fun computePearsonCorrelationTransform(
         fragments: List<Int>,
         data: GenomeStrandMap<TIntList>
     ): List<CrossCorrelation> {
