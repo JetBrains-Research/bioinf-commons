@@ -61,7 +61,7 @@ class ReadsQuery(
     /**
      * @return true when preprocessed coverage file is available or it can be recomputed by raw file
      */
-    fun isAccessible(): Boolean = npzPath().isAccessible() || path.isAccessible()
+    fun isAccessible(): Boolean = isCached() || npzPath().isAccessible() || path.isAccessible()
 
     fun coverage(): Coverage {
         check(isAccessible()) { "Unable to load coverage: original reads $path and cache ${npzPath()} not available" }

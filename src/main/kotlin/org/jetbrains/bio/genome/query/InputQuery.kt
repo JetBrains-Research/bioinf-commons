@@ -22,9 +22,12 @@ interface InputQuery<T> : Supplier<T> {
     val description: String get() = id
 }
 
-/** An input query which caches the result of [get] in a [SoftReference]. */
+/** An input query that caches the result of [get] in a [SoftReference]. */
 abstract class CachingInputQuery<T> : InputQuery<T> {
+    private val lazyCachedValue = lazy { getUncached() }
+    private val cachedValue: T by lazyCachedValue
 
-    private val cachedValue: T by lazy { getUncached() }
     override fun get() = cachedValue
+
+    fun isCached() = lazyCachedValue.isInitialized()
 }
