@@ -3,7 +3,7 @@ package org.jetbrains.bio.genome.coverage
 import gnu.trove.list.TIntList
 import org.jetbrains.bio.genome.Strand
 import org.jetbrains.bio.genome.containers.GenomeStrandMap
-import org.jetbrains.bio.genome.coverage.FragmentSize.computePearsonCorrelationTransform
+import org.jetbrains.bio.genome.coverage.FragmentSize.computeCrossCorrelation
 import org.slf4j.LoggerFactory
 import kotlin.math.ceil
 import kotlin.math.sqrt
@@ -37,6 +37,9 @@ object FragmentSize {
      * of tags on chromosome c and strand s, shifted by d, P[] is the Pearson
      * correlation coefficient.
      *
+     * In other words, we compute the weighted average of Pearson correlations
+     * over chromosomes.
+     *
      * Important: we cannot use 3rd party Pearson correlation method, because
      * total size of genome may exceed max int size, so cannot be stored in array.
      */
@@ -53,22 +56,21 @@ object FragmentSize {
         if (candidateRange.isEmpty()) {
             return averageReadLength.toInt()
         }
-        val ccs = computePearsonCorrelationTransform(candidateRange.toList(), data)
-        val fragment = ccs.maxByOrNull { it.pearsonTransform }!!.fragment
+        val ccs = computeCrossCorrelation(candidateRange.toList(), data)
+        val fragment = ccs.maxByOrNull { it.value }!!.fragment
         LOG.debug("Detected fragment: $fragment")
-        LOG.debug("All non-scaled cross-correlations: " +
-                ccs.filter { it.pearsonTransform > 0.01 }.joinToString(",") {
-                    "${it.fragment}:${String.format("%.2f", it.pearsonTransform)}"
+        LOG.debug("All cross-correlations: " +
+                ccs.filter { it.value > 0.01 }.joinToString(",") {
+                    "${it.fragment}:${String.format("%.2f", it.value)}"
                 }
         )
         return fragment
     }
 
     /**
-     * Stores a certain monotone substitute for Pearson correlation, see extensive comments
-     * to [computePearsonCorrelationTransform].
+     * Stores the Pearson cross-correlation value for a given fragment size.
      */
-    data class CrossCorrelation(val fragment: Int, var pearsonTransform: Double = 0.0)
+    data class CrossCorrelation(val fragment: Int, var value: Double = 0.0)
 
 
     /**
@@ -85,61 +87,59 @@ object FragmentSize {
 
 
     /**
-     * Compute Pearson correlation transform (see below) for a given range
-     * of candidate fragment sizes.
-     * Pearson correlation formula
+     * Compute Pearson cross-correlation for a given range of candidate fragment sizes.
+     * Pearson correlation formula:
      * https://en.wikipedia.org/wiki/Pearson_correlation_coefficient#Mathematical_properties
      *
      * Linear algorithm to compute ∑xi*yi, ∑xi, ∑xi^2, ∑yi, ∑yi^2
-     * for Pearson coefficient computation
+     * for Pearson coefficient computation.
      * In case of boolean unique alignment we deal with boolean vectors, where:
      *      matchedTags = ∑xi*yi
      *      positiveTags = ∑xi^2 = ∑xi
      *      negativeTags = ∑yi^2 = ∑yi
      *      Nc = ∑xi + ∑yi
      *      P[xi, yi] = (Lc∑xi*yi - ∑xi*∑yi) / √(∑xi * (Lc-∑xi) * ∑yi * (Lc-∑yi))
-     *      where Lc is the length of c.
-     * The only value that depends on d is ∑xi*yi, so we can simplify the arg max.
-     *      arg max 1/N ∑Nc P[tags(c, d, +), tags(c, 0, -)] =
-     *      arg max ∑Nc P[tags(c, d, +), tags(c, 0, -)] =
-     *      arg max ∑(∑xi + ∑yi) (Lc∑xi*yi - ∑xi*∑yi) / √(∑xi * (Lc-∑xi) * ∑yi * (Lc-∑yi)) =
-     *      arg max ∑(∑xi + ∑yi) Lc ∑xi*yi / √(∑xi * (Lc-∑xi) * ∑yi * (Lc-∑yi)) =
-     *      arg max ∑ ∑xi*yi * (∑xi + ∑yi) Lc / √(∑xi * (Lc-∑xi) * ∑yi * (Lc-∑yi))
-     *      We denote the value under arg max as "Pearson correlation transform".
+     *      where Lc is the length of chromosome c.
+     *
+     * The resulting value is the weighted average:
+     *      1/N ∑ Nc P[tags(c, d, +), tags(c, 0, -)]
      */
-    fun computePearsonCorrelationTransform(
+    fun computeCrossCorrelation(
         fragments: List<Int>,
         data: GenomeStrandMap<TIntList>
     ): List<CrossCorrelation> {
         val ccs = fragments.map { CrossCorrelation(it) }
+        var totalTags = 0L
         for (chr in data.genomeQuery.get()) {
             val positive = data[chr, Strand.PLUS]
             val positiveSize = positive.size()
             val negative = data[chr, Strand.MINUS]
             val negativeSize = negative.size()
+            totalTags += positiveSize + negativeSize
             if (positiveSize == 0 || negativeSize == 0) continue
             val chrLength = chr.length.toDouble()
             ccs.parallelStream().forEach { cc ->
-                cc.updatePearsonTransform(positive, negative, chrLength)
+                cc.updateCrossCorrelation(positive, negative, chrLength)
             }
+        }
+        if (totalTags > 0) {
+            ccs.forEach { it.value /= totalTags }
         }
         return ccs
     }
 
     /**
-     * Calculates a Pearson correlation transform summand for a given chromosome.
-     * See [computePearsonCorrelationTransform] comments
-     * for the definition of the transform and its calculation details.
+     * Calculates a Pearson cross-correlation summand for a given chromosome.
+     * See [computeCrossCorrelation] comments
+     * for the definition of the cross-correlation and its calculation details.
      */
-    private fun CrossCorrelation.updatePearsonTransform(
+    private fun CrossCorrelation.updateCrossCorrelation(
         positive: TIntList, negative: TIntList,
         chrLength: Double
     ) {
-        val positiveSize = positive.size()
-        val negativeSize = negative.size()
+        val positiveSize = positive.size().toDouble()
+        val negativeSize = negative.size().toDouble()
         var matchedTags = 0
-        var positiveTags = 0
-        var negativeTags = 0
         var positiveIndex = 0
         var negativeIndex = 0
         while (positiveIndex < positiveSize && negativeIndex < negativeSize) {
@@ -147,30 +147,28 @@ object FragmentSize {
             val t2 = negative[negativeIndex]
             when {
                 t1 < t2 -> {
-                    positiveIndex = nextIndex(positive, positiveSize, positiveIndex)
-                    positiveTags++
+                    positiveIndex = nextIndex(positive, positive.size(), positiveIndex)
                 }
 
                 t1 > t2 -> {
-                    negativeIndex = nextIndex(negative, negativeSize, negativeIndex)
-                    negativeTags++
+                    negativeIndex = nextIndex(negative, negative.size(), negativeIndex)
                 }
 
                 else -> {
                     matchedTags += 1
-                    positiveTags++
-                    negativeTags++
-                    positiveIndex = nextIndex(positive, positiveSize, positiveIndex)
-                    negativeIndex = nextIndex(negative, negativeSize, negativeIndex)
+                    positiveIndex = nextIndex(positive, positive.size(), positiveIndex)
+                    negativeIndex = nextIndex(negative, negative.size(), negativeIndex)
                 }
             }
         }
-        val coefficient = (positiveSize + negativeSize) * chrLength /
-                sqrt(
-                    positiveSize * (chrLength - positiveSize) *
-                            negativeSize * (chrLength - negativeSize)
-                )
-        pearsonTransform += matchedTags * coefficient
+        val denominator = sqrt(
+            positiveSize * (chrLength - positiveSize) *
+                    negativeSize * (chrLength - negativeSize)
+        )
+        if (denominator > 0) {
+            value += (positiveSize + negativeSize) *
+                    (chrLength * matchedTags - positiveSize * negativeSize) / denominator
+        }
     }
 
 }
