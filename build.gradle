@@ -2,8 +2,17 @@ buildscript {
     ext.kotlin_version = "2.2.0"
 
     repositories {
-        maven { url("https://repo1.maven.org/maven2") }
-        maven { url("https://plugins.gradle.org/m2") }
+        // On CI route through JetBrains cache-redirector to avoid Maven Central / plugin portal 429 rate limits.
+        // Skipped locally so IDEA Gradle import isn't slowed by the extra hop. CI is detected via -PbuildCounter,
+        // which TeamCity always passes (-PbuildCounter=%build.counter%) and which is absent for local builds / IDEA import.
+        if (project.hasProperty("buildCounter") || (System.getenv("TEAMCITY_VERSION") != null)) {
+            maven { url("https://cache-redirector.jetbrains.com/maven-central") }
+            maven { url("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2") }
+        } else {
+            mavenCentral()
+            maven { url("https://plugins.gradle.org/m2") }
+        }
+        maven { url("https://jitpack.io") }
     }
 
     dependencies {
@@ -20,8 +29,16 @@ compileKotlin { kotlinOptions.jvmTarget = sourceCompatibility }
 compileTestKotlin { kotlinOptions.jvmTarget = sourceCompatibility }
 
 repositories {
-    maven { url("https://repo1.maven.org/maven2") }
-    maven { url("https://plugins.gradle.org/m2") }
+    repositories {
+        // On CI route through JetBrains cache-redirector to avoid Maven Central / plugin portal 429 rate limits.
+        if (project.hasProperty("buildCounter") || (System.getenv("TEAMCITY_VERSION") != null)) {
+            maven { url("https://cache-redirector.jetbrains.com/maven-central") }
+            maven { url("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2") }
+        } else {
+            mavenCentral()
+            maven { url("https://plugins.gradle.org/m2") }
+        }
+    }
 }
 
 /**
