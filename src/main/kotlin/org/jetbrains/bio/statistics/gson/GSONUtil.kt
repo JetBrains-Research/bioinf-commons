@@ -90,7 +90,7 @@ object GSONUtil {
 
                 val aClass: Class<T>
                 try {
-                    aClass = Class.forName(fqn) as Class<T>
+                    aClass = loadClass(fqn) as Class<T>
                 } catch (e: ClassNotFoundException) {
                     deserializationError("Cannot load class %s", fqn, cause = e)
                     return null
@@ -154,7 +154,7 @@ object GSONUtil {
 
                 val aClass: Class<T>
                 try {
-                    aClass = Class.forName(fqn) as Class<T>
+                    aClass = loadClass(fqn) as Class<T>
                 } catch (e: ClassNotFoundException) {
                     deserializationError("Cannot load class %s", fqn, cause = e)
                     return null
@@ -197,5 +197,17 @@ object GSONUtil {
         } else {
             JsonParseException("Deserialization error: " + format.format(*args), cause)
         }
+    }
+
+    private fun loadClass(fqn: String): Class<*> {
+        val contextLoader = Thread.currentThread().contextClassLoader
+        if (contextLoader != null) {
+            try {
+                return Class.forName(fqn, false, contextLoader)
+            } catch (e: ClassNotFoundException) {
+                // Fallback to GSONUtil's class loader below.
+            }
+        }
+        return Class.forName(fqn)
     }
 }
