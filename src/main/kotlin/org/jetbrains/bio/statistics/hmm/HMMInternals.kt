@@ -47,9 +47,9 @@ object HMMInternals {
         val workBuffer = F64Array(numStates)
         for (observation in 1 until numObservations) {
             for (state in 0 until numStates) {
-                logForwardProbabilities.V[observation - 1].copyTo(workBuffer)
                 for (j in 0 until numStates) {
-                    workBuffer[j] += logTransitionProbabilities[j, state]
+                    workBuffer[j] = logForwardProbabilities[observation - 1, j] +
+                            logTransitionProbabilities[j, state]
                 }
 
                 logForwardProbabilities[observation, state] =
@@ -84,12 +84,15 @@ object HMMInternals {
         val numObservations = df.rowsNumber
         logBackwardProbabilities.V[numObservations - 1] = ln(1.0)
 
+        val workBuffer = F64Array(numStates)
         var observation = numObservations - 2
         while (observation >= 0) {
             for (state in 0 until numStates) {
-                val workBuffer = logObservationProbabilities.V[observation + 1] +
-                        logBackwardProbabilities.V[observation + 1] +
-                        logTransitionProbabilities.V[state]
+                for (nextState in 0 until numStates) {
+                    workBuffer[nextState] = logObservationProbabilities[observation + 1, nextState] +
+                            logBackwardProbabilities[observation + 1, nextState] +
+                            logTransitionProbabilities[state, nextState]
+                }
 
                 logBackwardProbabilities[observation, state] = workBuffer.logSumExp()
             }
@@ -125,11 +128,17 @@ object HMMInternals {
         logGammas: F64Array
     ) {
         val rowsNumber = df.rowsNumber
+        val numStates = logGammas.shape[0]
+        val workBuffer = F64Array(numStates)
         for (observation in 0 until rowsNumber) {
-            val workBuffer =
-                logForwardProbabilities.V[observation] + logBackwardProbabilities.V[observation]
+            for (state in 0 until numStates) {
+                workBuffer[state] = logForwardProbabilities[observation, state] +
+                        logBackwardProbabilities[observation, state]
+            }
             workBuffer.logRescale()
-            workBuffer.copyTo(logGammas.V[_I, observation])
+            for (state in 0 until numStates) {
+                logGammas[state, observation] = workBuffer[state]
+            }
         }
     }
 

@@ -251,29 +251,75 @@ class NegativeBinomialDistribution(
             mean: Double,
             failures: Double
         ): Double {
-            if (failures.isInfinite() || mean == 0.0) {
+            if (failures.isInfinite() || mean == 0.0 || values.isEmpty()) {
                 /* this is already Poisson or singular distribution, can't be optimized */
                 return failures
             }
 
-            // Compute summary weights of unique values using Kahan sums
-            val valuesMap = TIntObjectHashMap<KahanSum>()
+            var minVal = Int.MAX_VALUE
+            var maxVal = Int.MIN_VALUE
             for (i in values.indices) {
-                val value = values[i]
-                val weight = weights[i]
-                if (!valuesMap.contains(value)) {
-                    valuesMap.put(value, KahanSum())
+                val v = values[i]
+                if (v < minVal) minVal = v
+                if (v > maxVal) maxVal = v
+            }
+
+            if (minVal >= 0 && maxVal <= 65536) {
+                val sumArray = DoubleArray(maxVal + 1)
+                val compArray = DoubleArray(maxVal + 1)
+                for (i in values.indices) {
+                    val v = values[i]
+                    val w = weights[i]
+                    if (w != 0.0) {
+                        val y = w - compArray[v]
+                        val t = sumArray[v] + y
+                        compArray[v] = (t - sumArray[v]) - y
+                        sumArray[v] = t
+                    }
                 }
-                valuesMap[value].feed(weight)
+
+                var count = 0
+                for (v in 0..maxVal) {
+                    if (sumArray[v] != 0.0) {
+                        count++
+                    }
+                }
+
+                if (count == 0) {
+                    return failures
+                }
+
+                val uniqueValues = IntArray(count)
+                val uniqueValuesWeights = F64Array(count)
+                var idx = 0
+                for (v in 0..maxVal) {
+                    if (sumArray[v] != 0.0) {
+                        uniqueValues[idx] = v
+                        uniqueValuesWeights[idx] = sumArray[v]
+                        idx++
+                    }
+                }
+
+                return fitNumberOfFailures(uniqueValues, uniqueValuesWeights, failures)
+            } else {
+                // Compute summary weights of unique values using Kahan sums (fallback for large values)
+                val valuesMap = TIntObjectHashMap<KahanSum>()
+                for (i in values.indices) {
+                    val value = values[i]
+                    val weight = weights[i]
+                    if (!valuesMap.contains(value)) {
+                        valuesMap.put(value, KahanSum())
+                    }
+                    valuesMap[value].feed(weight)
+                }
+
+                val uniqueValues = valuesMap.keys().sortedArray()
+                val uniqueValuesWeights = F64Array(valuesMap.size()) {
+                    valuesMap[uniqueValues[it]].result()
+                }
+
+                return fitNumberOfFailures(uniqueValues, uniqueValuesWeights, failures)
             }
-
-
-            val uniqueValues = valuesMap.keys().sortedArray()
-            val uniqueValuesWeights = F64Array(valuesMap.size()) {
-                valuesMap[uniqueValues[it]].result()
-            }
-
-            return fitNumberOfFailures(uniqueValues, uniqueValuesWeights, failures)
         }
 
         /**

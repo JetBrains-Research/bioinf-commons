@@ -64,14 +64,10 @@ abstract class HMMIterationContext(
             logBackwardProbabilities
         )
 
-        val negativeInfinity = F64Array.full(
-            numStates, numStates,
-            init = Double.NEGATIVE_INFINITY
-        )
-
-        val res = negativeInfinity.copy()
-        (1 until df.rowsNumber).forEach { s ->
-            val logXit = negativeInfinity.copy()
+        logXiSums.fill(Double.NEGATIVE_INFINITY)
+        val logXit = F64Array(numStates, numStates)
+        val rows = df.rowsNumber
+        for (s in 1 until rows) {
             for (priorState in 0 until numStates) {
                 for (nextState in 0 until numStates) {
                     logXit[priorState, nextState] = logForwardProbabilities[s - 1, priorState] +
@@ -81,9 +77,8 @@ abstract class HMMIterationContext(
                 }
             }
             logXit.logRescale()
-            res.logAddExpAssign(logXit)
+            logXiSums.logAddExpAssign(logXit)
         }
-        res.copyTo(logXiSums)
 
         // TODO(lebedev): we can evaluate 'logGammas' simultaneously with
         // 'logXiSums' in the above loop.

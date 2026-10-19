@@ -221,6 +221,15 @@ abstract class MLAbstractHMM(
             logTransitionProbabilities.V[state].logRescale()
         }
 
+        if (dfs.size == 1) {
+            val context = contexts[0]
+            val df = dfs[0]
+            val localGammas = context.logGammas.copy()
+            localGammas.expInPlace()
+            updateParameters(df, localGammas)
+            return
+        }
+
         val df = DataFrame.rowBind(dfs.toTypedArray())
         val numObservations = contexts.sumOf { it.logGammas.shape[1] }
         val logGammas = F64Array(numStates, numObservations)
@@ -276,8 +285,8 @@ abstract class MLAbstractHMM(
         ) {
 
         override fun refill() {
-            (0 until numStates).forEach { state ->
-                val numObservations = df.rowsNumber
+            val numObservations = df.rowsNumber
+            for (state in 0 until numStates) {
                 for (observation in 0 until numObservations) {
                     logObservationProbabilities[observation, state] = logProbability(state, df, observation)
                 }

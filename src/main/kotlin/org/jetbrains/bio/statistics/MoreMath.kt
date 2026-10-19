@@ -104,14 +104,25 @@ object MoreMath {
 /**
  * Corrected standard deviation from sample of ints
  */
-fun IntArray.standardDeviation(): Double {
+fun IntArray.standardDeviation(offset: Int = 0, length: Int = size): Double {
+    if (length <= 1) return 0.0
     var sum = 0L
     var sumSq = 0L
-    for (value in this) {
+    for (i in offset until (offset + length)) {
+        val value = this[i]
         sum += value
-        sumSq += value * value
+        sumSq += value.toLong() * value
     }
-    return sqrt((sumSq - sum.toDouble() * sum.toDouble() / size) / (size - 1))
+    return sqrt((sumSq - sum.toDouble() * sum.toDouble() / length) / (length - 1))
+}
+
+fun IntArray.average(offset: Int, length: Int): Double {
+    if (length == 0) return 0.0
+    var sum = 0L
+    for (i in offset until (offset + length)) {
+        sum += this[i]
+    }
+    return sum.toDouble() / length
 }
 
 /**
