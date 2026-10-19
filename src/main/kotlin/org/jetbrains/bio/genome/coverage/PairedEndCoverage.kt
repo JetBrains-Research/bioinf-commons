@@ -34,27 +34,23 @@ class PairedEndCoverage private constructor(
      * Returns the number of tags covered by a given [location].
      */
     override fun getCoverage(location: Location) = location.strand.choose(
-        ifPlus = { getTags(location.toChromosomeRange()).size },
+        ifPlus = { getBothStrandsCoverage(location.toChromosomeRange()) },
         ifMinus = { 0 }
     )
 
-    override fun getBothStrandsCoverage(chromosomeRange: ChromosomeRange): Int =
-        getTags(chromosomeRange).size
+    override fun getBothStrandsCoverage(chromosomeRange: ChromosomeRange): Int {
+        val data = data[chromosomeRange.chromosome]
+        return data.binarySearchLeft(chromosomeRange.endOffset) - data.binarySearchLeft(chromosomeRange.startOffset)
+    }
 
     /**
      * Returns a sorted array of tags covered by a given [chromosomeRange].
      */
     fun getTags(chromosomeRange: ChromosomeRange): IntArray {
         val data = data[chromosomeRange.chromosome]
-        val index = data.binarySearchLeft(chromosomeRange.startOffset)
-        var size = 0
-        while (index + size < data.size() &&
-            data[index + size] < chromosomeRange.endOffset
-        ) {
-            size++
-        }
-
-        return data.toArray(index, size)
+        val startIdx = data.binarySearchLeft(chromosomeRange.startOffset)
+        val endIdx = data.binarySearchLeft(chromosomeRange.endOffset)
+        return data.toArray(startIdx, endIdx - startIdx)
     }
 
     override val depth = genomeQuery.get().map { chr -> data[chr].size().toLong() }.sum()

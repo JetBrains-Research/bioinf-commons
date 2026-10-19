@@ -53,12 +53,7 @@ class SingleEndCoverage private constructor(
         // IMPORTANT, here we invert shift to find shifted tags correctly
         val startOffset = location.startOffset - shift
         val endOffset = location.endOffset - shift
-        val index = data.binarySearchLeft(startOffset)
-        var size = 0
-        while (index + size < data.size() && data[index + size] < endOffset) {
-            size++
-        }
-        return size
+        return data.binarySearchLeft(endOffset) - data.binarySearchLeft(startOffset)
     }
 
     @Throws(IOException::class)
