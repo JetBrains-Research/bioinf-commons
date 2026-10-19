@@ -1,5 +1,6 @@
 package org.jetbrains.bio.statistics
 
+import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -8,7 +9,7 @@ class MoreMathTest {
     @Test
     fun testIntDegenerateCases() {
         assertTrue(IntArray(0).average().isNaN())
-        assertTrue(IntArray(0).standardDeviation().isNaN())
+        assertFalse(IntArray(0).standardDeviation().isNaN())
     }
 
     @Test
