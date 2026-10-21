@@ -56,7 +56,17 @@ object GSONUtil {
      */
     @JvmStatic
     fun <T : Any> classAwareAdapter(
-        gson: Gson, factory: TypeAdapterFactory, fqnField: String
+        gson: Gson,
+        factory: TypeAdapterFactory,
+        fqnField: String
+    ): TypeAdapter<T> = classAwareAdapter(gson, factory, fqnField, null)
+
+    @JvmStatic
+    fun <T : Any> classAwareAdapter(
+        gson: Gson,
+        factory: TypeAdapterFactory,
+        fqnField: String,
+        classLoader: ClassLoader?
     ): TypeAdapter<T> {
         return object : TypeAdapter<T>() {
             @Throws(IOException::class)
@@ -90,7 +100,7 @@ object GSONUtil {
 
                 val aClass: Class<T>
                 try {
-                    aClass = loadClass(fqn) as Class<T>
+                    aClass = loadClass(fqn, classLoader) as Class<T>
                 } catch (e: ClassNotFoundException) {
                     deserializationError("Cannot load class %s", fqn, cause = e)
                     return null
@@ -120,6 +130,17 @@ object GSONUtil {
         fqnField: String,
         versionField: String,
         fallbackClassFQN: String? = null
+    ): TypeAdapter<T> =
+        classAndVersionAdapter(gson, factory, fqnField, versionField, fallbackClassFQN, null)
+
+    @JvmStatic
+    fun <T : Any> classAndVersionAdapter(
+        gson: Gson,
+        factory: TypeAdapterFactory,
+        fqnField: String,
+        versionField: String,
+        fallbackClassFQN: String?,
+        classLoader: ClassLoader?
     ): TypeAdapter<T> {
         return object : TypeAdapter<T>() {
             override fun write(out: JsonWriter, value: T) {
@@ -154,7 +175,7 @@ object GSONUtil {
 
                 val aClass: Class<T>
                 try {
-                    aClass = loadClass(fqn) as Class<T>
+                    aClass = loadClass(fqn, classLoader) as Class<T>
                 } catch (e: ClassNotFoundException) {
                     deserializationError("Cannot load class %s", fqn, cause = e)
                     return null
@@ -199,13 +220,20 @@ object GSONUtil {
         }
     }
 
-    private fun loadClass(fqn: String): Class<*> {
+    private fun loadClass(fqn: String, classLoader: ClassLoader? = null): Class<*> {
         val contextLoader = Thread.currentThread().contextClassLoader
         if (contextLoader != null) {
             try {
                 return Class.forName(fqn, false, contextLoader)
             } catch (e: ClassNotFoundException) {
-                // Fallback to GSONUtil's class loader below.
+                // Fallback below
+            }
+        }
+        if (classLoader != null) {
+            try {
+                return Class.forName(fqn, false, classLoader)
+            } catch (e: ClassNotFoundException) {
+                // Fallback below
             }
         }
         return Class.forName(fqn)
