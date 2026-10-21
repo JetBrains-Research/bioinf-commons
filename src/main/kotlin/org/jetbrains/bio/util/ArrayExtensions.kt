@@ -68,6 +68,41 @@ fun DoubleArray.argSort(reverse: Boolean = false): IntArray {
         .toArray()
 }
 
+fun IntArray.filterNonZeros(): IntArray {
+    var count = 0
+    for (v in this) {
+        if (v != 0) count++
+    }
+    val result = IntArray(count)
+    var idx = 0
+    for (v in this) {
+        if (v != 0) {
+            result[idx++] = v
+        }
+    }
+    return result
+}
+
+fun List<IntArray>.filterNonZeros(): IntArray {
+    var nonZeroCount = 0
+    for (arr in this) {
+        for (v in arr) {
+            if (v != 0) nonZeroCount++
+        }
+    }
+    check(nonZeroCount > 0) { "Model can't be trained on empty coverage, exiting." }
+    val result = IntArray(nonZeroCount)
+    var idx = 0
+    for (arr in this) {
+        for (v in arr) {
+            if (v != 0) {
+                result[idx++] = v
+            }
+        }
+    }
+    return result
+}
+
 private class IntIntPair(val first: Int, val second: Int) {
     companion object {
         fun comparator(reverse: Boolean): Comparator<IntIntPair> {

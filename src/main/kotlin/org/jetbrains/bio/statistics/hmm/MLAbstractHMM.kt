@@ -88,6 +88,7 @@ abstract class MLAbstractHMM(
         threshold: Double, maxIterations: Int
     ) {
         val dfs = preprocessed.map { it.get() }
+        val boundDf = if (dfs.size == 1) dfs[0] else DataFrame.rowBind(dfs.toTypedArray())
         val contexts = dfs.map { context(it) }
         val monitor = MLMonitor(title, threshold, maxIterations)
         while (true) {
@@ -105,7 +106,7 @@ abstract class MLAbstractHMM(
                 break
             }
 
-            updateParameters(dfs, contexts)
+            updateParameters(dfs, boundDf, contexts)
         }
     }
 
@@ -195,7 +196,7 @@ abstract class MLAbstractHMM(
     protected abstract fun updateParameters(df: DataFrame, gammas: F64Array)
 
 
-    private fun updateParameters(dfs: List<DataFrame>, contexts: List<HMMIterationContext>) {
+    private fun updateParameters(dfs: List<DataFrame>, boundDf: DataFrame, contexts: List<HMMIterationContext>) {
         val logXiSums = F64Array.full(numStates, numStates, init = Double.NEGATIVE_INFINITY)
 
         for (context in contexts) {
@@ -223,31 +224,30 @@ abstract class MLAbstractHMM(
 
         if (dfs.size == 1) {
             val context = contexts[0]
-            val df = dfs[0]
             val localGammas = context.logGammas.copy()
             localGammas.expInPlace()
-            updateParameters(df, localGammas)
+            updateParameters(boundDf, localGammas)
             return
         }
 
-        val df = DataFrame.rowBind(dfs.toTypedArray())
         val numObservations = contexts.sumOf { it.logGammas.shape[1] }
         val logGammas = F64Array(numStates, numObservations)
 
         var observation = 0
         for (context in contexts) {
             val localLogGammas = context.logGammas
-            for (localObservation in 0 until localLogGammas.shape[1]) {
-                for (state in 0 until numStates) {
-                    logGammas[state, observation] = localLogGammas[state, localObservation]
+            val localCols = localLogGammas.shape[1]
+            for (state in 0 until numStates) {
+                for (localObservation in 0 until localCols) {
+                    logGammas[state, observation + localObservation] = localLogGammas[state, localObservation]
                 }
-                observation++
             }
+            observation += localCols
         }
         assert(observation == numObservations) { "Incomplete iterations contexts" }
 
         logGammas.expInPlace()
-        updateParameters(df, logGammas)
+        updateParameters(boundDf, logGammas)
     }
 
     fun sampleStates(preprocessed: Preprocessed<DataFrame>): IntArray {
