@@ -21,7 +21,7 @@ fun parallelismLevel(): Int {
 
 fun configureParallelism(parallelism: Int?) {
     if (parallelism != null) {
-        require(parallelism.toInt() > 0) {
+        require(parallelism > 0) {
             "Parallelism level should be at least 1, got: $parallelism"
         }
         System.setProperty(PARALLELISM, parallelism.toString())
@@ -34,7 +34,8 @@ fun configureParallelism(parallelism: Int?) {
  * Executes tasks re-throwing any exception occurred.
  */
 fun ExecutorService.awaitAll(tasks: Iterable<Callable<*>>, ignoreInterrupted: Boolean = false) {
-    tasks.map { submit(it) }.toList().forEach {
+    val futures = tasks.map { submit(it) }.toList()
+    futures.forEach {
         try {
             if (ignoreInterrupted) {
                 try {
@@ -46,7 +47,7 @@ fun ExecutorService.awaitAll(tasks: Iterable<Callable<*>>, ignoreInterrupted: Bo
                 it.get()
             }
         } catch (e: ExecutionException) {
-            shutdownNow()
+            futures.forEach { f -> f.cancel(true) }
             throw e.cause ?: e
         }
     }
@@ -65,9 +66,12 @@ fun <T> List<Callable<T>>.await(parallel: Boolean, newExecutor: Boolean=false) {
             Executors.newWorkStealingPool(parallelismLevel())
         else
             EXECUTOR
-        executor!!.awaitAll(this)
-        if (newExecutor) {
-            check(executor.shutdownNow().isEmpty())
+        try {
+            executor!!.awaitAll(this)
+        } finally {
+            if (newExecutor) {
+                check(executor!!.shutdownNow().isEmpty())
+            }
         }
     } else {
         forEach { it.call() }
