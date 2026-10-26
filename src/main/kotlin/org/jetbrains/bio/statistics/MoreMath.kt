@@ -151,3 +151,13 @@ fun LongArray.standardDeviation(): Double {
     return sqrt((sumSq - sum.toDouble() * sum.toDouble() / size) / (size - 1))
 }
 
+fun DoubleArray.standardDeviation(): Double {
+    var sum = 0.0
+    var sumSq = 0.0
+    for (value in this) {
+        sum += value
+        sumSq += value * value
+    }
+    return sqrt((sumSq - sum * sum / size) / size)
+}
+
