@@ -1,5 +1,6 @@
 buildscript {
     ext.kotlin_version = "2.2.0"
+    ext.coroutines_version = "1.7.3"
 
     repositories {
         // On CI route through JetBrains cache-redirector to avoid Maven Central / plugin portal 429 rate limits.
@@ -50,6 +51,7 @@ if (rootProject == project) {
     dependencies {
         implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
         implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version")
 
         // Logging dependencies
         implementation("ch.qos.logback:logback-classic:1.4.12")
@@ -75,6 +77,7 @@ if (rootProject == project) {
 
         testImplementation("junit:junit:4.13.2")
         testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlin_version")
+        testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version")
     }
 } else {
     project(":bioinf-commons") {
@@ -84,6 +87,7 @@ if (rootProject == project) {
         dependencies {
             implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
             implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version")
 
             // Logging dependencies
             implementation("ch.qos.logback:logback-classic:1.4.12")
@@ -109,6 +113,7 @@ if (rootProject == project) {
 
             testImplementation("junit:junit:4.13.2")
             testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlin_version")
+            testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version")
             testOutput sourceSets.main.output, sourceSets.test.output
         }
     }
